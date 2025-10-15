@@ -1,0 +1,313 @@
+@using Microsoft.Extensions.Localization
+@using Kokomija.Resources
+@inject IStringLocalizer<SharedResources> Localizer
+@inject Kokomija.Services.ICookieConsentService CookieConsentService
+
+@if (!CookieConsentService.HasConsent(Context))
+{
+    <div id="cookieConsent" class="cookie-consent-banner" role="dialog" aria-live="polite" aria-label="@Localizer["CookieConsent.Title"]">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-message">
+                <h4>@Localizer["CookieConsent.Title"]</h4>
+                <p>@Localizer["CookieConsent.Message"]</p>
+                <a href="/privacy" class="cookie-learn-more">@Localizer["CookieConsent.LearnMore"]</a>
+            </div>
+            <div class="cookie-consent-actions">
+                <button type="button" class="btn btn-success" onclick="acceptAllCookies()">
+                    @Localizer["CookieConsent.AcceptAll"]
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="acceptNecessaryCookies()">
+                    @Localizer["CookieConsent.AcceptNecessary"]
+                </button>
+                <button type="button" class="btn btn-link" onclick="showCookieSettings()">
+                    @Localizer["CookieConsent.Settings"]
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cookie Settings Modal -->
+    <div id="cookieSettingsModal" class="cookie-settings-modal" style="display: none;" role="dialog" aria-labelledby="cookieSettingsTitle">
+        <div class="cookie-settings-content">
+            <div class="cookie-settings-header">
+                <h3 id="cookieSettingsTitle">@Localizer["CookieConsent.Settings"]</h3>
+                <button type="button" class="close-btn" onclick="hideCookieSettings()" aria-label="Close">&times;</button>
+            </div>
+            <div class="cookie-settings-body">
+                <div class="cookie-category">
+                    <div class="cookie-category-header">
+                        <label>
+                            <input type="checkbox" id="cookie-essential" checked disabled>
+                            <strong>@Localizer["CookieCategory.Essential"]</strong>
+                        </label>
+                        <span class="cookie-required">(Wymagane)</span>
+                    </div>
+                    <p class="cookie-category-description">@Localizer["CookieCategory.EssentialDesc"]</p>
+                </div>
+
+                <div class="cookie-category">
+                    <div class="cookie-category-header">
+                        <label>
+                            <input type="checkbox" id="cookie-preferences" checked>
+                            <strong>@Localizer["CookieCategory.Preferences"]</strong>
+                        </label>
+                    </div>
+                    <p class="cookie-category-description">@Localizer["CookieCategory.PreferencesDesc"]</p>
+                </div>
+
+                <div class="cookie-category">
+                    <div class="cookie-category-header">
+                        <label>
+                            <input type="checkbox" id="cookie-analytics">
+                            <strong>@Localizer["CookieCategory.Analytics"]</strong>
+                        </label>
+                    </div>
+                    <p class="cookie-category-description">@Localizer["CookieCategory.AnalyticsDesc"]</p>
+                </div>
+
+                <div class="cookie-category">
+                    <div class="cookie-category-header">
+                        <label>
+                            <input type="checkbox" id="cookie-marketing">
+                            <strong>@Localizer["CookieCategory.Marketing"]</strong>
+                        </label>
+                    </div>
+                    <p class="cookie-category-description">@Localizer["CookieCategory.MarketingDesc"]</p>
+                </div>
+            </div>
+            <div class="cookie-settings-footer">
+                <button type="button" class="btn btn-primary" onclick="saveCustomCookieConsent()">
+                    Zapisz preferencje
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="hideCookieSettings()">
+                    Anuluj
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .cookie-consent-banner {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideUp 0.5s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .cookie-consent-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .cookie-consent-message {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .cookie-consent-message h4 {
+        margin: 0 0 10px 0;
+        font-size: 1.25rem;
+    }
+
+    .cookie-consent-message p {
+        margin: 0 0 10px 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .cookie-learn-more {
+        color: #3498db;
+        text-decoration: underline;
+        font-size: 0.9rem;
+    }
+
+    .cookie-consent-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .cookie-settings-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    }
+
+    .cookie-settings-content {
+        background: white;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .cookie-settings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .cookie-settings-header h3 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #7f8c8d;
+        line-height: 1;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+    }
+
+    .close-btn:hover {
+        color: #2c3e50;
+    }
+
+    .cookie-settings-body {
+        padding: 20px;
+    }
+
+    .cookie-category {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .cookie-category:last-child {
+        border-bottom: none;
+    }
+
+    .cookie-category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .cookie-category-header label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .cookie-required {
+        color: #95a5a6;
+        font-size: 0.85rem;
+    }
+
+    .cookie-category-description {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .cookie-settings-footer {
+        padding: 20px;
+        border-top: 1px solid #ddd;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    @@media (max-width: 768px) {
+        .cookie-consent-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .cookie-consent-actions {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    function acceptAllCookies() {
+        saveCookieConsent(true, true, true, true);
+    }
+
+    function acceptNecessaryCookies() {
+        saveCookieConsent(true, true, false, false);
+    }
+
+    function showCookieSettings() {
+        document.getElementById('cookieSettingsModal').style.display = 'flex';
+    }
+
+    function hideCookieSettings() {
+        document.getElementById('cookieSettingsModal').style.display = 'none';
+    }
+
+    function saveCustomCookieConsent() {
+        const preferences = document.getElementById('cookie-preferences').checked;
+        const analytics = document.getElementById('cookie-analytics').checked;
+        const marketing = document.getElementById('cookie-marketing').checked;
+        saveCookieConsent(true, preferences, analytics, marketing);
+        hideCookieSettings();
+    }
+
+    function saveCookieConsent(essential, preferences, analytics, marketing) {
+        const consent = {
+            Essential: essential,
+            Preferences: preferences,
+            Analytics: analytics,
+            Marketing: marketing
+        };
+
+        fetch('/api/cookie-consent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(consent)
+        }).then(() => {
+            document.getElementById('cookieConsent').style.display = 'none';
+            
+            // Reload page to apply consent settings
+            if (analytics || marketing) {
+                location.reload();
+            }
+        });
+    }
+</script>

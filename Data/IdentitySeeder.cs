@@ -1,0 +1,94 @@
+using Kokomija.Entity;
+using Microsoft.AspNetCore.Identity;
+
+namespace Kokomija.Data
+{
+    public static class IdentitySeeder
+    {
+        public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
+        {
+            var roles = new[] { "Admin", "Customer", "Manager" };
+
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+        }
+
+        public static async Task SeedAdminUserAsync(
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration)
+        {
+            var adminEmail = configuration["AdminUser:Email"];
+            var adminPassword = configuration["AdminUser:Password"];
+            var adminFirstName = configuration["AdminUser:FirstName"];
+            var adminLastName = configuration["AdminUser:LastName"];
+
+            if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
+            {
+                throw new InvalidOperationException("Admin user credentials are not configured in appsettings.");
+            }
+
+            // Check if admin already exists
+            var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+            if (existingAdmin != null)
+            {
+                return; // Admin already exists
+            }
+
+            // Create admin user
+            var adminUser = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                FirstName = adminFirstName ?? "Admin",
+                LastName = adminLastName ?? "User",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await userManager.CreateAsync(adminUser, adminPassword);
+
+            if (result.Succeeded)
+            {
+                // Add to Admin role
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create admin user: {errors}");
+            }
+        }
+
+        public static async Task EnsureDatabaseSeededAsync(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration)
+        {
+            using var scope = serviceProvider.CreateScope();
+            var services = scope.ServiceProvider;
+
+            try
+            {
+                var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+                // Seed roles
+                await SeedRolesAsync(roleManager);
+
+                // Seed admin user
+                await SeedAdminUserAsync(userManager, configuration);
+            }
+            catch (Exception ex)
+            {
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogError(ex, "An error occurred while seeding the database.");
+                throw;
+            }
+        }
+    }
+}
