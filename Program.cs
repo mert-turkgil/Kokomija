@@ -81,6 +81,17 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 // Register Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Register Repositories (for direct injection in views/controllers)
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IColorRepository, ColorRepository>();
+builder.Services.AddScoped<ISizeRepository, SizeRepository>();
+builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICarouselSlideRepository, CarouselSlideRepository>();
+
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddScoped<IStripeService, StripeService>();

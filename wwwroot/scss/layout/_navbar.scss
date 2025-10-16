@@ -1,0 +1,360 @@
+// ============================================
+// NAVIGATION BAR
+// Professional textile e-commerce navbar
+// ============================================
+
+.navbar-kokomija {
+  background-color: $white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  
+  [data-theme="dark"] & {
+    background-color: $dark-surface;
+    border-bottom-color: $dark-border;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  // Sticky navbar effect
+  &.navbar-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    animation: slideInDown 0.4s ease-in-out;
+  }
+  
+  // Brand logo
+  .navbar-brand {
+    font-family: $headings-font-family;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $primary;
+    letter-spacing: -0.5px;
+    transition: $transition-fast;
+    
+    &:hover {
+      color: $secondary;
+      transform: translateY(-2px);
+    }
+    
+    [data-theme="dark"] & {
+      color: $primary-dark;
+      
+      &:hover {
+        color: $secondary-dark;
+      }
+    }
+    
+    img {
+      height: 40px;
+      width: auto;
+      margin-right: 0.5rem;
+    }
+  }
+  
+  // Navigation links
+  .nav-link {
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: $dark-gray;
+    padding: 0.5rem 1rem;
+    position: relative;
+    transition: $transition-fast;
+    
+    &:hover,
+    &.active {
+      color: $primary;
+    }
+    
+    // Underline effect
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: $primary;
+      transform: translateX(-50%);
+      transition: width 0.3s ease;
+    }
+    
+    &:hover::after,
+    &.active::after {
+      width: 60%;
+    }
+    
+    [data-theme="dark"] & {
+      color: $dark-text-muted;
+      
+      &:hover,
+      &.active {
+        color: $primary-dark;
+      }
+      
+      &::after {
+        background: $primary-dark;
+      }
+    }
+  }
+  
+  // Dropdown menu
+  .dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: $border-radius-lg;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    animation: fadeInUp 0.3s ease;
+    
+    [data-theme="dark"] & {
+      background-color: $dark-surface;
+      border-color: $dark-border;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .dropdown-item {
+      padding: 0.625rem 1rem;
+      border-radius: $border-radius;
+      font-size: 0.9rem;
+      transition: $transition-fast;
+      
+      &:hover,
+      &:focus {
+        background-color: rgba($primary, 0.1);
+        color: $primary;
+      }
+      
+      &.active {
+        background-color: $primary;
+        color: $white;
+      }
+      
+      [data-theme="dark"] & {
+        color: $dark-text;
+        
+        &:hover,
+        &:focus {
+          background-color: rgba($primary-dark, 0.2);
+          color: $primary-dark;
+        }
+      }
+    }
+    
+    .dropdown-divider {
+      margin: 0.5rem 0;
+      border-color: rgba(0, 0, 0, 0.08);
+      
+      [data-theme="dark"] & {
+        border-color: $dark-border;
+      }
+    }
+  }
+  
+  // Mega menu for categories
+  .mega-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    .mega-menu-content {
+      padding: 2rem;
+      
+      .mega-menu-column {
+        h6 {
+          font-weight: 600;
+          font-size: 0.875rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: $gray;
+          margin-bottom: 1rem;
+          
+          [data-theme="dark"] & {
+            color: $dark-text-muted;
+          }
+        }
+        
+        .list-unstyled {
+          li {
+            margin-bottom: 0.5rem;
+          }
+          
+          a {
+            color: $dark-gray;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: $transition-fast;
+            
+            &:hover {
+              color: $primary;
+              padding-left: 5px;
+            }
+            
+            [data-theme="dark"] & {
+              color: $dark-text;
+              
+              &:hover {
+                color: $primary-dark;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Icons (cart, account, etc.)
+  .nav-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: $dark-gray;
+    transition: $transition-fast;
+    
+    &:hover {
+      background-color: rgba($primary, 0.1);
+      color: $primary;
+    }
+    
+    [data-theme="dark"] & {
+      color: $dark-text;
+      
+      &:hover {
+        background-color: rgba($primary-dark, 0.2);
+        color: $primary-dark;
+      }
+    }
+    
+    i {
+      font-size: 1.25rem;
+    }
+    
+    // Badge for cart count
+    .badge {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border-radius: 9px;
+      background-color: $danger;
+      color: $white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  // Search bar
+  .navbar-search {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+    
+    @include media-breakpoint-down(lg) {
+      max-width: 100%;
+      margin: 1rem 0;
+    }
+    
+    input {
+      padding-left: 2.5rem;
+      border-radius: 50px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      transition: $transition-fast;
+      
+      &:focus {
+        box-shadow: 0 0 0 3px rgba($primary, 0.1);
+        border-color: $primary;
+      }
+      
+      [data-theme="dark"] & {
+        background-color: $dark-bg;
+        border-color: $dark-border;
+        color: $dark-text;
+        
+        &::placeholder {
+          color: $dark-text-muted;
+        }
+      }
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $gray;
+      pointer-events: none;
+      
+      [data-theme="dark"] & {
+        color: $dark-text-muted;
+      }
+    }
+  }
+  
+  // Mobile menu toggle
+  .navbar-toggler {
+    border: none;
+    padding: 0.5rem;
+    
+    &:focus {
+      box-shadow: none;
+    }
+    
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(44, 95, 126, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+    
+    [data-theme="dark"] & .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(74, 139, 174, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+  }
+}
+
+// Top bar (announcements, contact info)
+.top-bar {
+  background-color: $primary;
+  color: $white;
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
+  
+  [data-theme="dark"] & {
+    background-color: $dark-surface;
+    border-bottom: 1px solid $dark-border;
+  }
+  
+  a {
+    color: $white;
+    text-decoration: none;
+    transition: $transition-fast;
+    
+    &:hover {
+      color: $third;
+    }
+    
+    [data-theme="dark"] & {
+      color: $dark-text;
+      
+      &:hover {
+        color: $third-dark;
+      }
+    }
+  }
+  
+  .top-bar-item {
+    margin-right: 1.5rem;
+    
+    i {
+      margin-right: 0.5rem;
+    }
+  }
+}

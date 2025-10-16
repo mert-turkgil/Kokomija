@@ -295,19 +295,26 @@
             Marketing: marketing
         };
 
-        fetch('/api/cookie-consent', {
+        fetch('/api/CookieConsent', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(consent)
-        }).then(() => {
-            document.getElementById('cookieConsent').style.display = 'none';
-            
-            // Reload page to apply consent settings
-            if (analytics || marketing) {
-                location.reload();
+        }).then(response => {
+            if (response.ok) {
+                const banner = document.getElementById('cookieConsent');
+                if (banner) {
+                    banner.style.display = 'none';
+                }
+                
+                // Reload page to apply consent settings
+                if (analytics || marketing) {
+                    location.reload();
+                }
             }
+        }).catch(error => {
+            console.error('Error saving cookie consent:', error);
         });
     }
 </script>

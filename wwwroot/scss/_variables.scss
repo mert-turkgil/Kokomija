@@ -1,0 +1,178 @@
+// ============================================
+// KOKOMIJA - COLOR SCHEME
+// Trust, Comfort, Textile Excellence
+// ============================================
+
+// Color Theory for Textile Brand:
+// - Trust & Professionalism: Deep Navy Blue
+// - Warmth & Comfort: Soft Terracotta/Coral
+// - Natural & Quality: Warm Beige/Sand
+// - Accent & Energy: Teal/Sage Green
+
+// ============================================
+// BRAND COLORS - Light Mode
+// ============================================
+$primary: #2C5F7E;      // Deep Navy Blue - Trust, professionalism, stability
+$secondary: #E07A5F;    // Terracotta - Warmth, comfort, textile warmth
+$third: #F4A261;        // Soft Amber - Quality, natural fibers, warmth
+$fourth: #81B29A;       // Sage Green - Sustainability, natural, fresh
+
+// ============================================
+// BRAND COLORS - Dark Mode
+// ============================================
+$primary-dark: #4A8BAE;      // Lighter Navy - Better visibility in dark mode
+$secondary-dark: #F0957F;    // Lighter Terracotta
+$third-dark: #F6B881;        // Lighter Amber
+$fourth-dark: #A1D2BA;       // Lighter Sage
+
+// ============================================
+// NEUTRAL COLORS - Light Mode
+// ============================================
+$white: #FFFFFF;
+$light: #F8F9FA;
+$light-gray: #E9ECEF;
+$gray: #6C757D;
+$dark-gray: #495057;
+$dark: #212529;
+$black: #000000;
+
+// ============================================
+// NEUTRAL COLORS - Dark Mode
+// ============================================
+$dark-bg: #1A1D23;          // Main dark background
+$dark-surface: #24272E;     // Card/surface background
+$dark-border: #3A3D44;      // Borders in dark mode
+$dark-text: #E4E6EB;        // Primary text in dark mode
+$dark-text-muted: #B0B3B8;  // Muted text in dark mode
+
+// ============================================
+// SEMANTIC COLORS
+// ============================================
+$success: #3A7D44;    // Deep green for success states
+$info: #2C5F7E;       // Use primary for info
+$warning: #F4A261;    // Use third for warnings
+$danger: #D64545;     // Error red
+$light: #F8F9FA;
+$dark: #212529;
+
+// ============================================
+// BOOTSTRAP OVERRIDES
+// ============================================
+
+// Typography
+$font-family-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-family-base: $font-family-sans-serif;
+$headings-font-family: 'Poppins', $font-family-sans-serif;
+$headings-font-weight: 600;
+
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-sm: 0.875rem;
+
+$h1-font-size: 2.5rem;
+$h2-font-size: 2rem;
+$h3-font-size: 1.75rem;
+$h4-font-size: 1.5rem;
+$h5-font-size: 1.25rem;
+$h6-font-size: 1rem;
+
+$line-height-base: 1.6;
+$headings-line-height: 1.2;
+
+// Spacing
+$spacer: 1rem;
+$spacers: (
+  0: 0,
+  1: $spacer * 0.25,
+  2: $spacer * 0.5,
+  3: $spacer,
+  4: $spacer * 1.5,
+  5: $spacer * 3,
+  6: $spacer * 4,
+  7: $spacer * 5,
+);
+
+// Border Radius
+$border-radius: 0.5rem;
+$border-radius-sm: 0.25rem;
+$border-radius-lg: 0.75rem;
+$border-radius-xl: 1rem;
+$border-radius-2xl: 1.5rem;
+
+// Shadows
+$box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+$box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+$box-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.15);
+
+// Transitions
+$transition-base: all 0.3s ease-in-out;
+$transition-fast: all 0.15s ease-in-out;
+$transition-slow: all 0.5s ease-in-out;
+
+// Navbar
+$navbar-padding-y: 1rem;
+$navbar-nav-link-padding-x: 1rem;
+$navbar-brand-font-size: 1.5rem;
+$navbar-brand-padding-y: 0.5rem;
+
+// Cards
+$card-border-radius: $border-radius-lg;
+$card-border-color: rgba(0, 0, 0, 0.08);
+$card-cap-padding-y: 1rem;
+$card-cap-padding-x: 1.25rem;
+$card-spacer-y: 1rem;
+$card-spacer-x: 1.25rem;
+
+// Buttons
+$btn-padding-y: 0.625rem;
+$btn-padding-x: 1.25rem;
+$btn-font-weight: 500;
+$btn-border-radius: $border-radius;
+$btn-border-radius-sm: $border-radius-sm;
+$btn-border-radius-lg: $border-radius-lg;
+
+// Forms
+$input-padding-y: 0.625rem;
+$input-padding-x: 0.875rem;
+$input-border-radius: $border-radius;
+$input-focus-border-color: $primary;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.15);
+
+// Grid breakpoints
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+);
+
+// Container max widths
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px
+);
+
+// Theme colors map
+$theme-colors: (
+  "primary": $primary,
+  "secondary": $secondary,
+  "third": $third,
+  "fourth": $fourth,
+  "success": $success,
+  "info": $info,
+  "warning": $warning,
+  "danger": $danger,
+  "light": $light,
+  "dark": $dark,
+);
+
+// Enable Bootstrap features
+$enable-negative-margins: true;
+$enable-shadows: true;
+$enable-gradients: false;
+$enable-smooth-scroll: true;

@@ -1,0 +1,39 @@
+{
+  "name": "kokomija",
+  "version": "1.0.0",
+  "description": "Kokomija - Professional Textile E-Commerce Platform",
+  "private": true,
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@popperjs/core": "^2.11.8",
+    "animate.css": "^4.1.1",
+    "bootstrap": "^5.3.3",
+    "gsap": "^3.12.7",
+    "jquery": "^3.7.1",
+    "jquery-validation": "^1.21.0",
+    "jquery-validation-unobtrusive": "^4.0.0",
+    "sass": "^1.85.1",
+    "swiper": "^11.2.5"
+  },
+  "scripts": {
+    "install:all": "npm install",
+    "copy:bootstrap": "copyfiles -u 2 \"node_modules/bootstrap/dist/**/*\" wwwroot/lib/bootstrap",
+    "copy:jquery": "copyfiles -u 2 \"node_modules/jquery/dist/*.min.js\" wwwroot/lib/jquery && copyfiles -u 2 \"node_modules/jquery/dist/*.min.map\" wwwroot/lib/jquery",
+    "copy:jquery-validation": "copyfiles -u 2 \"node_modules/jquery-validation/dist/*.min.js\" wwwroot/lib/jquery-validation && copyfiles -u 2 \"node_modules/jquery-validation-unobtrusive/dist/*.min.js\" wwwroot/lib/jquery-validation-unobtrusive",
+    "copy:fontawesome": "copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/css/*.min.css\" wwwroot/lib/fontawesome/css && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/webfonts/*\" wwwroot/lib/fontawesome/webfonts",
+    "copy:animate": "copyfiles -u 2 \"node_modules/animate.css/animate.min.css\" wwwroot/lib/animate",
+    "copy:swiper": "copyfiles -u 2 \"node_modules/swiper/swiper-bundle.min.css\" wwwroot/lib/swiper && copyfiles -u 2 \"node_modules/swiper/swiper-bundle.min.js\" wwwroot/lib/swiper && copyfiles -u 2 \"node_modules/swiper/swiper-bundle.min.js.map\" wwwroot/lib/swiper",
+    "copy:popper": "copyfiles -u 5 \"node_modules/@popperjs/core/dist/umd/popper.min.js\" wwwroot/lib/popper && copyfiles -u 5 \"node_modules/@popperjs/core/dist/umd/popper.min.js.map\" wwwroot/lib/popper",
+    "copy:gsap": "copyfiles -u 3 \"node_modules/gsap/dist/*.min.js\" wwwroot/lib/gsap",
+    "copy:libs": "npm run copy:bootstrap && npm run copy:jquery && npm run copy:jquery-validation && npm run copy:fontawesome && npm run copy:animate && npm run copy:swiper && npm run copy:popper && npm run copy:gsap",
+    "build:sass": "sass wwwroot/scss/site.scss wwwroot/css/site.css --style compressed",
+    "watch:sass": "sass --watch wwwroot/scss/site.scss:wwwroot/css/site.css",
+    "build": "npm run copy:libs && npm run build:sass",
+    "dev": "npm run watch:sass"
+  },
+  "devDependencies": {
+    "copyfiles": "^2.4.1"
+  },
+  "author": "Kokomija",
+  "license": "UNLICENSED"
+}

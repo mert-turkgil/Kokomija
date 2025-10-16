@@ -1,0 +1,113 @@
+// ============================================
+// CUSTOM MIXINS
+// ============================================
+
+// Responsive font size
+@mixin responsive-font($min-size, $max-size) {
+  font-size: calc(#{$min-size} + (#{$max-size} - #{$min-size}) * ((100vw - 320px) / (1920 - 320)));
+  
+  @media (max-width: 320px) {
+    font-size: $min-size;
+  }
+  
+  @media (min-width: 1920px) {
+    font-size: $max-size;
+  }
+}
+
+// Truncate text with ellipsis
+@mixin truncate($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// Aspect ratio box
+@mixin aspect-ratio($width, $height) {
+  position: relative;
+  
+  &::before {
+    display: block;
+    content: "";
+    width: 100%;
+    padding-top: ($height / $width) * 100%;
+  }
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+// Custom scrollbar
+@mixin custom-scrollbar($width: 8px, $track-color: #f1f1f1, $thumb-color: #888) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+    border-radius: $width / 2;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $width / 2;
+    
+    &:hover {
+      background: darken($thumb-color, 10%);
+    }
+  }
+}
+
+// Smooth gradient overlay
+@mixin gradient-overlay($direction: to bottom, $start-color: rgba(0,0,0,0), $end-color: rgba(0,0,0,0.7)) {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient($direction, $start-color, $end-color);
+    pointer-events: none;
+  }
+}
+
+// Centered flex container
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Glass morphism effect
+@mixin glass-morphism($blur: 10px, $opacity: 0.1) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+// Hover lift effect
+@mixin hover-lift($translate-y: -5px, $shadow: 0 10px 30px rgba(0,0,0,0.15)) {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY($translate-y);
+    box-shadow: $shadow;
+  }
+}

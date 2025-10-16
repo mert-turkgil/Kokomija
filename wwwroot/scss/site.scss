@@ -1,0 +1,396 @@
+// ============================================
+// KOKOMIJA - Main Stylesheet
+// Professional Textile E-Commerce Platform
+// ============================================
+
+// 1. Import Custom Variables (must be first)
+@import 'variables';
+
+// 2. Import Bootstrap
+@import '../../node_modules/bootstrap/scss/bootstrap';
+
+// 3. Import Utilities
+@import 'utilities/mixins';
+@import 'utilities/animations';
+
+// 4. Import Layout Components
+@import 'layout/navbar';
+@import 'layout/footer';
+@import 'layout/theme-toggle';
+
+// 5. Import Components
+@import 'components/buttons';
+@import 'components/cards';
+@import 'components/forms';
+@import 'components/carousel';
+
+// 6. Import Pages
+@import 'pages/home';
+@import 'pages/product';
+
+// ============================================
+// GLOBAL STYLES
+// ============================================
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  color: $dark;
+  background-color: $white;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  
+  &[data-theme="dark"] {
+    background-color: $dark-bg;
+    color: $dark-text;
+  }
+}
+
+// ============================================
+// DARK MODE STYLES
+// ============================================
+
+[data-theme="dark"] {
+  
+  // Override theme colors for dark mode
+  --bs-primary: #{$primary-dark};
+  --bs-secondary: #{$secondary-dark};
+  --bs-third: #{$third-dark};
+  --bs-fourth: #{$fourth-dark};
+  
+  // Background colors
+  --bs-body-bg: #{$dark-bg};
+  --bs-body-color: #{$dark-text};
+  
+  // Cards and surfaces
+  .card {
+    background-color: $dark-surface;
+    border-color: $dark-border;
+    color: $dark-text;
+  }
+  
+  // Navbar
+  .navbar {
+    background-color: $dark-surface !important;
+    border-bottom-color: $dark-border;
+  }
+  
+  // Forms
+  .form-control,
+  .form-select {
+    background-color: $dark-surface;
+    border-color: $dark-border;
+    color: $dark-text;
+    
+    &:focus {
+      background-color: $dark-surface;
+      border-color: $primary-dark;
+      color: $dark-text;
+    }
+    
+    &::placeholder {
+      color: $dark-text-muted;
+    }
+  }
+  
+  // Links
+  a {
+    color: $primary-dark;
+    
+    &:hover {
+      color: lighten($primary-dark, 10%);
+    }
+  }
+  
+  // Text
+  .text-muted {
+    color: $dark-text-muted !important;
+  }
+  
+  // Borders
+  .border {
+    border-color: $dark-border !important;
+  }
+  
+  hr {
+    border-color: $dark-border;
+    opacity: 1;
+  }
+}
+
+// ============================================
+// TYPOGRAPHY
+// ============================================
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: $headings-font-family;
+  font-weight: $headings-font-weight;
+  line-height: $headings-line-height;
+  margin-bottom: 1rem;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+a {
+  color: $primary;
+  text-decoration: none;
+  transition: $transition-fast;
+  
+  &:hover {
+    color: darken($primary, 10%);
+  }
+}
+
+// ============================================
+// UTILITY CLASSES
+// ============================================
+
+// Background utilities for custom colors
+.bg-third {
+  background-color: $third !important;
+}
+
+.bg-fourth {
+  background-color: $fourth !important;
+}
+
+// Text utilities for custom colors
+.text-third {
+  color: $third !important;
+}
+
+.text-fourth {
+  color: $fourth !important;
+}
+
+// Border utilities for custom colors
+.border-third {
+  border-color: $third !important;
+}
+
+.border-fourth {
+  border-color: $fourth !important;
+}
+
+// Button outline utilities
+.btn-outline-third {
+  @include button-outline-variant($third);
+}
+
+.btn-outline-fourth {
+  @include button-outline-variant($fourth);
+}
+
+// ============================================
+// SECTION SPACING
+// ============================================
+
+section {
+  padding: 4rem 0;
+  
+  @include media-breakpoint-up(lg) {
+    padding: 5rem 0;
+  }
+}
+
+.section-title {
+  margin-bottom: 3rem;
+  text-align: center;
+  
+  h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    
+    @include media-breakpoint-down(md) {
+      font-size: 2rem;
+    }
+  }
+  
+  p {
+    font-size: 1.125rem;
+    color: $gray;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+}
+
+// ============================================
+// CONTAINER ENHANCEMENTS
+// ============================================
+
+.container-fluid-custom {
+  padding-left: 2rem;
+  padding-right: 2rem;
+  
+  @include media-breakpoint-up(xl) {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+// ============================================
+// ACCESSIBILITY
+// ============================================
+
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: $primary;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+  
+  &:focus {
+    top: 0;
+  }
+}
+
+// Focus styles
+*:focus-visible {
+  outline: 2px solid $primary;
+  outline-offset: 2px;
+}
+
+// ============================================
+// LOADING STATES
+// ============================================
+
+.loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.6;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2rem;
+    height: 2rem;
+    margin-top: -1rem;
+    margin-left: -1rem;
+    border: 3px solid $light;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ============================================
+// BACK TO TOP BUTTON
+// ============================================
+
+#back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba($primary, 0.4);
+  transition: $transition-fast;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba($primary, 0.5);
+  }
+  
+  i {
+    font-size: 1.25rem;
+  }
+  
+  @include media-breakpoint-down(md) {
+    width: 45px;
+    height: 45px;
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+}
+
+// ============================================
+// TOAST NOTIFICATIONS
+// ============================================
+
+.toast-notification {
+  position: fixed;
+  top: -100px;
+  right: 2rem;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 1rem 1.5rem;
+  background-color: $white;
+  color: $dark;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  transition: top 0.3s ease;
+  
+  [data-theme="dark"] & {
+    background-color: $dark-surface;
+    color: $dark-text;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  &.show {
+    top: 2rem;
+  }
+  
+  &.toast-success {
+    border-left: 4px solid $success;
+  }
+  
+  &.toast-error {
+    border-left: 4px solid $danger;
+  }
+  
+  &.toast-warning {
+    border-left: 4px solid $warning;
+  }
+  
+  &.toast-info {
+    border-left: 4px solid $info;
+  }
+  
+  @include media-breakpoint-down(md) {
+    right: 1rem;
+    left: 1rem;
+    min-width: auto;
+  }
+}
+
+// ============================================
+// NAVBAR SCROLLED STATE
+// ============================================
+
+.navbar-kokomija.navbar-scrolled {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  
+  [data-theme="dark"] & {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+}

@@ -1,0 +1,142 @@
+// ============================================
+// FOOTER STYLES
+// ============================================
+
+.footer-kokomija {
+  background-color: $dark;
+  color: $white;
+  padding: 4rem 0 2rem;
+  margin-top: 5rem;
+  
+  [data-theme="dark"] & {
+    background-color: $dark-surface;
+    border-top: 1px solid $dark-border;
+  }
+  
+  .footer-brand {
+    font-family: $headings-font-family;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $white;
+    margin-bottom: 1rem;
+    
+    [data-theme="dark"] & {
+      color: $primary-dark;
+    }
+  }
+  
+  .footer-description {
+    color: rgba($white, 0.7);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    
+    [data-theme="dark"] & {
+      color: $dark-text-muted;
+    }
+  }
+  
+  .footer-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+    color: $white;
+    
+    [data-theme="dark"] & {
+      color: $dark-text;
+    }
+  }
+  
+  .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    
+    li {
+      margin-bottom: 0.75rem;
+    }
+    
+    a {
+      color: rgba($white, 0.7);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: $transition-fast;
+      display: inline-block;
+      
+      &:hover {
+        color: $secondary;
+        padding-left: 5px;
+      }
+      
+      [data-theme="dark"] & {
+        color: $dark-text-muted;
+        
+        &:hover {
+          color: $secondary-dark;
+        }
+      }
+    }
+  }
+  
+  .social-links {
+    display: flex;
+    gap: 1rem;
+    
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba($white, 0.1);
+      color: $white;
+      transition: $transition-fast;
+      
+      &:hover {
+        background-color: $primary;
+        transform: translateY(-3px);
+      }
+      
+      [data-theme="dark"] & {
+        background-color: rgba($dark-text, 0.1);
+        color: $dark-text;
+        
+        &:hover {
+          background-color: $primary-dark;
+        }
+      }
+    }
+  }
+  
+  .footer-bottom {
+    border-top: 1px solid rgba($white, 0.1);
+    margin-top: 3rem;
+    padding-top: 2rem;
+    text-align: center;
+    color: rgba($white, 0.6);
+    font-size: 0.875rem;
+    
+    [data-theme="dark"] & {
+      border-top-color: $dark-border;
+      color: $dark-text-muted;
+    }
+    
+    a {
+      color: rgba($white, 0.8);
+      text-decoration: none;
+      transition: $transition-fast;
+      
+      &:hover {
+        color: $secondary;
+      }
+      
+      [data-theme="dark"] & {
+        color: $dark-text-muted;
+        
+        &:hover {
+          color: $secondary-dark;
+        }
+      }
+    }
+  }
+}
