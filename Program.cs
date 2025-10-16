@@ -95,7 +95,22 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpClient(); // Required for TurnstileService
 builder.Services.AddScoped<ITurnstileService, TurnstileService>();
 
-// Add session support (required for cart, etc.)
+// Register Resource Service (Dynamic translations with live reload)
+builder.Services.AddSingleton<IResourceService, ResourceService>();
+
+// Register Admin Commission Service
+builder.Services.AddScoped<IAdminCommissionService, AdminCommissionService>();
+
+// Register Site Control Service (Emergency closure)
+builder.Services.AddScoped<ISiteControlService, SiteControlService>();
+
+// Register Email Command Service (Email-based admin commands)
+builder.Services.AddScoped<IEmailCommandService, EmailCommandService>();
+
+// Register Carousel Service (Homepage and category carousels)
+builder.Services.AddScoped<ICarouselService, CarouselService>();
+
+// Add session support (required for cart, emergency access, etc.)
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -152,6 +167,9 @@ app.UseHttpsRedirection();
 
 // Add security headers
 app.UseSecurityHeaders();
+
+// Add Site Closure Middleware (Emergency maintenance mode)
+app.UseMiddleware<SiteClosureMiddleware>();
 
 // Add localization support
 var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>();

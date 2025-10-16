@@ -21,9 +21,20 @@ namespace Kokomija.Data.Configurations
             builder.Property(o => o.StripeChargeId)
                 .HasMaxLength(100);
 
+            builder.Property(o => o.StripeCheckoutSessionId)
+                .HasMaxLength(100);
+
             builder.Property(o => o.TotalAmount)
                 .IsRequired()
                 .HasColumnType("decimal(18,2)");
+
+            builder.Property(o => o.TaxAmount)
+                .HasColumnType("decimal(18,2)")
+                .HasDefaultValue(0);
+
+            builder.Property(o => o.TaxRate)
+                .HasColumnType("decimal(5,4)")
+                .HasDefaultValue(0);
 
             builder.Property(o => o.CommissionAmount)
                 .IsRequired()
@@ -48,6 +59,41 @@ namespace Kokomija.Data.Configurations
 
             builder.Property(o => o.CustomerName)
                 .HasMaxLength(200);
+
+            builder.Property(o => o.CustomerPhone)
+                .HasMaxLength(100);
+
+            // Shipping Address
+            builder.Property(o => o.ShippingAddress)
+                .HasMaxLength(500);
+
+            builder.Property(o => o.ShippingCity)
+                .HasMaxLength(200);
+
+            builder.Property(o => o.ShippingState)
+                .HasMaxLength(200);
+
+            builder.Property(o => o.ShippingPostalCode)
+                .HasMaxLength(20);
+
+            builder.Property(o => o.ShippingCountry)
+                .HasMaxLength(100);
+
+            // Billing Address
+            builder.Property(o => o.BillingAddress)
+                .HasMaxLength(500);
+
+            builder.Property(o => o.BillingCity)
+                .HasMaxLength(200);
+
+            builder.Property(o => o.BillingState)
+                .HasMaxLength(200);
+
+            builder.Property(o => o.BillingPostalCode)
+                .HasMaxLength(20);
+
+            builder.Property(o => o.BillingCountry)
+                .HasMaxLength(100);
 
             builder.Property(o => o.OrderStatus)
                 .IsRequired()
@@ -88,11 +134,15 @@ namespace Kokomija.Data.Configurations
 
             builder.HasIndex(o => o.StripePaymentIntentId);
 
+            builder.HasIndex(o => o.StripeCheckoutSessionId);
+
             builder.HasIndex(o => o.CustomerEmail);
 
             builder.HasIndex(o => o.OrderStatus);
 
             builder.HasIndex(o => o.CreatedAt);
+
+            builder.HasIndex(o => o.ShippingCountry);
         }
     }
 }

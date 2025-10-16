@@ -28,6 +28,16 @@ namespace Kokomija.Data.Concrete
             Orders = new OrderRepository(_context);
             Users = new UserRepository(_context, _userManager);
             Coupons = new CouponRepository(_context);
+            
+            // Initialize admin and system repositories
+            SiteSettings = new Repository<SiteSetting>(_context);
+            AdminCommissions = new Repository<AdminCommission>(_context);
+            SiteClosures = new Repository<SiteClosure>(_context);
+            EmailCommands = new Repository<EmailCommand>(_context);
+            AdminEarnings = new Repository<AdminEarnings>(_context);
+            
+            // Initialize carousel repository
+            CarouselSlides = new CarouselSlideRepository(_context);
         }
 
         public IProductRepository Products { get; private set; }
@@ -38,6 +48,12 @@ namespace Kokomija.Data.Concrete
         public IOrderRepository Orders { get; private set; }
         public IUserRepository Users { get; private set; }
         public ICouponRepository Coupons { get; private set; }
+        public IRepository<SiteSetting> SiteSettings { get; private set; }
+        public IRepository<AdminCommission> AdminCommissions { get; private set; }
+        public IRepository<SiteClosure> SiteClosures { get; private set; }
+        public IRepository<EmailCommand> EmailCommands { get; private set; }
+        public IRepository<AdminEarnings> AdminEarnings { get; private set; }
+        public ICarouselSlideRepository CarouselSlides { get; private set; }
 
         public IRepository<T> Repository<T>() where T : class
         {

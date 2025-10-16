@@ -18,6 +18,12 @@ namespace Kokomija.Services
         Task<Stripe.Coupon> CreateStripeCouponAsync(Entity.Coupon coupon);
         Task<PromotionCode> CreateStripePromotionCodeAsync(string stripeCouponId, string code);
         Task<Stripe.Coupon> GetStripeCouponAsync(string couponId);
+        Task<Stripe.Checkout.Session> CreateCheckoutSessionAsync(List<Stripe.Checkout.SessionLineItemOptions> lineItems, string successUrl, string cancelUrl, string? customerId = null, Dictionary<string, string>? metadata = null);
+        Task<Stripe.Checkout.Session> GetCheckoutSessionAsync(string sessionId);
+        Task<Stripe.PaymentMethod> GetPaymentMethodAsync(string paymentMethodId);
+        Task<Stripe.PaymentMethod> AttachPaymentMethodToCustomerAsync(string paymentMethodId, string customerId);
+        Task<Stripe.PaymentMethod> DetachPaymentMethodAsync(string paymentMethodId);
+        Task<List<Stripe.PaymentMethod>> ListCustomerPaymentMethodsAsync(string customerId);
     }
 
     public class StripeService : IStripeService
@@ -30,6 +36,8 @@ namespace Kokomija.Services
         private readonly RefundService _refundService;
         private readonly CouponService _couponService;
         private readonly PromotionCodeService _promotionCodeService;
+        private readonly Stripe.Checkout.SessionService _checkoutSessionService;
+        private readonly PaymentMethodService _paymentMethodService;
 
         public StripeService(IConfiguration configuration)
         {
@@ -41,6 +49,8 @@ namespace Kokomija.Services
             _refundService = new RefundService();
             _couponService = new CouponService();
             _promotionCodeService = new PromotionCodeService();
+            _checkoutSessionService = new Stripe.Checkout.SessionService();
+            _paymentMethodService = new PaymentMethodService();
         }
 
         public async Task<Customer> CreateCustomerAsync(string email, string name, Dictionary<string, string>? metadata = null)
@@ -222,6 +232,147 @@ namespace Kokomija.Services
         public async Task<Stripe.Coupon> GetStripeCouponAsync(string couponId)
         {
             return await _couponService.GetAsync(couponId);
+        }
+
+        /// <summary>
+        /// Create a Stripe Checkout Session (for FREE tier - no Billing Portal needed)
+        /// </summary>
+        public async Task<Stripe.Checkout.Session> CreateCheckoutSessionAsync(
+            List<Stripe.Checkout.SessionLineItemOptions> lineItems,
+            string successUrl,
+            string cancelUrl,
+            string? customerId = null,
+            Dictionary<string, string>? metadata = null)
+        {
+            var options = new Stripe.Checkout.SessionCreateOptions
+            {
+                LineItems = lineItems,
+                Mode = "payment", // one-time payment
+                SuccessUrl = successUrl,
+                CancelUrl = cancelUrl,
+                PaymentMethodTypes = new List<string> { "card" }, // FREE tier supports cards
+                
+                // Collect shipping address automatically
+                ShippingAddressCollection = new Stripe.Checkout.SessionShippingAddressCollectionOptions
+                {
+                    AllowedCountries = new List<string> 
+                    { 
+                        "PL", // Poland
+                        "DE", // Germany
+                        "FR", // France
+                        "IT", // Italy
+                        "ES", // Spain
+                        "GB", // United Kingdom
+                        "US", // United States
+                        // Add more countries as needed
+                    }
+                },
+
+                // Collect billing address
+                BillingAddressCollection = "required",
+
+                // Collect phone number
+                PhoneNumberCollection = new Stripe.Checkout.SessionPhoneNumberCollectionOptions
+                {
+                    Enabled = true
+                },
+
+                // Customer email
+                CustomerEmail = customerId == null ? null : null, // If no customer, we'll provide email field
+                
+                // If customer exists, attach to them
+                Customer = customerId,
+
+                // Save payment method for future use (FREE for Checkout)
+                PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
+                {
+                    SetupFutureUsage = "on_session", // Save card for logged-in users
+                    Metadata = metadata ?? new Dictionary<string, string>()
+                },
+
+                // Metadata
+                Metadata = metadata ?? new Dictionary<string, string>(),
+
+                // Automatic tax calculation (FREE tier - basic tax)
+                AutomaticTax = new Stripe.Checkout.SessionAutomaticTaxOptions
+                {
+                    Enabled = true // Stripe handles EU VAT automatically
+                },
+
+                // Allow promotion codes
+                AllowPromotionCodes = true,
+
+                // Locale
+                Locale = "pl", // Polish by default
+
+                // Customer update (allow updating email and address)
+                CustomerUpdate = customerId != null ? new Stripe.Checkout.SessionCustomerUpdateOptions
+                {
+                    Address = "auto",
+                    Name = "auto",
+                    Shipping = "auto"
+                } : null
+            };
+
+            return await _checkoutSessionService.CreateAsync(options);
+        }
+
+        /// <summary>
+        /// Get Checkout Session details
+        /// </summary>
+        public async Task<Stripe.Checkout.Session> GetCheckoutSessionAsync(string sessionId)
+        {
+            var options = new Stripe.Checkout.SessionGetOptions();
+            options.AddExpand("line_items");
+            options.AddExpand("customer");
+            options.AddExpand("payment_intent");
+            options.AddExpand("shipping_details");
+
+            return await _checkoutSessionService.GetAsync(sessionId, options);
+        }
+
+        /// <summary>
+        /// Get payment method details
+        /// </summary>
+        public async Task<Stripe.PaymentMethod> GetPaymentMethodAsync(string paymentMethodId)
+        {
+            return await _paymentMethodService.GetAsync(paymentMethodId);
+        }
+
+        /// <summary>
+        /// Attach payment method to customer (for saving cards)
+        /// </summary>
+        public async Task<Stripe.PaymentMethod> AttachPaymentMethodToCustomerAsync(string paymentMethodId, string customerId)
+        {
+            var options = new PaymentMethodAttachOptions
+            {
+                Customer = customerId
+            };
+
+            return await _paymentMethodService.AttachAsync(paymentMethodId, options);
+        }
+
+        /// <summary>
+        /// Detach payment method from customer (remove saved card)
+        /// </summary>
+        public async Task<Stripe.PaymentMethod> DetachPaymentMethodAsync(string paymentMethodId)
+        {
+            return await _paymentMethodService.DetachAsync(paymentMethodId);
+        }
+
+        /// <summary>
+        /// List all payment methods for a customer
+        /// </summary>
+        public async Task<List<Stripe.PaymentMethod>> ListCustomerPaymentMethodsAsync(string customerId)
+        {
+            var options = new PaymentMethodListOptions
+            {
+                Customer = customerId,
+                Type = "card" // Only cards for now
+            };
+
+            var paymentMethods = await _paymentMethodService.ListAsync(options);
+            return paymentMethods.Data.ToList();
         }
     }
 }

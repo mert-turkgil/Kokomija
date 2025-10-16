@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Kokomija.Services
 {
@@ -12,6 +13,24 @@ namespace Kokomija.Services
         Task SendEmailAsync(string to, string subject, string body, string? replyTo, bool isHtml = true);
         Task SendEmailWithAttachmentAsync(string to, string subject, string body, string attachmentPath, bool isHtml = true);
         Task SendBulkEmailAsync(List<string> recipients, string subject, string body, bool isHtml = true);
+        Task<bool> SendOrderConfirmationAsync(string to, OrderEmailData orderData);
+        Task<string> LoadEmailTemplate(string templateName);
+    }
+
+    /// <summary>
+    /// Order email data for template
+    /// </summary>
+    public class OrderEmailData
+    {
+        public string OrderNumber { get; set; } = string.Empty;
+        public string OrderDate { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; }
+        public string ShippingAddress { get; set; } = string.Empty;
+        public string OrderItemsHtml { get; set; } = string.Empty;
+        public string TrackOrderUrl { get; set; } = string.Empty;
+        public string WebsiteUrl { get; set; } = string.Empty;
+        public string PrivacyUrl { get; set; } = string.Empty;
+        public string ContactUrl { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -22,11 +41,13 @@ namespace Kokomija.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailService> _logger;
+        private readonly IWebHostEnvironment _environment;
 
-        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+        public EmailService(IConfiguration configuration, ILogger<EmailService> logger, IWebHostEnvironment environment)
         {
             _configuration = configuration;
             _logger = logger;
+            _environment = environment;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body, bool isHtml = true)
@@ -172,6 +193,70 @@ namespace Kokomija.Services
             };
 
             return settings;
+        }
+
+        public async Task<string> LoadEmailTemplate(string templateName)
+        {
+            try
+            {
+                var templatePath = Path.Combine(_environment.ContentRootPath, "Views", "EmailTemplates", $"{templateName}.html");
+                
+                if (!File.Exists(templatePath))
+                {
+                    _logger.LogError("Email template not found: {TemplatePath}", templatePath);
+                    throw new FileNotFoundException($"Email template not found: {templateName}");
+                }
+
+                var template = await File.ReadAllTextAsync(templatePath);
+                _logger.LogInformation("Email template loaded successfully: {TemplateName}", templateName);
+                
+                return template;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading email template: {TemplateName}", templateName);
+                throw;
+            }
+        }
+
+        public async Task<bool> SendOrderConfirmationAsync(string to, OrderEmailData orderData)
+        {
+            try
+            {
+                // Load the order confirmation template
+                var template = await LoadEmailTemplate("OrderConfirmation");
+
+                // Replace placeholders with actual data
+                var emailBody = template
+                    .Replace("{{ORDER_NUMBER}}", orderData.OrderNumber)
+                    .Replace("{{ORDER_DATE}}", orderData.OrderDate)
+                    .Replace("{{TOTAL_AMOUNT}}", orderData.TotalAmount.ToString("N2") + " PLN")
+                    .Replace("{{SHIPPING_ADDRESS}}", orderData.ShippingAddress)
+                    .Replace("{{ORDER_ITEMS}}", orderData.OrderItemsHtml)
+                    .Replace("{{TRACK_ORDER_URL}}", orderData.TrackOrderUrl)
+                    .Replace("{{WEBSITE_URL}}", orderData.WebsiteUrl)
+                    .Replace("{{PRIVACY_URL}}", orderData.PrivacyUrl)
+                    .Replace("{{CONTACT_URL}}", orderData.ContactUrl);
+
+                // Send the email
+                await SendEmailAsync(
+                    to,
+                    $"Potwierdzenie zamówienia #{orderData.OrderNumber} - Kokomija",
+                    emailBody,
+                    isHtml: true
+                );
+
+                _logger.LogInformation("Order confirmation email sent successfully to {Email} for order {OrderNumber}", 
+                    to, orderData.OrderNumber);
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending order confirmation email to {Email} for order {OrderNumber}", 
+                    to, orderData.OrderNumber);
+                return false;
+            }
         }
 
         private class SmtpSettings

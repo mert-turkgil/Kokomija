@@ -455,3 +455,11 @@ $RECYCLE.BIN/
 
 # Temporary migration files (optional - uncomment if you want to ignore)
 # Migrations/
+
+##
+## DOCUMENTATION FILES - DO NOT UPLOAD TO GITHUB
+##
+*.md
+!README.md
+# Exclude all markdown documentation except README.md
+# This keeps documentation local while allowing README to be public

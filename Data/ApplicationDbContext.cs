@@ -12,6 +12,14 @@ namespace Kokomija.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            // Suppress pending model changes warning during migration
+            optionsBuilder.ConfigureWarnings(warnings => 
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Color> Colors { get; set; }
@@ -26,6 +34,14 @@ namespace Kokomija.Data
         public DbSet<CouponUsage> CouponUsages { get; set; }
         public DbSet<SupportedLanguage> SupportedLanguages { get; set; }
         public DbSet<SiteSetting> SiteSettings { get; set; }
+        public DbSet<Blog> Blogs { get; set; }
+        public DbSet<BlogCategory> BlogCategories { get; set; }
+        public DbSet<PaymentMethod> PaymentMethods { get; set; }
+        public DbSet<AdminCommission> AdminCommissions { get; set; }
+        public DbSet<SiteClosure> SiteClosures { get; set; }
+        public DbSet<EmailCommand> EmailCommands { get; set; }
+        public DbSet<AdminEarnings> AdminEarnings { get; set; }
+        public DbSet<CarouselSlide> CarouselSlides { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,12 +63,22 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new CouponUsageConfiguration());
             modelBuilder.ApplyConfiguration(new SupportedLanguageConfiguration());
             modelBuilder.ApplyConfiguration(new SiteSettingConfiguration());
+            modelBuilder.ApplyConfiguration(new BlogConfiguration());
+            modelBuilder.ApplyConfiguration(new BlogCategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new PaymentMethodConfiguration());
+            modelBuilder.ApplyConfiguration(new AdminCommissionConfiguration());
+            modelBuilder.ApplyConfiguration(new SiteClosureConfiguration());
+            modelBuilder.ApplyConfiguration(new EmailCommandConfiguration());
+            modelBuilder.ApplyConfiguration(new AdminEarningsConfiguration());
+            modelBuilder.ApplyConfiguration(new CarouselSlideConfiguration());
 
             // Seed initial data
             modelBuilder.SeedSizes();
             modelBuilder.SeedColors();
             modelBuilder.SeedCategories();
             modelBuilder.SeedLanguages();
+            modelBuilder.SeedBlogCategories();
+            modelBuilder.SeedAdminSettings();
         }
     }
 }

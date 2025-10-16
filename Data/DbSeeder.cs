@@ -305,5 +305,162 @@ namespace Kokomija.Data
                 }
             );
         }
+
+        public static void SeedBlogCategories(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<BlogCategory>().HasData(
+                new BlogCategory
+                {
+                    Id = 1,
+                    Name = "Porady",
+                    Slug = "porady",
+                    Description = "Porady dotyczące zakupów i stylizacji",
+                    DisplayOrder = 1,
+                    IsActive = true,
+                    Language = "pl",
+                    MetaDescription = "Porady zakupowe i stylizacyjne dla klientów Kokomija",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new BlogCategory
+                {
+                    Id = 2,
+                    Name = "Nowości",
+                    Slug = "nowosci",
+                    Description = "Najnowsze produkty i kolekcje",
+                    DisplayOrder = 2,
+                    IsActive = true,
+                    Language = "pl",
+                    MetaDescription = "Najnowsze produkty i kolekcje w Kokomija",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new BlogCategory
+                {
+                    Id = 3,
+                    Name = "Trendy",
+                    Slug = "trendy",
+                    Description = "Najnowsze trendy w modzie",
+                    DisplayOrder = 3,
+                    IsActive = true,
+                    Language = "pl",
+                    MetaDescription = "Najnowsze trendy w modzie i stylizacji",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new BlogCategory
+                {
+                    Id = 4,
+                    Name = "Inspiracje",
+                    Slug = "inspiracje",
+                    Description = "Inspiracje stylizacyjne i lookbooki",
+                    DisplayOrder = 4,
+                    IsActive = true,
+                    Language = "pl",
+                    MetaDescription = "Inspiracje stylizacyjne i lookbooki od Kokomija",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new BlogCategory
+                {
+                    Id = 5,
+                    Name = "O marce",
+                    Slug = "o-marce",
+                    Description = "Informacje o marce Kokomija",
+                    DisplayOrder = 5,
+                    IsActive = true,
+                    Language = "pl",
+                    MetaDescription = "Informacje o marce Kokomija i naszej misji",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                }
+            );
+        }
+
+        public static void SeedAdminSettings(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<SiteSetting>().HasData(
+                new SiteSetting
+                {
+                    Id = 1,
+                    Key = "SuperAdminEmail",
+                    Value = "admin@kokomija.com", // CHANGE THIS TO YOUR EMAIL!
+                    Description = "Super admin email for site control and emergency commands",
+                    Category = "Security",
+                    DataType = "string",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 2,
+                    Key = "PlatformCommissionRate",
+                    Value = "0.01", // 1%
+                    Description = "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)",
+                    Category = "Commission",
+                    DataType = "decimal",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 3,
+                    Key = "StripeProcessingFeeRate",
+                    Value = "0.014", // 1.4% for Poland
+                    Description = "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)",
+                    Category = "Commission",
+                    DataType = "decimal",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 4,
+                    Key = "StripeFixedFee",
+                    Value = "1.00", // 1 PLN for Poland
+                    Description = "Stripe fixed fee per transaction in PLN",
+                    Category = "Commission",
+                    DataType = "decimal",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 5,
+                    Key = "SiteClosureEnabled",
+                    Value = "false",
+                    Description = "Is site currently closed for maintenance",
+                    Category = "Maintenance",
+                    DataType = "boolean",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 6,
+                    Key = "SiteClosureMessage",
+                    Value = "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji.",
+                    Description = "Message displayed when site is closed",
+                    Category = "Maintenance",
+                    DataType = "string",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 7,
+                    Key = "AutoReopenAfterDays",
+                    Value = "30",
+                    Description = "Automatically reopen site after X days of closure",
+                    Category = "Maintenance",
+                    DataType = "integer",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 8,
+                    Key = "DailyConfirmationEmailEnabled",
+                    Value = "true",
+                    Description = "Send daily confirmation emails during site closure",
+                    Category = "Maintenance",
+                    DataType = "boolean",
+                    UpdatedAt = DateTime.UtcNow
+                }
+            );
+        }
     }
 }

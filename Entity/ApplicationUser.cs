@@ -14,6 +14,9 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string? StripeCustomerId { get; set; }
 
+        [MaxLength(100)]
+        public string? DefaultPaymentMethodId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? LastLoginAt { get; set; }
@@ -22,5 +25,8 @@ namespace Kokomija.Entity
 
         // Navigation properties for orders
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        // Navigation properties for saved payment methods
+        public ICollection<PaymentMethod> PaymentMethods { get; set; } = new List<PaymentMethod>();
     }
 }

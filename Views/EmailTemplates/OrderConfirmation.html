@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dziękujemy za zamówienie - Kokomija</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    
+    <!-- Wrapper Table -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
+        <tr>
+            <td style="padding: 20px 0;">
+                
+                <!-- Main Content Table -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header with Logo -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;">
+                                KOKOMIJA
+                            </h1>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+                                Twój sklep z tekstyliami
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Success Message -->
+                    <tr>
+                        <td style="padding: 40px 30px 30px 30px; text-align: center;">
+                            <div style="width: 80px; height: 80px; margin: 0 auto 20px auto; background-color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: #ffffff; font-size: 40px; line-height: 80px;">✓</span>
+                            </div>
+                            <h2 style="margin: 0 0 10px 0; color: #1f2937; font-size: 28px; font-weight: 700;">
+                                Dziękujemy za zamówienie!
+                            </h2>
+                            <p style="margin: 0; color: #6b7280; font-size: 16px; line-height: 1.6;">
+                                Twoje zamówienie zostało pomyślnie przyjęte i jest w trakcie realizacji.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Order Details Box -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
+                                            Szczegóły zamówienia
+                                        </h3>
+                                        
+                                        <!-- Order Number -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 15px;">
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">
+                                                    Numer zamówienia:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">
+                                                    {{ORDER_NUMBER}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">
+                                                    Data zamówienia:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">
+                                                    {{ORDER_DATE}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2" style="border-top: 1px solid #e5e7eb; margin: 15px 0;"></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">
+                                                    Kwota zamówienia:
+                                                </td>
+                                                <td style="padding: 8px 0; color: #1f2937; font-size: 16px; font-weight: 700; text-align: right;">
+                                                    {{TOTAL_AMOUNT}} PLN
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Order Items -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
+                                Zamówione produkty
+                            </h3>
+                            {{ORDER_ITEMS}}
+                        </td>
+                    </tr>
+                    
+                    <!-- Shipping Information -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 16px; font-weight: 600;">
+                                            📦 Informacje o wysyłce
+                                        </h3>
+                                        <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                            Twoje zamówienie zostanie wysłane na adres:<br>
+                                            <strong>{{SHIPPING_ADDRESS}}</strong>
+                                        </p>
+                                        <p style="margin: 15px 0 0 0; color: #1e40af; font-size: 14px;">
+                                            Czas dostawy: <strong>2-5 dni roboczych</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- What's Next Section -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
+                                Co dalej?
+                            </h3>
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="padding: 12px 0; vertical-align: top;">
+                                        <span style="display: inline-block; width: 24px; height: 24px; background-color: #667eea; color: #ffffff; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 10px;">1</span>
+                                        <span style="color: #4b5563; font-size: 14px;">Przygotujemy Twoje zamówienie</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 0; vertical-align: top;">
+                                        <span style="display: inline-block; width: 24px; height: 24px; background-color: #667eea; color: #ffffff; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 10px;">2</span>
+                                        <span style="color: #4b5563; font-size: 14px;">Wyślemy e-mail z numerem przesyłki</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 0; vertical-align: top;">
+                                        <span style="display: inline-block; width: 24px; height: 24px; background-color: #667eea; color: #ffffff; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 700; margin-right: 10px;">3</span>
+                                        <span style="color: #4b5563; font-size: 14px;">Otrzymasz paczkę w ciągu 2-5 dni</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Call to Action Button -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 6px; text-align: center;">
+                                        <a href="{{TRACK_ORDER_URL}}" style="display: inline-block; padding: 14px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">
+                                            Śledź zamówienie
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Help Section -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px; background-color: #fef3c7; border-radius: 8px; margin: 0 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="padding: 20px; text-align: center;">
+                                        <p style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 600;">
+                                            Potrzebujesz pomocy?
+                                        </p>
+                                        <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                            Skontaktuj się z nami: <a href="mailto:support@kokomija.com" style="color: #92400e; text-decoration: underline;">support@kokomija.com</a>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; text-align: center; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">
+                                Dziękujemy za zakupy w Kokomija!
+                            </p>
+                            <p style="margin: 0 0 15px 0; color: #9ca3af; font-size: 12px;">
+                                © 2025 Kokomija. Wszelkie prawa zastrzeżone.
+                            </p>
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0 8px;">
+                                        <a href="{{WEBSITE_URL}}" style="color: #9ca3af; font-size: 12px; text-decoration: none;">Strona główna</a>
+                                    </td>
+                                    <td style="padding: 0 8px; color: #d1d5db;">|</td>
+                                    <td style="padding: 0 8px;">
+                                        <a href="{{PRIVACY_URL}}" style="color: #9ca3af; font-size: 12px; text-decoration: none;">Polityka prywatności</a>
+                                    </td>
+                                    <td style="padding: 0 8px; color: #d1d5db;">|</td>
+                                    <td style="padding: 0 8px;">
+                                        <a href="{{CONTACT_URL}}" style="color: #9ca3af; font-size: 12px; text-decoration: none;">Kontakt</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                </table>
+                <!-- End Main Content Table -->
+                
+            </td>
+        </tr>
+    </table>
+    <!-- End Wrapper Table -->
+    
+</body>
+</html>

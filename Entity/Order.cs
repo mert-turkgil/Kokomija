@@ -19,9 +19,18 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string? StripeChargeId { get; set; }
 
+        [MaxLength(100)]
+        public string? StripeCheckoutSessionId { get; set; }
+
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TaxAmount { get; set; } = 0;
+
+        [Column(TypeName = "decimal(5,4)")]
+        public decimal TaxRate { get; set; } = 0;
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
@@ -48,6 +57,41 @@ namespace Kokomija.Entity
 
         [MaxLength(200)]
         public string? CustomerName { get; set; }
+
+        [MaxLength(100)]
+        public string? CustomerPhone { get; set; }
+
+        // Shipping Address (collected by Stripe Checkout)
+        [MaxLength(500)]
+        public string? ShippingAddress { get; set; }
+
+        [MaxLength(200)]
+        public string? ShippingCity { get; set; }
+
+        [MaxLength(200)]
+        public string? ShippingState { get; set; }
+
+        [MaxLength(20)]
+        public string? ShippingPostalCode { get; set; }
+
+        [MaxLength(100)]
+        public string? ShippingCountry { get; set; }
+
+        // Billing Address (collected by Stripe Checkout)
+        [MaxLength(500)]
+        public string? BillingAddress { get; set; }
+
+        [MaxLength(200)]
+        public string? BillingCity { get; set; }
+
+        [MaxLength(200)]
+        public string? BillingState { get; set; }
+
+        [MaxLength(20)]
+        public string? BillingPostalCode { get; set; }
+
+        [MaxLength(100)]
+        public string? BillingCountry { get; set; }
 
         // User relationship (optional - for registered users)
         public string? UserId { get; set; }

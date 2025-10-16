@@ -1,3 +1,5 @@
+using Kokomija.Entity;
+
 namespace Kokomija.Data.Abstract
 {
     public interface IUnitOfWork : IDisposable
@@ -10,6 +12,12 @@ namespace Kokomija.Data.Abstract
         IOrderRepository Orders { get; }
         IUserRepository Users { get; }
         ICouponRepository Coupons { get; }
+        IRepository<SiteSetting> SiteSettings { get; }
+        IRepository<AdminCommission> AdminCommissions { get; }
+        IRepository<SiteClosure> SiteClosures { get; }
+        IRepository<EmailCommand> EmailCommands { get; }
+        IRepository<AdminEarnings> AdminEarnings { get; }
+        ICarouselSlideRepository CarouselSlides { get; }
         IRepository<T> Repository<T>() where T : class;
         
         Task<int> SaveChangesAsync();
