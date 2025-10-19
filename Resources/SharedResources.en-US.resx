@@ -31,7 +31,7 @@
               <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
               <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
               <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" use="preserve" msdata:Ordinal="5" />
+              <xsd:attribute ref="xml:space" msdata:Ordinal="5" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
@@ -59,259 +59,159 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   
-  <!-- Cookie Consent Polish Translations -->
-  <data name="CookieConsent.Title" xml:space="preserve">
-    <value>Używamy plików cookie</value>
-    <comment>Cookie consent banner title</comment>
-  </data>
-  <data name="CookieConsent.Message" xml:space="preserve">
-    <value>Ta strona używa plików cookie, aby zapewnić najlepsze doświadczenia zakupowe. Klikając "Akceptuj wszystko", zgadzasz się na zapisanie WSZYSTKICH plików cookie.</value>
-    <comment>Cookie consent banner message</comment>
-  </data>
-  <data name="CookieConsent.AcceptAll" xml:space="preserve">
-    <value>Akceptuj wszystko</value>
-    <comment>Accept all cookies button</comment>
-  </data>
-  <data name="CookieConsent.AcceptNecessary" xml:space="preserve">
-    <value>Tylko niezbędne</value>
-    <comment>Accept only necessary cookies button</comment>
-  </data>
-  <data name="CookieConsent.Settings" xml:space="preserve">
-    <value>Ustawienia cookie</value>
-    <comment>Cookie settings button</comment>
-  </data>
-  <data name="CookieConsent.LearnMore" xml:space="preserve">
-    <value>Dowiedz się więcej</value>
-    <comment>Learn more link</comment>
-  </data>
-  
-  <!-- Cookie Categories -->
-  <data name="CookieCategory.Essential" xml:space="preserve">
-    <value>Niezbędne pliki cookie</value>
-    <comment>Essential cookies category</comment>
-  </data>
-  <data name="CookieCategory.EssentialDesc" xml:space="preserve">
-    <value>Te pliki cookie są niezbędne do działania strony i nie można ich wyłączyć. Obejmują uwierzytelnianie, koszyk zakupów i ustawienia prywatności.</value>
-    <comment>Essential cookies description</comment>
-  </data>
-  <data name="CookieCategory.Analytics" xml:space="preserve">
-    <value>Pliki cookie analityczne</value>
-    <comment>Analytics cookies category</comment>
-  </data>
-  <data name="CookieCategory.AnalyticsDesc" xml:space="preserve">
-    <value>Pomagają nam zrozumieć, jak odwiedzający korzystają z naszej strony, zbierając informacje anonimowo.</value>
-    <comment>Analytics cookies description</comment>
-  </data>
-  <data name="CookieCategory.Marketing" xml:space="preserve">
-    <value>Pliki cookie marketingowe</value>
-    <comment>Marketing cookies category</comment>
-  </data>
-  <data name="CookieCategory.MarketingDesc" xml:space="preserve">
-    <value>Służą do śledzenia odwiedzających na różnych stronach w celu wyświetlania odpowiednich reklam.</value>
-    <comment>Marketing cookies description</comment>
-  </data>
-  <data name="CookieCategory.Preferences" xml:space="preserve">
-    <value>Pliki cookie preferencji</value>
-    <comment>Preferences cookies category</comment>
-  </data>
-  <data name="CookieCategory.PreferencesDesc" xml:space="preserve">
-    <value>Umożliwiają stronie zapamiętanie wyborów użytkownika, takich jak język lub region.</value>
-    <comment>Preferences cookies description</comment>
-  </data>
-  
-  <!-- Common UI Elements (Examples - not filled yet) -->
-  <data name="Common.Home" xml:space="preserve">
-    <value>Strona główna</value>
-  </data>
-  <data name="Common.Products" xml:space="preserve">
-    <value>Produkty</value>
-  </data>
-  <data name="Common.Cart" xml:space="preserve">
-    <value>Koszyk</value>
-  </data>
-  <data name="Common.Checkout" xml:space="preserve">
-    <value>Kasa</value>
-  </data>
-  <data name="Common.Login" xml:space="preserve">
-    <value>Zaloguj się</value>
-  </data>
-  <data name="Common.Register" xml:space="preserve">
-    <value>Zarejestruj się</value>
-  </data>
-  <data name="Common.MyAccount" xml:space="preserve">
-    <value>Moje konto</value>
-  </data>
-  <data name="Common.Search" xml:space="preserve">
-    <value>Szukaj</value>
-  </data>
-  <data name="Common.Price" xml:space="preserve">
-    <value>Cena</value>
-  </data>
-  <data name="Common.AddToCart" xml:space="preserve">
-    <value>Dodaj do koszyka</value>
-  </data>
-  <data name="Common.Size" xml:space="preserve">
-    <value>Rozmiar</value>
-  </data>
-  <data name="Common.Color" xml:space="preserve">
-    <value>Kolor</value>
-  </data>
-  
-  <!-- Note: More translations will be added as backend features are completed -->
-  
   <!-- Navigation -->
   <data name="Nav_Men" xml:space="preserve">
-    <value>Męskie</value>
+    <value>Men</value>
   </data>
   <data name="Nav_Women" xml:space="preserve">
-    <value>Damskie</value>
+    <value>Women</value>
   </data>
   <data name="Nav_Search" xml:space="preserve">
-    <value>Szukaj</value>
+    <value>Search</value>
   </data>
   <data name="Nav_Account" xml:space="preserve">
-    <value>Konto</value>
+    <value>Account</value>
   </data>
   <data name="Nav_Cart" xml:space="preserve">
-    <value>Koszyk</value>
+    <value>Cart</value>
   </data>
   <data name="Nav_Blog" xml:space="preserve">
     <value>Blog</value>
   </data>
   <data name="Nav_Contact" xml:space="preserve">
-    <value>Kontakt</value>
+    <value>Contact</value>
   </data>
   <data name="Nav_FAQ" xml:space="preserve">
     <value>FAQ</value>
   </data>
   <data name="Nav_AboutUs" xml:space="preserve">
-    <value>O nas</value>
+    <value>About Us</value>
   </data>
   
   <!-- Homepage -->
   <data name="Home_Welcome" xml:space="preserve">
-    <value>Witamy</value>
+    <value>Welcome</value>
   </data>
   <data name="Home_FeaturedCategories" xml:space="preserve">
-    <value>Popularne Kategorie</value>
+    <value>Featured Categories</value>
   </data>
   <data name="Home_FeaturedProducts" xml:space="preserve">
-    <value>Polecane Produkty</value>
+    <value>Featured Products</value>
   </data>
   <data name="Home_ViewAll" xml:space="preserve">
-    <value>Zobacz wszystkie</value>
+    <value>View All</value>
   </data>
   <data name="Home_ShopNow" xml:space="preserve">
-    <value>Kup teraz</value>
+    <value>Shop Now</value>
   </data>
   
   <!-- Products -->
   <data name="Product_AddToCart" xml:space="preserve">
-    <value>Dodaj do koszyka</value>
+    <value>Add to Cart</value>
   </data>
   <data name="Product_OutOfStock" xml:space="preserve">
-    <value>Brak w magazynie</value>
+    <value>Out of Stock</value>
   </data>
   <data name="Product_SelectSize" xml:space="preserve">
-    <value>Wybierz rozmiar</value>
+    <value>Select Size</value>
   </data>
   <data name="Product_SelectColor" xml:space="preserve">
-    <value>Wybierz kolor</value>
+    <value>Select Color</value>
   </data>
   <data name="Product_Description" xml:space="preserve">
-    <value>Opis produktu</value>
+    <value>Description</value>
   </data>
   <data name="Product_Specifications" xml:space="preserve">
-    <value>Specyfikacja</value>
+    <value>Specifications</value>
   </data>
   <data name="Product_Reviews" xml:space="preserve">
-    <value>Opinie</value>
+    <value>Reviews</value>
   </data>
   <data name="Product_Price" xml:space="preserve">
-    <value>Cena</value>
+    <value>Price</value>
   </data>
   <data name="Product_Quantity" xml:space="preserve">
-    <value>Ilość</value>
+    <value>Quantity</value>
   </data>
   
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
-    <value>Męskie</value>
+    <value>Men</value>
   </data>
   <data name="Category_Women" xml:space="preserve">
-    <value>Damskie</value>
+    <value>Women</value>
   </data>
   <data name="Category_Shirts" xml:space="preserve">
-    <value>Koszule</value>
+    <value>Shirts</value>
   </data>
   <data name="Category_Pants" xml:space="preserve">
-    <value>Spodnie</value>
+    <value>Pants</value>
   </data>
   <data name="Category_Dresses" xml:space="preserve">
-    <value>Sukienki</value>
+    <value>Dresses</value>
   </data>
   <data name="Category_Outerwear" xml:space="preserve">
-    <value>Odzież wierzchnia</value>
+    <value>Outerwear</value>
   </data>
   <data name="Category_Accessories" xml:space="preserve">
-    <value>Akcesoria</value>
+    <value>Accessories</value>
   </data>
   
   <!-- Common -->
   <data name="Common_New" xml:space="preserve">
-    <value>Nowość</value>
+    <value>New</value>
   </data>
   <data name="Common_Sale" xml:space="preserve">
-    <value>Wyprzedaż</value>
+    <value>Sale</value>
   </data>
   <data name="Common_FreeShipping" xml:space="preserve">
-    <value>Darmowa dostawa przy zamówieniach powyżej 200 PLN</value>
+    <value>Free shipping over $50</value>
   </data>
   <data name="Common_Loading" xml:space="preserve">
-    <value>Ładowanie...</value>
+    <value>Loading...</value>
   </data>
   <data name="Common_Error" xml:space="preserve">
-    <value>Wystąpił błąd</value>
+    <value>An error occurred</value>
   </data>
   
   <!-- Product Card -->
   <data name="Product_New" xml:space="preserve">
-    <value>Nowość</value>
+    <value>New</value>
   </data>
   <data name="Product_Sale" xml:space="preserve">
-    <value>Wyprzedaż</value>
+    <value>Sale</value>
   </data>
   <data name="Product_Color" xml:space="preserve">
-    <value>Kolor</value>
+    <value>Color</value>
   </data>
   <data name="Product_Size" xml:space="preserve">
-    <value>Rozmiar</value>
+    <value>Size</value>
   </data>
   <data name="Product_InStock" xml:space="preserve">
-    <value>Dostępny</value>
+    <value>In Stock</value>
   </data>
   <data name="Product_Available" xml:space="preserve">
-    <value>szt.</value>
+    <value>available</value>
   </data>
   <data name="Product_SelectOptions" xml:space="preserve">
-    <value>Wybierz rozmiar i kolor, aby dodać do koszyka</value>
+    <value>Select size and color to add to cart</value>
   </data>
   <data name="Product_ViewDetails" xml:space="preserve">
-    <value>Zobacz szczegóły</value>
+    <value>View Details</value>
   </data>
   <data name="Auth_LoginToOrder" xml:space="preserve">
-    <value>Zaloguj się, aby kupić</value>
+    <value>Login to Order</value>
   </data>
   <data name="Common_Adding" xml:space="preserve">
-    <value>Dodawanie</value>
+    <value>Adding</value>
   </data>
   <data name="Common_Added" xml:space="preserve">
-    <value>Dodano</value>
+    <value>Added</value>
   </data>
   <data name="Error_AddToCart" xml:space="preserve">
-    <value>Nie udało się dodać produktu do koszyka</value>
+    <value>Failed to add product to cart</value>
   </data>
   <data name="Home_FeaturedProducts_Subtitle" xml:space="preserve">
-    <value>Odkryj nasze najlepsze produkty</value>
+    <value>Discover our best products</value>
   </data>
 </root>

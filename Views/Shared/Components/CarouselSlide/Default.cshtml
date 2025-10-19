@@ -1,0 +1,125 @@
+@model Kokomija.Models.ViewModels.CarouselSlideCollectionViewModel
+
+@if (Model.Slides.Any())
+{
+    <div class="kokomija-carousel swiper-container">
+        <div class="swiper-wrapper">
+            @foreach (var slide in Model.Slides)
+            {
+                <div class="swiper-slide" 
+                     style="@(!string.IsNullOrEmpty(slide.BackgroundColor) ? $"background-color: {slide.BackgroundColor};" : "")">
+                    
+                    @if (!slide.UseFallbackImage)
+                    {
+                        <!-- Image with responsive sources -->
+                        <picture class="carousel-image-wrapper">
+                            @if (!string.IsNullOrEmpty(slide.FullMobileImagePath))
+                            {
+                                <source media="(max-width: 768px)" srcset="@slide.FullMobileImagePath" />
+                            }
+                            <img 
+                                src="~/@slide.FullImagePath"
+                                class="carousel-image"
+                                alt="@slide.ImageAlt"
+                                loading="lazy"
+                                decoding="async" />
+                        </picture>
+                    }
+                    else
+                    {
+                        <!-- Fallback logo -->
+                        <div class="carousel-fallback-wrapper">
+                            <img 
+                                src="~/@Model.FallbackImagePath"
+                                class="carousel-fallback-logo"
+                                alt="Kokomija Logo"
+                                loading="lazy" />
+                        </div>
+                    }
+                    
+                    <!-- Slide overlay content -->
+                    <div class="carousel-overlay text-@slide.TextAlignment"
+                         style="@(!string.IsNullOrEmpty(slide.TextColor) ? $"color: {slide.TextColor};" : "")">
+                        <div class="carousel-content">
+                            <h2 class="carousel-title" data-swiper-parallax="-300">
+                                @slide.Title
+                            </h2>
+                            
+                            @if (!string.IsNullOrEmpty(slide.Subtitle))
+                            {
+                                <p class="carousel-subtitle" data-swiper-parallax="-200">
+                                    @slide.Subtitle
+                                </p>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(slide.LinkUrl) && !string.IsNullOrEmpty(slide.ButtonText))
+                            {
+                                <div class="carousel-button-wrapper" data-swiper-parallax="-100">
+                                    <a href="@slide.LinkUrl" 
+                                       class="btn @slide.ButtonClass carousel-button"
+                                       aria-label="@slide.ButtonText - @slide.Title">
+                                        @slide.ButtonText
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Navigation -->
+        <div class="swiper-pagination" role="group" aria-label="Slide pagination"></div>
+        <button class="swiper-button-prev" aria-label="Previous slide" type="button"></button>
+        <button class="swiper-button-next" aria-label="Next slide" type="button"></button>
+    </div>
+
+    @section Scripts {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof Swiper !== 'undefined') {
+                    const carousel = new Swiper('.kokomija-carousel', {
+                        loop: @(Model.Slides.Count > 1 ? "true" : "false"),
+                        autoplay: {
+                            delay: 5000,
+                            disableOnInteraction: false,
+                            pauseOnMouseEnter: true
+                        },
+                        speed: 800,
+                        effect: 'fade',
+                        fadeEffect: {
+                            crossFade: true
+                        },
+                        parallax: true,
+                        pagination: {
+                            el: '.swiper-pagination',
+                            clickable: true,
+                            dynamicBullets: true
+                        },
+                        navigation: {
+                            nextEl: '.swiper-button-next',
+                            prevEl: '.swiper-button-prev'
+                        },
+                        keyboard: {
+                            enabled: true,
+                            onlyInViewport: true
+                        },
+                        a11y: {
+                            enabled: true,
+                            prevSlideMessage: 'Previous slide',
+                            nextSlideMessage: 'Next slide',
+                            paginationBulletMessage: 'Go to slide {{index}}'
+                        },
+                        on: {
+                            init: function() {
+                                console.log('Kokomija carousel initialized with @Model.Slides.Count slides');
+                            }
+                        }
+                    });
+                } else {
+                    console.error('Swiper library not loaded. Please include Swiper CSS and JS.');
+                }
+            });
+        </script>
+    }
+}

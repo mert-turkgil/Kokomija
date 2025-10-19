@@ -61,8 +61,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Configure Localization
 var supportedCultures = builder.Configuration.GetSection("Localization:SupportedCultures").Get<string[]>() 
-    ?? new[] { "pl-PL", "en-US" };
-var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "pl-PL";
+    ?? new[] { "tr-TR", "en-US" };
+var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "tr-TR";
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -78,19 +78,8 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders.Insert(1, new Microsoft.AspNetCore.Localization.CookieRequestCultureProvider());
 });
 
-// Register Unit of Work
+// Register Unit of Work (provides all repositories)
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Register Repositories (for direct injection in views/controllers)
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IColorRepository, ColorRepository>();
-builder.Services.AddScoped<ISizeRepository, SizeRepository>();
-builder.Services.AddScoped<ICouponRepository, CouponRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ICarouselSlideRepository, CarouselSlideRepository>();
 
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];

@@ -79,6 +79,10 @@ namespace Kokomija.Data
             modelBuilder.SeedLanguages();
             modelBuilder.SeedBlogCategories();
             modelBuilder.SeedAdminSettings();
+            modelBuilder.SeedProducts();
+            modelBuilder.SeedProductImages();
+            modelBuilder.SeedProductVariants();
+            modelBuilder.SeedCarouselSlides();
         }
     }
 }

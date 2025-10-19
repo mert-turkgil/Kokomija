@@ -49,17 +49,16 @@ namespace Kokomija.Middleware
             // NOTE: Adjust based on your actual external resources (CDNs, Stripe, etc.)
             var cspPolicy = _configuration.GetValue<string>("Security:ContentSecurityPolicy") ??
                 "default-src 'self'; " +
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://api.stripe.com; " +
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
                 "img-src 'self' data: https: blob:; " +
-                "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                "connect-src 'self' https://api.stripe.com; " +
-                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com; " +
+                "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com https://fonts.googleapis.com; " +
+                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com wss://localhost:* ws://localhost:*; " +
+                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +
                 "form-action 'self'; " +
-                "frame-ancestors 'self'; " +
-                "upgrade-insecure-requests;";
+                "frame-ancestors 'self';";
 
             context.Response.Headers.Append("Content-Security-Policy", cspPolicy);
 

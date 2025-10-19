@@ -1,0 +1,913 @@
+@model Kokomija.Models.ViewModels.ProductCardViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Kokomija.Resources.SharedResources> Localizer
+
+<div class="product-card" data-product-id="@Model.Id">
+    <div class="product-card-inner">
+        <!-- Image Gallery with Swiper & Overlay Content -->
+        <div class="product-image-wrapper">
+            <a href="/products/@Model.Id" class="image-link">
+                @if (Model.Images.Any())
+                {
+                    <div class="swiper product-swiper-@Model.Id">
+                        <div class="swiper-wrapper">
+                            @foreach (var image in Model.Images)
+                            {
+                                <div class="swiper-slide">
+                                    <img src="/img/@image.ImageUrl" 
+                                         alt="@image.AltText" 
+                                         class="product-image"
+                                         onerror="this.onerror=null; this.src='/img/logo_black.png';">
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Images.Count > 1)
+                        {
+                            <div class="swiper-pagination"></div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <img src="/img/logo_black.png" alt="@Model.Name" class="product-image">
+                }
+            </a>
+            
+            <!-- Top Overlay: Badges & Quick Actions -->
+            <div class="top-overlay">
+                <div class="product-badges">
+                    @if (Model.IsNew)
+                    {
+                        <span class="badge badge-new">@Localizer["Product_New"]</span>
+                    }
+                    @if (Model.IsOnSale)
+                    {
+                        <span class="badge badge-sale">@Localizer["Product_Sale"]</span>
+                    }
+                </div>
+                <div class="quick-actions">
+                    <button type="button" class="quick-action-btn wishlist-btn" title="Add to Wishlist" aria-label="Add to Wishlist">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Overlay: Quick Add to Cart -->
+            <div class="bottom-overlay">
+                @if (User.Identity?.IsAuthenticated == true && Model.HasStock)
+                {
+                    <button type="button" class="btn btn-dark btn-sm w-100 quick-add-btn" data-product-id="@Model.Id">
+                        <i class="fas fa-shopping-cart me-2"></i>@Localizer["Product_AddToCart"]
+                    </button>
+                }
+                else if (!Model.HasStock)
+                {
+                    <button type="button" class="btn btn-secondary btn-sm w-100" disabled>
+                        @Localizer["Product_OutOfStock"]
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Compact Product Info -->
+        <div class="product-info">
+            <h3 class="product-title">
+                <a href="/products/@Model.Id" class="text-decoration-none">
+                    @Model.Name
+                </a>
+            </h3>
+
+            <!-- Price & Colors in One Line -->
+            <div class="price-colors-row">
+                <div class="product-price">
+                    @if (Model.DiscountedPrice.HasValue)
+                    {
+                        <span class="price-current fw-bold">
+                            @Model.DiscountedPrice.Value.ToString("C", new System.Globalization.CultureInfo("pl-PL"))
+                        </span>
+                        <span class="price-original">
+                            @Model.BasePrice.ToString("C", new System.Globalization.CultureInfo("pl-PL"))
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="price-current fw-bold">
+                            @Model.BasePrice.ToString("C", new System.Globalization.CultureInfo("pl-PL"))
+                        </span>
+                    }
+                </div>
+                
+                @if (Model.Colors.Any())
+                {
+                    <div class="color-preview">
+                        @foreach (var color in Model.Colors.Take(4))
+                        {
+                            <span class="color-dot" 
+                                  style="background-color: @color.HexCode;" 
+                                  title="@color.DisplayName"></span>
+                        }
+                        @if (Model.Colors.Count > 4)
+                        {
+                            <span class="color-more">+@(Model.Colors.Count - 4)</span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Sizes Compact -->
+            @if (Model.Sizes.Any())
+            {
+                <div class="sizes-compact">
+                    <span class="sizes-label">@Localizer["Product_Size"]:</span>
+                    @foreach (var size in Model.Sizes.Take(5))
+                    {
+                        <span class="size-tag">@size.Name</span>
+                    }
+                    @if (Model.Sizes.Count > 5)
+                    {
+                        <span class="size-more">+@(Model.Sizes.Count - 5)</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Expandable Options Modal (Appears on Quick Add Click) -->
+    <div class="options-modal" id="options-modal-@Model.Id">
+        <div class="options-modal-content">
+            <button type="button" class="close-modal" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <h5 class="modal-title">@Model.Name</h5>
+            
+            @if (Model.Colors.Any())
+            {
+                <div class="modal-section">
+                    <label class="modal-label">@Localizer["Product_Color"]:</label>
+                    <div class="color-options">
+                        @foreach (var color in Model.Colors)
+                        {
+                            <button type="button" 
+                                    class="color-option" 
+                                    data-color-id="@color.Id"
+                                    data-color-name="@color.DisplayName"
+                                    style="background-color: @color.HexCode;"
+                                    title="@color.DisplayName">
+                                <span class="color-checkmark">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.Sizes.Any())
+            {
+                <div class="modal-section">
+                    <label class="modal-label">@Localizer["Product_Size"]:</label>
+                    <div class="size-options">
+                        @foreach (var size in Model.Sizes)
+                        {
+                            <button type="button" 
+                                    class="size-option" 
+                                    data-size-id="@size.Id"
+                                    data-size-name="@size.Name">
+                                @size.Name
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <button type="button" class="btn btn-primary w-100 confirm-add-btn" disabled>
+                <i class="fas fa-shopping-cart me-2"></i>@Localizer["Product_AddToCart"]
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===== Product Card Container ===== */
+    .product-card {
+        height: 100%;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .product-card-inner {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.3s ease;
+        position: relative;
+    }
+
+    .product-card:hover .product-card-inner {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    /* ===== Image Wrapper with Overlays ===== */
+    .product-image-wrapper {
+        position: relative;
+        background: #f8f9fa;
+        overflow: hidden;
+        aspect-ratio: 3/4;
+        min-height: 350px;
+    }
+
+    .image-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .product-swiper-@Model.Id {
+        width: 100%;
+        height: 100%;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.08);
+    }
+
+    /* ===== Top Overlay (Badges & Quick Actions) ===== */
+    .top-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .top-overlay > * {
+        pointer-events: auto;
+    }
+
+    .product-badges {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .product-badges .badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .badge-new {
+        background: rgba(16, 185, 129, 0.95);
+        color: white;
+    }
+
+    .badge-sale {
+        background: rgba(239, 68, 68, 0.95);
+        color: white;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 8px;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+    }
+
+    .product-card:hover .quick-actions {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .quick-action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        backdrop-filter: blur(8px);
+    }
+
+    .quick-action-btn:hover {
+        background: white;
+        transform: scale(1.1);
+        color: #ef4444;
+    }
+
+    .quick-action-btn i {
+        font-size: 16px;
+    }
+
+    /* ===== Bottom Overlay (Quick Add) ===== */
+    .bottom-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 12px;
+        background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+        z-index: 10;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+    }
+
+    .product-card:hover .bottom-overlay {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .quick-add-btn {
+        backdrop-filter: blur(10px);
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+        padding: 10px;
+        transition: all 0.2s ease;
+    }
+
+    .quick-add-btn:hover {
+        background: #000 !important;
+        transform: scale(1.02);
+    }
+
+    /* ===== Compact Product Info ===== */
+    .product-info {
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .product-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 0;
+        line-height: 1.4;
+        min-height: 2.6rem;
+        max-height: 2.6rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .product-title a {
+        color: #1f2937;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .product-title a:hover {
+        color: #3b82f6;
+    }
+
+    /* ===== Price & Colors Row ===== */
+    .price-colors-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .product-price {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .price-current {
+        font-size: 1.15rem;
+        color: #1f2937;
+        font-weight: 700;
+    }
+
+    .price-original {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        text-decoration: line-through;
+    }
+
+    .color-preview {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .color-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .color-dot:hover {
+        transform: scale(1.2);
+        z-index: 2;
+    }
+
+    .color-more {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 500;
+        margin-left: 2px;
+    }
+
+    /* ===== Sizes Compact ===== */
+    .sizes-compact {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+    }
+
+    .sizes-label {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .size-tag {
+        padding: 2px 8px;
+        background: #f3f4f6;
+        border-radius: 4px;
+        color: #4b5563;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    .size-more {
+        color: #6b7280;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    /* ===== Options Modal (Slide-up) ===== */
+    .options-modal {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        z-index: 1050;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .options-modal.active {
+        transform: translateY(0);
+    }
+
+    .options-modal-content {
+        padding: 24px;
+        position: relative;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .close-modal:hover {
+        background: #e5e7eb;
+        transform: rotate(90deg);
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0 0 20px 0;
+        color: #1f2937;
+    }
+
+    .modal-section {
+        margin-bottom: 20px;
+    }
+
+    .modal-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 10px;
+    }
+
+    .color-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .color-option {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        padding: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .color-option:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .color-option.active {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .color-checkmark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 16px;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .color-option.active .color-checkmark {
+        opacity: 1;
+    }
+
+    .size-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .size-option {
+        min-width: 50px;
+        padding: 10px 16px;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #4b5563;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .size-option:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        transform: translateY(-2px);
+    }
+
+    .size-option.active {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+    }
+
+    .confirm-add-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ===== Swiper Customization ===== */
+    .swiper-pagination {
+        bottom: 60px !important;
+    }
+
+    .swiper-pagination-bullet {
+        background: white;
+        opacity: 0.6;
+        width: 8px;
+        height: 8px;
+        margin: 0 4px !important;
+    }
+
+    .swiper-pagination-bullet-active {
+        opacity: 1;
+        width: 24px;
+        border-radius: 4px;
+    }
+
+    /* ===== Modal Backdrop ===== */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* ===== Responsive ===== */
+    @@media (max-width: 768px) {
+        .product-image-wrapper {
+            aspect-ratio: 1/1;
+        }
+
+        .product-info {
+            padding: 12px;
+        }
+
+        .product-title {
+            font-size: 0.9rem;
+        }
+
+        .price-current {
+            font-size: 1rem;
+        }
+
+        .color-dot {
+            width: 16px;
+            height: 16px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productId = @Model.Id;
+        const card = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+        const modal = document.getElementById(`options-modal-${productId}`);
+        const quickAddBtn = card.querySelector('.quick-add-btn');
+        const closeModalBtn = modal?.querySelector('.close-modal');
+        const confirmBtn = modal?.querySelector('.confirm-add-btn');
+        
+        // Create backdrop
+        let backdrop = document.querySelector('.modal-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop';
+            document.body.appendChild(backdrop);
+        }
+
+        // Initialize Swiper for this product
+        const swiper = new Swiper('.product-swiper-@Model.Id', {
+            loop: @(Model.Images.Count > 1 ? "true" : "false"),
+            pagination: {
+                el: '.product-swiper-@Model.Id .swiper-pagination',
+                clickable: true,
+            },
+            autoplay: @(Model.Images.Count > 1 ? "{delay: 4000, disableOnInteraction: false}" : "false"),
+            effect: 'fade',
+            fadeEffect: {
+                crossFade: true
+            },
+            speed: 800,
+        });
+
+        // GSAP Animation on scroll
+        gsap.from(card, {
+            scrollTrigger: {
+                trigger: card,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse'
+            },
+            y: 40,
+            opacity: 0,
+            duration: 0.5,
+            ease: 'power2.out'
+        });
+
+        // Wishlist button
+        const wishlistBtn = card.querySelector('.wishlist-btn');
+        if (wishlistBtn) {
+            wishlistBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('far')) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    gsap.from(icon, {
+                        scale: 0,
+                        duration: 0.4,
+                        ease: 'back.out(4)'
+                    });
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                }
+            });
+        }
+
+        // Quick Add Modal Open
+        if (quickAddBtn && modal) {
+            quickAddBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                modal.classList.add('active');
+                backdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                gsap.from(modal, {
+                    y: 100,
+                    duration: 0.4,
+                    ease: 'power3.out'
+                });
+            });
+        }
+
+        // Close Modal
+        function closeModal() {
+            if (modal) {
+                modal.classList.remove('active');
+                backdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+        }
+
+        if (backdrop) {
+            backdrop.addEventListener('click', closeModal);
+        }
+
+        // Color & Size Selection in Modal
+        if (modal) {
+            const colorOptions = modal.querySelectorAll('.color-option');
+            const sizeOptions = modal.querySelectorAll('.size-option');
+
+            colorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    colorOptions.forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    gsap.from(this.querySelector('.color-checkmark'), {
+                        scale: 0,
+                        duration: 0.3,
+                        ease: 'back.out(3)'
+                    });
+                    
+                    checkSelectionComplete();
+                });
+            });
+
+            sizeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    sizeOptions.forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    gsap.from(this, {
+                        scale: 0.9,
+                        duration: 0.2
+                    });
+                    
+                    checkSelectionComplete();
+                });
+            });
+
+            function checkSelectionComplete() {
+                const hasColorSelected = modal.querySelector('.color-option.active');
+                const hasSizeSelected = modal.querySelector('.size-option.active');
+                
+                const needsColor = @(Model.Colors.Any() ? "true" : "false");
+                const needsSize = @(Model.Sizes.Any() ? "true" : "false");
+                
+                const colorReady = !needsColor || hasColorSelected;
+                const sizeReady = !needsSize || hasSizeSelected;
+                
+                if (confirmBtn) {
+                    confirmBtn.disabled = !(colorReady && sizeReady);
+                }
+            }
+
+            // Confirm Add to Cart
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', async function() {
+                    const colorId = modal.querySelector('.color-option.active')?.dataset.colorId;
+                    const sizeId = modal.querySelector('.size-option.active')?.dataset.sizeId;
+                    
+                    const cartData = {
+                        productId: productId,
+                        colorId: colorId ? parseInt(colorId) : null,
+                        sizeId: sizeId ? parseInt(sizeId) : null,
+                        quantity: 1
+                    };
+
+                    try {
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>@Localizer["Common_Adding"]...';
+                        this.disabled = true;
+
+                        const response = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(cartData)
+                        });
+
+                        if (response.ok) {
+                            this.innerHTML = '<i class="fas fa-check me-2"></i>@Localizer["Common_Added"]!';
+                            this.classList.remove('btn-primary');
+                            this.classList.add('btn-success');
+
+                            // Update cart count
+                            const cartCount = document.querySelector('.cart-count');
+                            if (cartCount) {
+                                const currentCount = parseInt(cartCount.textContent) || 0;
+                                cartCount.textContent = currentCount + 1;
+                                gsap.from(cartCount, {
+                                    scale: 1.5,
+                                    duration: 0.3
+                                });
+                            }
+
+                            // Close modal after delay
+                            setTimeout(() => {
+                                closeModal();
+                                this.innerHTML = originalText;
+                                this.classList.remove('btn-success');
+                                this.classList.add('btn-primary');
+                                this.disabled = false;
+                                
+                                // Reset selections
+                                colorOptions.forEach(o => o.classList.remove('active'));
+                                sizeOptions.forEach(o => o.classList.remove('active'));
+                            }, 1500);
+                        } else {
+                            throw new Error('Failed to add to cart');
+                        }
+                    } catch (error) {
+                        console.error('Error adding to cart:', error);
+                        alert('@Localizer["Error_AddToCart"]');
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                });
+            }
+        }
+
+        // Prevent modal close when clicking inside modal content
+        if (modal) {
+            modal.querySelector('.options-modal-content')?.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    });
+</script>

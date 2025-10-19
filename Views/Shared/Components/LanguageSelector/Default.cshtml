@@ -1,0 +1,49 @@
+@model List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+
+@{
+    var currentCulture = Model.FirstOrDefault(c => c.Selected);
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="dropdown language-selector">
+    <button class="btn btn-link dropdown-toggle text-decoration-none" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Select Language">
+        <i class="fas fa-globe me-1"></i>
+        <span class="d-none d-md-inline">@(currentCulture?.Text ?? "Language")</span>
+        <span class="d-inline d-md-none">@(currentCulture?.Value.Split('-')[0].ToUpper() ?? "EN")</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+        @foreach (var culture in Model)
+        {
+            <li>
+                <a class="dropdown-item @(culture.Selected ? "active" : "")" 
+                   href="@Url.Action("SetLanguage", "Home", new { culture = culture.Value, returnUrl = returnUrl })">
+                    <span class="flag-icon flag-icon-@GetFlagCode(culture.Value) me-2"></span>
+                    @culture.Text
+                    @if (culture.Selected)
+                    {
+                        <i class="fas fa-check ms-2 text-success"></i>
+                    }
+                </a>
+            </li>
+        }
+    </ul>
+</div>
+
+@functions {
+    private string GetFlagCode(string cultureCode)
+    {
+        // Map culture codes to flag icons (ISO 3166-1 alpha-2)
+        return cultureCode switch
+        {
+            "pl-PL" => "pl",
+            "en-US" => "us",
+            "en-GB" => "gb",
+            "tr-TR" => "tr",
+            "de-DE" => "de",
+            "fr-FR" => "fr",
+            "es-ES" => "es",
+            "it-IT" => "it",
+            _ => cultureCode.Split('-').LastOrDefault()?.ToLower() ?? "un"
+        };
+    }
+}
