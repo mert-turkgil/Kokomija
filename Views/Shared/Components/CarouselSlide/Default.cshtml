@@ -9,7 +9,7 @@
                 <div class="swiper-slide" 
                      style="@(!string.IsNullOrEmpty(slide.BackgroundColor) ? $"background-color: {slide.BackgroundColor};" : "")">
                     
-                    @if (!slide.UseFallbackImage)
+                    @if (!slide.UseFallbackImage && !string.IsNullOrEmpty(slide.FullImagePath))
                     {
                         <!-- Image with responsive sources -->
                         <picture class="carousel-image-wrapper">
@@ -22,15 +22,25 @@
                                 class="carousel-image"
                                 alt="@slide.ImageAlt"
                                 loading="lazy"
-                                decoding="async" />
+                                decoding="async"
+                                onerror="this.onerror=null; this.closest('.carousel-image-wrapper').style.display='none'; this.closest('.swiper-slide').querySelector('.carousel-fallback-wrapper').style.display='flex';" />
                         </picture>
+                        
+                        <!-- Hidden fallback, shown on error -->
+                        <div class="carousel-fallback-wrapper" style="display: none;">
+                            <img 
+                                src="~/img/logo_black.png"
+                                class="carousel-fallback-logo"
+                                alt="Kokomija Logo"
+                                loading="lazy" />
+                        </div>
                     }
                     else
                     {
                         <!-- Fallback logo -->
                         <div class="carousel-fallback-wrapper">
                             <img 
-                                src="~/@Model.FallbackImagePath"
+                                src="~/img/logo_black.png"
                                 class="carousel-fallback-logo"
                                 alt="Kokomija Logo"
                                 loading="lazy" />

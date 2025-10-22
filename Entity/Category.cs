@@ -31,6 +31,9 @@ namespace Kokomija.Entity
         [MaxLength(50)]
         public string? IconCssClass { get; set; }
 
+        [MaxLength(255)]
+        public string? ImageUrl { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

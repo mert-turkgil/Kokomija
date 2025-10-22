@@ -42,6 +42,8 @@ namespace Kokomija.Data
         public DbSet<EmailCommand> EmailCommands { get; set; }
         public DbSet<AdminEarnings> AdminEarnings { get; set; }
         public DbSet<CarouselSlide> CarouselSlides { get; set; }
+        public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<Cart> Carts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

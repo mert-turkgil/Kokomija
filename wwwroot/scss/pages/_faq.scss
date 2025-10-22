@@ -1,0 +1,346 @@
+// FAQ Page Styles
+.faq-page {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 0%, transparent 100%);
+    min-height: 100vh;
+
+    .faq-header {
+        h1 {
+            color: $primary;
+            font-weight: 700;
+        }
+
+        .lead {
+            font-size: 1.125rem;
+            color: $text-muted;
+        }
+    }
+
+    // Search Bar
+    .faq-search {
+        .input-group {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: $border-radius-lg;
+            overflow: hidden;
+
+            .input-group-text {
+                border: 1px solid $input-border-color;
+                padding: 0.75rem 1rem;
+
+                i {
+                    color: $text-muted;
+                    font-size: 1.25rem;
+                }
+            }
+
+            .form-control {
+                border: 1px solid $input-border-color;
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+
+                &:focus {
+                    box-shadow: none;
+                    border-color: $primary;
+                }
+            }
+        }
+    }
+
+    // Category Pills
+    .faq-categories {
+        .category-pill {
+            border-radius: 50px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid $primary;
+            color: $primary;
+            background: white;
+
+            i {
+                font-size: 1rem;
+            }
+
+            &:hover {
+                background: rgba($primary, 0.1);
+                transform: translateY(-2px);
+                box-shadow: 0 2px 8px rgba($primary, 0.2);
+            }
+
+            &.active {
+                background: $primary;
+                color: white;
+                box-shadow: 0 4px 12px rgba($primary, 0.3);
+
+                &:hover {
+                    background: darken($primary, 5%);
+                }
+            }
+        }
+    }
+
+    // FAQ Content
+    .faq-content {
+        .faq-item {
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+
+            .accordion-item {
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                border-radius: $border-radius;
+                overflow: hidden;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                    transform: translateY(-2px);
+                }
+
+                .accordion-header {
+                    .accordion-button {
+                        font-size: 1.125rem;
+                        font-weight: 600;
+                        color: $dark;
+                        padding: 1.25rem 1.5rem;
+                        background-color: white;
+                        border: none;
+                        transition: all 0.3s ease;
+
+                        &:not(.collapsed) {
+                            color: $primary;
+                            background-color: rgba($primary, 0.05);
+                            box-shadow: none;
+
+                            &::after {
+                                transform: rotate(-180deg);
+                                color: $primary;
+                            }
+                        }
+
+                        &:focus {
+                            box-shadow: none;
+                            border-color: transparent;
+                        }
+
+                        &::after {
+                            transition: transform 0.3s ease;
+                            flex-shrink: 0;
+                            width: 1.25rem;
+                            height: 1.25rem;
+                            margin-left: auto;
+                        }
+
+                        &:hover {
+                            background-color: rgba($primary, 0.05);
+                        }
+                    }
+                }
+
+                .accordion-body {
+                    padding: 1.5rem;
+                    font-size: 1rem;
+                    line-height: 1.7;
+                    color: $text-muted;
+                    background-color: white;
+
+                    a {
+                        color: $primary;
+                        text-decoration: none;
+                        font-weight: 500;
+
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // No Results
+    #noResults {
+        i {
+            opacity: 0.3;
+        }
+
+        h3 {
+            font-weight: 600;
+        }
+    }
+
+    // Help Section
+    .faq-help-section {
+        background: linear-gradient(135deg, rgba($primary, 0.05) 0%, rgba($primary, 0.02) 100%);
+        border-radius: $border-radius-lg;
+        padding: 3rem 2rem;
+        margin: 0 -15px;
+
+        h3 {
+            font-weight: 700;
+            color: $dark;
+        }
+
+        .btn-primary {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba($primary, 0.3);
+            }
+        }
+    }
+}
+
+// Dark Mode Support
+@media (prefers-color-scheme: dark) {
+    .faq-page {
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+
+        .faq-header {
+            h1 {
+                color: lighten($primary, 10%);
+            }
+        }
+
+        .faq-search {
+            .input-group {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+                .input-group-text {
+                    background-color: $dark;
+                    border-color: rgba(255, 255, 255, 0.1);
+
+                    i {
+                        color: rgba(255, 255, 255, 0.7);
+                    }
+                }
+
+                .form-control {
+                    background-color: $dark;
+                    border-color: rgba(255, 255, 255, 0.1);
+                    color: white;
+
+                    &::placeholder {
+                        color: rgba(255, 255, 255, 0.5);
+                    }
+                }
+            }
+        }
+
+        .category-pill {
+            background-color: $dark;
+            border-color: lighten($primary, 10%);
+            color: lighten($primary, 10%);
+
+            &:hover {
+                background-color: rgba(lighten($primary, 10%), 0.1);
+            }
+
+            &.active {
+                background-color: lighten($primary, 10%);
+                color: $dark;
+            }
+        }
+
+        .faq-item {
+            .accordion-item {
+                background-color: $dark;
+                border-color: rgba(255, 255, 255, 0.1);
+
+                .accordion-button {
+                    background-color: $dark;
+                    color: white;
+
+                    &:not(.collapsed) {
+                        background-color: rgba(lighten($primary, 10%), 0.1);
+                        color: lighten($primary, 10%);
+                    }
+
+                    &:hover {
+                        background-color: rgba(lighten($primary, 10%), 0.05);
+                    }
+                }
+
+                .accordion-body {
+                    background-color: $dark;
+                    color: rgba(255, 255, 255, 0.8);
+                }
+            }
+        }
+
+        .faq-help-section {
+            background: linear-gradient(135deg, rgba(lighten($primary, 10%), 0.1) 0%, rgba(lighten($primary, 10%), 0.05) 100%);
+
+            h3 {
+                color: white;
+            }
+        }
+    }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+    .faq-page {
+        .faq-header {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .lead {
+                font-size: 1rem;
+            }
+        }
+
+        .faq-search {
+            .input-group {
+                .form-control {
+                    font-size: 0.9rem;
+                }
+            }
+        }
+
+        .faq-categories {
+            .category-pill {
+                padding: 0.4rem 1rem;
+                font-size: 0.875rem;
+
+                i {
+                    font-size: 0.875rem;
+                }
+            }
+        }
+
+        .faq-item {
+            .accordion-item {
+                .accordion-header {
+                    .accordion-button {
+                        font-size: 1rem;
+                        padding: 1rem;
+                    }
+                }
+
+                .accordion-body {
+                    padding: 1rem;
+                    font-size: 0.9rem;
+                }
+            }
+        }
+
+        .faq-help-section {
+            padding: 2rem 1rem;
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .faq-page {
+        .faq-categories {
+            .category-pill {
+                flex: 1 1 calc(50% - 0.5rem);
+                min-width: calc(50% - 0.5rem);
+            }
+        }
+    }
+}

@@ -38,6 +38,12 @@ namespace Kokomija.Data.Concrete
             
             // Initialize carousel repository
             CarouselSlides = new CarouselSlideRepository(_context);
+            
+            // Initialize wishlist repository
+            Wishlists = new WishlistRepository(_context);
+            
+            // Initialize cart repository
+            Carts = new CartRepository(_context);
         }
 
         public IProductRepository Products { get; private set; }
@@ -54,6 +60,8 @@ namespace Kokomija.Data.Concrete
         public IRepository<EmailCommand> EmailCommands { get; private set; }
         public IRepository<AdminEarnings> AdminEarnings { get; private set; }
         public ICarouselSlideRepository CarouselSlides { get; private set; }
+        public IWishlistRepository Wishlists { get; private set; }
+        public ICartRepository Carts { get; private set; }
 
         public IRepository<T> Repository<T>() where T : class
         {

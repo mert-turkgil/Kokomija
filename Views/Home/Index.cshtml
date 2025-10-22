@@ -29,17 +29,32 @@
 <!-- Categories -->
 @if (Model.FeaturedCategories.Any())
 {
-    <section class="py-5">
+    <section class="py-5 categories-section">
         <div class="container">
             <h2 class="text-center mb-5">@Localizer["Home_FeaturedCategories"]</h2>
             <div class="row g-4">
-                @foreach (var category in Model.FeaturedCategories)
+                @for (int i = 0; i < Model.FeaturedCategories.Count; i++)
                 {
+                    var category = Model.FeaturedCategories.ElementAt(i);
+                    var gradientClass = $"category-gradient-{(i % 3) + 1}";
+                    
                     <div class="col-md-4">
                         <a href="/products?category=@category.Slug" class="text-decoration-none">
-                            <div class="card h-100 shadow-sm">
+                            <div class="card category-card h-100 shadow-sm overflow-hidden @gradientClass">
+                                @if (!string.IsNullOrEmpty(category.ImageUrl))
+                                {
+                                    <div class="category-image-container">
+                                        <img src="/img/@category.ImageUrl" class="card-img-top category-image" alt="@category.Name" onerror="this.style.display='none'; this.parentElement.classList.add('no-image');">
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="category-image-container no-image">
+                                        <img src="/img/logo_black.png" class="category-logo" alt="Kokomija">
+                                    </div>
+                                }
                                 <div class="card-body text-center p-4">
-                                    <h3 class="h5 text-dark">@category.Name</h3>
+                                    <h3 class="h5 category-title">@category.Name</h3>
                                 </div>
                             </div>
                         </a>
@@ -53,11 +68,11 @@
 <!-- Products -->
 @if (Model.FeaturedProducts.Any())
 {
-    <section class="py-5 bg-light">
+    <section class="py-5 products-section">
         <div class="container">
             <div class="text-center mb-5">
                 <h2 class="display-5 fw-bold">@Localizer["Home_FeaturedProducts"]</h2>
-                <p class="text-muted">@Localizer["Home_FeaturedProducts_Subtitle"]</p>
+                <p class="text-muted products-subtitle">@Localizer["Home_FeaturedProducts_Subtitle"]</p>
             </div>
             <div class="row g-4">
                 @foreach (var product in Model.FeaturedProducts)

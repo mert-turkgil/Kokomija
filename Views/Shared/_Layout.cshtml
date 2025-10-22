@@ -15,6 +15,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
     <!-- Stylesheets -->
     <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
@@ -27,6 +30,11 @@
 </head>
 <body>
     <a href="#main-content" class="skip-to-content">Skip to content</a>
+    
+    <script>
+        // Set authentication status for cart manager
+        document.body.dataset.authenticated = '@(User.Identity?.IsAuthenticated == true ? "true" : "false")';
+    </script>
     
     <!-- Top Bar -->
     <div class="top-bar d-none d-lg-block">
@@ -58,17 +66,17 @@
                     
                     <span class="top-bar-separator">|</span>
                     
-                    <a href="/blog" class="top-bar-link">
-                        <i class="fas fa-blog me-1"></i> Blog
+                    <a asp-controller="Home" asp-action="Index" class="top-bar-link">
+                        <i class="fas fa-home me-1"></i> Home
                     </a>
-                    <a asp-controller="Home" asp-action="Contact" class="top-bar-link">
-                        <i class="fas fa-envelope me-1"></i> Contact
+                    <a asp-controller="Product" asp-action="Index" class="top-bar-link">
+                        <i class="fas fa-shopping-bag me-1"></i> Shop
                     </a>
-                    <a href="/faq" class="top-bar-link">
+                    <a asp-controller="Home" asp-action="FAQ" class="top-bar-link">
                         <i class="fas fa-question-circle me-1"></i> FAQ
                     </a>
-                    <a asp-controller="Home" asp-action="About" class="top-bar-link">
-                        <i class="fas fa-info-circle me-1"></i> About Us
+                    <a asp-controller="Home" asp-action="Privacy" class="top-bar-link">
+                        <i class="fas fa-info-circle me-1"></i> Info
                     </a>
                 </div>
                 
@@ -97,8 +105,8 @@
             <div class="container">
                 @{
                     var categories = await UnitOfWork.Categories.GetNavbarCategoriesAsync();
-                    var womenCategory = categories.FirstOrDefault(c => c.Slug == "women" && c.ParentCategoryId == null && c.IsActive);
-                    var menCategory = categories.FirstOrDefault(c => c.Slug == "men" && c.ParentCategoryId == null && c.IsActive);
+                    var womenCategory = categories.FirstOrDefault(c => (c.Slug == "women" || c.Slug == "damskie") && c.ParentCategoryId == null && c.IsActive);
+                    var menCategory = categories.FirstOrDefault(c => (c.Slug == "men" || c.Slug == "meskie") && c.ParentCategoryId == null && c.IsActive);
                     var womenSubCategories = womenCategory != null ? categories.Where(c => c.ParentCategoryId == womenCategory.Id && c.IsActive) : Enumerable.Empty<Kokomija.Entity.Category>();
                     var menSubCategories = menCategory != null ? categories.Where(c => c.ParentCategoryId == menCategory.Id && c.IsActive) : Enumerable.Empty<Kokomija.Entity.Category>();
                 }
@@ -111,9 +119,9 @@
                     <!-- Center: Men, Logo, Women -->
                     <div class="navbar-center d-flex align-items-center">
                         <!-- Men with Dropdown -->
-                        <div class="nav-item dropdown">
+                        <div class="nav-item dropdown dropdown-hover">
                             <a class="nav-link dropdown-toggle fw-bold fs-5" href="#" id="menDropdown" role="button" 
-                               data-bs-toggle="dropdown" aria-expanded="false">
+                               aria-expanded="false">
                                 <i class="fa-solid fa-person"></i> MEN
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="menDropdown">
@@ -154,9 +162,9 @@
                         </a>
                         
                         <!-- Women with Dropdown -->
-                        <div class="nav-item dropdown">
+                        <div class="nav-item dropdown dropdown-hover">
                             <a class="nav-link dropdown-toggle fw-bold fs-5" href="#" id="womenDropdown" role="button" 
-                               data-bs-toggle="dropdown" aria-expanded="false">
+                               aria-expanded="false">
                                 <i class="fa-solid fa-person-dress"></i> WOMEN
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="womenDropdown">
@@ -225,10 +233,26 @@
                         </div>
                         
                         <!-- Shopping Cart -->
-                        <a href="/cart" class="nav-icon position-relative" aria-label="Shopping Cart">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span class="badge bg-danger cart-badge" style="display: none;">0</span>
-                        </a>
+                        <div class="dropdown dropdown-hover cart-dropdown">
+                            <a href="/cart" class="nav-icon position-relative" aria-label="Shopping Cart">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="badge bg-danger cart-badge" style="display: none;">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end cart-preview-dropdown">
+                                <div class="cart-preview-header">
+                                    <h6 class="mb-0">Shopping Cart</h6>
+                                </div>
+                                <div class="cart-preview-items" id="cartPreviewItems">
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="fas fa-shopping-cart mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
+                                        <p class="mb-0">Your cart is empty</p>
+                                    </div>
+                                </div>
+                                <div class="cart-preview-footer">
+                                    <a href="/cart" class="btn btn-primary w-100">View Cart</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -394,10 +418,10 @@
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-title">Quick Links</h5>
                     <ul class="footer-links">
-                        <li><a asp-controller="Home" asp-action="About">About Us</a></li>
-                        <li><a href="/blog">Blog</a></li>
-                        <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
-                        <li><a href="/faq">FAQ</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li><a asp-controller="Product" asp-action="Index">Shop</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">FAQ</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">Privacy</a></li>
                     </ul>
                 </div>
                 
@@ -405,10 +429,10 @@
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-title">Shop</h5>
                     <ul class="footer-links">
-                        <li><a href="/products/woman">Women</a></li>
-                        <li><a href="/products/man">Men</a></li>
-                        <li><a href="/products/sale">Sale</a></li>
-                        <li><a href="/products/new">New Arrivals</a></li>
+                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="damskie">Women</a></li>
+                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="meskie">Men</a></li>
+                        <li><a asp-controller="Product" asp-action="Index">All Products</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">New Arrivals</a></li>
                     </ul>
                 </div>
                 
@@ -416,9 +440,10 @@
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-title">Customer Service</h5>
                     <ul class="footer-links">
-                        <li><a href="/shipping">Shipping Info</a></li>
-                        <li><a href="/returns">Returns</a></li>
-                        <li><a href="/size-guide">Size Guide</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">FAQ</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">Shipping Info</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">Returns</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">Size Guide</a></li>
                         <li><a asp-controller="Home" asp-action="Privacy">Privacy Policy</a></li>
                     </ul>
                 </div>
@@ -438,8 +463,9 @@
             <div class="footer-bottom">
                 <p class="mb-0">
                     &copy; @DateTime.Now.Year Kokomija. All rights reserved. | 
+                    <a asp-controller="Home" asp-action="FAQ">FAQ</a> |
                     <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a> | 
-                    <a href="/terms">Terms & Conditions</a>
+                    <a asp-controller="Home" asp-action="Privacy">Terms & Conditions</a>
                 </p>
             </div>
         </div>
@@ -468,6 +494,22 @@
     </script>
     <script src="~/js/theme.js" asp-append-version="true"></script>
     <script src="~/js/main.js" asp-append-version="true"></script>
+    <script src="~/js/cart.js" asp-append-version="true"></script>
+    <script>
+        // Auto-merge guest cart on login
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <text>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Check if there's a guest cart to merge
+                const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                if (guestCart.length > 0 && window.cartManager) {
+                    window.cartManager.mergeGuestCartOnLogin();
+                }
+            });
+            </text>
+        }
+    </script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
     @await RenderSectionAsync("Scripts", required: false)

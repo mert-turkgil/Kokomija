@@ -1,0 +1,500 @@
+@using Kokomija.Models.ViewModels
+@model FAQViewModel
+
+@{
+    ViewData["Title"] = Model.MetaTitle;
+}
+
+@section Meta {
+    <meta name="description" content="@Model.MetaDescription">
+    <meta name="keywords" content="@Model.MetaKeywords">
+    <link rel="canonical" href="@Model.CanonicalUrl">
+}
+
+<div class="faq-page">
+    <div class="container py-5">
+        <!-- Page Header -->
+        <div class="faq-header text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">Frequently Asked Questions</h1>
+            <p class="lead text-muted">Find answers to common questions about our products and services</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="faq-search mb-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control border-start-0 ps-0" 
+                               id="faqSearchInput" 
+                               placeholder="Search for answers...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="faq-categories mb-4">
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button class="btn btn-outline-primary category-pill active" data-category="all">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>All
+                </button>
+                <button class="btn btn-outline-primary category-pill" data-category="general">
+                    <i class="bi bi-info-circle me-2"></i>General
+                </button>
+                <button class="btn btn-outline-primary category-pill" data-category="ordering">
+                    <i class="bi bi-cart-check me-2"></i>Ordering
+                </button>
+                <button class="btn btn-outline-primary category-pill" data-category="shipping">
+                    <i class="bi bi-truck me-2"></i>Shipping
+                </button>
+                <button class="btn btn-outline-primary category-pill" data-category="returns">
+                    <i class="bi bi-arrow-return-left me-2"></i>Returns
+                </button>
+                <button class="btn btn-outline-primary category-pill" data-category="payment">
+                    <i class="bi bi-credit-card me-2"></i>Payment
+                </button>
+                <button class="btn btn-outline-primary category-pill" data-category="account">
+                    <i class="bi bi-person-circle me-2"></i>Account
+                </button>
+            </div>
+        </div>
+
+        <!-- FAQ Accordion -->
+        <div class="faq-content">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="accordion" id="faqAccordion">
+                        
+                        <!-- General Questions -->
+                        <div class="faq-item" data-category="general">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        What is Kokomija?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Kokomija is a premium online fashion retailer offering high-quality clothing and textiles for both men and women. We curate the latest trends and timeless classics to help you express your unique style.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="general">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        Where are you located?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        We are based in Poland and ship to customers across Europe. Our warehouse is located in Warsaw, ensuring fast and reliable delivery to your doorstep.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ordering Questions -->
+                        <div class="faq-item" data-category="ordering">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        How do I place an order?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Simply browse our products, select your desired size and color, and add items to your cart. When ready, proceed to checkout, enter your shipping information, and complete payment. You'll receive an order confirmation email immediately.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="ordering">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                        Can I modify or cancel my order?
+                                    </button>
+                                </h2>
+                                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        You can modify or cancel your order within 2 hours of placing it. After this time, orders are processed and shipped. Please contact our customer service immediately if you need to make changes.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="ordering">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                        Do you offer gift wrapping?
+                                    </button>
+                                </h2>
+                                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes! We offer complimentary gift wrapping on all orders. Simply select the gift wrapping option during checkout and add a personalized message for the recipient.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping Questions -->
+                        <div class="faq-item" data-category="shipping">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                        What are the shipping costs?
+                                    </button>
+                                </h2>
+                                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Standard shipping is 15 PLN for orders under 200 PLN. We offer FREE shipping on all orders over 200 PLN. Express shipping (1-2 business days) is available for 25 PLN.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="shipping">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                        How long does delivery take?
+                                    </button>
+                                </h2>
+                                <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Standard delivery takes 3-5 business days within Poland. For international orders, delivery typically takes 5-10 business days depending on your location. You'll receive tracking information once your order ships.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="shipping">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                                        Do you ship internationally?
+                                    </button>
+                                </h2>
+                                <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes, we ship to most European countries. International shipping costs vary by destination. Additional customs fees may apply for non-EU countries and are the responsibility of the customer.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="shipping">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq9">
+                                        Can I track my order?
+                                    </button>
+                                </h2>
+                                <div id="faq9" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Absolutely! Once your order ships, you'll receive an email with tracking information. You can also track your order status by logging into your account and viewing your order history.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Returns Questions -->
+                        <div class="faq-item" data-category="returns">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq10">
+                                        What is your return policy?
+                                    </button>
+                                </h2>
+                                <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        We offer a 30-day return policy from the date of delivery. Items must be unworn, unwashed, with original tags attached. Returns are free for Polish customers. International return shipping costs are the customer's responsibility.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="returns">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq11">
+                                        How do I initiate a return?
+                                    </button>
+                                </h2>
+                                <div id="faq11" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Log into your account, go to "My Orders," select the order you want to return, and click "Request Return." Choose the items and reason, and we'll provide you with a return label and instructions.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="returns">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq12">
+                                        When will I receive my refund?
+                                    </button>
+                                </h2>
+                                <div id="faq12" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Refunds are processed within 5-7 business days after we receive and inspect your returned items. The refund will be credited to your original payment method. Bank processing times may vary.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="returns">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq13">
+                                        Can I exchange an item?
+                                    </button>
+                                </h2>
+                                <div id="faq13" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes! We offer free exchanges for different sizes or colors. Simply indicate "Exchange" when initiating your return, and specify your preferred replacement. We'll ship it as soon as we receive your original item.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Questions -->
+                        <div class="faq-item" data-category="payment">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq14">
+                                        What payment methods do you accept?
+                                    </button>
+                                </h2>
+                                <div id="faq14" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        We accept all major credit and debit cards (Visa, Mastercard, American Express), PayPal, and bank transfers. All payments are processed securely through Stripe payment gateway.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="payment">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq15">
+                                        Is my payment information secure?
+                                    </button>
+                                </h2>
+                                <div id="faq15" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Absolutely. We use SSL encryption and PCI-DSS compliant payment processing. Your payment information is never stored on our servers – all transactions are handled securely by Stripe.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="payment">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq16">
+                                        Do you offer payment plans?
+                                    </button>
+                                </h2>
+                                <div id="faq16" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Currently, we only accept full payment at checkout. However, we're exploring installment payment options for the future. Stay tuned for updates!
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="payment">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq17">
+                                        Can I use discount codes?
+                                    </button>
+                                </h2>
+                                <div id="faq17" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Yes! Enter your discount code at checkout to apply it to your order. Codes cannot be combined with other promotions. Sign up for our newsletter to receive exclusive discount codes and early access to sales.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Questions -->
+                        <div class="faq-item" data-category="account">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq18">
+                                        Do I need an account to place an order?
+                                    </button>
+                                </h2>
+                                <div id="faq18" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        No, you can checkout as a guest. However, creating an account allows you to track orders, save multiple addresses, view order history, and receive exclusive member benefits and discounts.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="account">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq19">
+                                        How do I reset my password?
+                                    </button>
+                                </h2>
+                                <div id="faq19" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Click "Login" at the top of the page, then select "Forgot Password?" Enter your email address, and we'll send you a link to reset your password. The link is valid for 24 hours.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="account">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq20">
+                                        How do I update my account information?
+                                    </button>
+                                </h2>
+                                <div id="faq20" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Log into your account and go to "Account Settings." From there, you can update your email, password, shipping addresses, and communication preferences. Changes are saved automatically.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="general">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq21">
+                                        How can I contact customer service?
+                                    </button>
+                                </h2>
+                                <div id="faq21" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        You can reach us via email at <a href="mailto:support@kokomija.com">support@kokomija.com</a>, or use the contact form on our website. We respond to all inquiries within 24 hours during business days.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="faq-item" data-category="general">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq22">
+                                        How do I find the right size?
+                                    </button>
+                                </h2>
+                                <div id="faq22" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Each product page includes a detailed size guide with measurements. We recommend measuring yourself and comparing to our size charts. If you're between sizes, we suggest ordering the larger size for comfort.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- No Results Message -->
+                    <div id="noResults" class="text-center py-5" style="display: none;">
+                        <i class="bi bi-search display-1 text-muted mb-3"></i>
+                        <h3 class="text-muted">No results found</h3>
+                        <p class="text-muted">Try different keywords or browse all categories</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Still Need Help Section -->
+        <div class="faq-help-section mt-5 pt-5 border-top">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h3 class="mb-3">Still need help?</h3>
+                    <p class="text-muted mb-4">
+                        Can't find the answer you're looking for? Our customer support team is here to help.
+                    </p>
+                    <a href="mailto:support@kokomija.com" class="btn btn-primary btn-lg">
+                        <i class="bi bi-envelope me-2"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('faqSearchInput');
+            const categoryPills = document.querySelectorAll('.category-pill');
+            const faqItems = document.querySelectorAll('.faq-item');
+            const noResults = document.getElementById('noResults');
+            let activeCategory = 'all';
+
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                filterFAQs();
+            });
+
+            // Category filter
+            categoryPills.forEach(pill => {
+                pill.addEventListener('click', function() {
+                    categoryPills.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    activeCategory = this.dataset.category;
+                    filterFAQs();
+                });
+            });
+
+            function filterFAQs() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let visibleCount = 0;
+
+                faqItems.forEach(item => {
+                    const category = item.dataset.category;
+                    const text = item.textContent.toLowerCase();
+                    const matchesSearch = text.includes(searchTerm);
+                    const matchesCategory = activeCategory === 'all' || category === activeCategory;
+
+                    if (matchesSearch && matchesCategory) {
+                        item.style.display = '';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                // Show/hide no results message
+                if (visibleCount === 0) {
+                    noResults.style.display = 'block';
+                } else {
+                    noResults.style.display = 'none';
+                }
+            }
+
+            // Smooth scroll to opened accordion
+            const accordionButtons = document.querySelectorAll('.accordion-button');
+            accordionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    setTimeout(() => {
+                        if (!this.classList.contains('collapsed')) {
+                            this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }, 350);
+                });
+            });
+        });
+    </script>
+}

@@ -84,6 +84,19 @@ public class HomeController : Controller
         return View();
     }
 
+    public IActionResult FAQ()
+    {
+        var model = new FAQViewModel
+        {
+            MetaTitle = "FAQ - Frequently Asked Questions | Kokomija",
+            MetaDescription = "Find answers to common questions about ordering, shipping, returns, payments, and more.",
+            MetaKeywords = "FAQ, help, support, questions, shipping, returns, payment methods",
+            CanonicalUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}"
+        };
+
+        return View(model);
+    }
+
     [HttpGet]
     public IActionResult SetLanguage(string culture, string returnUrl)
     {

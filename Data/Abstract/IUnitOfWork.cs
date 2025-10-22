@@ -18,6 +18,8 @@ namespace Kokomija.Data.Abstract
         IRepository<EmailCommand> EmailCommands { get; }
         IRepository<AdminEarnings> AdminEarnings { get; }
         ICarouselSlideRepository CarouselSlides { get; }
+        IWishlistRepository Wishlists { get; }
+        ICartRepository Carts { get; }
         IRepository<T> Repository<T>() where T : class;
         
         Task<int> SaveChangesAsync();
