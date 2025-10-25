@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" use="preserve" msdata:Ordinal="5" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Cookie Consent Polish Translations -->
+  <data name="CookieConsent.Title" xml:space="preserve">
+    <value>Używamy plików cookie</value>
+    <comment>Cookie consent banner title</comment>
+  </data>
+  <data name="CookieConsent.Message" xml:space="preserve">
+    <value>Ta strona używa plików cookie, aby zapewnić najlepsze doświadczenia zakupowe. Klikając "Akceptuj wszystko", zgadzasz się na zapisanie WSZYSTKICH plików cookie.</value>
+    <comment>Cookie consent banner message</comment>
+  </data>
+  <data name="CookieConsent.AcceptAll" xml:space="preserve">
+    <value>Akceptuj wszystko</value>
+    <comment>Accept all cookies button</comment>
+  </data>
+  <data name="CookieConsent.AcceptNecessary" xml:space="preserve">
+    <value>Tylko niezbędne</value>
+    <comment>Accept only necessary cookies button</comment>
+  </data>
+  <data name="CookieConsent.Settings" xml:space="preserve">
+    <value>Ustawienia cookie</value>
+    <comment>Cookie settings button</comment>
+  </data>
+  <data name="CookieConsent.LearnMore" xml:space="preserve">
+    <value>Dowiedz się więcej</value>
+    <comment>Learn more link</comment>
+  </data>
+  
+  <!-- Cookie Categories -->
+  <data name="CookieCategory.Essential" xml:space="preserve">
+    <value>Niezbędne pliki cookie</value>
+    <comment>Essential cookies category</comment>
+  </data>
+  <data name="CookieCategory.EssentialDesc" xml:space="preserve">
+    <value>Te pliki cookie są niezbędne do działania strony i nie można ich wyłączyć. Obejmują uwierzytelnianie, koszyk zakupów i ustawienia prywatności.</value>
+    <comment>Essential cookies description</comment>
+  </data>
+  <data name="CookieCategory.Analytics" xml:space="preserve">
+    <value>Pliki cookie analityczne</value>
+    <comment>Analytics cookies category</comment>
+  </data>
+  <data name="CookieCategory.AnalyticsDesc" xml:space="preserve">
+    <value>Pomagają nam zrozumieć, jak odwiedzający korzystają z naszej strony, zbierając informacje anonimowo.</value>
+    <comment>Analytics cookies description</comment>
+  </data>
+  <data name="CookieCategory.Marketing" xml:space="preserve">
+    <value>Pliki cookie marketingowe</value>
+    <comment>Marketing cookies category</comment>
+  </data>
+  <data name="CookieCategory.MarketingDesc" xml:space="preserve">
+    <value>Służą do śledzenia odwiedzających na różnych stronach w celu wyświetlania odpowiednich reklam.</value>
+    <comment>Marketing cookies description</comment>
+  </data>
+  <data name="CookieCategory.Preferences" xml:space="preserve">
+    <value>Pliki cookie preferencji</value>
+    <comment>Preferences cookies category</comment>
+  </data>
+  <data name="CookieCategory.PreferencesDesc" xml:space="preserve">
+    <value>Umożliwiają stronie zapamiętanie wyborów użytkownika, takich jak język lub region.</value>
+    <comment>Preferences cookies description</comment>
+  </data>
+  
+  <!-- Common UI Elements (Examples - not filled yet) -->
+  <data name="Common.Home" xml:space="preserve">
+    <value>Strona główna</value>
+  </data>
+  <data name="Common.Products" xml:space="preserve">
+    <value>Produkty</value>
+  </data>
+  <data name="Common.Cart" xml:space="preserve">
+    <value>Koszyk</value>
+  </data>
+  <data name="Common.Checkout" xml:space="preserve">
+    <value>Kasa</value>
+  </data>
+  <data name="Common.Login" xml:space="preserve">
+    <value>Zaloguj się</value>
+  </data>
+  <data name="Common.Register" xml:space="preserve">
+    <value>Zarejestruj się</value>
+  </data>
+  <data name="Common.MyAccount" xml:space="preserve">
+    <value>Moje konto</value>
+  </data>
+  <data name="Common.Search" xml:space="preserve">
+    <value>Szukaj</value>
+  </data>
+  <data name="Common.Price" xml:space="preserve">
+    <value>Cena</value>
+  </data>
+  <data name="Common.AddToCart" xml:space="preserve">
+    <value>Dodaj do koszyka</value>
+  </data>
+  <data name="Common.Size" xml:space="preserve">
+    <value>Rozmiar</value>
+  </data>
+  <data name="Common.Color" xml:space="preserve">
+    <value>Kolor</value>
+  </data>
+  
+  <!-- Note: More translations will be added as backend features are completed -->
+  
+  <!-- Navigation -->
+  <data name="Nav_Men" xml:space="preserve">
+    <value>Męskie</value>
+  </data>
+  <data name="Nav_Women" xml:space="preserve">
+    <value>Damskie</value>
+  </data>
+  <data name="Nav_Search" xml:space="preserve">
+    <value>Szukaj</value>
+  </data>
+  <data name="Nav_Account" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="Nav_Cart" xml:space="preserve">
+    <value>Koszyk</value>
+  </data>
+  <data name="Nav_Blog" xml:space="preserve">
+    <value>Blog</value>
+  </data>
+  <data name="Nav_Contact" xml:space="preserve">
+    <value>Kontakt</value>
+  </data>
+  <data name="Nav_FAQ" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Nav_AboutUs" xml:space="preserve">
+    <value>O nas</value>
+  </data>
+  
+  <!-- Homepage -->
+  <data name="Home_Welcome" xml:space="preserve">
+    <value>Witamy</value>
+  </data>
+  <data name="Home.Welcome" xml:space="preserve">
+    <value>Witamy w Kokomija</value>
+  </data>
+  <data name="Home.MetaTitle" xml:space="preserve">
+    <value>Kokomija - Premium Tekstylia i Moda</value>
+  </data>
+  <data name="Home.MetaDescription" xml:space="preserve">
+    <value>Odkryj wysokiej jakości odzież i tekstylia. Kup modę męską i damską z darmową wysyłką przy zamówieniach powyżej 200 PLN.</value>
+  </data>
+  <data name="Home_FeaturedCategories" xml:space="preserve">
+    <value>Popularne Kategorie</value>
+  </data>
+  <data name="Home_FeaturedProducts" xml:space="preserve">
+    <value>Polecane Produkty</value>
+  </data>
+  <data name="Home_ViewAll" xml:space="preserve">
+    <value>Zobacz wszystkie</value>
+  </data>
+  <data name="Home_ShopNow" xml:space="preserve">
+    <value>Kup teraz</value>
+  </data>
+  
+  <!-- Products -->
+  <data name="Product_AddToCart" xml:space="preserve">
+    <value>Dodaj do koszyka</value>
+  </data>
+  <data name="Product_OutOfStock" xml:space="preserve">
+    <value>Brak w magazynie</value>
+  </data>
+  <data name="Product_SelectSize" xml:space="preserve">
+    <value>Wybierz rozmiar</value>
+  </data>
+  <data name="Product_SelectColor" xml:space="preserve">
+    <value>Wybierz kolor</value>
+  </data>
+  <data name="Product_Description" xml:space="preserve">
+    <value>Opis produktu</value>
+  </data>
+  <data name="Product_Specifications" xml:space="preserve">
+    <value>Specyfikacja</value>
+  </data>
+  <data name="Product_Reviews" xml:space="preserve">
+    <value>Opinie</value>
+  </data>
+  <data name="Product_Price" xml:space="preserve">
+    <value>Cena</value>
+  </data>
+  <data name="Product_Quantity" xml:space="preserve">
+    <value>Ilość</value>
+  </data>
+  
+  <!-- Categories -->
+  <data name="Category_Men" xml:space="preserve">
+    <value>Męskie</value>
+  </data>
+  <data name="Category_Women" xml:space="preserve">
+    <value>Damskie</value>
+  </data>
+  <data name="Category_Shirts" xml:space="preserve">
+    <value>Koszule</value>
+  </data>
+  <data name="Category_Pants" xml:space="preserve">
+    <value>Spodnie</value>
+  </data>
+  <data name="Category_Dresses" xml:space="preserve">
+    <value>Sukienki</value>
+  </data>
+  <data name="Category_Outerwear" xml:space="preserve">
+    <value>Odzież wierzchnia</value>
+  </data>
+  <data name="Category_Accessories" xml:space="preserve">
+    <value>Akcesoria</value>
+  </data>
+  
+  <!-- Common -->
+  <data name="Common_New" xml:space="preserve">
+    <value>Nowość</value>
+  </data>
+  <data name="Common_Sale" xml:space="preserve">
+    <value>Wyprzedaż</value>
+  </data>
+  <data name="Common_FreeShipping" xml:space="preserve">
+    <value>Darmowa dostawa przy zamówieniach powyżej 200 PLN</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Ładowanie...</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>Wystąpił błąd</value>
+  </data>
+  
+  <!-- Product Card -->
+  <data name="Product_New" xml:space="preserve">
+    <value>Nowość</value>
+  </data>
+  <data name="Product_Sale" xml:space="preserve">
+    <value>Wyprzedaż</value>
+  </data>
+  <data name="Product_Color" xml:space="preserve">
+    <value>Kolor</value>
+  </data>
+  <data name="Product_Size" xml:space="preserve">
+    <value>Rozmiar</value>
+  </data>
+  <data name="Product_InStock" xml:space="preserve">
+    <value>Dostępny</value>
+  </data>
+  <data name="Product_Available" xml:space="preserve">
+    <value>szt.</value>
+  </data>
+  <data name="Product_SelectOptions" xml:space="preserve">
+    <value>Wybierz rozmiar i kolor, aby dodać do koszyka</value>
+  </data>
+  <data name="Product_ViewDetails" xml:space="preserve">
+    <value>Zobacz szczegóły</value>
+  </data>
+  <data name="Auth_LoginToOrder" xml:space="preserve">
+    <value>Zaloguj się, aby kupić</value>
+  </data>
+  <data name="Common_Adding" xml:space="preserve">
+    <value>Dodawanie</value>
+  </data>
+  <data name="Common_Added" xml:space="preserve">
+    <value>Dodano</value>
+  </data>
+  <data name="Error_AddToCart" xml:space="preserve">
+    <value>Nie udało się dodać produktu do koszyka</value>
+  </data>
+  <data name="Home_FeaturedProducts_Subtitle" xml:space="preserve">
+    <value>Odkryj nasze najlepsze produkty</value>
+  </data>
+  
+  <!-- Top Bar -->
+  <data name="TopBar_Home" xml:space="preserve">
+    <value>Strona główna</value>
+  </data>
+  <data name="TopBar_Shop" xml:space="preserve">
+    <value>Sklep</value>
+  </data>
+  <data name="TopBar_Info" xml:space="preserve">
+    <value>Informacje</value>
+  </data>
+  <data name="TopBar_FreeShipping" xml:space="preserve">
+    <value>Darmowa wysyłka od 200 PLN</value>
+  </data>
+  
+  <!-- Footer -->
+  <data name="Footer_Brand_Description" xml:space="preserve">
+    <value>Odkryj produkty tekstylne premium łączące komfort, jakość i styl. Twoje zaufane źródło doskonałości w modzie.</value>
+  </data>
+  <data name="Footer_QuickLinks" xml:space="preserve">
+    <value>Szybkie linki</value>
+  </data>
+  <data name="Footer_Shop" xml:space="preserve">
+    <value>Sklep</value>
+  </data>
+  <data name="Footer_Categories" xml:space="preserve">
+    <value>Sklep</value>
+  </data>
+  <data name="Footer_AllProducts" xml:space="preserve">
+    <value>Wszystkie produkty</value>
+  </data>
+  <data name="Footer_NewArrivals" xml:space="preserve">
+    <value>Nowości</value>
+  </data>
+  <data name="Footer_CustomerService" xml:space="preserve">
+    <value>Obsługa klienta</value>
+  </data>
+  <data name="Footer_ShippingInfo" xml:space="preserve">
+    <value>Informacje o wysyłce</value>
+  </data>
+  <data name="Footer_Returns" xml:space="preserve">
+    <value>Zwroty</value>
+  </data>
+  <data name="Footer_SizeGuide" xml:space="preserve">
+    <value>Tabela rozmiarów</value>
+  </data>
+  <data name="Footer_PrivacyPolicy" xml:space="preserve">
+    <value>Polityka prywatności</value>
+  </data>
+  <data name="Footer_Contact" xml:space="preserve">
+    <value>Kontakt</value>
+  </data>
+  <data name="Footer_AllRightsReserved" xml:space="preserve">
+    <value>Wszelkie prawa zastrzeżone.</value>
+  </data>
+  <data name="Footer_Terms" xml:space="preserve">
+    <value>Regulamin</value>
+  </data>
+  
+  <!-- Account -->
+  <data name="Account_MyAccount" xml:space="preserve">
+    <value>Moje konto</value>
+  </data>
+  <data name="Account_Profile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Account_Orders" xml:space="preserve">
+    <value>Zamówienia</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>Wyloguj</value>
+  </data>
+  <data name="Account_Login" xml:space="preserve">
+    <value>Zaloguj się</value>
+  </data>
+  <data name="Account_Register" xml:space="preserve">
+    <value>Zarejestruj się</value>
+  </data>
+  
+  <!-- Cart -->
+  <data name="Cart_ShoppingCart" xml:space="preserve">
+    <value>Koszyk</value>
+  </data>
+  <data name="Cart_Empty" xml:space="preserve">
+    <value>Twój koszyk jest pusty</value>
+  </data>
+  <data name="Cart_StartShopping" xml:space="preserve">
+    <value>Rozpocznij zakupy</value>
+  </data>
+  <data name="Cart_Subtotal" xml:space="preserve">
+    <value>Suma częściowa</value>
+  </data>
+  <data name="Cart_ViewCart" xml:space="preserve">
+    <value>Zobacz koszyk</value>
+  </data>
+  <data name="Cart_Checkout" xml:space="preserve">
+    <value>Do kasy</value>
+  </data>
+  
+  <!-- Accessibility -->
+  <data name="Accessibility_SkipToContent" xml:space="preserve">
+    <value>Przejdź do treści</value>
+  </data>
+  <data name="Accessibility_BackToTop" xml:space="preserve">
+    <value>Powrót na górę</value>
+  </data>
+  <data name="Accessibility_ToggleDarkMode" xml:space="preserve">
+    <value>Przełącz tryb ciemny</value>
+  </data>
+  <data name="Accessibility_ToggleNavigation" xml:space="preserve">
+    <value>Przełącz nawigację</value>
+  </data>
+  
+  <!-- FAQ Page -->
+  <data name="FAQ_Title" xml:space="preserve">
+    <value>Najczęściej Zadawane Pytania</value>
+  </data>
+  <data name="FAQ_Subtitle" xml:space="preserve">
+    <value>Znajdź odpowiedzi na najczęstsze pytania dotyczące naszych produktów i usług</value>
+  </data>
+  <data name="FAQ_SearchPlaceholder" xml:space="preserve">
+    <value>Szukaj odpowiedzi...</value>
+  </data>
+  <data name="FAQ_Category_All" xml:space="preserve">
+    <value>Wszystkie</value>
+  </data>
+  <data name="FAQ_Category_General" xml:space="preserve">
+    <value>Ogólne</value>
+  </data>
+  <data name="FAQ_Category_Ordering" xml:space="preserve">
+    <value>Zamawianie</value>
+  </data>
+  <data name="FAQ_Category_Shipping" xml:space="preserve">
+    <value>Wysyłka</value>
+  </data>
+  <data name="FAQ_Category_Returns" xml:space="preserve">
+    <value>Zwroty</value>
+  </data>
+  <data name="FAQ_Category_Payment" xml:space="preserve">
+    <value>Płatność</value>
+  </data>
+  <data name="FAQ_Category_Account" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="FAQ_NoResults" xml:space="preserve">
+    <value>Nie znaleziono wyników</value>
+  </data>
+  <data name="FAQ_NoResults_Text" xml:space="preserve">
+    <value>Spróbuj innych słów kluczowych lub przeglądaj wszystkie kategorie</value>
+  </data>
+  <data name="FAQ_NeedHelp_Title" xml:space="preserve">
+    <value>Nadal potrzebujesz pomocy?</value>
+  </data>
+  <data name="FAQ_NeedHelp_Text" xml:space="preserve">
+    <value>Nie możesz znaleźć odpowiedzi, której szukasz? Nasz zespół wsparcia jest tutaj, aby pomóc.</value>
+  </data>
+  <data name="FAQ_ContactSupport" xml:space="preserve">
+    <value>Skontaktuj się z obsługą</value>
+  </data>
+  
+  <!-- FAQ Questions -->
+  <data name="FAQ_Q1_Title" xml:space="preserve">
+    <value>Czym jest Kokomija?</value>
+  </data>
+  <data name="FAQ_Q1_Answer" xml:space="preserve">
+    <value>Kokomija to premium internetowy sklep odzieżowy oferujący wysokiej jakości odzież i tekstylia dla mężczyzn i kobiet. Wybieramy najnowsze trendy i ponadczasowe klasyki, aby pomóc Ci wyrazić Twój unikalny styl.</value>
+  </data>
+  <data name="FAQ_Q2_Title" xml:space="preserve">
+    <value>Gdzie się znajdujecie?</value>
+  </data>
+  <data name="FAQ_Q2_Answer" xml:space="preserve">
+    <value>Mamy siedzibę w Polsce i wysyłamy do klientów w całej Europie. Nasze centrum logistyczne znajduje się w Warszawie, zapewniając szybką i niezawodną dostawę pod Twoje drzwi.</value>
+  </data>
+  <data name="FAQ_Q3_Title" xml:space="preserve">
+    <value>Jak złożyć zamówienie?</value>
+  </data>
+  <data name="FAQ_Q3_Answer" xml:space="preserve">
+    <value>Po prostu przeglądaj nasze produkty, wybierz pożądany rozmiar i kolor, a następnie dodaj produkty do koszyka. Gdy będziesz gotowy, przejdź do kasy, wprowadź informacje o wysyłce i dokonaj płatności. Natychmiast otrzymasz e-mail z potwierdzeniem zamówienia.</value>
+  </data>
+  <data name="FAQ_Q4_Title" xml:space="preserve">
+    <value>Czy mogę zmodyfikować lub anulować zamówienie?</value>
+  </data>
+  <data name="FAQ_Q4_Answer" xml:space="preserve">
+    <value>Możesz zmodyfikować lub anulować zamówienie w ciągu 2 godzin od jego złożenia. Po tym czasie zamówienia są przetwarzane i wysyłane. Skontaktuj się z naszą obsługą klienta natychmiast, jeśli musisz wprowadzić zmiany.</value>
+  </data>
+  <data name="FAQ_Q5_Title" xml:space="preserve">
+    <value>Czy oferujecie pakowanie prezentowe?</value>
+  </data>
+  <data name="FAQ_Q5_Answer" xml:space="preserve">
+    <value>Tak! Oferujemy eleganckie pakowanie prezentowe dla wszystkich zamówień. Po prostu wybierz opcję pakowania prezentowego podczas składania zamówienia i dodaj spersonalizowaną wiadomość dla odbiorcy. Idealne na urodziny, święta lub każdą specjalną okazję.</value>
+  </data>
+  <data name="FAQ_Q6_Title" xml:space="preserve">
+    <value>Jakie są koszty wysyłki?</value>
+  </data>
+  <data name="FAQ_Q6_Answer" xml:space="preserve">
+    <value>Standardowa wysyłka wynosi 15 PLN dla zamówień poniżej 200 PLN. Oferujemy DARMOWĄ wysyłkę dla wszystkich zamówień powyżej 200 PLN. Wysyłka ekspresowa (1-2 dni robocze) jest dostępna za 25 PLN.</value>
+  </data>
+  <data name="FAQ_Q7_Title" xml:space="preserve">
+    <value>Jak długo trwa dostawa?</value>
+  </data>
+  <data name="FAQ_Q7_Answer" xml:space="preserve">
+    <value>Standardowa dostawa w Polsce trwa 3-5 dni roboczych. W przypadku zamówień międzynarodowych dostawa zazwyczaj trwa 5-10 dni roboczych w zależności od lokalizacji. Po wysłaniu zamówienia otrzymasz informacje o śledzeniu przesyłki.</value>
+  </data>
+  <data name="FAQ_Q8_Title" xml:space="preserve">
+    <value>Czy wysyłacie międzynarodowo?</value>
+  </data>
+  <data name="FAQ_Q8_Answer" xml:space="preserve">
+    <value>Tak, wysyłamy do większości krajów europejskich. Koszty wysyłki międzynarodowej różnią się w zależności od miejsca przeznaczenia. Dla krajów spoza UE mogą obowiązywać dodatkowe opłaty celne, za które odpowiedzialny jest klient.</value>
+  </data>
+  <data name="FAQ_Q9_Title" xml:space="preserve">
+    <value>Czy mogę śledzić moje zamówienie?</value>
+  </data>
+  <data name="FAQ_Q9_Answer" xml:space="preserve">
+    <value>Oczywiście! Po wysłaniu zamówienia otrzymasz e-mail z informacjami o śledzeniu. Możesz również sprawdzić status zamówienia, logując się na swoje konto i przeglądając historię zamówień.</value>
+  </data>
+  <data name="FAQ_Q10_Title" xml:space="preserve">
+    <value>Jaka jest Wasza polityka zwrotów?</value>
+  </data>
+  <data name="FAQ_Q10_Answer" xml:space="preserve">
+    <value>Oferujemy 14-dniową politykę zwrotów od daty dostawy, zgodnie ze standardami Allegro. Produkty muszą być nieużywane, niepranie, z oryginalnymi metkami. Zwroty są bezpłatne dla klientów z Polski. Międzynarodowe koszty wysyłki zwrotnej ponosi klient.</value>
+  </data>
+  <data name="FAQ_Q11_Title" xml:space="preserve">
+    <value>Jak rozpocząć zwrot?</value>
+  </data>
+  <data name="FAQ_Q11_Answer" xml:space="preserve">
+    <value>Zaloguj się na swoje konto, przejdź do "Moje zamówienia", wybierz zamówienie, które chcesz zwrócić i kliknij "Żądaj zwrotu". Wybierz produkty i powód, a my dostarczymy Ci etykietę zwrotną i instrukcje.</value>
+  </data>
+  <data name="FAQ_Q12_Title" xml:space="preserve">
+    <value>Kiedy otrzymam zwrot pieniędzy?</value>
+  </data>
+  <data name="FAQ_Q12_Answer" xml:space="preserve">
+    <value>Zwroty są przetwarzane w ciągu 5-7 dni roboczych po otrzymaniu i sprawdzeniu zwróconych produktów. Zwrot zostanie przelany na Twoją oryginalną metodę płatności przez bezpieczny system Stripe. Czas przetwarzania przez bank może się różnić o 2-3 dodatkowe dni robocze.</value>
+  </data>
+  <data name="FAQ_Q13_Title" xml:space="preserve">
+    <value>Czy mogę wymienić produkt?</value>
+  </data>
+  <data name="FAQ_Q13_Answer" xml:space="preserve">
+    <value>Tak! Oferujemy bezpłatne wymiany na inne rozmiary lub kolory. Po prostu zaznacz "Wymiana" podczas rozpoczynania zwrotu i określ preferowany zamiennik. Wyślemy go, gdy tylko otrzymamy Twój oryginalny produkt.</value>
+  </data>
+  <data name="FAQ_Q14_Title" xml:space="preserve">
+    <value>Jakie metody płatności akceptujecie?</value>
+  </data>
+  <data name="FAQ_Q14_Answer" xml:space="preserve">
+    <value>Akceptujemy wszystkie główne karty kredytowe i debetowe (Visa, Mastercard, American Express), portfele cyfrowe i przelewy bankowe. Wszystkie płatności są przetwarzane bezpiecznie przez Stripe, wiodącą platformę płatniczą na świecie, której ufa miliony firm.</value>
+  </data>
+  <data name="FAQ_Q15_Title" xml:space="preserve">
+    <value>Czy moje informacje o płatności są bezpieczne?</value>
+  </data>
+  <data name="FAQ_Q15_Answer" xml:space="preserve">
+    <value>100% bezpieczne. Wszystkie transakcje są przetwarzane przez Stripe z szyf rowaniem SSL klasy wojskowej i zgodnością z PCI-DSS Level 1 (najwyższy standard bezpieczeństwa). Twoje informacje o płatności nigdy nie są przechowywane na naszych serwerach - Stripe obsługuje wszystko bezpiecznie. Nasz system członkostwa jest również w pełni zasilany przez Stripe dla maksymalnego bezpieczeństwa.</value>
+  </data>
+  <data name="FAQ_Q16_Title" xml:space="preserve">
+    <value>A co z płatnościami za członkostwo?</value>
+  </data>
+  <data name="FAQ_Q16_Answer" xml:space="preserve">
+    <value>Nasze członkostwo premium jest w całości zarządzane przez Stripe, zapewniając 100% bezpieczne płatności cykliczne. Możesz w dowolnym momencie zmienić, obniżyć lub anulować swoje członkostwo bezpośrednio z panelu konta. Wszystkie rozliczenia są przejrzyste, bez ukrytych opłat.</value>
+  </data>
+  <data name="FAQ_Q17_Title" xml:space="preserve">
+    <value>Czy mogę użyć kodów rabatowych?</value>
+  </data>
+  <data name="FAQ_Q17_Answer" xml:space="preserve">
+    <value>Tak! Wprowadź swój kod rabatowy przy kasie, aby zastosować go do zamówienia. Kody nie mogą być łączone z innymi promocjami. Zapisz się do naszego newslettera, aby otrzymywać ekskluzywne kody rabatowe i wcześniejszy dostęp do wyprzedaży.</value>
+  </data>
+  <data name="FAQ_Q18_Title" xml:space="preserve">
+    <value>Czy potrzebuję konta, aby złożyć zamówienie?</value>
+  </data>
+  <data name="FAQ_Q18_Answer" xml:space="preserve">
+    <value>Nie, możesz złożyć zamówienie jako gość. Jednak utworzenie konta pozwala śledzić zamówienia, zapisywać wiele adresów, przeglądać historię zamówień i otrzymywać ekskluzywne korzyści oraz zniżki dla członków.</value>
+  </data>
+  <data name="FAQ_Q19_Title" xml:space="preserve">
+    <value>Jak zresetować hasło?</value>
+  </data>
+  <data name="FAQ_Q19_Answer" xml:space="preserve">
+    <value>Kliknij "Zaloguj się" u góry strony, a następnie wybierz "Zapomniałeś hasła?" Wprowadź swój adres e-mail, a wyślemy Ci link do zresetowania hasła. Link jest ważny przez 24 godziny.</value>
+  </data>
+  <data name="FAQ_Q20_Title" xml:space="preserve">
+    <value>Jak zaktualizować informacje o koncie?</value>
+  </data>
+  <data name="FAQ_Q20_Answer" xml:space="preserve">
+    <value>Zaloguj się na swoje konto i przejdź do "Ustawienia konta". Stamtąd możesz zaktualizować swój e-mail, hasło, adresy wysyłki i preferencje komunikacyjne. Zmiany są zapisywane automatycznie.</value>
+  </data>
+  <data name="FAQ_Q21_Title" xml:space="preserve">
+    <value>Jak mogę skontaktować się z obsługą klienta?</value>
+  </data>
+  <data name="FAQ_Q21_Answer" xml:space="preserve">
+    <value>Możesz skontaktować się z nami przez e-mail pod adresem support@kokomija.com lub użyć formularza kontaktowego na naszej stronie. Odpowiadamy na wszystkie zapytania w ciągu 24 godzin w dni robocze.</value>
+  </data>
+  <data name="FAQ_Q22_Title" xml:space="preserve">
+    <value>Jak znaleźć odpowiedni rozmiar?</value>
+  </data>
+  <data name="FAQ_Q22_Answer" xml:space="preserve">
+    <value>Każda strona produktu zawiera szczegółowy przewodnik po rozmiarach z wymiarami. Zalecamy zmierzenie się i porównanie z naszymi tabelami rozmiarów. Jeśli jesteś pomiędzy rozmiarami, sugerujemy zamówienie większego rozmiaru dla komfortu.</value>
+  </data>
+</root>

@@ -1,6 +1,6 @@
-﻿@using Kokomija.Resources
+@using Kokomija.Resources
 @inject Kokomija.Data.Abstract.IUnitOfWork UnitOfWork
-@inject Microsoft.Extensions.Localization.IStringLocalizer<SharedResources> Localizer
+@inject Kokomija.Services.ILocalizationService L
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,6 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#FFFFFF" />
     <title>@ViewData["Title"] - Kokomija</title>
+    
+    @await RenderSectionAsync("Meta", required: false)
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +31,7 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <a href="#main-content" class="skip-to-content">Skip to content</a>
+    <a href="#main-content" class="skip-to-content">@L["Accessibility_SkipToContent"]</a>
     
     <script>
         // Set authentication status for cart manager
@@ -44,7 +46,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <!-- Theme Toggle -->
                     <label class="theme-switch" style="--toggle-size: 16px;">
-                        <input type="checkbox" class="theme-switch__checkbox" id="theme-toggle" aria-label="Toggle dark mode">
+                        <input type="checkbox" class="theme-switch__checkbox" id="theme-toggle" aria-label="@L["Accessibility_ToggleDarkMode"]">
                         <div class="theme-switch__container">
                             <div class="theme-switch__clouds"></div>
                             <div class="theme-switch__stars-container">
@@ -67,16 +69,16 @@
                     <span class="top-bar-separator">|</span>
                     
                     <a asp-controller="Home" asp-action="Index" class="top-bar-link">
-                        <i class="fas fa-home me-1"></i> Home
+                        <i class="fas fa-home me-1"></i> @L["TopBar_Home"]
                     </a>
                     <a asp-controller="Product" asp-action="Index" class="top-bar-link">
-                        <i class="fas fa-shopping-bag me-1"></i> Shop
+                        <i class="fas fa-shopping-bag me-1"></i> @L["TopBar_Shop"]
                     </a>
                     <a asp-controller="Home" asp-action="FAQ" class="top-bar-link">
-                        <i class="fas fa-question-circle me-1"></i> FAQ
+                        <i class="fas fa-question-circle me-1"></i> @L["Nav_FAQ"]
                     </a>
-                    <a asp-controller="Home" asp-action="Privacy" class="top-bar-link">
-                        <i class="fas fa-info-circle me-1"></i> Info
+                    <a asp-controller="Home" asp-action="Blog" class="top-bar-link">
+                        <i class="fas fa-info-circle me-1"></i> @L["TopBar_Info"]
                     </a>
                 </div>
                 
@@ -92,7 +94,7 @@
                     </span>
                     <span class="top-bar-separator">|</span>
                     <span class="top-bar-item text-success">
-                        <i class="fas fa-truck me-1"></i> Darmowa wysyłka od 200 PLN
+                        <i class="fas fa-truck me-1"></i> @L.GetString(key: "TopBar_FreeShipping")
                     </span>
                 </div>
             </div>
@@ -105,10 +107,11 @@
             <div class="container">
                 @{
                     var categories = await UnitOfWork.Categories.GetNavbarCategoriesAsync();
-                    var womenCategory = categories.FirstOrDefault(c => (c.Slug == "women" || c.Slug == "damskie") && c.ParentCategoryId == null && c.IsActive);
-                    var menCategory = categories.FirstOrDefault(c => (c.Slug == "men" || c.Slug == "meskie") && c.ParentCategoryId == null && c.IsActive);
-                    var womenSubCategories = womenCategory != null ? categories.Where(c => c.ParentCategoryId == womenCategory.Id && c.IsActive) : Enumerable.Empty<Kokomija.Entity.Category>();
-                    var menSubCategories = menCategory != null ? categories.Where(c => c.ParentCategoryId == menCategory.Id && c.IsActive) : Enumerable.Empty<Kokomija.Entity.Category>();
+                    var categoryList = categories.ToList();
+                    var womenCategory = categoryList.FirstOrDefault(c => (c.Slug == "women" || c.Slug == "damskie") && c.ParentCategoryId == null && c.IsActive);
+                    var menCategory = categoryList.FirstOrDefault(c => (c.Slug == "men" || c.Slug == "meskie") && c.ParentCategoryId == null && c.IsActive);
+                    var womenSubCategories = womenCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
+                    var menSubCategories = menCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
                 }
                 
                 <!-- Desktop Navigation (hidden on mobile) -->
@@ -122,14 +125,14 @@
                         <div class="nav-item dropdown dropdown-hover">
                             <a class="nav-link dropdown-toggle fw-bold fs-5" href="#" id="menDropdown" role="button" 
                                aria-expanded="false">
-                                <i class="fa-solid fa-person"></i> MEN
+                                <i class="fa-solid fa-person"></i> @L["Nav_Men"].ToUpper()
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="menDropdown">
                                 @if (menCategory != null)
                                 {
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@menCategory.Slug">
-                                            All Men's Products
+                                            @L["Footer_AllProducts"] - @L["Nav_Men"]
                                         </a>
                                     </li>
                                     @if (menSubCategories.Any())
@@ -165,14 +168,14 @@
                         <div class="nav-item dropdown dropdown-hover">
                             <a class="nav-link dropdown-toggle fw-bold fs-5" href="#" id="womenDropdown" role="button" 
                                aria-expanded="false">
-                                <i class="fa-solid fa-person-dress"></i> WOMEN
+                                <i class="fa-solid fa-person-dress"></i> @L["Nav_Women"].ToUpper()
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="womenDropdown">
                                 @if (womenCategory != null)
                                 {
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@womenCategory.Slug">
-                                            All Women's Products
+                                            @L["Footer_AllProducts"] - @L["Nav_Women"]
                                         </a>
                                     </li>
                                     @if (womenSubCategories.Any())
@@ -203,49 +206,49 @@
                     <!-- Right: Search, Account, Cart -->
                     <div class="navbar-actions d-flex align-items-center gap-3">
                         <!-- Search Icon -->
-                        <a href="/search" class="nav-icon" aria-label="Search">
+                        <a href="/search" class="nav-icon" aria-label="@L["Nav_Search"]">
                             <i class="fas fa-search"></i>
                         </a>
                         
                         <!-- Account Icon -->
                         <div class="dropdown">
-                            <a class="nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account">
+                            <a class="nav-icon" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="@L["Nav_Account"]">
                                 <i class="fas fa-user"></i>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
-                                    <li><a class="dropdown-item" href="/account/profile"><i class="fas fa-user me-2"></i> My Account</a></li>
-                                    <li><a class="dropdown-item" href="/account/orders"><i class="fas fa-box me-2"></i> My Orders</a></li>
+                                    <li><a class="dropdown-item" href="/account/profile"><i class="fas fa-user me-2"></i> @L["Account_MyAccount"]</a></li>
+                                    <li><a class="dropdown-item" href="/account/orders"><i class="fas fa-box me-2"></i> @L["Account_Orders"]</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post">
-                                            <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
+                                            <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i> @L["Account_Logout"]</button>
                                         </form>
                                     </li>
                                 }
                                 else
                                 {
-                                    <li><a class="dropdown-item" href="/account/login"><i class="fas fa-sign-in-alt me-2"></i> Login</a></li>
-                                    <li><a class="dropdown-item" href="/account/register"><i class="fas fa-user-plus me-2"></i> Register</a></li>
+                                    <li><a class="dropdown-item" href="/account/login"><i class="fas fa-sign-in-alt me-2"></i> @L["Account_Login"]</a></li>
+                                    <li><a class="dropdown-item" href="/account/register"><i class="fas fa-user-plus me-2"></i> @L["Account_Register"]</a></li>
                                 }
                             </ul>
                         </div>
                         
                         <!-- Shopping Cart -->
                         <div class="dropdown dropdown-hover cart-dropdown">
-                            <a href="/cart" class="nav-icon position-relative" aria-label="Shopping Cart">
+                            <a href="/cart" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
                                 <i class="fas fa-shopping-cart"></i>
                                 <span class="badge bg-danger cart-badge" style="display: none;">0</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end cart-preview-dropdown">
                                 <div class="cart-preview-header">
-                                    <h6 class="mb-0">Shopping Cart</h6>
+                                    <h6 class="mb-0">@L["Cart_ShoppingCart"]</h6>
                                 </div>
                                 <div class="cart-preview-items" id="cartPreviewItems">
                                     <div class="text-center py-4 text-muted">
                                         <i class="fas fa-shopping-cart mb-2" style="font-size: 2rem; opacity: 0.3;"></i>
-                                        <p class="mb-0">Your cart is empty</p>
+                                        <p class="mb-0">@L["Cart_Empty"]</p>
                                     </div>
                                 </div>
                                 <div class="cart-preview-footer">
@@ -260,7 +263,7 @@
                 <div class="d-lg-none d-flex justify-content-between align-items-center w-100 py-2">
                     <!-- Mobile Menu Toggle -->
                     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMobile" 
-                            aria-controls="navbarMobile" aria-expanded="false" aria-label="Toggle navigation">
+                            aria-controls="navbarMobile" aria-expanded="false" aria-label="@L["Accessibility_ToggleNavigation"]">
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     
@@ -271,10 +274,10 @@
                     
                     <!-- Mobile Icons (Right) -->
                     <div class="d-flex align-items-center gap-2">
-                        <a href="/search" class="nav-icon" aria-label="Search">
+                        <a href="/search" class="nav-icon" aria-label="@L["Nav_Search"]">
                             <i class="fas fa-search"></i>
                         </a>
-                        <a href="/cart" class="nav-icon position-relative" aria-label="Shopping Cart">
+                        <a href="/cart" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="badge bg-danger cart-badge" style="display: none;">0</span>
                         </a>
@@ -290,12 +293,12 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle fw-bold" href="#" id="menDropdownMobile" role="button" 
                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-mars me-2"></i> MEN
+                                    <i class="fas fa-mars me-2"></i> @L["Nav_Men"].ToUpper()
                                 </a>
                                 <ul class="dropdown-menu w-100" aria-labelledby="menDropdownMobile">
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@menCategory.Slug">
-                                            All Men's Products
+                                            @L["Footer_AllProducts"] - @L["Nav_Men"]
                                         </a>
                                     </li>
                                     @if (menSubCategories.Any())
@@ -324,12 +327,12 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle fw-bold" href="#" id="womenDropdownMobile" role="button" 
                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-venus me-2"></i> WOMEN
+                                    <i class="fas fa-venus me-2"></i> @L["Nav_Women"].ToUpper()
                                 </a>
                                 <ul class="dropdown-menu w-100" aria-labelledby="womenDropdownMobile">
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@womenCategory.Slug">
-                                            All Women's Products
+                                            @L["Footer_AllProducts"] - @L["Nav_Women"]
                                         </a>
                                     </li>
                                     @if (womenSubCategories.Any())
@@ -354,20 +357,20 @@
                         
                         <li class="nav-item border-top mt-2 pt-2">
                             <a class="nav-link" href="/account/profile">
-                                <i class="fas fa-user me-2"></i> My Account
+                                <i class="fas fa-user me-2"></i> @L["Account_MyAccount"]
                             </a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
                                 <a class="nav-link" href="/account/orders">
-                                    <i class="fas fa-box me-2"></i> My Orders
+                                    <i class="fas fa-box me-2"></i> @L["Account_Orders"]
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post">
                                     <button type="submit" class="nav-link btn btn-link text-start w-100">
-                                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                        <i class="fas fa-sign-out-alt me-2"></i> @L["Account_Logout"]
                                     </button>
                                 </form>
                             </li>
@@ -376,12 +379,12 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" href="/account/login">
-                                    <i class="fas fa-sign-in-alt me-2"></i> Login
+                                    <i class="fas fa-sign-in-alt me-2"></i> @L["Account_Login"]
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="/account/register">
-                                    <i class="fas fa-user-plus me-2"></i> Register
+                                    <i class="fas fa-user-plus me-2"></i> @L["Account_Register"]
                                 </a>
                             </li>
                         }
@@ -403,8 +406,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="footer-brand">Kokomija</div>
                     <p class="footer-description">
-                        Discover premium textile products that combine comfort, quality, and style. 
-                        Your trusted source for fashion excellence.
+                        @L["Footer_Brand_Description"]
                     </p>
                     <div class="social-links mt-3">
                         <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
@@ -416,41 +418,41 @@
                 
                 <!-- Quick Links -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">Quick Links</h5>
+                    <h5 class="footer-title">@L["Footer_QuickLinks"]</h5>
                     <ul class="footer-links">
-                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-                        <li><a asp-controller="Product" asp-action="Index">Shop</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">FAQ</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">@L["TopBar_Home"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Index">@L["Footer_Shop"]</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a></li>
                     </ul>
                 </div>
                 
                 <!-- Categories -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">Shop</h5>
+                    <h5 class="footer-title">@L["Footer_Categories"]</h5>
                     <ul class="footer-links">
-                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="damskie">Women</a></li>
-                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="meskie">Men</a></li>
-                        <li><a asp-controller="Product" asp-action="Index">All Products</a></li>
-                        <li><a asp-controller="Home" asp-action="Index">New Arrivals</a></li>
+                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="damskie">@L["Nav_Women"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="meskie">@L["Nav_Men"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Index">@L["Footer_AllProducts"]</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">@L["Footer_NewArrivals"]</a></li>
                     </ul>
                 </div>
                 
                 <!-- Customer Service -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">Customer Service</h5>
+                    <h5 class="footer-title">@L["Footer_CustomerService"]</h5>
                     <ul class="footer-links">
-                        <li><a asp-controller="Home" asp-action="FAQ">FAQ</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">Shipping Info</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">Returns</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">Size Guide</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy">Privacy Policy</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L["Footer_ShippingInfo"]</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L["Footer_Returns"]</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L["Footer_SizeGuide"]</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a></li>
                     </ul>
                 </div>
                 
                 <!-- Contact -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">Contact</h5>
+                    <h5 class="footer-title">@L["Footer_Contact"]</h5>
                     <ul class="footer-links">
                         <li><i class="fas fa-phone me-2"></i> +48 123 456 789</li>
                         <li><i class="fas fa-envelope me-2"></i> kontakt@kokomija.com</li>
@@ -462,17 +464,17 @@
             <!-- Footer Bottom -->
             <div class="footer-bottom">
                 <p class="mb-0">
-                    &copy; @DateTime.Now.Year Kokomija. All rights reserved. | 
-                    <a asp-controller="Home" asp-action="FAQ">FAQ</a> |
-                    <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a> | 
-                    <a asp-controller="Home" asp-action="Privacy">Terms & Conditions</a>
+                    &copy; @DateTime.Now.Year Kokomija. @L["Footer_AllRightsReserved"] | 
+                    <a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a> |
+                    <a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a> | 
+                    <a asp-controller="Home" asp-action="Privacy">@L["Footer_Terms"]</a>
                 </p>
             </div>
         </div>
     </footer>
     
     <!-- Back to Top Button -->
-    <button id="back-to-top" class="btn btn-primary btn-icon" aria-label="Back to top" style="display: none;">
+    <button id="back-to-top" class="btn btn-primary btn-icon" aria-label="@L["Accessibility_BackToTop"]" style="display: none;">
         <i class="fas fa-arrow-up"></i>
     </button>
     

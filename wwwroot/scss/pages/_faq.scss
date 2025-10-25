@@ -2,44 +2,64 @@
 .faq-page {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 0%, transparent 100%);
     min-height: 100vh;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
 
     .faq-header {
         h1 {
-            color: $primary;
+            color: #1f2937;
             font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
         .lead {
             font-size: 1.125rem;
-            color: $text-muted;
+            color: #6b7280;
+            font-weight: 400;
         }
     }
 
     // Search Bar
     .faq-search {
         .input-group {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-radius: $border-radius-lg;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
             overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+
+            &:focus-within {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            }
 
             .input-group-text {
-                border: 1px solid $input-border-color;
+                background-color: white;
+                border: none;
+                border-right: none;
+                color: #6b7280;
                 padding: 0.75rem 1rem;
 
                 i {
-                    color: $text-muted;
                     font-size: 1.25rem;
                 }
             }
 
             .form-control {
-                border: 1px solid $input-border-color;
-                padding: 0.75rem 1rem;
+                border: none;
+                border-left: none;
+                padding: 0.75rem 1rem 0.75rem 0;
                 font-size: 1rem;
+                background-color: white;
+                color: #1f2937;
 
                 &:focus {
                     box-shadow: none;
-                    border-color: $primary;
+                    background-color: white;
+                }
+
+                &::placeholder {
+                    color: #9ca3af;
                 }
             }
         }
@@ -51,28 +71,31 @@
             border-radius: 50px;
             padding: 0.5rem 1.25rem;
             font-weight: 500;
-            transition: all 0.3s ease;
-            border: 2px solid $primary;
-            color: $primary;
-            background: white;
+            transition: all 0.2s ease;
+            border: 2px solid #e5e7eb;
+            background-color: white;
+            color: #4b5563;
 
             i {
                 font-size: 1rem;
             }
 
             &:hover {
-                background: rgba($primary, 0.1);
+                background-color: #eff6ff;
+                border-color: #3b82f6;
+                color: #3b82f6;
                 transform: translateY(-2px);
-                box-shadow: 0 2px 8px rgba($primary, 0.2);
             }
 
             &.active {
-                background: $primary;
+                background-color: #3b82f6;
+                border-color: #3b82f6;
                 color: white;
-                box-shadow: 0 4px 12px rgba($primary, 0.3);
+                box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
 
                 &:hover {
-                    background: darken($primary, 5%);
+                    background-color: #2563eb;
+                    transform: translateY(-2px);
                 }
             }
         }
@@ -85,34 +108,33 @@
             transition: all 0.3s ease;
 
             .accordion-item {
-                border: 1px solid rgba(0, 0, 0, 0.1);
-                border-radius: $border-radius;
+                border: 1px solid #e5e7eb;
+                background-color: white;
+                border-radius: 12px !important;
                 overflow: hidden;
                 transition: all 0.3s ease;
 
                 &:hover {
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
                 }
 
                 .accordion-header {
                     .accordion-button {
-                        font-size: 1.125rem;
+                        font-size: 1rem;
                         font-weight: 600;
-                        color: $dark;
+                        color: #1f2937;
                         padding: 1.25rem 1.5rem;
                         background-color: white;
                         border: none;
                         transition: all 0.3s ease;
 
                         &:not(.collapsed) {
-                            color: $primary;
-                            background-color: rgba($primary, 0.05);
+                            color: #3b82f6;
+                            background-color: #eff6ff;
                             box-shadow: none;
 
                             &::after {
                                 transform: rotate(-180deg);
-                                color: $primary;
                             }
                         }
 
@@ -122,15 +144,12 @@
                         }
 
                         &::after {
+                            background-size: 1.25rem;
                             transition: transform 0.3s ease;
-                            flex-shrink: 0;
-                            width: 1.25rem;
-                            height: 1.25rem;
-                            margin-left: auto;
                         }
 
                         &:hover {
-                            background-color: rgba($primary, 0.05);
+                            background-color: #f3f4f6;
                         }
                     }
                 }
@@ -139,11 +158,16 @@
                     padding: 1.5rem;
                     font-size: 1rem;
                     line-height: 1.7;
-                    color: $text-muted;
+                    color: #4b5563;
                     background-color: white;
 
+                    strong {
+                        color: #1f2937;
+                        font-weight: 600;
+                    }
+
                     a {
-                        color: $primary;
+                        color: #3b82f6;
                         text-decoration: none;
                         font-weight: 500;
 
@@ -159,126 +183,210 @@
     // No Results
     #noResults {
         i {
-            opacity: 0.3;
+            color: #d1d5db;
         }
 
         h3 {
             font-weight: 600;
+            color: #6b7280;
+        }
+
+        p {
+            color: #9ca3af;
         }
     }
 
     // Help Section
     .faq-help-section {
-        background: linear-gradient(135deg, rgba($primary, 0.05) 0%, rgba($primary, 0.02) 100%);
-        border-radius: $border-radius-lg;
-        padding: 3rem 2rem;
-        margin: 0 -15px;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 3rem;
+        padding-top: 3rem;
 
-        h3 {
-            font-weight: 700;
-            color: $dark;
-        }
+        .faq-help-card {
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
-        .btn-primary {
-            padding: 0.75rem 2rem;
-            font-weight: 600;
-            border-radius: 50px;
-            transition: all 0.3s ease;
+            i {
+                color: #3b82f6;
+            }
 
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 20px rgba($primary, 0.3);
+            h3 {
+                font-weight: 700;
+                color: #1f2937;
+            }
+
+            p {
+                color: #6b7280;
+            }
+
+            .btn-primary {
+                padding: 0.75rem 2rem;
+                font-weight: 600;
+                border-radius: 50px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+                }
             }
         }
     }
 }
 
+
 // Dark Mode Support
-@media (prefers-color-scheme: dark) {
+[data-theme="dark"] {
     .faq-page {
         background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
 
         .faq-header {
             h1 {
-                color: lighten($primary, 10%);
+                color: #f1f5f9;
+            }
+
+            .lead {
+                color: #94a3b8;
             }
         }
 
         .faq-search {
             .input-group {
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+
+                &:focus-within {
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+                }
 
                 .input-group-text {
-                    background-color: $dark;
-                    border-color: rgba(255, 255, 255, 0.1);
-
-                    i {
-                        color: rgba(255, 255, 255, 0.7);
-                    }
+                    background-color: #1e293b;
+                    color: #94a3b8;
                 }
 
                 .form-control {
-                    background-color: $dark;
-                    border-color: rgba(255, 255, 255, 0.1);
-                    color: white;
+                    background-color: #1e293b;
+                    color: #f1f5f9;
+
+                    &:focus {
+                        background-color: #1e293b;
+                    }
 
                     &::placeholder {
-                        color: rgba(255, 255, 255, 0.5);
+                        color: #64748b;
                     }
                 }
             }
         }
 
         .category-pill {
-            background-color: $dark;
-            border-color: lighten($primary, 10%);
-            color: lighten($primary, 10%);
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #94a3b8;
 
             &:hover {
-                background-color: rgba(lighten($primary, 10%), 0.1);
+                background-color: #1e3a5f;
+                border-color: #3b82f6;
+                color: #60a5fa;
             }
 
             &.active {
-                background-color: lighten($primary, 10%);
-                color: $dark;
+                background-color: #3b82f6;
+                border-color: #3b82f6;
+                color: white;
+                box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+
+                &:hover {
+                    background-color: #2563eb;
+                }
             }
         }
 
         .faq-item {
             .accordion-item {
-                background-color: $dark;
-                border-color: rgba(255, 255, 255, 0.1);
+                background-color: #1e293b;
+                border-color: #334155;
+
+                &:hover {
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                }
 
                 .accordion-button {
-                    background-color: $dark;
-                    color: white;
+                    background-color: #1e293b;
+                    color: #f1f5f9;
 
                     &:not(.collapsed) {
-                        background-color: rgba(lighten($primary, 10%), 0.1);
-                        color: lighten($primary, 10%);
+                        background-color: #1e3a5f;
+                        color: #60a5fa;
                     }
 
                     &:hover {
-                        background-color: rgba(lighten($primary, 10%), 0.05);
+                        background-color: #334155;
+                        color: #f1f5f9;
+                    }
+
+                    &::after {
+                        filter: invert(1);
+                    }
+
+                    &:not(.collapsed)::after {
+                        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(180deg);
                     }
                 }
 
                 .accordion-body {
-                    background-color: $dark;
-                    color: rgba(255, 255, 255, 0.8);
+                    background-color: #1e293b;
+                    color: #cbd5e1;
+
+                    strong {
+                        color: #f1f5f9;
+                    }
+
+                    a {
+                        color: #60a5fa;
+                    }
                 }
             }
         }
 
-        .faq-help-section {
-            background: linear-gradient(135deg, rgba(lighten($primary, 10%), 0.1) 0%, rgba(lighten($primary, 10%), 0.05) 100%);
+        #noResults {
+            i {
+                color: #475569;
+            }
 
             h3 {
-                color: white;
+                color: #94a3b8;
+            }
+
+            p {
+                color: #64748b;
+            }
+        }
+
+        .faq-help-section {
+            border-top-color: #334155;
+
+            .faq-help-card {
+                background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+
+                i {
+                    color: #60a5fa;
+                }
+
+                h3 {
+                    color: #f1f5f9;
+                }
+
+                p {
+                    color: #94a3b8;
+                }
             }
         }
     }
 }
+
 
 // Responsive Design
 @media (max-width: 768px) {

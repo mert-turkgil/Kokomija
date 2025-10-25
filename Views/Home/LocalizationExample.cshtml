@@ -1,0 +1,260 @@
+@*
+    This is an example view demonstrating how to use the ILocalizationService
+    To access this view, add a route in HomeController:
+    
+    public IActionResult LocalizationExample()
+    {
+        return View();
+    }
+*@
+
+@inject Kokomija.Services.ILocalizationService L
+@using System.Globalization
+
+@{
+    ViewData["Title"] = L["Home.MetaTitle"];
+    var currentCulture = CultureInfo.CurrentCulture.Name;
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 mb-4">@L["Home.Welcome"]</h1>
+            
+            <!-- Current Language Info -->
+            <div class="alert alert-info">
+                <h5>Current Culture Information</h5>
+                <p class="mb-1"><strong>Culture:</strong> @currentCulture</p>
+                <p class="mb-0"><strong>UI Culture:</strong> @CultureInfo.CurrentUICulture.Name</p>
+            </div>
+
+            <!-- Language Switcher -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Language Switcher</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="/Home/SetLanguage?culture=pl-PL&returnUrl=@Context.Request.Path" 
+                           class="btn btn-outline-primary @(currentCulture == "pl-PL" ? "active" : "")">
+                            🇵🇱 Polski
+                        </a>
+                        <a href="/Home/SetLanguage?culture=en-US&returnUrl=@Context.Request.Path"
+                           class="btn btn-outline-primary @(currentCulture == "en-US" ? "active" : "")">
+                            🇺🇸 English
+                        </a>
+                    </div>
+                    <p class="mt-3 mb-0 text-muted">
+                        <small>Click a language to switch. The page will reload with new translations.</small>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Example 1: Simple String Access with Indexer -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 1: Simple String Access</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Navigation Items:</h6>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item">@L["Nav_Men"]</li>
+                        <li class="list-group-item">@L["Nav_Women"]</li>
+                        <li class="list-group-item">@L["Nav_Blog"]</li>
+                        <li class="list-group-item">@L["Nav_Contact"]</li>
+                        <li class="list-group-item">@L["Nav_FAQ"]</li>
+                    </ul>
+                    <code>@@L["Nav_Men"]</code>
+                </div>
+            </div>
+
+            <!-- Example 2: GetString Method -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 2: GetString() Method</h5>
+                </div>
+                <div class="card-body">
+                    @{
+                        var welcomeText = L.GetString("Home_Welcome");
+                        var featuredCategories = L.GetString("Home_FeaturedCategories");
+                        var featuredProducts = L.GetString("Home_FeaturedProducts");
+                    }
+                    <p><strong>Welcome:</strong> @welcomeText</p>
+                    <p><strong>Featured Categories:</strong> @featuredCategories</p>
+                    <p><strong>Featured Products:</strong> @featuredProducts</p>
+                    <code>@@L.GetString("Home_Welcome")</code>
+                </div>
+            </div>
+
+            <!-- Example 3: GetKey with Metadata -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 3: GetKey() with Metadata</h5>
+                </div>
+                <div class="card-body">
+                    @{
+                        var metaTitle = L.GetKey("Home.MetaTitle");
+                        var metaDescription = L.GetKey("Home.MetaDescription");
+                        var missingKey = L.GetKey("NonExistent.Key");
+                    }
+                    <div class="mb-3">
+                        <strong>Meta Title:</strong>
+                        <p>@metaTitle.Value</p>
+                        <small class="text-muted">Resource Not Found: @metaTitle.ResourceNotFound</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Meta Description:</strong>
+                        <p>@metaDescription.Value</p>
+                        <small class="text-muted">Resource Not Found: @metaDescription.ResourceNotFound</small>
+                    </div>
+                    <div class="alert alert-warning">
+                        <strong>Missing Key Test:</strong>
+                        <p>@missingKey.Value</p>
+                        <small class="text-danger">Resource Not Found: @missingKey.ResourceNotFound</small>
+                    </div>
+                    <code>@@L.GetKey("Home.MetaTitle")</code>
+                </div>
+            </div>
+
+            <!-- Example 4: Using in HTML Attributes -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 4: Using in HTML Attributes</h5>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <input type="text" 
+                                   class="form-control" 
+                                   placeholder="@L["Nav_Search"]"
+                                   aria-label="@L["Nav_Search"]" />
+                        </div>
+                        <div class="mb-3">
+                            <button type="button" 
+                                    class="btn btn-primary"
+                                    title="@L["Product_AddToCart"]">
+                                @L["Product_AddToCart"]
+                            </button>
+                        </div>
+                    </form>
+                    <code>&lt;input placeholder="@@L["Nav_Search"]" /&gt;</code>
+                </div>
+            </div>
+
+            <!-- Example 5: Product Card Translations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 5: Product Card Example</h5>
+                </div>
+                <div class="card-body">
+                    <div class="card" style="max-width: 300px;">
+                        <div class="card-body">
+                            <span class="badge bg-success">@L["Product_New"]</span>
+                            <span class="badge bg-danger">@L["Product_Sale"]</span>
+                            <h5 class="card-title mt-2">Sample Product</h5>
+                            <p class="card-text"><strong>@L["Product_Price"]:</strong> 199.99 PLN</p>
+                            <p class="card-text"><strong>@L["Product_Color"]:</strong> Blue</p>
+                            <p class="card-text"><strong>@L["Product_Size"]:</strong> M</p>
+                            <span class="badge bg-info">@L["Product_InStock"]</span>
+                            <button class="btn btn-primary btn-sm mt-2 w-100">
+                                @L["Product_AddToCart"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 6: Cache Invalidation -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 6: Cache Invalidation</h5>
+                </div>
+                <div class="card-body">
+                    <p>During development, you can invalidate the localization cache to reload .resx files without restarting the app.</p>
+                    <form method="post" action="/Home/InvalidateLocalizationCache">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-sync-alt"></i> Invalidate Cache & Reload Translations
+                        </button>
+                    </form>
+                    <div class="alert alert-info mt-3 mb-0">
+                        <strong>Tip:</strong> The ResourceService automatically watches for .resx file changes 
+                        and reloads them after 500ms. This button forces an immediate reload.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 7: Common UI Elements -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 7: Common UI Elements</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Account Menu:</h6>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item">@L["Account_MyAccount"]</li>
+                        <li class="list-group-item">@L["Account_Profile"]</li>
+                        <li class="list-group-item">@L["Account_Orders"]</li>
+                        <li class="list-group-item">@L["Account_Logout"]</li>
+                    </ul>
+                    
+                    <h6>Cart:</h6>
+                    <div class="alert alert-secondary">
+                        <p class="mb-2">@L["Cart_ShoppingCart"]</p>
+                        <p class="mb-2">@L["Cart_Empty"]</p>
+                        <button class="btn btn-sm btn-primary">@L["Cart_StartShopping"]</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example 8: Footer Translations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Example 8: Footer Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>@L["Footer_QuickLinks"]</h6>
+                            <ul>
+                                <li>@L["Footer_Shop"]</li>
+                                <li>@L["Footer_AllProducts"]</li>
+                                <li>@L["Footer_NewArrivals"]</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>@L["Footer_CustomerService"]</h6>
+                            <ul>
+                                <li>@L["Footer_ShippingInfo"]</li>
+                                <li>@L["Footer_Returns"]</li>
+                                <li>@L["Footer_SizeGuide"]</li>
+                                <li>@L["Footer_Contact"]</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testing Section -->
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">How to Test Live Reload</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Keep this page open in your browser</li>
+                        <li>Open <code>Resources/SharedResources.@(currentCulture).resx</code> in VS Code</li>
+                        <li>Find the key <code>Home_Welcome</code> and change its value</li>
+                        <li>Save the file</li>
+                        <li>Wait 500ms (automatic reload)</li>
+                        <li>Refresh this page - you should see the new translation!</li>
+                    </ol>
+                    <div class="alert alert-info mt-3 mb-0">
+                        <strong>Note:</strong> The FileSystemWatcher monitors the Resources folder for changes 
+                        to .resx files and automatically reloads translations.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

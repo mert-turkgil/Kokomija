@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Add HttpContextAccessor for localization service
+builder.Services.AddHttpContextAccessor();
+
 // Configure Database with Provider Pattern
 var databaseProvider = GetDatabaseProvider(builder.Configuration);
 var connectionString = databaseProvider.GetConnectionString(builder.Configuration);
@@ -61,8 +64,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Configure Localization
 var supportedCultures = builder.Configuration.GetSection("Localization:SupportedCultures").Get<string[]>() 
-    ?? new[] { "tr-TR", "en-US" };
-var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "tr-TR";
+    ?? new[] { "pl-PL", "en-US" };
+var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "pl-PL";
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -109,6 +112,9 @@ builder.Services.AddScoped<IEmailCommandService, EmailCommandService>();
 
 // Register Carousel Service (Homepage and category carousels)
 builder.Services.AddScoped<ICarouselService, CarouselService>();
+
+// Register Localization Service (Translation wrapper with logging)
+builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 
 // Add session support (required for cart, emergency access, etc.)
 builder.Services.AddSession(options =>

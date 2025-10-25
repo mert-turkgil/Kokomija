@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Kokomija.Models;
 using Kokomija.Models.ViewModels;
 using Kokomija.Data.Abstract;
+using Kokomija.Services;
 
 namespace Kokomija.Controllers;
 
@@ -12,19 +13,28 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILocalizationService _localizationService;
 
-    public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork)
+    public HomeController(
+        ILogger<HomeController> logger, 
+        IUnitOfWork unitOfWork,
+        ILocalizationService localizationService)
     {
         _logger = logger;
         _unitOfWork = unitOfWork;
+        _localizationService = localizationService;
     }
 
     public async Task<IActionResult> Index()
     {
+        // Example: Using localization service in controller
+        var welcomeMessage = _localizationService["Home.Welcome"];
+        ViewBag.WelcomeMessage = welcomeMessage;
+
         var model = new HomeIndexViewModel
         {
-            MetaTitle = "Kokomija - Premium Textile & Fashion",
-            MetaDescription = "Discover high-quality clothing and textiles. Shop men's and women's fashion with free shipping on orders over 200 PLN.",
+            MetaTitle = _localizationService["Home.MetaTitle"],
+            MetaDescription = _localizationService["Home.MetaDescription"],
             MetaKeywords = "clothing, fashion, textiles, men's clothing, women's clothing, online shop",
             CanonicalUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}"
         };
@@ -97,6 +107,14 @@ public class HomeController : Controller
         return View(model);
     }
 
+    /// <summary>
+    /// Localization example page - demonstrates all ways to use ILocalizationService
+    /// </summary>
+    public IActionResult LocalizationExample()
+    {
+        return View();
+    }
+
     [HttpGet]
     public IActionResult SetLanguage(string culture, string returnUrl)
     {
@@ -115,6 +133,40 @@ public class HomeController : Controller
         );
 
         return LocalRedirect(returnUrl ?? "/");
+    }
+
+    /// <summary>
+    /// Invalidate localization cache - useful during development
+    /// In production, you should secure this endpoint (require admin role)
+    /// </summary>
+    [HttpPost]
+    public IActionResult InvalidateLocalizationCache()
+    {
+        try
+        {
+            _localizationService.InvalidateCache();
+            _logger.LogInformation("Localization cache invalidated successfully");
+            
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, message = "Cache invalidated successfully" });
+            }
+            
+            TempData["SuccessMessage"] = "Localization cache has been invalidated and reloaded.";
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error invalidating localization cache");
+            
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "Error invalidating cache" });
+            }
+            
+            TempData["ErrorMessage"] = "Failed to invalidate cache.";
+            return RedirectToAction("Index");
+        }
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

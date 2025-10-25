@@ -1,5 +1,5 @@
 @model Kokomija.Models.ViewModels.ProductCardViewModel
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Kokomija.Resources.SharedResources> Localizer
+@inject Kokomija.Services.ILocalizationService Localizer
 
 <div class="product-card" data-product-id="@Model.Id">
     <div class="product-card-inner">
@@ -350,10 +350,18 @@
         font-weight: 700;
     }
 
+    [data-theme="dark"] .price-current {
+        color: #e2e8f0;
+    }
+
     .price-original {
         font-size: 0.9rem;
         color: #9ca3af;
         text-decoration: line-through;
+    }
+
+    [data-theme="dark"] .price-original {
+        color: #64748b;
     }
 
     .discount-badge {
