@@ -15,7 +15,7 @@ public class CartRepository : Repository<Cart>, ICartRepository
         return await _context.Carts
             .Where(c => c.UserId == userId)
             .Include(c => c.Product)
-                .ThenInclude(p => p.Images.Where(img => img.IsPrimary))
+                .ThenInclude(p => p.Images)
             .Include(c => c.Color)
             .Include(c => c.Size)
             .OrderByDescending(c => c.AddedAt)

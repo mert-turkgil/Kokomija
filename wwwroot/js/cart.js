@@ -60,6 +60,8 @@ class CartManager {
         
         const items = await this.getCartItems();
         
+        console.log('Cart items received:', items); // Debug log
+        
         if (items.length === 0) {
             this.cartPreviewItems.innerHTML = `
                 <div class="text-center py-4 text-muted">
@@ -96,7 +98,7 @@ class CartManager {
                 // For authenticated users, normalize the data structure
                 productData = {
                     productId: item.productId,
-                    name: item.productName,
+                    name: item.productName,  // API returns productName
                     price: item.price,
                     image: item.imageUrl?.replace('/img/', '') || 'logo_black.png',
                     colorId: item.colorId,
@@ -107,6 +109,7 @@ class CartManager {
                 };
             }
             
+            console.log('Processed product data:', productData); // Debug log
             return this.renderCartItem(productData);
         }));
         
@@ -123,14 +126,19 @@ class CartManager {
         if (item.sizeName) metaParts.push(item.sizeName);
         const meta = metaParts.length > 0 ? metaParts.join(' / ') : '';
         
+        // Ensure we have valid data
+        const productName = item.name || 'Product';
+        const productImage = item.image || 'logo_black.png';
+        const productPrice = item.price || 0;
+        
         return `
             <div class="cart-preview-item" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
-                <img src="/img/${item.image}" alt="${item.name}" onerror="this.src='/img/logo_black.png'">
+                <img src="/img/${productImage}" alt="${productName}" onerror="this.src='/img/logo_black.png'">
                 <div class="cart-item-details">
-                    <h6>${item.name}</h6>
+                    <h6>${productName}</h6>
                     ${meta ? `<div class="cart-item-meta">${meta}</div>` : ''}
                     <div class="cart-item-price">
-                        ${item.price ? `${item.price.toLocaleString('pl-PL', { style: 'currency', currency: 'PLN' })}` : ''}
+                        ${productPrice ? `${productPrice.toLocaleString('pl-PL', { style: 'currency', currency: 'PLN' })}` : ''}
                         ${item.quantity > 1 ? ` x ${item.quantity}` : ''}
                     </div>
                 </div>

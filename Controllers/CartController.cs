@@ -7,7 +7,6 @@ namespace Kokomija.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class CartController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -17,6 +16,7 @@ public class CartController : ControllerBase
         _unitOfWork = unitOfWork;
     }
 
+    [Authorize]
     [HttpPost("add")]
     public async Task<IActionResult> AddToCart([FromBody] CartAddRequest request)
     {
@@ -58,6 +58,7 @@ public class CartController : ControllerBase
         return Ok(new { success = true, count });
     }
 
+    [Authorize]
     [HttpPost("remove")]
     public async Task<IActionResult> RemoveFromCart([FromBody] CartRemoveRequest request)
     {
@@ -81,12 +82,13 @@ public class CartController : ControllerBase
         return Ok(new { success = true, count });
     }
 
+    [AllowAnonymous]
     [HttpGet("items")]
     public async Task<IActionResult> GetCartItems()
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
+            return Ok(new List<object>());
 
         var items = await _unitOfWork.Carts.GetByUserIdAsync(userId);
         
@@ -106,6 +108,7 @@ public class CartController : ControllerBase
         return Ok(cartItems);
     }
 
+    [Authorize]
     [HttpGet("count")]
     public async Task<IActionResult> GetCartCount()
     {
@@ -117,6 +120,7 @@ public class CartController : ControllerBase
         return Ok(new { count });
     }
 
+    [Authorize]
     [HttpPost("merge")]
     public async Task<IActionResult> MergeGuestCart([FromBody] List<GuestCartItem> guestItems)
     {

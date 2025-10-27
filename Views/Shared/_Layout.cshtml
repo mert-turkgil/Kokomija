@@ -106,12 +106,12 @@
         <nav class="navbar navbar-kokomija navbar-expand-lg navbar-sticky">
             <div class="container">
                 @{
-                    var categories = await UnitOfWork.Categories.GetNavbarCategoriesAsync();
-                    var categoryList = categories.ToList();
-                    var womenCategory = categoryList.FirstOrDefault(c => (c.Slug == "women" || c.Slug == "damskie") && c.ParentCategoryId == null && c.IsActive);
-                    var menCategory = categoryList.FirstOrDefault(c => (c.Slug == "men" || c.Slug == "meskie") && c.ParentCategoryId == null && c.IsActive);
-                    var womenSubCategories = womenCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
-                    var menSubCategories = menCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
+                    IEnumerable<Kokomija.Entity.Category>? categories = await UnitOfWork.Categories.GetNavbarCategoriesAsync();
+                    List<Kokomija.Entity.Category>? categoryList = categories.ToList();
+                    Kokomija.Entity.Category? womenCategory = categoryList.FirstOrDefault(c => (c.Slug == "women" || c.Slug == "damskie") && c.ParentCategoryId == null && c.IsActive);
+                    Kokomija.Entity.Category? menCategory = categoryList.FirstOrDefault(c => (c.Slug == "men" || c.Slug == "meskie") && c.ParentCategoryId == null && c.IsActive);
+                    IEnumerable<Kokomija.Entity.Category>? womenSubCategories = womenCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
+                    IEnumerable<Kokomija.Entity.Category>? menSubCategories = menCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
                 }
                 
                 <!-- Desktop Navigation (hidden on mobile) -->
