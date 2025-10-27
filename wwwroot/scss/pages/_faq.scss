@@ -4,8 +4,33 @@
     min-height: 100vh;
     padding-top: 2rem;
     padding-bottom: 4rem;
+    animation: fadeIn 0.6s ease-out;
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
     .faq-header {
+        animation: slideDown 0.7s ease-out;
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         h1 {
             color: #1f2937;
             font-weight: 700;
@@ -21,6 +46,19 @@
 
     // Search Bar
     .faq-search {
+        animation: scaleIn 0.8s ease-out 0.2s both;
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         .input-group {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             border-radius: 12px;
@@ -31,6 +69,7 @@
             &:focus-within {
                 border-color: #3b82f6;
                 box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+                transform: translateY(-2px);
             }
 
             .input-group-text {
@@ -39,10 +78,17 @@
                 border-right: none;
                 color: #6b7280;
                 padding: 0.75rem 1rem;
+                transition: color 0.3s ease;
 
                 i {
                     font-size: 1.25rem;
+                    transition: transform 0.3s ease;
                 }
+            }
+
+            &:focus-within .input-group-text i {
+                transform: scale(1.1);
+                color: #3b82f6;
             }
 
             .form-control {
@@ -52,6 +98,7 @@
                 font-size: 1rem;
                 background-color: white;
                 color: #1f2937;
+                transition: all 0.3s ease;
 
                 &:focus {
                     box-shadow: none;
@@ -60,6 +107,11 @@
 
                 &::placeholder {
                     color: #9ca3af;
+                    transition: opacity 0.3s ease;
+                }
+                
+                &:focus::placeholder {
+                    opacity: 0.6;
                 }
             }
         }
@@ -67,24 +119,63 @@
 
     // Category Pills
     .faq-categories {
+        animation: slideUp 0.9s ease-out 0.3s both;
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .category-pill {
             border-radius: 50px;
             padding: 0.5rem 1.25rem;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 2px solid #e5e7eb;
             background-color: white;
             color: #4b5563;
+            position: relative;
+            overflow: hidden;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 0;
+                height: 0;
+                border-radius: 50%;
+                background: rgba(59, 130, 246, 0.1);
+                transform: translate(-50%, -50%);
+                transition: width 0.6s ease, height 0.6s ease;
+            }
+
+            &:hover::before {
+                width: 300px;
+                height: 300px;
+            }
 
             i {
                 font-size: 1rem;
+                transition: transform 0.3s ease;
             }
 
             &:hover {
                 background-color: #eff6ff;
                 border-color: #3b82f6;
                 color: #3b82f6;
-                transform: translateY(-2px);
+                transform: translateY(-2px) scale(1.05);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+                
+                i {
+                    transform: rotate(5deg) scale(1.1);
+                }
             }
 
             &.active {
@@ -92,10 +183,20 @@
                 border-color: #3b82f6;
                 color: white;
                 box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+                animation: pulse 2s infinite;
+
+                @keyframes pulse {
+                    0%, 100% {
+                        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+                    }
+                    50% {
+                        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+                    }
+                }
 
                 &:hover {
                     background-color: #2563eb;
-                    transform: translateY(-2px);
+                    transform: translateY(-2px) scale(1.05);
                 }
             }
         }
@@ -106,16 +207,36 @@
         .faq-item {
             margin-bottom: 1rem;
             transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out both;
+            
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @for $i from 1 through 30 {
+                &:nth-child(#{$i}) {
+                    animation-delay: #{0.4 + ($i * 0.05)}s;
+                }
+            }
 
             .accordion-item {
                 border: 1px solid #e5e7eb;
                 background-color: white;
                 border-radius: 12px !important;
                 overflow: hidden;
-                transition: all 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
                 &:hover {
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                    transform: translateY(-3px);
+                    border-color: #3b82f6;
                 }
 
                 .accordion-header {
@@ -126,12 +247,28 @@
                         padding: 1.25rem 1.5rem;
                         background-color: white;
                         border: none;
-                        transition: all 0.3s ease;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        position: relative;
+
+                        &::before {
+                            content: '';
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            bottom: 0;
+                            width: 0;
+                            background: linear-gradient(90deg, #3b82f6, #2563eb);
+                            transition: width 0.3s ease;
+                        }
 
                         &:not(.collapsed) {
                             color: #3b82f6;
                             background-color: #eff6ff;
                             box-shadow: none;
+
+                            &::before {
+                                width: 4px;
+                            }
 
                             &::after {
                                 transform: rotate(-180deg);
@@ -145,11 +282,12 @@
 
                         &::after {
                             background-size: 1.25rem;
-                            transition: transform 0.3s ease;
+                            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                         }
 
                         &:hover {
                             background-color: #f3f4f6;
+                            padding-left: 1.75rem;
                         }
                     }
                 }
@@ -160,6 +298,18 @@
                     line-height: 1.7;
                     color: #4b5563;
                     background-color: white;
+                    animation: fadeInContent 0.4s ease-out;
+
+                    @keyframes fadeInContent {
+                        from {
+                            opacity: 0;
+                            transform: translateY(-10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
 
                     strong {
                         color: #1f2937;
@@ -170,9 +320,21 @@
                         color: #3b82f6;
                         text-decoration: none;
                         font-weight: 500;
+                        position: relative;
+                        
+                        &::after {
+                            content: '';
+                            position: absolute;
+                            bottom: -2px;
+                            left: 0;
+                            width: 0;
+                            height: 2px;
+                            background: #3b82f6;
+                            transition: width 0.3s ease;
+                        }
 
-                        &:hover {
-                            text-decoration: underline;
+                        &:hover::after {
+                            width: 100%;
                         }
                     }
                 }
@@ -182,8 +344,20 @@
 
     // No Results
     #noResults {
+        animation: fadeIn 0.5s ease-out;
+        
         i {
             color: #d1d5db;
+            animation: bounce 2s infinite;
+            
+            @keyframes bounce {
+                0%, 100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-10px);
+                }
+            }
         }
 
         h3 {
@@ -201,15 +375,32 @@
         border-top: 1px solid #e5e7eb;
         margin-top: 3rem;
         padding-top: 3rem;
+        animation: fadeIn 1.2s ease-out;
 
         .faq-help-card {
             padding: 3rem 2rem;
             background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
             border-radius: 16px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            &:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+            }
 
             i {
                 color: #3b82f6;
+                animation: float 3s ease-in-out infinite;
+                
+                @keyframes float {
+                    0%, 100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(-10px);
+                    }
+                }
             }
 
             h3 {
@@ -226,10 +417,34 @@
                 font-weight: 600;
                 border-radius: 50px;
                 transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+                
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 0;
+                    height: 0;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: translate(-50%, -50%);
+                    transition: width 0.6s ease, height 0.6s ease;
+                }
+                
+                &:hover::before {
+                    width: 300px;
+                    height: 300px;
+                }
 
                 &:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+                    transform: translateY(-2px) scale(1.05);
+                    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+                }
+                
+                &:active {
+                    transform: translateY(0) scale(0.98);
                 }
             }
         }
@@ -344,7 +559,7 @@
                     }
 
                     a {
-                        color: #60a5fa;
+                        color: #fff;
                     }
                 }
             }

@@ -77,8 +77,8 @@
                     <a asp-controller="Home" asp-action="FAQ" class="top-bar-link">
                         <i class="fas fa-question-circle me-1"></i> @L["Nav_FAQ"]
                     </a>
-                    <a asp-controller="Home" asp-action="Blog" class="top-bar-link">
-                        <i class="fas fa-info-circle me-1"></i> @L["TopBar_Info"]
+                    <a asp-controller="Blog" asp-action="Index" class="top-bar-link">
+                        <i class="fas fa-blog me-1"></i> @L["Blog_Title"]
                     </a>
                 </div>
                 
@@ -89,9 +89,9 @@
                     
                     <span class="top-bar-separator">|</span>
                     
-                    <span class="top-bar-item">
+                    <a asp-controller="Home" asp-action="Contact" class="top-bar-item text-decoration-none">
                         <i class="fas fa-envelope me-1"></i> kontakt@kokomija.com
-                    </span>
+                    </a>
                     <span class="top-bar-separator">|</span>
                     <span class="top-bar-item text-success">
                         <i class="fas fa-truck me-1"></i> @L.GetString(key: "TopBar_FreeShipping")
@@ -422,6 +422,7 @@
                     <ul class="footer-links">
                         <li><a asp-controller="Home" asp-action="Index">@L["TopBar_Home"]</a></li>
                         <li><a asp-controller="Product" asp-action="Index">@L["Footer_Shop"]</a></li>
+                        <li><a asp-controller="Blog" asp-action="Index">@L["Blog_Title"]</a></li>
                         <li><a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a></li>
                         <li><a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a></li>
                     </ul>
@@ -431,8 +432,8 @@
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-title">@L["Footer_Categories"]</h5>
                     <ul class="footer-links">
-                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="damskie">@L["Nav_Women"]</a></li>
-                        <li><a asp-controller="Product" asp-action="Index" asp-route-category="meskie">@L["Nav_Men"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Category" asp-route-slug="damskie">@L["Nav_Women"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Category" asp-route-slug="meskie">@L["Nav_Men"]</a></li>
                         <li><a asp-controller="Product" asp-action="Index">@L["Footer_AllProducts"]</a></li>
                         <li><a asp-controller="Home" asp-action="Index">@L["Footer_NewArrivals"]</a></li>
                     </ul>
@@ -455,8 +456,12 @@
                     <h5 class="footer-title">@L["Footer_Contact"]</h5>
                     <ul class="footer-links">
                         <li><i class="fas fa-phone me-2"></i> +48 123 456 789</li>
-                        <li><i class="fas fa-envelope me-2"></i> kontakt@kokomija.com</li>
-                        <li><i class="fas fa-map-marker-alt me-2"></i> Warsaw, Poland</li>
+                        <li>
+                            <a asp-controller="Home" asp-action="Contact" class="text-decoration-none">
+                                <i class="fas fa-envelope me-2"></i> kontakt@kokomija.com
+                            </a>
+                        </li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Kraków, Poland</li>
                     </ul>
                 </div>
             </div>

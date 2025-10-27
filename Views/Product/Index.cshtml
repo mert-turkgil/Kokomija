@@ -1,0 +1,355 @@
+@model IEnumerable<Kokomija.Entity.Product>
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = ViewBag.Category != null 
+        ? ViewBag.Category.Name 
+        : (ViewBag.SearchQuery != null ? $"Search Results: {ViewBag.SearchQuery}" : "All Products");
+}
+
+<div class="products-page">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="products-header mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="products-title">
+                        @if (ViewBag.Category != null)
+                        {
+                            @ViewBag.Category.Name
+                        }
+                        else if (ViewBag.SearchQuery != null)
+                        {
+                            <span>Search Results: "@ViewBag.SearchQuery"</span>
+                        }
+                        else
+                        {
+                            <span>All Products</span>
+                        }
+                    </h1>
+                    <p class="products-count">@Model.Count() items found</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <button class="btn btn-outline-primary" id="filterToggle">
+                        <i class="bi bi-funnel me-2"></i>Filters
+                    </button>
+                    <div class="btn-group ms-2" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="gridView">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="listView">
+                            <i class="bi bi-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Filter Sidebar -->
+            <div class="col-lg-3 filter-sidebar" id="filterSidebar">
+                <div class="filter-card">
+                    <div class="filter-header">
+                        <h5>Filter By</h5>
+                        <button class="btn btn-link btn-sm text-danger" id="clearFilters">Clear All</button>
+                    </div>
+
+                    <!-- Categories Filter -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">
+                            <i class="bi bi-tag me-2"></i>Categories
+                        </h6>
+                        <div id="categoryFilters" class="filter-options">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Price Range Filter -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">
+                            <i class="bi bi-currency-dollar me-2"></i>Price Range
+                        </h6>
+                        <div class="price-filter">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" id="minPrice" placeholder="Min">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" id="maxPrice" placeholder="Max">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100 mt-2" id="applyPriceFilter">Apply</button>
+                        </div>
+                    </div>
+
+                    <!-- Colors Filter -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">
+                            <i class="bi bi-palette me-2"></i>Colors
+                        </h6>
+                        <div id="colorFilters" class="filter-options color-options">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Sizes Filter -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">
+                            <i class="bi bi-rulers me-2"></i>Sizes
+                        </h6>
+                        <div id="sizeFilters" class="filter-options size-options">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Sort Options -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">
+                            <i class="bi bi-sort-down me-2"></i>Sort By
+                        </h6>
+                        <select class="form-select form-select-sm" id="sortBy">
+                            <option value="newest">Newest First</option>
+                            <option value="price-asc">Price: Low to High</option>
+                            <option value="price-desc">Price: High to Low</option>
+                            <option value="name-asc">Name: A-Z</option>
+                            <option value="name-desc">Name: Z-A</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="col-lg-9 products-container">
+                @if (!Model.Any())
+                {
+                    <div class="no-products">
+                        <i class="bi bi-inbox display-1"></i>
+                        <h3>No Products Found</h3>
+                        <p>Try adjusting your filters or search criteria.</p>
+                        <a asp-action="Index" class="btn btn-primary">View All Products</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="products-grid row g-4" id="productsGrid">
+                        @foreach (var product in Model)
+                        {
+                            <div class="col-md-6 col-lg-4" 
+                                 data-category="@product.CategoryId" 
+                                 data-price="@product.Price"
+                                 data-name="@product.Name"
+                                 data-created="@product.CreatedAt.Ticks">
+                                @await Component.InvokeAsync("ProductCard", new { productId = product.Id })
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load filter options
+            loadCategories();
+            loadColors();
+            loadSizes();
+
+            // Filter toggle
+            $('#filterToggle').click(function() {
+                $('#filterSidebar').toggleClass('show');
+            });
+
+            // View toggle
+            $('#gridView').click(function() {
+                $('#productsGrid').removeClass('row-cols-1').addClass('row');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            $('#listView').click(function() {
+                $('#productsGrid').removeClass('row').addClass('row-cols-1');
+                $(this).addClass('active').siblings().removeClass('active');
+            });
+
+            // Filter logic
+            function applyFilters() {
+                const selectedCategories = $('input[name="category"]:checked').map(function() {
+                    return parseInt($(this).val());
+                }).get();
+
+                const minPrice = parseFloat($('#minPrice').val()) || 0;
+                const maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
+                const sortBy = $('#sortBy').val();
+
+                let $products = $('#productsGrid > div');
+                let visibleCount = 0;
+
+                $products.each(function() {
+                    const $product = $(this);
+                    const productCategory = parseInt($product.data('category'));
+                    const productPrice = parseFloat($product.data('price'));
+                    
+                    let showProduct = true;
+
+                    // Filter by category
+                    if (selectedCategories.length > 0) {
+                        if (!selectedCategories.includes(productCategory)) {
+                            showProduct = false;
+                        }
+                    }
+
+                    // Filter by price
+                    if (productPrice < minPrice || productPrice > maxPrice) {
+                        showProduct = false;
+                    }
+
+                    if (showProduct) {
+                        $product.show();
+                        visibleCount++;
+                    } else {
+                        $product.hide();
+                    }
+                });
+
+                // Sort products
+                if (sortBy && sortBy !== 'newest') {
+                    sortProducts(sortBy);
+                }
+
+                // Update count
+                $('.products-count').text(visibleCount + ' @L["Products_ItemsFound"]');
+
+                // Show/hide no products message
+                if (visibleCount === 0) {
+                    if ($('.no-products-filter').length === 0) {
+                        $('#productsGrid').after('<div class="no-products no-products-filter"><i class="bi bi-inbox display-1"></i><h3>No Products Found</h3><p>Try adjusting your filters.</p></div>');
+                    }
+                } else {
+                    $('.no-products-filter').remove();
+                }
+
+                // Scroll to products section smoothly
+                $('html, body').animate({
+                    scrollTop: $('.products-header').offset().top - 100
+                }, 400);
+            }
+
+            function sortProducts(sortBy) {
+                const $container = $('#productsGrid');
+                const $products = $container.children('div').get();
+
+                $products.sort(function(a, b) {
+                    const $a = $(a);
+                    const $b = $(b);
+
+                    switch(sortBy) {
+                        case 'price-asc':
+                            return $a.data('price') - $b.data('price');
+                        case 'price-desc':
+                            return $b.data('price') - $a.data('price');
+                        case 'name-asc':
+                            return $a.data('name').toString().localeCompare($b.data('name').toString());
+                        case 'name-desc':
+                            return $b.data('name').toString().localeCompare($a.data('name').toString());
+                        case 'newest':
+                            return $b.data('created') - $a.data('created');
+                        default:
+                            return 0;
+                    }
+                });
+
+                $.each($products, function(idx, item) {
+                    $container.append(item);
+                });
+            }
+
+            // Event listeners
+            $(document).on('change', 'input[name="category"], #sortBy', applyFilters);
+            $('#applyPriceFilter').click(applyFilters);
+
+            $('#clearFilters').click(function() {
+                $('input[type="checkbox"]').prop('checked', false);
+                $('#minPrice, #maxPrice').val('');
+                $('#sortBy').val('newest');
+                $('#productsGrid > div').show();
+                $('.products-count').text($('#productsGrid > div').length + ' @L["Products_ItemsFound"]');
+                $('.no-products-filter').remove();
+                
+                // Scroll to top of products
+                $('html, body').animate({
+                    scrollTop: $('.products-header').offset().top - 100
+                }, 400);
+            });
+
+            // Load categories
+            function loadCategories() {
+                $.get('/Product/GetCategories', function(data) {
+                    // Group categories by parent
+                    const grouped = {};
+                    data.forEach(cat => {
+                        const parent = cat.parentName || 'Other';
+                        if (!grouped[parent]) {
+                            grouped[parent] = [];
+                        }
+                        grouped[parent].push(cat);
+                    });
+
+                    let html = '';
+                    Object.keys(grouped).sort().forEach(parentName => {
+                        html += `<div class="category-group mb-3">`;
+                        html += `<div class="category-group-title">${parentName}</div>`;
+                        grouped[parentName].forEach(cat => {
+                            html += `
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="category" value="${cat.id}" id="cat${cat.id}">
+                                    <label class="form-check-label" for="cat${cat.id}">
+                                        ${cat.name}
+                                    </label>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    });
+                    
+                    $('#categoryFilters').html(html);
+                }).fail(function() {
+                    console.error('Failed to load categories');
+                });
+            }
+
+            // Load colors
+            function loadColors() {
+                $.get('/Product/GetColors', function(data) {
+                    const html = data.map(color => `
+                        <div class="color-option">
+                            <input type="checkbox" name="color" value="${color.id}" id="color${color.id}" class="color-checkbox">
+                            <label for="color${color.id}" class="color-label" title="${color.displayName}">
+                                <span class="color-swatch" style="background-color: ${color.hexCode}"></span>
+                                <span class="color-name">${color.displayName}</span>
+                            </label>
+                        </div>
+                    `).join('');
+                    $('#colorFilters').html(html);
+                }).fail(function() {
+                    console.error('Failed to load colors');
+                });
+            }
+
+            // Load sizes
+            function loadSizes() {
+                $.get('/Product/GetSizes', function(data) {
+                    const html = data.map(size => `
+                        <button type="button" class="size-btn" data-size="${size.id}">
+                            ${size.displayName}
+                        </button>
+                    `).join('');
+                    $('#sizeFilters').html(html);
+                }).fail(function() {
+                    console.error('Failed to load sizes');
+                });
+            }
+        });
+    </script>
+}

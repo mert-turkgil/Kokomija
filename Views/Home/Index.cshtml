@@ -14,13 +14,31 @@
 <!-- Hero Banner -->
 @if (Model.HeroAd != null)
 {
-    <section class="py-5" style="background: linear-gradient(135deg, @Model.HeroAd.BackgroundColor 0%, #1a4057 100%);">
+    <section class="hero-banner py-5" style="background: linear-gradient(135deg, @Model.HeroAd.BackgroundColor 0%, #1a4057 100%);">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-lg-6 text-white">
+                <div class="col-lg-7 text-white">
                     <h1 class="display-4 fw-bold mb-3">@Model.HeroAd.Title</h1>
                     <p class="lead mb-4">@Model.HeroAd.Subtitle</p>
-                    <a href="@Model.HeroAd.ButtonUrl" class="btn btn-light btn-lg px-5 py-3">
+                    
+                    <!-- Search Form -->
+                    <div class="hero-search-form mb-4">
+                        <form asp-controller="Product" asp-action="Search" method="get" class="d-flex">
+                            <div class="input-group input-group-lg shadow-lg">
+                                <input type="text" 
+                                       name="q" 
+                                       class="form-control" 
+                                       placeholder="@L["Home_SearchPlaceholder"]"
+                                       aria-label="@L["Home_SearchProducts"]"
+                                       required>
+                                <button class="btn btn-light px-4" type="submit">
+                                    <i class="bi bi-search me-2"></i>@L["Home_Search"]
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <a asp-controller="Product" asp-action="Category" asp-route-slug="@Model.HeroAd.ButtonUrl" class="btn btn-light btn-lg px-5 py-3">
                         @Model.HeroAd.ButtonText <i class="fas fa-arrow-right ms-2"></i>
                     </a>
                 </div>
@@ -34,33 +52,51 @@
 {
     <section class="py-5 categories-section">
         <div class="container">
-            <h2 class="text-center mb-5">@L["Home_FeaturedCategories"]</h2>
+            <h2 class="text-center mb-5">@L["Home_ShopByCategory"]</h2>
             <div class="row g-4">
-                @for (int i = 0; i < Model.FeaturedCategories.Count; i++)
+                @foreach (var category in Model.FeaturedCategories)
                 {
-                    var category = Model.FeaturedCategories.ElementAt(i);
-                    var gradientClass = $"category-gradient-{(i % 3) + 1}";
-                    
-                    <div class="col-md-4">
-                        <a href="/products?category=@category.Slug" class="text-decoration-none">
-                            <div class="card category-card h-100 shadow-sm overflow-hidden @gradientClass">
+                    <div class="col-lg-6">
+                        <div class="category-group-card">
+                            <div class="category-group-header">
                                 @if (!string.IsNullOrEmpty(category.ImageUrl))
                                 {
-                                    <div class="category-image-container">
-                                        <img src="/img/@category.ImageUrl" class="card-img-top category-image" alt="@category.Name" onerror="this.style.display='none'; this.parentElement.classList.add('no-image');">
-                                    </div>
+                                    <img src="~/img/@category.ImageUrl" class="category-group-image" alt="@(!string.IsNullOrEmpty(category.NameKey) ? L[category.NameKey] : category.Name)">
                                 }
                                 else
                                 {
-                                    <div class="category-image-container no-image">
-                                        <img src="/img/logo_black.png" class="category-logo" alt="Kokomija">
+                                    <div class="category-group-image-placeholder">
+                                        <i class="@(category.IconCssClass ?? "bi bi-tag-fill")"></i>
                                     </div>
                                 }
-                                <div class="card-body text-center p-4">
-                                    <h3 class="h5 category-title">@category.Name</h3>
-                                </div>
+                                <h3 class="category-group-title">@(!string.IsNullOrEmpty(category.NameKey) ? L[category.NameKey] : category.Name)</h3>
                             </div>
-                        </a>
+                            
+                            @if (category.SubCategories.Any())
+                            {
+                                <div class="category-subcategories">
+                                    @foreach (var subcat in category.SubCategories.Where(s => s.IsActive).OrderBy(s => s.DisplayOrder))
+                                    {
+                                        <a asp-controller="Product" asp-action="Category" asp-route-slug="@subcat.Slug" class="subcategory-link">
+                                            @if (!string.IsNullOrEmpty(subcat.IconCssClass))
+                                            {
+                                                <i class="@subcat.IconCssClass me-2"></i>
+                                            }
+                                            @(!string.IsNullOrEmpty(subcat.NameKey) ? L[subcat.NameKey] : subcat.Name)
+                                            <i class="bi bi-arrow-right ms-auto"></i>
+                                        </a>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-3">
+                                    <a asp-controller="Product" asp-action="Category" asp-route-slug="@category.Slug" class="btn btn-outline-primary">
+                                        @L["Home_ViewAllProducts"]
+                                    </a>
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
             </div>

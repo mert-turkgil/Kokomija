@@ -1,0 +1,274 @@
+@model Kokomija.Models.ViewModels.Blog.BlogDetailsViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+@section Meta {
+    <meta name="description" content="@Model.MetaDescription">
+    <meta name="keywords" content="@Model.MetaKeywords">
+    <meta name="author" content="@Model.AuthorName">
+    <link rel="canonical" href="@Model.CanonicalUrl">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="@Model.CanonicalUrl">
+    <meta property="og:title" content="@Model.Title">
+    <meta property="og:description" content="@Model.MetaDescription">
+    @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+    {
+        <meta property="og:image" content="@Model.FeaturedImage">
+    }
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="@Model.CanonicalUrl">
+    <meta property="twitter:title" content="@Model.Title">
+    <meta property="twitter:description" content="@Model.MetaDescription">
+    @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+    {
+        <meta property="twitter:image" content="@Model.FeaturedImage">
+    }
+}
+
+<div class="blog-details-page">
+    <!-- Article Header -->
+    <article class="blog-article">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-8">
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
+                            <li class="breadcrumb-item"><a asp-controller="Blog" asp-action="Index">@L["Blog_Title"]</a></li>
+                            <li class="breadcrumb-item"><a asp-action="Index" asp-route-categoryId="@Model.CategoryId">@Model.CategoryName</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Article Meta -->
+                    <div class="article-meta mb-4">
+                        <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="category-badge-large">
+                            @Model.CategoryName
+                        </a>
+                    </div>
+
+                    <!-- Article Title -->
+                    <h1 class="article-title">@Model.Title</h1>
+
+                    <!-- Article Info -->
+                    <div class="article-info">
+                        <div class="author-info">
+                            <div class="author-avatar">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div class="author-details">
+                                <div class="author-name">@Model.AuthorName</div>
+                                <div class="article-date">
+                                    <i class="bi bi-calendar3"></i>
+                                    @Model.PublishedDate?.ToString("MMMM dd, yyyy")
+                                    @if (Model.UpdatedAt > Model.PublishedDate)
+                                    {
+                                        <span class="text-muted ms-2">
+                                            (@L["Blog_Updated"]: @Model.UpdatedAt.ToString("MMM dd, yyyy"))
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="article-stats">
+                            <span class="stat-item">
+                                <i class="bi bi-clock"></i>
+                                @Model.ReadingTimeMinutes @L["Blog_MinRead"]
+                            </span>
+                            <span class="stat-item">
+                                <i class="bi bi-eye"></i>
+                                @Model.Views @L["Blog_Views"]
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Featured Image -->
+                    @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+                    {
+                        <div class="article-featured-image">
+                            <img src="@Model.FeaturedImage" alt="@Model.Title">
+                        </div>
+                    }
+
+                    <!-- Article Content -->
+                    <div class="article-content">
+                        @Html.Raw(Model.Content)
+                    </div>
+
+                    <!-- Article Tags -->
+                    @if (Model.Tags.Any())
+                    {
+                        <div class="article-tags">
+                            <h5 class="tags-title">@L["Blog_Tags"]:</h5>
+                            <div class="tags-list">
+                                @foreach (var tag in Model.Tags)
+                                {
+                                    <a asp-action="Tag" asp-route-tag="@tag" class="tag-badge">#@tag</a>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Share Buttons -->
+                    <div class="article-share">
+                        <h5 class="share-title">@L["Blog_Share"]:</h5>
+                        <div class="share-buttons">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(Model.CanonicalUrl)" 
+                               target="_blank" 
+                               class="share-btn share-facebook"
+                               title="@L["Blog_ShareFacebook"]">
+                                <i class="bi bi-facebook"></i>
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(Model.CanonicalUrl)&text=@Uri.EscapeDataString(Model.Title)" 
+                               target="_blank" 
+                               class="share-btn share-twitter"
+                               title="@L["Blog_ShareTwitter"]">
+                                <i class="bi bi-twitter"></i>
+                            </a>
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url=@Uri.EscapeDataString(Model.CanonicalUrl)&title=@Uri.EscapeDataString(Model.Title)" 
+                               target="_blank" 
+                               class="share-btn share-linkedin"
+                               title="@L["Blog_ShareLinkedIn"]">
+                                <i class="bi bi-linkedin"></i>
+                            </a>
+                            <a href="https://pinterest.com/pin/create/button/?url=@Uri.EscapeDataString(Model.CanonicalUrl)&description=@Uri.EscapeDataString(Model.Title)" 
+                               target="_blank" 
+                               class="share-btn share-pinterest"
+                               title="@L["Blog_SharePinterest"]">
+                                <i class="bi bi-pinterest"></i>
+                            </a>
+                            <button class="share-btn share-copy" 
+                                    onclick="copyToClipboard('@Model.CanonicalUrl')"
+                                    title="@L["Blog_CopyLink"]">
+                                <i class="bi bi-link-45deg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Author Bio -->
+                    <div class="author-bio-section">
+                        <div class="author-bio-card">
+                            <div class="author-avatar-large">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <div class="author-bio-content">
+                                <h4 class="author-bio-name">@Model.AuthorName</h4>
+                                <p class="author-bio-description">
+                                    @(Model.AuthorBio ?? L["Blog_AuthorDefaultBio"])
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Related Product -->
+                    @if (Model.RelatedProduct != null)
+                    {
+                        <div class="related-product-section">
+                            <h3 class="section-title">@L["Blog_FeaturedProduct"]</h3>
+                            <div class="related-product-card">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        @if (Model.RelatedProduct.Images.Any())
+                                        {
+                                            <img src="@Model.RelatedProduct.Images.First().ImageUrl" 
+                                                 alt="@Model.RelatedProduct.Name" 
+                                                 class="product-image">
+                                        }
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h4 class="product-name">@Model.RelatedProduct.Name</h4>
+                                        <p class="product-description">@Model.RelatedProduct.Description</p>
+                                        <div class="product-price">
+                                            @Model.RelatedProduct.Price.ToString("C")
+                                        </div>
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.RelatedProduct.Id" 
+                                           class="btn btn-primary mt-3">
+                                            @L["Blog_ViewProduct"] <i class="bi bi-arrow-right ms-2"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Related Posts -->
+    @if (Model.RelatedPosts.Any())
+    {
+        <section class="related-posts-section">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 col-xl-8">
+                        <h3 class="section-title text-center mb-5">@L["Blog_RelatedPosts"]</h3>
+                        <div class="row g-4">
+                            @foreach (var post in Model.RelatedPosts)
+                            {
+                                <div class="col-md-4">
+                                    <article class="related-post-card">
+                                        @if (!string.IsNullOrEmpty(post.FeaturedImage))
+                                        {
+                                            <a asp-action="Details" asp-route-slug="@post.Slug" class="related-post-image">
+                                                <img src="@post.FeaturedImage" alt="@post.Title">
+                                            </a>
+                                        }
+                                        <div class="related-post-body">
+                                            <div class="post-category-small">@post.CategoryName</div>
+                                            <h5 class="related-post-title">
+                                                <a asp-action="Details" asp-route-slug="@post.Slug">@post.Title</a>
+                                            </h5>
+                                            <p class="related-post-excerpt">@post.Excerpt</p>
+                                            <div class="related-post-meta">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    @post.PublishedDate?.ToString("MMM dd")
+                                                </span>
+                                                <span class="text-muted">
+                                                    <i class="bi bi-clock"></i>
+                                                    @post.ReadingTimeMinutes @L["Blog_Min"]
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- Back to Blog Button -->
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8 text-center">
+                <a asp-action="Index" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-arrow-left me-2"></i> @L["Blog_BackToBlog"]
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('@L["Blog_LinkCopied"]');
+            }, function() {
+                alert('@L["Blog_CopyFailed"]');
+            });
+        }
+    </script>
+}

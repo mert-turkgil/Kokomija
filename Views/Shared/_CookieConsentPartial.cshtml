@@ -40,7 +40,7 @@
                             <input type="checkbox" id="cookie-essential" checked disabled>
                             <strong>@Localizer["CookieCategory.Essential"]</strong>
                         </label>
-                        <span class="cookie-required">(Wymagane)</span>
+                        <span class="cookie-required">(@Localizer["Required"])</span>
                     </div>
                     <p class="cookie-category-description">@Localizer["CookieCategory.EssentialDesc"]</p>
                 </div>
@@ -77,10 +77,10 @@
             </div>
             <div class="cookie-settings-footer">
                 <button type="button" class="btn btn-primary" onclick="saveCustomCookieConsent()">
-                    Zapisz preferencje
+                    @Localizer["SavePreferences"]
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="hideCookieSettings()">
-                    Anuluj
+                    @Localizer["Cancel"]
                 </button>
             </div>
         </div>

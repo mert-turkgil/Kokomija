@@ -20,6 +20,8 @@ namespace Kokomija.Data.Abstract
         ICarouselSlideRepository CarouselSlides { get; }
         IWishlistRepository Wishlists { get; }
         ICartRepository Carts { get; }
+        IBlogRepository Blogs { get; }
+        IBlogCategoryRepository BlogCategories { get; }
         IRepository<T> Repository<T>() where T : class;
         
         Task<int> SaveChangesAsync();

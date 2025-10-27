@@ -11,11 +11,16 @@ namespace Kokomija.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<ProductController> _logger;
+        private readonly Kokomija.Services.ILocalizationService _localizationService;
 
-        public ProductController(IUnitOfWork unitOfWork, ILogger<ProductController> logger)
+        public ProductController(
+            IUnitOfWork unitOfWork, 
+            ILogger<ProductController> logger,
+            Kokomija.Services.ILocalizationService localizationService)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _localizationService = localizationService;
         }
 
         // GET: Product
@@ -177,6 +182,48 @@ namespace Kokomija.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving sizes");
+                return BadRequest();
+            }
+        }
+
+        // Example: Get categories for filtering (AJAX endpoint)
+        [HttpGet]
+        public async Task<IActionResult> GetCategories()
+        {
+            try
+            {
+                #pragma warning disable CS8604 // ToListAsync never returns null
+                var categories = await _unitOfWork.Categories.GetAllAsync(c => c.ParentCategory!) ?? Enumerable.Empty<Kokomija.Entity.Category>();
+                #pragma warning restore CS8604
+                
+                if (!categories.Any())
+                {
+                    return Json(Array.Empty<object>());
+                }
+                
+                // Only show subcategories (actual product categories like Shorts, T-Shirts)
+                // Filter out parent categories (Male, Female) by checking if they have a ParentCategoryId
+                var result = categories
+                    .Where(c => c.ParentCategoryId.HasValue && c.IsActive)
+                    .OrderBy(c => c.ParentCategory != null ? c.ParentCategory.DisplayOrder : 0)
+                    .ThenBy(c => c.DisplayOrder)
+                    .Select(c => new
+                    {
+                        id = c.Id,
+                        name = !string.IsNullOrEmpty(c.NameKey) ? _localizationService[c.NameKey] : c.Name,
+                        slug = c.Slug,
+                        parentId = c.ParentCategoryId,
+                        parentName = c.ParentCategory != null && !string.IsNullOrEmpty(c.ParentCategory.NameKey) 
+                            ? _localizationService[c.ParentCategory.NameKey] 
+                            : (c.ParentCategory?.Name ?? "Other")
+                    })
+                    .ToList();
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving categories");
                 return BadRequest();
             }
         }

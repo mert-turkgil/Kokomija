@@ -39,10 +39,10 @@ public class HomeController : Controller
             CanonicalUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}"
         };
 
-        // Get featured categories (top-level only, active)
-        var allCategories = await _unitOfWork.Categories.GetAllAsync();
+        // Get featured categories with subcategories
+        var allCategories = await _unitOfWork.Categories.GetAllAsync(c => c.SubCategories);
         model.FeaturedCategories = allCategories
-            .Where(c => c.IsActive && c.ParentCategoryId == null)
+            .Where(c => c.IsActive && c.ParentCategoryId == null && c.ShowInNavbar)
             .OrderBy(c => c.DisplayOrder)
             .Take(6)
             .ToList();
@@ -89,12 +89,17 @@ public class HomeController : Controller
         return View(model);
     }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
-    public IActionResult FAQ()
+        public IActionResult Privacy()
+        {
+            var model = new PrivacyViewModel
+            {
+                MetaTitle = _localizationService.GetString("Privacy_MetaTitle"),
+                MetaDescription = _localizationService.GetString("Privacy_MetaDescription"),
+                MetaKeywords = _localizationService.GetString("Privacy_MetaKeywords"),
+                CanonicalUrl = Url.Action("Privacy", "Home", null, Request.Scheme) ?? string.Empty
+            };
+            return View(model);
+        }    public IActionResult FAQ()
     {
         var model = new FAQViewModel
         {
@@ -105,6 +110,46 @@ public class HomeController : Controller
         };
 
         return View(model);
+    }
+
+    public IActionResult Contact()
+    {
+        var model = new ContactViewModel
+        {
+            MetaTitle = "Contact Us - Kokomija",
+            MetaDescription = "Get in touch with Kokomija. Contact us for any questions about our products, orders, or services.",
+            MetaKeywords = "contact, customer service, support, kokomija",
+            CanonicalUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}"
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Contact(ContactViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        try
+        {
+            // Here you would typically send an email or save to database
+            // For now, we'll just log it and show a success message
+            _logger.LogInformation("Contact form submitted: {Name} - {Email} - {Subject}", 
+                model.Name, model.Email, model.Subject);
+
+            TempData["SuccessMessage"] = _localizationService["Contact_SuccessMessage"];
+            return RedirectToAction(nameof(Contact));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing contact form");
+            ModelState.AddModelError("", _localizationService["Contact_ErrorMessage"]);
+            return View(model);
+        }
     }
 
     /// <summary>

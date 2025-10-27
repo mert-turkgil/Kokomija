@@ -118,6 +118,15 @@
     <value>Umożliwiają stronie zapamiętanie wyborów użytkownika, takich jak język lub region.</value>
     <comment>Preferences cookies description</comment>
   </data>
+  <data name="Required" xml:space="preserve">
+    <value>Wymagane</value>
+  </data>
+  <data name="SavePreferences" xml:space="preserve">
+    <value>Zapisz preferencje</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
   
   <!-- Common UI Elements (Examples - not filled yet) -->
   <data name="Common.Home" xml:space="preserve">
@@ -204,14 +213,29 @@
   <data name="Home_FeaturedCategories" xml:space="preserve">
     <value>Popularne Kategorie</value>
   </data>
+  <data name="Home_ShopByCategory" xml:space="preserve">
+    <value>Kup według kategorii</value>
+  </data>
   <data name="Home_FeaturedProducts" xml:space="preserve">
     <value>Polecane Produkty</value>
   </data>
   <data name="Home_ViewAll" xml:space="preserve">
     <value>Zobacz wszystkie</value>
   </data>
+  <data name="Home_ViewAllProducts" xml:space="preserve">
+    <value>Zobacz wszystkie produkty</value>
+  </data>
   <data name="Home_ShopNow" xml:space="preserve">
     <value>Kup teraz</value>
+  </data>
+  <data name="Home_Search" xml:space="preserve">
+    <value>Szukaj</value>
+  </data>
+  <data name="Home_SearchProducts" xml:space="preserve">
+    <value>Szukaj produktów</value>
+  </data>
+  <data name="Home_SearchPlaceholder" xml:space="preserve">
+    <value>Szukaj odzieży, akcesoriów...</value>
   </data>
   
   <!-- Products -->
@@ -242,6 +266,9 @@
   <data name="Product_Quantity" xml:space="preserve">
     <value>Ilość</value>
   </data>
+  <data name="Products_ItemsFound" xml:space="preserve">
+    <value>znalezionych przedmiotów</value>
+  </data>
   
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
@@ -250,20 +277,35 @@
   <data name="Category_Women" xml:space="preserve">
     <value>Damskie</value>
   </data>
-  <data name="Category_Shirts" xml:space="preserve">
-    <value>Koszule</value>
+  <data name="Category_Outerwear" xml:space="preserve">
+    <value>Odzież Wierzchnia</value>
   </data>
-  <data name="Category_Pants" xml:space="preserve">
-    <value>Spodnie</value>
+  <data name="Category_Accessories" xml:space="preserve">
+    <value>Akcesoria</value>
   </data>
   <data name="Category_Dresses" xml:space="preserve">
     <value>Sukienki</value>
   </data>
-  <data name="Category_Outerwear" xml:space="preserve">
-    <value>Odzież wierzchnia</value>
+  <data name="Category_Skirts" xml:space="preserve">
+    <value>Spódnice</value>
   </data>
-  <data name="Category_Accessories" xml:space="preserve">
-    <value>Akcesoria</value>
+  <data name="Category_Blouses" xml:space="preserve">
+    <value>Bluzki</value>
+  </data>
+  <data name="Category_WomenPants" xml:space="preserve">
+    <value>Spodnie</value>
+  </data>
+  <data name="Category_Shirts" xml:space="preserve">
+    <value>Koszule</value>
+  </data>
+  <data name="Category_MenPants" xml:space="preserve">
+    <value>Spodnie</value>
+  </data>
+  <data name="Category_TShirts" xml:space="preserve">
+    <value>T-Shirty</value>
+  </data>
+  <data name="Category_Sweatshirts" xml:space="preserve">
+    <value>Bluzy</value>
   </data>
   
   <!-- Common -->
@@ -615,5 +657,199 @@
   </data>
   <data name="FAQ_Q22_Answer" xml:space="preserve">
     <value>Każda strona produktu zawiera szczegółowy przewodnik po rozmiarach z wymiarami. Zalecamy zmierzenie się i porównanie z naszymi tabelami rozmiarów. Jeśli jesteś pomiędzy rozmiarami, sugerujemy zamówienie większego rozmiaru dla komfortu.</value>
+  </data>
+  
+  <!-- Strona Kontaktowa -->
+  <data name="Contact_Title" xml:space="preserve">
+    <value>Skontaktuj się z nami</value>
+  </data>
+  <data name="Contact_Subtitle" xml:space="preserve">
+    <value>Skontaktuj się z nami w przypadku jakichkolwiek pytań lub zapytań</value>
+  </data>
+  <data name="Contact_GetInTouch" xml:space="preserve">
+    <value>Skontaktuj się z nami</value>
+  </data>
+  <data name="Contact_Address" xml:space="preserve">
+    <value>Adres</value>
+  </data>
+  <data name="Contact_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Contact_Phone" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+  <data name="Contact_Hours" xml:space="preserve">
+    <value>Godziny otwarcia</value>
+  </data>
+  <data name="Contact_Hours_Weekdays" xml:space="preserve">
+    <value>Pon - Pt: 9:00 - 18:00</value>
+  </data>
+  <data name="Contact_Hours_Weekend" xml:space="preserve">
+    <value>Sob - Ndz: 10:00 - 16:00</value>
+  </data>
+  <data name="Contact_FollowUs" xml:space="preserve">
+    <value>Śledź nas</value>
+  </data>
+  <data name="Contact_SendMessage" xml:space="preserve">
+    <value>Wyślij nam wiadomość</value>
+  </data>
+  <data name="Contact_Form_Name" xml:space="preserve">
+    <value>Imię i nazwisko</value>
+  </data>
+  <data name="Contact_Form_Name_Placeholder" xml:space="preserve">
+    <value>Wpisz swoje imię i nazwisko</value>
+  </data>
+  <data name="Contact_Form_Email" xml:space="preserve">
+    <value>Adres email</value>
+  </data>
+  <data name="Contact_Form_Email_Placeholder" xml:space="preserve">
+    <value>twoj.email@example.com</value>
+  </data>
+  <data name="Contact_Form_Phone" xml:space="preserve">
+    <value>Numer telefonu (opcjonalnie)</value>
+  </data>
+  <data name="Contact_Form_Phone_Placeholder" xml:space="preserve">
+    <value>+48 123 456 789</value>
+  </data>
+  <data name="Contact_Form_Subject" xml:space="preserve">
+    <value>Temat</value>
+  </data>
+  <data name="Contact_Form_Subject_Placeholder" xml:space="preserve">
+    <value>W czym możemy pomóc?</value>
+  </data>
+  <data name="Contact_Form_Message" xml:space="preserve">
+    <value>Wiadomość</value>
+  </data>
+  <data name="Contact_Form_Message_Placeholder" xml:space="preserve">
+    <value>Napisz swoją wiadomość tutaj...</value>
+  </data>
+  <data name="Contact_Form_Submit" xml:space="preserve">
+    <value>Wyślij wiadomość</value>
+  </data>
+  <data name="Contact_FindUs" xml:space="preserve">
+    <value>Znajdź nas na mapie</value>
+  </data>
+  <data name="Contact_SuccessMessage" xml:space="preserve">
+    <value>Dziękujemy za kontakt! Odpowiemy jak najszybciej.</value>
+  </data>
+  <data name="Contact_ErrorMessage" xml:space="preserve">
+    <value>Wystąpił błąd podczas wysyłania wiadomości. Spróbuj ponownie później.</value>
+  </data>
+  <data name="Blog_Title" xml:space="preserve">
+    <value>Nasz Blog</value>
+  </data>
+  <data name="Blog_Subtitle" xml:space="preserve">
+    <value>Odkryj trendy modowe, porady stylistyczne i najnowsze wiadomości ze świata tekstyliów</value>
+  </data>
+  <data name="Blog_SearchPlaceholder" xml:space="preserve">
+    <value>Szukaj artykułów...</value>
+  </data>
+  <data name="Blog_Search" xml:space="preserve">
+    <value>Szukaj</value>
+  </data>
+  <data name="Blog_ActiveFilters" xml:space="preserve">
+    <value>Aktywne filtry</value>
+  </data>
+  <data name="Blog_RemoveFilter" xml:space="preserve">
+    <value>Usuń filtr</value>
+  </data>
+  <data name="Blog_ClearFilters" xml:space="preserve">
+    <value>Wyczyść wszystkie filtry</value>
+  </data>
+  <data name="Blog_PostsFound" xml:space="preserve">
+    <value>znalezionych postów</value>
+  </data>
+  <data name="Blog_MinRead" xml:space="preserve">
+    <value>min czytania</value>
+  </data>
+  <data name="Blog_Min" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="Blog_Views" xml:space="preserve">
+    <value>wyświetleń</value>
+  </data>
+  <data name="Blog_NoPosts" xml:space="preserve">
+    <value>Nie znaleziono postów</value>
+  </data>
+  <data name="Blog_NoPostsDesc" xml:space="preserve">
+    <value>Przepraszamy, nie znaleźliśmy żadnych postów spełniających Twoje kryteria. Spróbuj dostosować filtry lub zapytanie wyszukiwania.</value>
+  </data>
+  <data name="Blog_BackToAll" xml:space="preserve">
+    <value>Powrót do wszystkich postów</value>
+  </data>
+  <data name="Blog_Categories" xml:space="preserve">
+    <value>Kategorie</value>
+  </data>
+  <data name="Blog_AllCategories" xml:space="preserve">
+    <value>Wszystkie kategorie</value>
+  </data>
+  <data name="Blog_RecentPosts" xml:space="preserve">
+    <value>Najnowsze posty</value>
+  </data>
+  <data name="Blog_PopularTags" xml:space="preserve">
+    <value>Popularne tagi</value>
+  </data>
+  <data name="Blog_Newsletter" xml:space="preserve">
+    <value>Newsletter</value>
+  </data>
+  <data name="Blog_NewsletterDesc" xml:space="preserve">
+    <value>Zapisz się, aby otrzymywać najnowsze artykuły i porady modowe bezpośrednio na swoją skrzynkę.</value>
+  </data>
+  <data name="Blog_EmailPlaceholder" xml:space="preserve">
+    <value>Twój adres email</value>
+  </data>
+  <data name="Blog_Subscribe" xml:space="preserve">
+    <value>Zapisz się</value>
+  </data>
+  <data name="Blog_SearchResults" xml:space="preserve">
+    <value>Wyniki wyszukiwania</value>
+  </data>
+  <data name="Blog_Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="Blog_Updated" xml:space="preserve">
+    <value>Zaktualizowano</value>
+  </data>
+  <data name="Blog_Tags" xml:space="preserve">
+    <value>Tagi</value>
+  </data>
+  <data name="Blog_Share" xml:space="preserve">
+    <value>Udostępnij ten artykuł</value>
+  </data>
+  <data name="Blog_ShareFacebook" xml:space="preserve">
+    <value>Udostępnij na Facebooku</value>
+  </data>
+  <data name="Blog_ShareTwitter" xml:space="preserve">
+    <value>Udostępnij na Twitterze</value>
+  </data>
+  <data name="Blog_ShareLinkedIn" xml:space="preserve">
+    <value>Udostępnij na LinkedIn</value>
+  </data>
+  <data name="Blog_SharePinterest" xml:space="preserve">
+    <value>Udostępnij na Pinterest</value>
+  </data>
+  <data name="Blog_CopyLink" xml:space="preserve">
+    <value>Skopiuj link</value>
+  </data>
+  <data name="Blog_LinkCopied" xml:space="preserve">
+    <value>Link skopiowany do schowka!</value>
+  </data>
+  <data name="Blog_CopyFailed" xml:space="preserve">
+    <value>Nie udało się skopiować linku</value>
+  </data>
+  <data name="Blog_AuthorDefaultBio" xml:space="preserve">
+    <value>Pasjonat mody i tekstyliów, dzielący się spostrzeżeniami i trendami z naszą społecznością.</value>
+  </data>
+  <data name="Blog_FeaturedProduct" xml:space="preserve">
+    <value>Polecany produkt</value>
+  </data>
+  <data name="Blog_ViewProduct" xml:space="preserve">
+    <value>Zobacz produkt</value>
+  </data>
+  <data name="Blog_RelatedPosts" xml:space="preserve">
+    <value>Powiązane artykuły</value>
+  </data>
+  <data name="Blog_BackToBlog" xml:space="preserve">
+    <value>Powrót do bloga</value>
   </data>
 </root>

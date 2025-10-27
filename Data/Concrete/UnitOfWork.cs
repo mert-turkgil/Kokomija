@@ -44,6 +44,10 @@ namespace Kokomija.Data.Concrete
             
             // Initialize cart repository
             Carts = new CartRepository(_context);
+            
+            // Initialize blog repositories
+            Blogs = new BlogRepository(_context);
+            BlogCategories = new BlogCategoryRepository(_context);
         }
 
         public IProductRepository Products { get; private set; }
@@ -62,6 +66,8 @@ namespace Kokomija.Data.Concrete
         public ICarouselSlideRepository CarouselSlides { get; private set; }
         public IWishlistRepository Wishlists { get; private set; }
         public ICartRepository Carts { get; private set; }
+        public IBlogRepository Blogs { get; private set; }
+        public IBlogCategoryRepository BlogCategories { get; private set; }
 
         public IRepository<T> Repository<T>() where T : class
         {

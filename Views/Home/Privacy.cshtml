@@ -1,6 +1,279 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
-}
-<h1>@ViewData["Title"]</h1>
+﻿@model Kokomija.Models.ViewModels.PrivacyViewModel
+@inject Kokomija.Services.ILocalizationService L
 
-<p>Use this page to detail your site's privacy policy.</p>
+@{
+    ViewData["Title"] = Model.MetaTitle;
+}
+
+@section Meta {
+    <meta name="description" content="@Model.MetaDescription">
+    <meta name="keywords" content="@Model.MetaKeywords">
+    <link rel="canonical" href="@Model.CanonicalUrl">
+}
+
+<div class="privacy-page">
+    <div class="container py-5">
+        <!-- Page Header -->
+        <div class="privacy-header text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">@L["Privacy_Title"]</h1>
+            <p class="lead privacy-subtitle">@L["Privacy_Subtitle"]</p>
+            <p class="text-muted">@L["Privacy_LastUpdated"]: @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Introduction -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h2>@L["Privacy_Intro_Title"]</h2>
+                    <p>@L["Privacy_Intro_Text"]</p>
+                </section>
+
+                <!-- Information We Collect -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-database"></i>
+                    </div>
+                    <h2>@L["Privacy_InfoCollect_Title"]</h2>
+                    <p>@L["Privacy_InfoCollect_Text"]</p>
+                    
+                    <h3>@L["Privacy_InfoCollect_Personal"]</h3>
+                    <ul>
+                        <li><strong>@L["Privacy_InfoCollect_Name"]:</strong> @L["Privacy_InfoCollect_Name_Desc"]</li>
+                        <li><strong>@L["Privacy_InfoCollect_Email"]:</strong> @L["Privacy_InfoCollect_Email_Desc"]</li>
+                        <li><strong>@L["Privacy_InfoCollect_Phone"]:</strong> @L["Privacy_InfoCollect_Phone_Desc"]</li>
+                        <li><strong>@L["Privacy_InfoCollect_Address"]:</strong> @L["Privacy_InfoCollect_Address_Desc"]</li>
+                        <li><strong>@L["Privacy_InfoCollect_Payment"]:</strong> @L["Privacy_InfoCollect_Payment_Desc"]</li>
+                    </ul>
+                    
+                    <h3>@L["Privacy_InfoCollect_Auto"]</h3>
+                    <ul>
+                        <li><strong>@L["Privacy_InfoCollect_Cookies"]:</strong> @L["Privacy_InfoCollect_Cookies_Desc"]</li>
+                        <li><strong>@L["Privacy_InfoCollect_Usage"]:</strong> @L["Privacy_InfoCollect_Usage_Desc"]</li>
+                        <li><strong>@L["Privacy_InfoCollect_Device"]:</strong> @L["Privacy_InfoCollect_Device_Desc"]</li>
+                    </ul>
+                </section>
+
+                <!-- Stripe Payment Processing -->
+                <section class="privacy-section highlight-section">
+                    <div class="privacy-icon-wrapper stripe-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <h2>@L["Privacy_Stripe_Title"]</h2>
+                    <p>@L["Privacy_Stripe_Text"]</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>@L["Privacy_Stripe_Important"]:</strong> @L["Privacy_Stripe_Important_Text"]
+                    </div>
+                    
+                    <p>@L["Privacy_Stripe_Process"]</p>
+                    <p>@L["Privacy_Stripe_LearnMore"]: <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">https://stripe.com/privacy</a></p>
+                </section>
+
+                <!-- Cloudflare Security -->
+                <section class="privacy-section highlight-section">
+                    <div class="privacy-icon-wrapper cloudflare-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h2>@L["Privacy_Cloudflare_Title"]</h2>
+                    <p>@L["Privacy_Cloudflare_Text"]</p>
+                    
+                    <ul>
+                        <li><strong>@L["Privacy_Cloudflare_DDoS"]:</strong> @L["Privacy_Cloudflare_DDoS_Desc"]</li>
+                        <li><strong>@L["Privacy_Cloudflare_SSL"]:</strong> @L["Privacy_Cloudflare_SSL_Desc"]</li>
+                        <li><strong>@L["Privacy_Cloudflare_CDN"]:</strong> @L["Privacy_Cloudflare_CDN_Desc"]</li>
+                        <li><strong>@L["Privacy_Cloudflare_WAF"]:</strong> @L["Privacy_Cloudflare_WAF_Desc"]</li>
+                    </ul>
+                    
+                    <p>@L["Privacy_Cloudflare_LearnMore"]: <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">https://www.cloudflare.com/privacypolicy/</a></p>
+                </section>
+
+                <!-- How We Use Your Information -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-gear"></i>
+                    </div>
+                    <h2>@L["Privacy_Use_Title"]</h2>
+                    <ul>
+                        <li>@L["Privacy_Use_Orders"]</li>
+                        <li>@L["Privacy_Use_Communication"]</li>
+                        <li>@L["Privacy_Use_Improve"]</li>
+                        <li>@L["Privacy_Use_Personalize"]</li>
+                        <li>@L["Privacy_Use_Marketing"]</li>
+                        <li>@L["Privacy_Use_Fraud"]</li>
+                        <li>@L["Privacy_Use_Legal"]</li>
+                    </ul>
+                </section>
+
+                <!-- Account Management -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <h2>@L["Privacy_Account_Title"]</h2>
+                    <p>@L["Privacy_Account_Text"]</p>
+                    
+                    <div class="account-rights-grid">
+                        <div class="rights-card">
+                            <i class="bi bi-pencil-square"></i>
+                            <h4>@L["Privacy_Account_Update"]</h4>
+                            <p>@L["Privacy_Account_Update_Desc"]</p>
+                        </div>
+                        <div class="rights-card">
+                            <i class="bi bi-trash"></i>
+                            <h4>@L["Privacy_Account_Delete"]</h4>
+                            <p>@L["Privacy_Account_Delete_Desc"]</p>
+                        </div>
+                        <div class="rights-card">
+                            <i class="bi bi-eye"></i>
+                            <h4>@L["Privacy_Account_View"]</h4>
+                            <p>@L["Privacy_Account_View_Desc"]</p>
+                        </div>
+                        <div class="rights-card">
+                            <i class="bi bi-download"></i>
+                            <h4>@L["Privacy_Account_Export"]</h4>
+                            <p>@L["Privacy_Account_Export_Desc"]</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Loyalty Program -->
+                <section class="privacy-section highlight-section loyalty-section">
+                    <div class="privacy-icon-wrapper loyalty-icon">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <h2>@L["Privacy_Loyalty_Title"]</h2>
+                    <p>@L["Privacy_Loyalty_Text"]</p>
+                    
+                    <div class="loyalty-benefits">
+                        <div class="benefit-item">
+                            <i class="bi bi-tag-fill"></i>
+                            <span>@L["Privacy_Loyalty_Discounts"]</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-gift-fill"></i>
+                            <span>@L["Privacy_Loyalty_Rewards"]</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-truck-front-fill"></i>
+                            <span>@L["Privacy_Loyalty_Shipping"]</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-bell-fill"></i>
+                            <span>@L["Privacy_Loyalty_Early"]</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-calendar-event-fill"></i>
+                            <span>@L["Privacy_Loyalty_Birthday"]</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="bi bi-trophy-fill"></i>
+                            <span>@L["Privacy_Loyalty_VIP"]</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Security -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                    <h2>@L["Privacy_Security_Title"]</h2>
+                    <p>@L["Privacy_Security_Text"]</p>
+                    
+                    <ul>
+                        <li>@L["Privacy_Security_Encryption"]</li>
+                        <li>@L["Privacy_Security_Access"]</li>
+                        <li>@L["Privacy_Security_Monitoring"]</li>
+                        <li>@L["Privacy_Security_Backup"]</li>
+                    </ul>
+                </section>
+
+                <!-- Cookies -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-cookie"></i>
+                    </div>
+                    <h2>@L["Privacy_Cookies_Title"]</h2>
+                    <p>@L["Privacy_Cookies_Text"]</p>
+                    
+                    <p>@L["Privacy_Cookies_Manage"]</p>
+                </section>
+
+                <!-- Data Retention -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h2>@L["Privacy_Retention_Title"]</h2>
+                    <p>@L["Privacy_Retention_Text"]</p>
+                </section>
+
+                <!-- Third-Party Services -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-link-45deg"></i>
+                    </div>
+                    <h2>@L["Privacy_ThirdParty_Title"]</h2>
+                    <p>@L["Privacy_ThirdParty_Text"]</p>
+                    
+                    <ul>
+                        <li><strong>Stripe:</strong> @L["Privacy_ThirdParty_Stripe"]</li>
+                        <li><strong>Cloudflare:</strong> @L["Privacy_ThirdParty_Cloudflare"]</li>
+                        <li><strong>@L["Privacy_ThirdParty_Analytics"]:</strong> @L["Privacy_ThirdParty_Analytics_Desc"]</li>
+                    </ul>
+                </section>
+
+                <!-- Your Rights (GDPR) -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h2>@L["Privacy_Rights_Title"]</h2>
+                    <p>@L["Privacy_Rights_Text"]</p>
+                    
+                    <ul>
+                        <li>@L["Privacy_Rights_Access"]</li>
+                        <li>@L["Privacy_Rights_Rectification"]</li>
+                        <li>@L["Privacy_Rights_Erasure"]</li>
+                        <li>@L["Privacy_Rights_Restriction"]</li>
+                        <li>@L["Privacy_Rights_Portability"]</li>
+                        <li>@L["Privacy_Rights_Object"]</li>
+                        <li>@L["Privacy_Rights_Withdraw"]</li>
+                    </ul>
+                </section>
+
+                <!-- Contact Us -->
+                <section class="privacy-section contact-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <h2>@L["Privacy_Contact_Title"]</h2>
+                    <p>@L["Privacy_Contact_Text"]</p>
+                    
+                    <div class="contact-info-privacy">
+                        <p><strong>@L["Privacy_Contact_Email"]:</strong> privacy@kokomija.com</p>
+                        <p><strong>@L["Privacy_Contact_Phone"]:</strong> +48 123 456 789</p>
+                        <p><strong>@L["Privacy_Contact_Address"]:</strong> ul. Floriańska 31, 31-019 Kraków, Poland</p>
+                    </div>
+                    
+                    <a asp-controller="Home" asp-action="Contact" class="btn btn-primary mt-3">
+                        <i class="bi bi-send me-2"></i>@L["Privacy_Contact_Button"]
+                    </a>
+                </section>
+
+                <!-- Changes to Policy -->
+                <section class="privacy-section">
+                    <div class="privacy-icon-wrapper">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <h2>@L["Privacy_Changes_Title"]</h2>
+                    <p>@L["Privacy_Changes_Text"]</p>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>

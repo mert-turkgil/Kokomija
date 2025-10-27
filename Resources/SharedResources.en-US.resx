@@ -104,14 +104,29 @@
   <data name="Home_FeaturedCategories" xml:space="preserve">
     <value>Featured Categories</value>
   </data>
+  <data name="Home_ShopByCategory" xml:space="preserve">
+    <value>Shop by Category</value>
+  </data>
   <data name="Home_FeaturedProducts" xml:space="preserve">
     <value>Featured Products</value>
   </data>
   <data name="Home_ViewAll" xml:space="preserve">
     <value>View All</value>
   </data>
+  <data name="Home_ViewAllProducts" xml:space="preserve">
+    <value>View All Products</value>
+  </data>
   <data name="Home_ShopNow" xml:space="preserve">
     <value>Shop Now</value>
+  </data>
+  <data name="Home_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Home_SearchProducts" xml:space="preserve">
+    <value>Search products</value>
+  </data>
+  <data name="Home_SearchPlaceholder" xml:space="preserve">
+    <value>Search for clothing, accessories...</value>
   </data>
   
   <!-- Products -->
@@ -142,6 +157,9 @@
   <data name="Product_Quantity" xml:space="preserve">
     <value>Quantity</value>
   </data>
+  <data name="Products_ItemsFound" xml:space="preserve">
+    <value>items found</value>
+  </data>
   
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
@@ -150,20 +168,35 @@
   <data name="Category_Women" xml:space="preserve">
     <value>Women</value>
   </data>
-  <data name="Category_Shirts" xml:space="preserve">
-    <value>Shirts</value>
-  </data>
-  <data name="Category_Pants" xml:space="preserve">
-    <value>Pants</value>
-  </data>
-  <data name="Category_Dresses" xml:space="preserve">
-    <value>Dresses</value>
-  </data>
   <data name="Category_Outerwear" xml:space="preserve">
     <value>Outerwear</value>
   </data>
   <data name="Category_Accessories" xml:space="preserve">
     <value>Accessories</value>
+  </data>
+  <data name="Category_Dresses" xml:space="preserve">
+    <value>Dresses</value>
+  </data>
+  <data name="Category_Skirts" xml:space="preserve">
+    <value>Skirts</value>
+  </data>
+  <data name="Category_Blouses" xml:space="preserve">
+    <value>Blouses</value>
+  </data>
+  <data name="Category_WomenPants" xml:space="preserve">
+    <value>Pants</value>
+  </data>
+  <data name="Category_Shirts" xml:space="preserve">
+    <value>Shirts</value>
+  </data>
+  <data name="Category_MenPants" xml:space="preserve">
+    <value>Pants</value>
+  </data>
+  <data name="Category_TShirts" xml:space="preserve">
+    <value>T-Shirts</value>
+  </data>
+  <data name="Category_Sweatshirts" xml:space="preserve">
+    <value>Sweatshirts</value>
   </data>
   
   <!-- Common -->
@@ -515,5 +548,569 @@
   </data>
   <data name="FAQ_Q22_Answer" xml:space="preserve">
     <value>Each product page includes a detailed size guide with measurements. We recommend measuring yourself and comparing to our size charts. If you're between sizes, we suggest ordering the larger size for comfort.</value>
+  </data>
+  
+  <!-- Contact Page -->
+  <data name="Contact_Title" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="Contact_Subtitle" xml:space="preserve">
+    <value>Get in touch with us for any questions or inquiries</value>
+  </data>
+  <data name="Contact_GetInTouch" xml:space="preserve">
+    <value>Get In Touch</value>
+  </data>
+  <data name="Contact_Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Contact_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Contact_Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Contact_Hours" xml:space="preserve">
+    <value>Business Hours</value>
+  </data>
+  <data name="Contact_Hours_Weekdays" xml:space="preserve">
+    <value>Mon - Fri: 9:00 AM - 6:00 PM</value>
+  </data>
+  <data name="Contact_Hours_Weekend" xml:space="preserve">
+    <value>Sat - Sun: 10:00 AM - 4:00 PM</value>
+  </data>
+  <data name="Contact_FollowUs" xml:space="preserve">
+    <value>Follow Us</value>
+  </data>
+  <data name="Contact_SendMessage" xml:space="preserve">
+    <value>Send us a Message</value>
+  </data>
+  <data name="Contact_Form_Name" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="Contact_Form_Name_Placeholder" xml:space="preserve">
+    <value>Enter your full name</value>
+  </data>
+  <data name="Contact_Form_Email" xml:space="preserve">
+    <value>Email Address</value>
+  </data>
+  <data name="Contact_Form_Email_Placeholder" xml:space="preserve">
+    <value>your.email@example.com</value>
+  </data>
+  <data name="Contact_Form_Phone" xml:space="preserve">
+    <value>Phone Number (Optional)</value>
+  </data>
+  <data name="Contact_Form_Phone_Placeholder" xml:space="preserve">
+    <value>+48 123 456 789</value>
+  </data>
+  <data name="Contact_Form_Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="Contact_Form_Subject_Placeholder" xml:space="preserve">
+    <value>How can we help you?</value>
+  </data>
+  <data name="Contact_Form_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="Contact_Form_Message_Placeholder" xml:space="preserve">
+    <value>Write your message here...</value>
+  </data>
+  <data name="Contact_Form_Submit" xml:space="preserve">
+    <value>Send Message</value>
+  </data>
+  <data name="Contact_FindUs" xml:space="preserve">
+    <value>Find Us on the Map</value>
+  </data>
+  <data name="Contact_SuccessMessage" xml:space="preserve">
+    <value>Thank you for contacting us! We'll get back to you as soon as possible.</value>
+  </data>
+  <data name="Contact_ErrorMessage" xml:space="preserve">
+    <value>An error occurred while sending your message. Please try again later.</value>
+  </data>
+  
+  <!-- Cookie Consent -->
+  <data name="CookieConsent.Title" xml:space="preserve">
+    <value>Cookie Preferences</value>
+  </data>
+  <data name="CookieConsent.Message" xml:space="preserve">
+    <value>We use cookies to improve your browsing experience, personalize content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.</value>
+  </data>
+  <data name="CookieConsent.LearnMore" xml:space="preserve">
+    <value>Learn more in our Privacy Policy</value>
+  </data>
+  <data name="CookieConsent.AcceptAll" xml:space="preserve">
+    <value>Accept All</value>
+  </data>
+  <data name="CookieConsent.AcceptNecessary" xml:space="preserve">
+    <value>Necessary Only</value>
+  </data>
+  <data name="CookieConsent.Settings" xml:space="preserve">
+    <value>Cookie Settings</value>
+  </data>
+  <data name="CookieCategory.Essential" xml:space="preserve">
+    <value>Essential Cookies</value>
+  </data>
+  <data name="CookieCategory.EssentialDesc" xml:space="preserve">
+    <value>These cookies are necessary for the website to function and cannot be disabled. They are usually set in response to your actions such as logging in or filling in forms.</value>
+  </data>
+  <data name="CookieCategory.Preferences" xml:space="preserve">
+    <value>Preference Cookies</value>
+  </data>
+  <data name="CookieCategory.PreferencesDesc" xml:space="preserve">
+    <value>These cookies allow the website to remember your choices (such as your language or theme preference) and provide enhanced, more personal features.</value>
+  </data>
+  <data name="CookieCategory.Analytics" xml:space="preserve">
+    <value>Analytics Cookies</value>
+  </data>
+  <data name="CookieCategory.AnalyticsDesc" xml:space="preserve">
+    <value>These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.</value>
+  </data>
+  <data name="CookieCategory.Marketing" xml:space="preserve">
+    <value>Marketing Cookies</value>
+  </data>
+  <data name="CookieCategory.MarketingDesc" xml:space="preserve">
+    <value>These cookies are used to track visitors across websites to display relevant and engaging advertisements for individual users.</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="SavePreferences" xml:space="preserve">
+    <value>Save Preferences</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  
+  <!-- Privacy Policy Page -->
+  <data name="Privacy_MetaTitle" xml:space="preserve">
+    <value>Privacy Policy - Kokomija</value>
+  </data>
+  <data name="Privacy_MetaDescription" xml:space="preserve">
+    <value>Learn how Kokomija protects your privacy and data. Information about Stripe payments, Cloudflare security, account management, and loyalty benefits.</value>
+  </data>
+  <data name="Privacy_MetaKeywords" xml:space="preserve">
+    <value>privacy policy, data protection, GDPR, Stripe, Cloudflare, security, account management</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="Privacy_Subtitle" xml:space="preserve">
+    <value>Your privacy is important to us. This policy explains how we collect, use, and protect your information.</value>
+  </data>
+  <data name="Privacy_LastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+  </data>
+  <data name="Privacy_Intro_Title" xml:space="preserve">
+    <value>Introduction</value>
+  </data>
+  <data name="Privacy_Intro_Text" xml:space="preserve">
+    <value>Welcome to Kokomija. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we handle your personal data when you visit our website and tell you about your privacy rights.</value>
+  </data>
+  <data name="Privacy_InfoCollect_Title" xml:space="preserve">
+    <value>Information We Collect</value>
+  </data>
+  <data name="Privacy_InfoCollect_Text" xml:space="preserve">
+    <value>We collect various types of information to provide and improve our services:</value>
+  </data>
+  <data name="Privacy_InfoCollect_Personal" xml:space="preserve">
+    <value>Personal Information You Provide</value>
+  </data>
+  <data name="Privacy_InfoCollect_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Privacy_InfoCollect_Name_Desc" xml:space="preserve">
+    <value>To personalize your experience and process orders</value>
+  </data>
+  <data name="Privacy_InfoCollect_Email" xml:space="preserve">
+    <value>Email Address</value>
+  </data>
+  <data name="Privacy_InfoCollect_Email_Desc" xml:space="preserve">
+    <value>For account creation, order confirmations, and communication</value>
+  </data>
+  <data name="Privacy_InfoCollect_Phone" xml:space="preserve">
+    <value>Phone Number</value>
+  </data>
+  <data name="Privacy_InfoCollect_Phone_Desc" xml:space="preserve">
+    <value>For delivery updates and customer support</value>
+  </data>
+  <data name="Privacy_InfoCollect_Address" xml:space="preserve">
+    <value>Shipping Address</value>
+  </data>
+  <data name="Privacy_InfoCollect_Address_Desc" xml:space="preserve">
+    <value>To deliver your orders accurately</value>
+  </data>
+  <data name="Privacy_InfoCollect_Payment" xml:space="preserve">
+    <value>Payment Information</value>
+  </data>
+  <data name="Privacy_InfoCollect_Payment_Desc" xml:space="preserve">
+    <value>Securely processed by Stripe (we never store full card details)</value>
+  </data>
+  <data name="Privacy_InfoCollect_Auto" xml:space="preserve">
+    <value>Automatically Collected Information</value>
+  </data>
+  <data name="Privacy_InfoCollect_Cookies" xml:space="preserve">
+    <value>Cookies</value>
+  </data>
+  <data name="Privacy_InfoCollect_Cookies_Desc" xml:space="preserve">
+    <value>To remember your preferences and improve your experience</value>
+  </data>
+  <data name="Privacy_InfoCollect_Usage" xml:space="preserve">
+    <value>Usage Data</value>
+  </data>
+  <data name="Privacy_InfoCollect_Usage_Desc" xml:space="preserve">
+    <value>Pages visited, time spent, and browsing patterns</value>
+  </data>
+  <data name="Privacy_InfoCollect_Device" xml:space="preserve">
+    <value>Device Information</value>
+  </data>
+  <data name="Privacy_InfoCollect_Device_Desc" xml:space="preserve">
+    <value>IP address, browser type, and device identifiers</value>
+  </data>
+  <data name="Privacy_Stripe_Title" xml:space="preserve">
+    <value>Payment Processing with Stripe</value>
+  </data>
+  <data name="Privacy_Stripe_Text" xml:space="preserve">
+    <value>All payment transactions are processed by Stripe, a PCI-DSS Level 1 certified payment processor. Stripe handles all payment card information securely.</value>
+  </data>
+  <data name="Privacy_Stripe_Important" xml:space="preserve">
+    <value>Important</value>
+  </data>
+  <data name="Privacy_Stripe_Important_Text" xml:space="preserve">
+    <value>Stripe is responsible for the security and privacy of all payment information. We never store your complete credit card details on our servers.</value>
+  </data>
+  <data name="Privacy_Stripe_Process" xml:space="preserve">
+    <value>When you make a purchase, your payment information is encrypted and transmitted directly to Stripe's secure servers. Stripe complies with industry-leading security standards and is regularly audited for compliance.</value>
+  </data>
+  <data name="Privacy_Stripe_LearnMore" xml:space="preserve">
+    <value>Learn more about Stripe's privacy practices</value>
+  </data>
+  <data name="Privacy_Cloudflare_Title" xml:space="preserve">
+    <value>Security with Cloudflare</value>
+  </data>
+  <data name="Privacy_Cloudflare_Text" xml:space="preserve">
+    <value>We use Cloudflare to protect our website and your data with enterprise-grade security features:</value>
+  </data>
+  <data name="Privacy_Cloudflare_DDoS" xml:space="preserve">
+    <value>DDoS Protection</value>
+  </data>
+  <data name="Privacy_Cloudflare_DDoS_Desc" xml:space="preserve">
+    <value>Protects against malicious attacks to ensure website availability</value>
+  </data>
+  <data name="Privacy_Cloudflare_SSL" xml:space="preserve">
+    <value>SSL/TLS Encryption</value>
+  </data>
+  <data name="Privacy_Cloudflare_SSL_Desc" xml:space="preserve">
+    <value>All data transmitted is encrypted using industry-standard protocols</value>
+  </data>
+  <data name="Privacy_Cloudflare_CDN" xml:space="preserve">
+    <value>Global CDN</value>
+  </data>
+  <data name="Privacy_Cloudflare_CDN_Desc" xml:space="preserve">
+    <value>Fast and secure content delivery from servers closest to you</value>
+  </data>
+  <data name="Privacy_Cloudflare_WAF" xml:space="preserve">
+    <value>Web Application Firewall</value>
+  </data>
+  <data name="Privacy_Cloudflare_WAF_Desc" xml:space="preserve">
+    <value>Blocks malicious traffic and protects against common vulnerabilities</value>
+  </data>
+  <data name="Privacy_Cloudflare_LearnMore" xml:space="preserve">
+    <value>Learn more about Cloudflare's privacy policy</value>
+  </data>
+  <data name="Privacy_Use_Title" xml:space="preserve">
+    <value>How We Use Your Information</value>
+  </data>
+  <data name="Privacy_Use_Orders" xml:space="preserve">
+    <value>Process and fulfill your orders</value>
+  </data>
+  <data name="Privacy_Use_Communication" xml:space="preserve">
+    <value>Communicate with you about your orders and account</value>
+  </data>
+  <data name="Privacy_Use_Improve" xml:space="preserve">
+    <value>Improve our website, products, and services</value>
+  </data>
+  <data name="Privacy_Use_Personalize" xml:space="preserve">
+    <value>Personalize your shopping experience</value>
+  </data>
+  <data name="Privacy_Use_Marketing" xml:space="preserve">
+    <value>Send you marketing communications (with your consent)</value>
+  </data>
+  <data name="Privacy_Use_Fraud" xml:space="preserve">
+    <value>Detect and prevent fraud and security issues</value>
+  </data>
+  <data name="Privacy_Use_Legal" xml:space="preserve">
+    <value>Comply with legal obligations</value>
+  </data>
+  <data name="Privacy_Account_Title" xml:space="preserve">
+    <value>Your Account Management Rights</value>
+  </data>
+  <data name="Privacy_Account_Text" xml:space="preserve">
+    <value>You have full control over your account and personal data. You can easily:</value>
+  </data>
+  <data name="Privacy_Account_Update" xml:space="preserve">
+    <value>Update Information</value>
+  </data>
+  <data name="Privacy_Account_Update_Desc" xml:space="preserve">
+    <value>Edit your personal details, addresses, and preferences anytime</value>
+  </data>
+  <data name="Privacy_Account_Delete" xml:space="preserve">
+    <value>Delete Account</value>
+  </data>
+  <data name="Privacy_Account_Delete_Desc" xml:space="preserve">
+    <value>Permanently remove your account and associated data</value>
+  </data>
+  <data name="Privacy_Account_View" xml:space="preserve">
+    <value>View Your Data</value>
+  </data>
+  <data name="Privacy_Account_View_Desc" xml:space="preserve">
+    <value>Access all personal information we store about you</value>
+  </data>
+  <data name="Privacy_Account_Export" xml:space="preserve">
+    <value>Export Data</value>
+  </data>
+  <data name="Privacy_Account_Export_Desc" xml:space="preserve">
+    <value>Download your data in a portable format</value>
+  </data>
+  <data name="Privacy_Loyalty_Title" xml:space="preserve">
+    <value>Loyalty Program Benefits</value>
+  </data>
+  <data name="Privacy_Loyalty_Text" xml:space="preserve">
+    <value>Registered customers and returning shoppers receive exclusive advantages through our loyalty program:</value>
+  </data>
+  <data name="Privacy_Loyalty_Discounts" xml:space="preserve">
+    <value>Exclusive Discounts</value>
+  </data>
+  <data name="Privacy_Loyalty_Rewards" xml:space="preserve">
+    <value>Reward Points</value>
+  </data>
+  <data name="Privacy_Loyalty_Shipping" xml:space="preserve">
+    <value>Free Shipping Benefits</value>
+  </data>
+  <data name="Privacy_Loyalty_Early" xml:space="preserve">
+    <value>Early Access to Sales</value>
+  </data>
+  <data name="Privacy_Loyalty_Birthday" xml:space="preserve">
+    <value>Birthday Surprises</value>
+  </data>
+  <data name="Privacy_Loyalty_VIP" xml:space="preserve">
+    <value>VIP Customer Status</value>
+  </data>
+  <data name="Privacy_Security_Title" xml:space="preserve">
+    <value>Data Security</value>
+  </data>
+  <data name="Privacy_Security_Text" xml:space="preserve">
+    <value>We implement industry-standard security measures to protect your data:</value>
+  </data>
+  <data name="Privacy_Security_Encryption" xml:space="preserve">
+    <value>End-to-end encryption for all sensitive data</value>
+  </data>
+  <data name="Privacy_Security_Access" xml:space="preserve">
+    <value>Restricted access to personal information</value>
+  </data>
+  <data name="Privacy_Security_Monitoring" xml:space="preserve">
+    <value>24/7 security monitoring and threat detection</value>
+  </data>
+  <data name="Privacy_Security_Backup" xml:space="preserve">
+    <value>Regular security audits and backups</value>
+  </data>
+  <data name="Privacy_Cookies_Title" xml:space="preserve">
+    <value>Cookies and Tracking</value>
+  </data>
+  <data name="Privacy_Cookies_Text" xml:space="preserve">
+    <value>We use cookies to enhance your browsing experience, remember your preferences, and analyze website traffic. You can manage your cookie preferences at any time.</value>
+  </data>
+  <data name="Privacy_Cookies_Manage" xml:space="preserve">
+    <value>You can manage your cookie preferences through your browser settings or our cookie consent banner.</value>
+  </data>
+  <data name="Privacy_Retention_Title" xml:space="preserve">
+    <value>Data Retention</value>
+  </data>
+  <data name="Privacy_Retention_Text" xml:space="preserve">
+    <value>We retain your personal information only for as long as necessary to fulfill the purposes outlined in this privacy policy or as required by law. When data is no longer needed, it is securely deleted or anonymized.</value>
+  </data>
+  <data name="Privacy_ThirdParty_Title" xml:space="preserve">
+    <value>Third-Party Services</value>
+  </data>
+  <data name="Privacy_ThirdParty_Text" xml:space="preserve">
+    <value>We work with trusted third-party service providers who help us operate our business:</value>
+  </data>
+  <data name="Privacy_ThirdParty_Stripe" xml:space="preserve">
+    <value>Payment processing (PCI-DSS compliant)</value>
+  </data>
+  <data name="Privacy_ThirdParty_Cloudflare" xml:space="preserve">
+    <value>Security, performance, and DDoS protection</value>
+  </data>
+  <data name="Privacy_ThirdParty_Analytics" xml:space="preserve">
+    <value>Analytics Services</value>
+  </data>
+  <data name="Privacy_ThirdParty_Analytics_Desc" xml:space="preserve">
+    <value>Website usage analysis and improvements</value>
+  </data>
+  <data name="Privacy_Rights_Title" xml:space="preserve">
+    <value>Your Privacy Rights (GDPR)</value>
+  </data>
+  <data name="Privacy_Rights_Text" xml:space="preserve">
+    <value>Under GDPR, you have the following rights regarding your personal data:</value>
+  </data>
+  <data name="Privacy_Rights_Access" xml:space="preserve">
+    <value>Right to access your personal data</value>
+  </data>
+  <data name="Privacy_Rights_Rectification" xml:space="preserve">
+    <value>Right to rectify inaccurate data</value>
+  </data>
+  <data name="Privacy_Rights_Erasure" xml:space="preserve">
+    <value>Right to erasure ("right to be forgotten")</value>
+  </data>
+  <data name="Privacy_Rights_Restriction" xml:space="preserve">
+    <value>Right to restrict processing</value>
+  </data>
+  <data name="Privacy_Rights_Portability" xml:space="preserve">
+    <value>Right to data portability</value>
+  </data>
+  <data name="Privacy_Rights_Object" xml:space="preserve">
+    <value>Right to object to processing</value>
+  </data>
+  <data name="Privacy_Rights_Withdraw" xml:space="preserve">
+    <value>Right to withdraw consent at any time</value>
+  </data>
+  <data name="Privacy_Contact_Title" xml:space="preserve">
+    <value>Contact Us About Privacy</value>
+  </data>
+  <data name="Privacy_Contact_Text" xml:space="preserve">
+    <value>If you have questions about this privacy policy or how we handle your data, please contact us:</value>
+  </data>
+  <data name="Privacy_Contact_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Privacy_Contact_Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Privacy_Contact_Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Privacy_Contact_Button" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="Privacy_Changes_Title" xml:space="preserve">
+    <value>Changes to This Policy</value>
+  </data>
+  <data name="Privacy_Changes_Text" xml:space="preserve">
+    <value>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.</value>
+  </data>
+  <data name="Blog_Title" xml:space="preserve">
+    <value>Our Blog</value>
+  </data>
+  <data name="Blog_Subtitle" xml:space="preserve">
+    <value>Discover fashion trends, style tips, and the latest news from the textile world</value>
+  </data>
+  <data name="Blog_SearchPlaceholder" xml:space="preserve">
+    <value>Search articles...</value>
+  </data>
+  <data name="Blog_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Blog_ActiveFilters" xml:space="preserve">
+    <value>Active Filters</value>
+  </data>
+  <data name="Blog_RemoveFilter" xml:space="preserve">
+    <value>Remove filter</value>
+  </data>
+  <data name="Blog_ClearFilters" xml:space="preserve">
+    <value>Clear All Filters</value>
+  </data>
+  <data name="Blog_PostsFound" xml:space="preserve">
+    <value>posts found</value>
+  </data>
+  <data name="Blog_MinRead" xml:space="preserve">
+    <value>min read</value>
+  </data>
+  <data name="Blog_Min" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="Blog_Views" xml:space="preserve">
+    <value>views</value>
+  </data>
+  <data name="Blog_NoPosts" xml:space="preserve">
+    <value>No Posts Found</value>
+  </data>
+  <data name="Blog_NoPostsDesc" xml:space="preserve">
+    <value>Sorry, we couldn't find any blog posts matching your criteria. Try adjusting your filters or search query.</value>
+  </data>
+  <data name="Blog_BackToAll" xml:space="preserve">
+    <value>Back to All Posts</value>
+  </data>
+  <data name="Blog_Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Blog_AllCategories" xml:space="preserve">
+    <value>All Categories</value>
+  </data>
+  <data name="Blog_RecentPosts" xml:space="preserve">
+    <value>Recent Posts</value>
+  </data>
+  <data name="Blog_PopularTags" xml:space="preserve">
+    <value>Popular Tags</value>
+  </data>
+  <data name="Blog_Newsletter" xml:space="preserve">
+    <value>Newsletter</value>
+  </data>
+  <data name="Blog_NewsletterDesc" xml:space="preserve">
+    <value>Subscribe to get the latest articles and fashion tips delivered to your inbox.</value>
+  </data>
+  <data name="Blog_EmailPlaceholder" xml:space="preserve">
+    <value>Your email address</value>
+  </data>
+  <data name="Blog_Subscribe" xml:space="preserve">
+    <value>Subscribe</value>
+  </data>
+  <data name="Blog_SearchResults" xml:space="preserve">
+    <value>Search Results</value>
+  </data>
+  <data name="Blog_Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="Blog_Updated" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="Blog_Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Blog_Share" xml:space="preserve">
+    <value>Share this article</value>
+  </data>
+  <data name="Blog_ShareFacebook" xml:space="preserve">
+    <value>Share on Facebook</value>
+  </data>
+  <data name="Blog_ShareTwitter" xml:space="preserve">
+    <value>Share on Twitter</value>
+  </data>
+  <data name="Blog_ShareLinkedIn" xml:space="preserve">
+    <value>Share on LinkedIn</value>
+  </data>
+  <data name="Blog_SharePinterest" xml:space="preserve">
+    <value>Share on Pinterest</value>
+  </data>
+  <data name="Blog_CopyLink" xml:space="preserve">
+    <value>Copy Link</value>
+  </data>
+  <data name="Blog_LinkCopied" xml:space="preserve">
+    <value>Link copied to clipboard!</value>
+  </data>
+  <data name="Blog_CopyFailed" xml:space="preserve">
+    <value>Failed to copy link</value>
+  </data>
+  <data name="Blog_AuthorDefaultBio" xml:space="preserve">
+    <value>Passionate about fashion and textiles, sharing insights and trends with our community.</value>
+  </data>
+  <data name="Blog_FeaturedProduct" xml:space="preserve">
+    <value>Featured Product</value>
+  </data>
+  <data name="Blog_ViewProduct" xml:space="preserve">
+    <value>View Product</value>
+  </data>
+  <data name="Blog_RelatedPosts" xml:space="preserve">
+    <value>Related Articles</value>
+  </data>
+  <data name="Blog_BackToBlog" xml:space="preserve">
+    <value>Back to Blog</value>
   </data>
 </root>

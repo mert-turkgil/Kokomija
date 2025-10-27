@@ -15,9 +15,10 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string Slug { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+        [MaxLength(100)]
+        public string? NameKey { get; set; }
 
-        // For hierarchical categories (Woman -> Pants, T-Shirts, etc.)
+        public string? Description { get; set; } 
         public int? ParentCategoryId { get; set; }
         [ForeignKey("ParentCategoryId")]
         public Category? ParentCategory { get; set; }

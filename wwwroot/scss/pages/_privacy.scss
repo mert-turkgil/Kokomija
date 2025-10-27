@@ -1,0 +1,565 @@
+// Privacy Page Styles
+.privacy-page {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 0%, transparent 100%);
+    min-height: 100vh;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+    animation: fadeIn 0.6s ease-out;
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .privacy-header {
+        animation: slideDown 0.7s ease-out;
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #1f2937;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .privacy-subtitle {
+            font-size: 1.125rem;
+            color: #6b7280;
+            font-weight: 400;
+        }
+    }
+
+    .privacy-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.6s ease-out both;
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @for $i from 1 through 15 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{0.1 * $i}s;
+            }
+        }
+
+        &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        h3 {
+            color: #374151;
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            color: #4b5563;
+            line-height: 1.8;
+            margin-left: 1.5rem;
+
+            li {
+                margin-bottom: 0.75rem;
+                padding-left: 0.5rem;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    color: #1f2937;
+                    padding-left: 1rem;
+                }
+
+                strong {
+                    color: #1f2937;
+                }
+            }
+        }
+
+        a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: -2px;
+                left: 0;
+                width: 0;
+                height: 2px;
+                background: #3b82f6;
+                transition: width 0.3s ease;
+            }
+
+            &:hover {
+                color: #2563eb;
+
+                &::after {
+                    width: 100%;
+                }
+            }
+        }
+
+        .privacy-icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+
+            @keyframes float {
+                0%, 100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-10px);
+                }
+            }
+
+            i {
+                font-size: 1.875rem;
+                color: white;
+            }
+
+            &.stripe-icon {
+                background: linear-gradient(135deg, #635bff 0%, #4338ca 100%);
+            }
+
+            &.cloudflare-icon {
+                background: linear-gradient(135deg, #f6821f 0%, #f6511f 100%);
+            }
+
+            &.loyalty-icon {
+                background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            }
+        }
+
+        &.highlight-section {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 2px solid #3b82f6;
+        }
+
+        &.loyalty-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+        }
+
+        &.contact-section {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #10b981;
+        }
+    }
+
+    .alert-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+        border: none;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+        animation: slideInRight 0.5s ease-out;
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        strong {
+            color: #1e3a8a;
+        }
+    }
+
+    .account-rights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+
+        .rights-card {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #e5e7eb;
+
+            &:hover {
+                transform: translateY(-5px) scale(1.03);
+                box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+                border-color: #3b82f6;
+
+                i {
+                    transform: scale(1.1) rotate(5deg);
+                    color: #3b82f6;
+                }
+            }
+
+            i {
+                font-size: 2.5rem;
+                color: #6b7280;
+                margin-bottom: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            h4 {
+                color: #1f2937;
+                font-weight: 600;
+                font-size: 1.125rem;
+                margin-bottom: 0.75rem;
+            }
+
+            p {
+                color: #6b7280;
+                font-size: 0.9rem;
+                margin: 0;
+            }
+        }
+    }
+
+    .loyalty-benefits {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+
+        .benefit-item {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #fed7aa;
+
+            &:hover {
+                transform: translateX(10px);
+                box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+                border-color: #f59e0b;
+
+                i {
+                    transform: scale(1.2) rotate(10deg);
+                }
+            }
+
+            i {
+                font-size: 1.5rem;
+                color: #f59e0b;
+                transition: all 0.3s ease;
+            }
+
+            span {
+                color: #78350f;
+                font-weight: 500;
+                font-size: 0.95rem;
+            }
+        }
+    }
+
+    .contact-info-privacy {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border-left: 4px solid #10b981;
+
+        p {
+            margin: 0.5rem 0;
+            color: #374151;
+            font-size: 1rem;
+
+            strong {
+                color: #047857;
+            }
+        }
+    }
+
+    .btn-primary {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        &:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        &:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+        }
+    }
+}
+
+// Dark Mode Support
+[data-theme="dark"] {
+    .privacy-page {
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+
+        .privacy-header {
+            h1 {
+                color: #f1f5f9;
+            }
+
+            .privacy-subtitle {
+                color: #94a3b8;
+            }
+
+            .text-muted {
+                color: #64748b !important;
+            }
+        }
+
+        .privacy-section {
+            background-color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+
+            h2, h3 {
+                color: #f1f5f9;
+            }
+
+            p, ul li {
+                color: #cbd5e1;
+
+                strong {
+                    color: #f1f5f9;
+                }
+            }
+
+            a {
+                color: #60a5fa;
+
+                &::after {
+                    background: #60a5fa;
+                }
+
+                &:hover {
+                    color: #93c5fd;
+                }
+            }
+
+            .privacy-icon-wrapper {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+
+            &.highlight-section {
+                background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+                border-color: #3b82f6;
+
+                p, ul li {
+                    color: #bfdbfe;
+                }
+            }
+
+            &.loyalty-section {
+                background: linear-gradient(135deg, #422006 0%, #1c0a00 100%);
+                border-color: #f59e0b;
+
+                h2, h3 {
+                    color: #fef3c7;
+                }
+
+                p, ul li {
+                    color: #fde68a;
+                }
+            }
+
+            &.contact-section {
+                background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+                border-color: #10b981;
+
+                h2 {
+                    color: #d1fae5;
+                }
+
+                p {
+                    color: #a7f3d0;
+                }
+            }
+        }
+
+        .alert-info {
+            background-color: #1e3a5f;
+            color: #93c5fd;
+            border: 1px solid #3b82f6;
+
+            strong {
+                color: #dbeafe;
+            }
+
+            i {
+                color: #60a5fa;
+            }
+        }
+
+        .account-rights-grid .rights-card {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            border-color: #475569;
+
+            &:hover {
+                border-color: #3b82f6;
+                background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+
+                i {
+                    color: #60a5fa;
+                }
+            }
+
+            i {
+                color: #94a3b8;
+            }
+
+            h4 {
+                color: #f1f5f9;
+            }
+
+            p {
+                color: #94a3b8;
+            }
+        }
+
+        .loyalty-benefits .benefit-item {
+            background: linear-gradient(135deg, #422006 0%, #1c0a00 100%);
+            border-color: #92400e;
+
+            &:hover {
+                border-color: #f59e0b;
+                background: linear-gradient(135deg, #78350f 0%, #451a03 100%);
+            }
+
+            i {
+                color: #fbbf24;
+            }
+
+            span {
+                color: #fef3c7;
+            }
+        }
+
+        .contact-info-privacy {
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+            border-left-color: #10b981;
+
+            p {
+                color: #d1fae5;
+
+                strong {
+                    color: #6ee7b7;
+                }
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #3b82f6;
+            color: #ffffff;
+
+            &:hover {
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                border-color: #2563eb;
+            }
+        }
+    }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+    .privacy-page {
+        .privacy-header {
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .privacy-section {
+            padding: 1.5rem;
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.125rem;
+            }
+        }
+
+        .account-rights-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .loyalty-benefits {
+            grid-template-columns: 1fr;
+        }
+    }
+}

@@ -1,0 +1,305 @@
+@model Kokomija.Models.ViewModels.Blog.BlogIndexViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = !string.IsNullOrEmpty(Model.SearchQuery) 
+        ? $"{L["Blog_SearchResults"]}: {Model.SearchQuery}"
+        : Model.SelectedCategoryId.HasValue 
+            ? Model.Categories.FirstOrDefault(c => c.Id == Model.SelectedCategoryId.Value)?.Name ?? L["Blog_Title"]
+            : !string.IsNullOrEmpty(Model.SelectedTag)
+                ? $"{L["Blog_Tag"]}: {Model.SelectedTag}"
+                : L["Blog_Title"];
+}
+
+<div class="blog-page">
+    <!-- Header Section -->
+    <div class="blog-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-3">@L["Blog_Title"]</h1>
+                    <p class="lead text-muted mb-4">@L["Blog_Subtitle"]</p>
+                    
+                    <!-- Search Form -->
+                    <form asp-action="Search" method="get" class="blog-search-form">
+                        <div class="input-group input-group-lg">
+                            <input type="text" name="q" class="form-control" placeholder="@L["Blog_SearchPlaceholder"]" value="@Model.SearchQuery">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-search"></i> @L["Blog_Search"]
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+        <div class="row g-5">
+            <!-- Blog Posts (Main Content) -->
+            <div class="col-lg-8">
+                @if (!string.IsNullOrEmpty(Model.SearchQuery) || Model.SelectedCategoryId.HasValue || !string.IsNullOrEmpty(Model.SelectedTag))
+                {
+                    <div class="active-filters mb-4">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="fw-semibold">@L["Blog_ActiveFilters"]:</span>
+                            
+                            @if (Model.SelectedCategoryId.HasValue)
+                            {
+                                var category = Model.Categories.FirstOrDefault(c => c.Id == Model.SelectedCategoryId.Value);
+                                if (category != null)
+                                {
+                                    <span class="badge bg-primary">
+                                        @category.Name
+                                        <a asp-action="Index" class="text-white ms-1" title="@L["Blog_RemoveFilter"]">
+                                            <i class="bi bi-x"></i>
+                                        </a>
+                                    </span>
+                                }
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Model.SelectedTag))
+                            {
+                                <span class="badge bg-info">
+                                    #@Model.SelectedTag
+                                    <a asp-action="Index" class="text-white ms-1" title="@L["Blog_RemoveFilter"]">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                            {
+                                <span class="badge bg-success">
+                                    "@Model.SearchQuery"
+                                    <a asp-action="Index" class="text-white ms-1" title="@L["Blog_RemoveFilter"]">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                            }
+                            
+                            <a asp-action="Index" class="btn btn-sm btn-outline-secondary ms-2">
+                                <i class="bi bi-arrow-counterclockwise"></i> @L["Blog_ClearFilters"]
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                <div class="posts-count mb-4">
+                    <h5 class="text-muted">
+                        @Model.TotalPosts @L["Blog_PostsFound"]
+                    </h5>
+                </div>
+
+                @if (Model.Posts.Any())
+                {
+                    <div class="row g-4">
+                        @foreach (var post in Model.Posts)
+                        {
+                            <div class="col-md-6">
+                                <article class="blog-post-card">
+                                    @if (!string.IsNullOrEmpty(post.FeaturedImage))
+                                    {
+                                        <a asp-action="Details" asp-route-slug="@post.Slug" class="post-image-link">
+                                            <img src="@post.FeaturedImage" alt="@post.Title" class="post-featured-image">
+                                        </a>
+                                    }
+                                    
+                                    <div class="post-card-body">
+                                        <div class="post-meta mb-2">
+                                            <a asp-action="Index" asp-route-categoryId="@post.CategoryId" class="category-badge">
+                                                @post.CategoryName
+                                            </a>
+                                            <span class="text-muted mx-2">•</span>
+                                            <span class="text-muted">
+                                                <i class="bi bi-clock"></i> @post.ReadingTimeMinutes @L["Blog_MinRead"]
+                                            </span>
+                                        </div>
+                                        
+                                        <h3 class="post-title">
+                                            <a asp-action="Details" asp-route-slug="@post.Slug">@post.Title</a>
+                                        </h3>
+                                        
+                                        <p class="post-excerpt">@post.Excerpt</p>
+                                        
+                                        <div class="post-footer">
+                                            <div class="post-author">
+                                                <i class="bi bi-person-circle"></i>
+                                                <span>@post.AuthorName</span>
+                                            </div>
+                                            <div class="post-stats">
+                                                <span class="text-muted">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    @post.PublishedDate?.ToString("MMM dd, yyyy")
+                                                </span>
+                                                <span class="text-muted ms-3">
+                                                    <i class="bi bi-eye"></i>
+                                                    @post.Views
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        @if (post.Tags.Any())
+                                        {
+                                            <div class="post-tags mt-3">
+                                                @foreach (var tag in post.Tags.Take(3))
+                                                {
+                                                    <a asp-action="Tag" asp-route-tag="@tag" class="tag-link">#@tag</a>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </article>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Blog pagination" class="mt-5">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index" 
+                                       asp-route-categoryId="@Model.SelectedCategoryId"
+                                       asp-route-tag="@Model.SelectedTag"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-page="@(Model.CurrentPage - 1)">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                                
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link" asp-action="Index"
+                                           asp-route-categoryId="@Model.SelectedCategoryId"
+                                           asp-route-tag="@Model.SelectedTag"
+                                           asp-route-search="@Model.SearchQuery"
+                                           asp-route-page="@i">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+                                
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-categoryId="@Model.SelectedCategoryId"
+                                       asp-route-tag="@Model.SelectedTag"
+                                       asp-route-search="@Model.SearchQuery"
+                                       asp-route-page="@(Model.CurrentPage + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="no-posts-found text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                        <h3>@L["Blog_NoPosts"]</h3>
+                        <p class="text-muted">@L["Blog_NoPostsDesc"]</p>
+                        <a asp-action="Index" class="btn btn-primary mt-3">
+                            <i class="bi bi-arrow-left"></i> @L["Blog_BackToAll"]
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="blog-sidebar">
+                    <!-- Categories Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">@L["Blog_Categories"]</h4>
+                        <ul class="category-list">
+                            <li class="@(!Model.SelectedCategoryId.HasValue ? "active" : "")">
+                                <a asp-action="Index">
+                                    <span>@L["Blog_AllCategories"]</span>
+                                    <span class="badge">@Model.TotalPosts</span>
+                                </a>
+                            </li>
+                            @foreach (var category in Model.Categories)
+                            {
+                                var count = Model.Posts.Count(p => p.CategoryId == category.Id);
+                                <li class="@(Model.SelectedCategoryId == category.Id ? "active" : "")">
+                                    <a asp-action="Index" asp-route-categoryId="@category.Id">
+                                        <span>@category.Name</span>
+                                        <span class="badge">@count</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <!-- Recent Posts Widget -->
+                    @if (Model.RecentPosts.Any())
+                    {
+                        <div class="sidebar-widget">
+                            <h4 class="widget-title">@L["Blog_RecentPosts"]</h4>
+                            <div class="recent-posts-list">
+                                @foreach (var post in Model.RecentPosts)
+                                {
+                                    <div class="recent-post-item">
+                                        @if (!string.IsNullOrEmpty(post.FeaturedImage))
+                                        {
+                                            <a asp-action="Details" asp-route-slug="@post.Slug" class="recent-post-thumb">
+                                                <img src="@post.FeaturedImage" alt="@post.Title">
+                                            </a>
+                                        }
+                                        <div class="recent-post-content">
+                                            <h6 class="recent-post-title">
+                                                <a asp-action="Details" asp-route-slug="@post.Slug">@post.Title</a>
+                                            </h6>
+                                            <div class="recent-post-meta">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    @post.PublishedDate?.ToString("MMM dd")
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Popular Tags Widget -->
+                    @if (Model.PopularTags.Any())
+                    {
+                        <div class="sidebar-widget">
+                            <h4 class="widget-title">@L["Blog_PopularTags"]</h4>
+                            <div class="tags-cloud">
+                                @foreach (var tag in Model.PopularTags)
+                                {
+                                    <a asp-action="Tag" asp-route-tag="@tag.Name" 
+                                       class="tag-cloud-item @(Model.SelectedTag == tag.Name ? "active" : "")"
+                                       style="font-size: @(0.875 + (tag.Count * 0.1))rem;">
+                                        #@tag.Name
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Newsletter Widget -->
+                    <div class="sidebar-widget newsletter-widget">
+                        <h4 class="widget-title">@L["Blog_Newsletter"]</h4>
+                        <p class="text-muted mb-3">@L["Blog_NewsletterDesc"]</p>
+                        <form class="newsletter-form">
+                            <div class="mb-3">
+                                <input type="email" class="form-control" placeholder="@L["Blog_EmailPlaceholder"]" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-envelope"></i> @L["Blog_Subscribe"]
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
