@@ -39,6 +39,13 @@ public class CartRepository : Repository<Cart>, ICartRepository
             .SumAsync(c => c.Quantity);
     }
 
+    public async Task<int> GetCartItemCountAsync(string userId)
+    {
+        return await _context.Carts
+            .Where(c => c.UserId == userId)
+            .SumAsync(c => c.Quantity);
+    }
+
     public async Task ClearCartAsync(string userId)
     {
         var cartItems = await _context.Carts

@@ -31,6 +31,19 @@ namespace Kokomija.Data.Concrete
                 .FirstOrDefaultAsync(v => v.SKU == sku && v.IsActive);
         }
 
+        public async Task<ProductVariant?> GetVariantAsync(int productId, int? sizeId, int? colorId)
+        {
+            return await _dbSet
+                .Include(v => v.Product)
+                .Include(v => v.Size)
+                .Include(v => v.Color)
+                .FirstOrDefaultAsync(v => 
+                    v.ProductId == productId && 
+                    v.SizeId == sizeId && 
+                    v.ColorId == colorId && 
+                    v.IsActive);
+        }
+
         public async Task<IEnumerable<ProductVariant>> GetActiveVariantsAsync()
         {
             return await _dbSet

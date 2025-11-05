@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Account Locked";
+}
+
+<div class="lockout-page">
+    <div class="container">
+        <div class="lockout-card">
+            <div class="icon-wrapper">
+                <i class="bi bi-lock"></i>
+            </div>
+            <h1>Account Locked</h1>
+            <p class="subtitle">Your account has been temporarily locked</p>
+            
+            <div class="message">
+                <p>
+                    For security reasons, your account has been locked after multiple failed login attempts. 
+                    This is a temporary measure to protect your account.
+                </p>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-clock"></i>
+                    Your account will be automatically unlocked in <strong>30 minutes</strong>.
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h5>What can I do?</h5>
+                <ul>
+                    <li>Wait 30 minutes and try logging in again</li>
+                    <li>Reset your password if you've forgotten it</li>
+                    <li>Contact support if you believe this is an error</li>
+                </ul>
+            </div>
+
+            <div class="actions">
+                <a href="@Url.Action("ForgotPassword", "Account")" class="btn btn-primary">
+                    <i class="bi bi-key"></i>
+                    Reset Password
+                </a>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">
+                    <i class="bi bi-house"></i>
+                    Go to Homepage
+                </a>
+            </div>
+
+            <div class="help-text">
+                <p class="text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    Need immediate assistance? <a href="@Url.Action("Index", "Contact")">Contact Support</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

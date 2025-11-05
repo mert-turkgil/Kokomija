@@ -7,6 +7,7 @@ namespace Kokomija.Data.Abstract
         Task<Order?> GetOrderByOrderNumberAsync(string orderNumber);
         Task<Order?> GetOrderByStripePaymentIntentIdAsync(string paymentIntentId);
         Task<IEnumerable<Order>> GetOrdersByCustomerEmailAsync(string email);
+        Task<IEnumerable<Order>> GetOrdersByUserIdAsync(string userId);
         Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status);
         Task<Order?> GetOrderWithItemsAsync(int id);
         Task<IEnumerable<Order>> GetRecentOrdersAsync(int count);

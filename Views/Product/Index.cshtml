@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = ViewBag.Category != null 
         ? ViewBag.Category.Name 
-        : (ViewBag.SearchQuery != null ? $"Search Results: {ViewBag.SearchQuery}" : "All Products");
+        : (ViewBag.SearchQuery != null ? $"{L["Products_SearchResults"]}: {ViewBag.SearchQuery}" : L["Products_AllProducts"]);
 }
 
 <div class="products-page">
@@ -20,18 +20,18 @@
                         }
                         else if (ViewBag.SearchQuery != null)
                         {
-                            <span>Search Results: "@ViewBag.SearchQuery"</span>
+                            <span>@L["Products_SearchResults"]: "@ViewBag.SearchQuery"</span>
                         }
                         else
                         {
-                            <span>All Products</span>
+                            <span>@L["Products_AllProducts"]</span>
                         }
                     </h1>
-                    <p class="products-count">@Model.Count() items found</p>
+                    <p class="products-count">@Model.Count() @L["Products_ItemsFound_Plural"]</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <button class="btn btn-outline-primary" id="filterToggle">
-                        <i class="bi bi-funnel me-2"></i>Filters
+                        <i class="bi bi-funnel me-2"></i>@L["Products_Filters"]
                     </button>
                     <div class="btn-group ms-2" role="group">
                         <button type="button" class="btn btn-outline-secondary active" id="gridView">
@@ -50,14 +50,14 @@
             <div class="col-lg-3 filter-sidebar" id="filterSidebar">
                 <div class="filter-card">
                     <div class="filter-header">
-                        <h5>Filter By</h5>
-                        <button class="btn btn-link btn-sm text-danger" id="clearFilters">Clear All</button>
+                        <h5>@L["Products_FilterBy"]</h5>
+                        <button class="btn btn-link btn-sm text-danger" id="clearFilters">@L["Products_ClearAll"]</button>
                     </div>
 
                     <!-- Categories Filter -->
                     <div class="filter-section">
                         <h6 class="filter-title">
-                            <i class="bi bi-tag me-2"></i>Categories
+                            <i class="bi bi-tag me-2"></i>@L["Products_Categories"]
                         </h6>
                         <div id="categoryFilters" class="filter-options">
                             <!-- Will be populated dynamically -->
@@ -67,25 +67,25 @@
                     <!-- Price Range Filter -->
                     <div class="filter-section">
                         <h6 class="filter-title">
-                            <i class="bi bi-currency-dollar me-2"></i>Price Range
+                            <i class="bi bi-currency-dollar me-2"></i>@L["Products_PriceRange"]
                         </h6>
                         <div class="price-filter">
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input type="number" class="form-control form-control-sm" id="minPrice" placeholder="Min">
+                                    <input type="number" class="form-control form-control-sm" id="minPrice" placeholder="@L["Products_MinPrice"]">
                                 </div>
                                 <div class="col-6">
-                                    <input type="number" class="form-control form-control-sm" id="maxPrice" placeholder="Max">
+                                    <input type="number" class="form-control form-control-sm" id="maxPrice" placeholder="@L["Products_MaxPrice"]">
                                 </div>
                             </div>
-                            <button class="btn btn-primary btn-sm w-100 mt-2" id="applyPriceFilter">Apply</button>
+                            <button class="btn btn-primary btn-sm w-100 mt-2" id="applyPriceFilter">@L["Products_Apply"]</button>
                         </div>
                     </div>
 
                     <!-- Colors Filter -->
                     <div class="filter-section">
                         <h6 class="filter-title">
-                            <i class="bi bi-palette me-2"></i>Colors
+                            <i class="bi bi-palette me-2"></i>@L["Products_Colors"]
                         </h6>
                         <div id="colorFilters" class="filter-options color-options">
                             <!-- Will be populated dynamically -->
@@ -95,7 +95,7 @@
                     <!-- Sizes Filter -->
                     <div class="filter-section">
                         <h6 class="filter-title">
-                            <i class="bi bi-rulers me-2"></i>Sizes
+                            <i class="bi bi-rulers me-2"></i>@L["Products_Sizes"]
                         </h6>
                         <div id="sizeFilters" class="filter-options size-options">
                             <!-- Will be populated dynamically -->
@@ -105,14 +105,14 @@
                     <!-- Sort Options -->
                     <div class="filter-section">
                         <h6 class="filter-title">
-                            <i class="bi bi-sort-down me-2"></i>Sort By
+                            <i class="bi bi-sort-down me-2"></i>@L["Products_SortBy"]
                         </h6>
                         <select class="form-select form-select-sm" id="sortBy">
-                            <option value="newest">Newest First</option>
-                            <option value="price-asc">Price: Low to High</option>
-                            <option value="price-desc">Price: High to Low</option>
-                            <option value="name-asc">Name: A-Z</option>
-                            <option value="name-desc">Name: Z-A</option>
+                            <option value="newest">@L["Products_Sort_Newest"]</option>
+                            <option value="price-asc">@L["Products_Sort_PriceAsc"]</option>
+                            <option value="price-desc">@L["Products_Sort_PriceDesc"]</option>
+                            <option value="name-asc">@L["Products_Sort_NameAsc"]</option>
+                            <option value="name-desc">@L["Products_Sort_NameDesc"]</option>
                         </select>
                     </div>
                 </div>
@@ -124,9 +124,9 @@
                 {
                     <div class="no-products">
                         <i class="bi bi-inbox display-1"></i>
-                        <h3>No Products Found</h3>
-                        <p>Try adjusting your filters or search criteria.</p>
-                        <a asp-action="Index" class="btn btn-primary">View All Products</a>
+                        <h3>@L["Products_NoProductsFound"]</h3>
+                        <p>@L["Products_NoProductsDesc"]</p>
+                        <a asp-action="Index" class="btn btn-primary">@L["Products_ViewAllProducts"]</a>
                     </div>
                 }
                 else
@@ -219,12 +219,12 @@
                 }
 
                 // Update count
-                $('.products-count').text(visibleCount + ' @L["Products_ItemsFound"]');
+                $('.products-count').text(visibleCount + ' @L["Products_ItemsFound_Plural"]');
 
                 // Show/hide no products message
                 if (visibleCount === 0) {
                     if ($('.no-products-filter').length === 0) {
-                        $('#productsGrid').after('<div class="no-products no-products-filter"><i class="bi bi-inbox display-1"></i><h3>No Products Found</h3><p>Try adjusting your filters.</p></div>');
+                        $('#productsGrid').after('<div class="no-products no-products-filter"><i class="bi bi-inbox display-1"></i><h3>@L["Products_NoProductsFound"]</h3><p>@L["Products_TryAdjustingFilters"]</p></div>');
                     }
                 } else {
                     $('.no-products-filter').remove();
@@ -274,7 +274,7 @@
                 $('#minPrice, #maxPrice').val('');
                 $('#sortBy').val('newest');
                 $('#productsGrid > div').show();
-                $('.products-count').text($('#productsGrid > div').length + ' @L["Products_ItemsFound"]');
+                $('.products-count').text($('#productsGrid > div').length + ' @L["Products_ItemsFound_Plural"]');
                 $('.no-products-filter').remove();
                 
                 // Scroll to top of products

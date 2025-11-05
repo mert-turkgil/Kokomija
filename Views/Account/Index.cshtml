@@ -1,0 +1,296 @@
+﻿@model Kokomija.Models.ViewModels.Account.AccountIndexViewModel
+@inject Kokomija.Services.ILocalizationService Localizer
+
+@{
+    ViewData["Title"] = "My Account";
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<div class="account-page container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>Welcome, @Model.FirstName!</h1>
+            @if (isAdmin)
+            {
+                <a href="/Admin" class="btn btn-primary mt-2">
+                    <i class="bi bi-shield-lock"></i> Admin Panel
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">Total Orders</h5>
+                    <h2 class="display-4">@Model.TotalOrders</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">Completed</h5>
+                    <h2 class="display-4">@Model.CompletedOrders</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">Total Spent</h5>
+                    <h2 class="display-4">@Model.TotalSpent.ToString("C")</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">Wishlist</h5>
+                    <h2 class="display-4">@Model.WishlistCount</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">Orders</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">VIP Status</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">Settings</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="accountTabsContent">
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Orders</h5>
+                            <a href="#orders" data-bs-toggle="tab" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.RecentOrders.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order #</th>
+                                                <th>Date</th>
+                                                <th>Items</th>
+                                                <th>Total</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var order in Model.RecentOrders)
+                                            {
+                                                <tr>
+                                                    <td>#@order.OrderNumber</td>
+                                                    <td>@order.OrderDate.ToShortDateString()</td>
+                                                    <td>@order.ItemCount</td>
+                                                    <td>@order.TotalAmount.ToString("C")</td>
+                                                    <td>
+                                                        <span class="badge bg-@(order.OrderStatus == "Completed" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning")">
+                                                            @order.OrderStatus
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted text-center py-4">No orders yet. <a href="/Product">Start shopping!</a></p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">VIP Status</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <span class="badge bg-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light text-dark" : Model.VIPStatus.TierName == "Gold" ? "warning" : "primary") fs-4">
+                                    @Model.VIPStatus.TierName
+                                </span>
+                            </div>
+                            <p class="mb-2">Discount: <strong>@Model.VIPStatus.DiscountPercentage%</strong></p>
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%">
+                                    @Model.VIPStatus.ProgressPercentage%
+                                </div>
+                            </div>
+                            <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") to next tier</small>
+                            <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">View Benefits</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="orders" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.RecentOrders.Any())
+                    {
+                        @foreach (var order in Model.RecentOrders)
+                        {
+                            <div class="order-card border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5>Order #@order.OrderNumber</h5>
+                                        <p class="text-muted mb-1">@order.OrderDate.ToString("MMMM dd, yyyy")</p>
+                                        <span class="badge bg-@(order.OrderStatus == "Completed" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning")">
+                                            @order.OrderStatus
+                                        </span>
+                                    </div>
+                                    <div class="text-end">
+                                        <h4>@order.TotalAmount.ToString("C")</h4>
+                                        <small class="text-muted">@order.ItemCount items</small>
+                                    </div>
+                                </div>
+                                @if (order.CanCancel)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger">Cancel Order</button>
+                                }
+                                @if (order.CanReturn)
+                                {
+                                    <button class="btn btn-sm btn-outline-warning">Request Return</button>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-5">No orders yet. <a href="/Product">Start shopping!</a></p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="vip" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your VIP Benefits</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach (var benefit in Model.VIPStatus.Benefits)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 @(benefit.IsUnlocked ? "border-success" : "")">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-start">
+                                            <i class="bi bi-@benefit.Icon fs-3 me-3 @(benefit.IsUnlocked ? "text-success" : "text-muted")"></i>
+                                            <div>
+                                                <h6>@benefit.Title</h6>
+                                                <p class="small text-muted mb-0">@benefit.Description</p>
+                                                @if (!benefit.IsUnlocked)
+                                                {
+                                                    <small class="text-warning">Locked</small>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">VIP Tier Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Tier</th>
+                                    <th>Requirement</th>
+                                    <th>Discount</th>
+                                    <th>Benefits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="@(Model.VIPStatus.TierName == "Bronze" ? "table-active" : "")">
+                                    <td><span class="badge bg-secondary">Bronze</span></td>
+                                    <td>0 PLN</td>
+                                    <td>5%</td>
+                                    <td>Basic discount</td>
+                                </tr>
+                                <tr class="@(Model.VIPStatus.TierName == "Silver" ? "table-active" : "")">
+                                    <td><span class="badge bg-light text-dark">Silver</span></td>
+                                    <td>500 PLN</td>
+                                    <td>10%</td>
+                                    <td>Free shipping on all orders</td>
+                                </tr>
+                                <tr class="@(Model.VIPStatus.TierName == "Gold" ? "table-active" : "")">
+                                    <td><span class="badge bg-warning">Gold</span></td>
+                                    <td>1,500 PLN</td>
+                                    <td>15%</td>
+                                    <td>Early access to new products</td>
+                                </tr>
+                                <tr class="@(Model.VIPStatus.TierName == "Platinum" ? "table-active" : "")">
+                                    <td><span class="badge bg-primary">Platinum</span></td>
+                                    <td>5,000 PLN</td>
+                                    <td>20%</td>
+                                    <td>Birthday gift + exclusive offers</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="settings" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Account Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="UpdateProfile">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="@Model.FirstName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="@Model.LastName" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" value="@Model.Email" disabled>
+                            <small class="text-muted">Contact support to change email</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                    <hr class="my-4">
+                    <h6>Password</h6>
+                    <a href="/Account/ChangePassword" class="btn btn-outline-secondary">Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

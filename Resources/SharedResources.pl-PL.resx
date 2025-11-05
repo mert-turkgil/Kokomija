@@ -852,4 +852,99 @@
   <data name="Blog_BackToBlog" xml:space="preserve">
     <value>Powrót do bloga</value>
   </data>
+  
+  <!-- Products Page -->
+  <data name="Products_AllProducts" xml:space="preserve">
+    <value>Wszystkie Produkty</value>
+  </data>
+  <data name="Products_SearchResults" xml:space="preserve">
+    <value>Wyniki Wyszukiwania</value>
+  </data>
+  <data name="Products_ItemsFound_Plural" xml:space="preserve">
+    <value>znalezionych produktów</value>
+  </data>
+  <data name="Products_Filters" xml:space="preserve">
+    <value>Filtry</value>
+  </data>
+  <data name="Products_FilterBy" xml:space="preserve">
+    <value>Filtruj według</value>
+  </data>
+  <data name="Products_ClearAll" xml:space="preserve">
+    <value>Wyczyść wszystko</value>
+  </data>
+  <data name="Products_Categories" xml:space="preserve">
+    <value>Kategorie</value>
+  </data>
+  <data name="Products_PriceRange" xml:space="preserve">
+    <value>Zakres cen</value>
+  </data>
+  <data name="Products_MinPrice" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="Products_MaxPrice" xml:space="preserve">
+    <value>Max</value>
+  </data>
+  <data name="Products_Apply" xml:space="preserve">
+    <value>Zastosuj</value>
+  </data>
+  <data name="Products_Colors" xml:space="preserve">
+    <value>Kolory</value>
+  </data>
+  <data name="Products_Sizes" xml:space="preserve">
+    <value>Rozmiary</value>
+  </data>
+  <data name="Products_SortBy" xml:space="preserve">
+    <value>Sortuj według</value>
+  </data>
+  <data name="Products_Sort_Newest" xml:space="preserve">
+    <value>Najnowsze</value>
+  </data>
+  <data name="Products_Sort_PriceAsc" xml:space="preserve">
+    <value>Cena: od najniższej</value>
+  </data>
+  <data name="Products_Sort_PriceDesc" xml:space="preserve">
+    <value>Cena: od najwyższej</value>
+  </data>
+  <data name="Products_Sort_NameAsc" xml:space="preserve">
+    <value>Nazwa: A-Z</value>
+  </data>
+  <data name="Products_Sort_NameDesc" xml:space="preserve">
+    <value>Nazwa: Z-A</value>
+  </data>
+  <data name="Products_NoProductsFound" xml:space="preserve">
+    <value>Nie znaleziono produktów</value>
+  </data>
+  <data name="Products_NoProductsDesc" xml:space="preserve">
+    <value>Spróbuj dostosować filtry lub kryteria wyszukiwania.</value>
+  </data>
+  <data name="Products_ViewAllProducts" xml:space="preserve">
+    <value>Zobacz wszystkie produkty</value>
+  </data>
+  <data name="Products_TryAdjustingFilters" xml:space="preserve">
+    <value>Spróbuj dostosować filtry.</value>
+  </data>
+  <data name="Product_SummerDress_Name" xml:space="preserve">
+    <value>Elegancka Sukienka Letnia</value>
+  </data>
+  <data name="Product_SummerDress_Description" xml:space="preserve">
+    <value>Piękna, zwiewna sukienka idealna na letnie wieczory. Wykonana z wysokiej jakości materiału, zapewnia komfort i styl.</value>
+  </data>
+  <data name="Product_BlueShirt_Name" xml:space="preserve">
+    <value>Klasyczna Niebieska Koszula</value>
+  </data>
+  <data name="Product_BlueShirt_Description" xml:space="preserve">
+    <value>Elegancka koszula w uniwersalnym niebieskim odcieniu. Idealna zarówno na biznesowe spotkania, jak i na co dzień.</value>
+  </data>
+  <data name="Product_SpringJacket_Name" xml:space="preserve">
+    <value>Wiosenna Lekka Kurtka</value>
+  </data>
+  <data name="Product_SpringJacket_Description" xml:space="preserve">
+    <value>Stylowa kurtka idealna na przejściową pogodę. Wodoodporny materiał i nowoczesny krój gwarantują komfort w chłodne dni.</value>
+  </data>
+  <data name="Blog_FashionTrends_Title" xml:space="preserve">
+    <value>Trendy Modowe na 2025</value>
+  </data>
+  <data name="Blog_FashionTrends_Content" xml:space="preserve">
+    <value>Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory, prezentujemy wszystko, co musisz wiedzieć, aby być na czasie. Ten sezon przynosi powrót do klasyki z nowoczesnym akcentem - oversize'owe marynarki, midi spódnice i minimalistyczna biżuteria to must-have w każdej garderobie.</value>
+  </data>
 </root>

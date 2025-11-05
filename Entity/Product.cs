@@ -12,8 +12,14 @@ namespace Kokomija.Entity
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(100)]
+        public string? NameKey { get; set; }
+
         [Required]
         public string Description { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string? DescriptionKey { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

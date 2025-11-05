@@ -127,7 +127,7 @@ public class HomeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Contact(ContactViewModel model)
+    public IActionResult Contact(ContactViewModel model)
     {
         if (!ModelState.IsValid)
         {

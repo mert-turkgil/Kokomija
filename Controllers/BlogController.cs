@@ -158,14 +158,14 @@ namespace Kokomija.Controllers
 
         // GET: /Blog/Tag/{tag}
         [Route("Blog/Tag/{tag}")]
-        public async Task<IActionResult> Tag(string tag, int page = 1)
+        public IActionResult Tag(string tag, int page = 1)
         {
             return RedirectToAction("Index", new { tag, page });
         }
 
         // GET: /Blog/Search?q={query}
         [Route("Blog/Search")]
-        public async Task<IActionResult> Search(string q, int page = 1)
+        public IActionResult Search(string q, int page = 1)
         {
             return RedirectToAction("Index", new { search = q, page });
         }

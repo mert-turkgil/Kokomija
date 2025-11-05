@@ -80,6 +80,8 @@ namespace Kokomija.Data
             modelBuilder.SeedCategories();
             modelBuilder.SeedLanguages();
             modelBuilder.SeedBlogCategories();
+            // Note: Blog seeding requires user accounts to be created first
+            // modelBuilder.SeedBlogs(); // Uncomment after running IdentitySeeder
             modelBuilder.SeedAdminSettings();
             modelBuilder.SeedProducts();
             modelBuilder.SeedProductImages();

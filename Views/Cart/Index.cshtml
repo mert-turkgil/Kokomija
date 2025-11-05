@@ -1,0 +1,275 @@
+@model Kokomija.Models.ViewModels.Cart.CartIndexViewModel
+@inject Kokomija.Services.ILocalizationService Localizer
+
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<div class="cart-page container my-5">
+    <h1 class="mb-4">Shopping Cart</h1>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty-cart text-center py-5">
+            <i class="bi bi-cart-x display-1 text-muted"></i>
+            <h3 class="mt-3">Your cart is empty</h3>
+            <p class="text-muted">Start shopping to add items to your cart</p>
+            <a href="/Product" class="btn btn-primary">Continue Shopping</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8">
+                @* Cart Items *@
+                <div class="card mb-4">
+                    <div class="card-body">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="cart-item border-bottom py-3" data-item-id="@item.Id">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        @if (!string.IsNullOrEmpty(item.ProductImage))
+                                        {
+                                            <img src="@item.ProductImage" alt="@item.ProductName" class="img-fluid rounded">
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light rounded" style="height: 100px;"></div>
+                                        }
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5 class="mb-1">@item.ProductName</h5>
+                                        @if (!string.IsNullOrEmpty(item.ColorName))
+                                        {
+                                            <small class="text-muted">Color: @item.ColorName</small><br />
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.SizeName))
+                                        {
+                                            <small class="text-muted">Size: @item.SizeName</small>
+                                        }
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="input-group input-group-sm">
+                                            <button class="btn btn-outline-secondary quantity-decrease" type="button" data-item-id="@item.Id">
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="number" class="form-control text-center quantity-input" value="@item.Quantity" min="1" max="@item.MaxQuantity" readonly>
+                                            <button class="btn btn-outline-secondary quantity-increase" type="button" data-item-id="@item.Id" @(item.Quantity >= item.MaxQuantity ? "disabled" : "")>
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        @if (!item.IsInStock)
+                                        {
+                                            <small class="text-danger">Out of stock</small>
+                                        }
+                                        else if (item.Quantity >= item.MaxQuantity)
+                                        {
+                                            <small class="text-warning">Max quantity</small>
+                                        }
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <strong>@item.TotalPrice.ToString("C")</strong>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button class="btn btn-sm btn-outline-danger remove-item" data-item-id="@item.Id">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @* Coupon Section *@
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Have a coupon?</h5>
+                        @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
+                        {
+                            <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-check-circle"></i> Coupon <strong>@Model.AppliedCouponCode</strong> applied!
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="removeCoupon">Remove</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <form id="couponForm" class="row g-3">
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-outline-primary w-100">Apply Coupon</button>
+                                </div>
+                            </form>
+                            <div id="couponMessage" class="mt-2"></div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                @* Order Summary *@
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <strong>@Model.Subtotal.ToString("C")</strong>
+                        </div>
+
+                        @if (Model.DiscountAmount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Discount:</span>
+                                <strong>-@Model.DiscountAmount.ToString("C")</strong>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping:</span>
+                            <strong>@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C") : "FREE")</strong>
+                        </div>
+
+                        @if (!Model.HasFreeShipping && Model.RemainingForFreeShipping > 0)
+                        {
+                            <div class="free-shipping-progress mb-3">
+                                <small class="text-muted">Add @Model.RemainingForFreeShipping.ToString("C") more for free shipping</small>
+                                <div class="progress mt-1" style="height: 5px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: @((int)(((Model.FreeShippingThreshold - Model.RemainingForFreeShipping) / Model.FreeShippingThreshold) * 100))%"></div>
+                                </div>
+                            </div>
+                        }
+                        else if (Model.HasFreeShipping)
+                        {
+                            <div class="alert alert-success py-2 mb-3">
+                                <i class="bi bi-truck"></i> You've qualified for free shipping!
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax (23%):</span>
+                            <strong>@Model.TaxAmount.ToString("C")</strong>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5>Total:</h5>
+                            <h5>@Model.Total.ToString("C")</h5>
+                        </div>
+
+                        <a href="/Checkout" class="btn btn-primary w-100 mb-2">Proceed to Checkout</a>
+                        <a href="/Product" class="btn btn-outline-secondary w-100">Continue Shopping</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Update quantity
+            $('.quantity-decrease, .quantity-increase').on('click', function() {
+                const itemId = $(this).data('item-id');
+                const isIncrease = $(this).hasClass('quantity-increase');
+                const $item = $(`.cart-item[data-item-id="${itemId}"]`);
+                const $input = $item.find('.quantity-input');
+                let quantity = parseInt($input.val());
+
+                if (isIncrease) {
+                    quantity++;
+                } else if (quantity > 1) {
+                    quantity--;
+                } else {
+                    return; // Don't allow quantity below 1
+                }
+
+                // Update via AJAX
+                $.ajax({
+                    url: '/Cart/UpdateQuantity',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ cartItemId: itemId, quantity: quantity }),
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload(); // Refresh to update totals
+                        } else {
+                            alert(response.message || 'Failed to update quantity');
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while updating quantity');
+                    }
+                });
+            });
+
+            // Remove item
+            $('.remove-item').on('click', function() {
+                if (!confirm('Remove this item from cart?')) return;
+
+                const itemId = $(this).data('item-id');
+
+                $.ajax({
+                    url: '/Cart/RemoveItem',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ cartItemId: itemId }),
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert(response.message || 'Failed to remove item');
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while removing item');
+                    }
+                });
+            });
+
+            // Apply coupon
+            $('#couponForm').on('submit', function(e) {
+                e.preventDefault();
+                const couponCode = $('#couponCode').val().trim();
+
+                $.ajax({
+                    url: '/Cart/ApplyCoupon',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ couponCode: couponCode }),
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            $('#couponMessage').html(`<div class="alert alert-danger">${response.message}</div>`);
+                        }
+                    },
+                    error: function() {
+                        $('#couponMessage').html('<div class="alert alert-danger">An error occurred</div>');
+                    }
+                });
+            });
+
+            // Remove coupon
+            $('#removeCoupon').on('click', function() {
+                $.ajax({
+                    url: '/Cart/RemoveCoupon',
+                    method: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

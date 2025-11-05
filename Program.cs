@@ -49,6 +49,76 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Configure External Authentication Providers (Google, Facebook, Apple)
+var authBuilder = builder.Services.AddAuthentication();
+
+// Google Authentication
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    authBuilder.AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = googleClientId;
+        googleOptions.ClientSecret = googleClientSecret;
+        googleOptions.CallbackPath = "/signin-google";
+        googleOptions.SaveTokens = true;
+        
+        // Request email and profile scopes
+        googleOptions.Scope.Add("email");
+        googleOptions.Scope.Add("profile");
+    });
+}
+
+// Facebook Authentication
+var facebookAppId = builder.Configuration["Authentication:Facebook:AppId"];
+var facebookAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSecret))
+{
+    authBuilder.AddFacebook(facebookOptions =>
+    {
+        facebookOptions.AppId = facebookAppId;
+        facebookOptions.AppSecret = facebookAppSecret;
+        facebookOptions.CallbackPath = "/signin-facebook";
+        facebookOptions.SaveTokens = true;
+        
+        // Request email and public_profile permissions
+        facebookOptions.Scope.Add("email");
+        facebookOptions.Scope.Add("public_profile");
+        
+        // Map fields
+        facebookOptions.Fields.Add("name");
+        facebookOptions.Fields.Add("email");
+        facebookOptions.Fields.Add("picture");
+    });
+}
+
+// Apple Authentication (only add if all credentials are present)
+var appleClientId = builder.Configuration["Authentication:Apple:ClientId"];
+var appleTeamId = builder.Configuration["Authentication:Apple:TeamId"];
+var appleKeyId = builder.Configuration["Authentication:Apple:KeyId"];
+var applePrivateKey = builder.Configuration["Authentication:Apple:PrivateKey"];
+
+if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) && 
+    !string.IsNullOrEmpty(appleKeyId) && !string.IsNullOrEmpty(applePrivateKey))
+{
+    authBuilder.AddApple(appleOptions =>
+    {
+        appleOptions.ClientId = appleClientId;
+        appleOptions.TeamId = appleTeamId;
+        appleOptions.KeyId = appleKeyId;
+        appleOptions.CallbackPath = "/signin-apple";
+        appleOptions.SaveTokens = true;
+        appleOptions.GenerateClientSecret = true;
+        
+        // Configure private key
+        appleOptions.PrivateKey = (keyId, cancellationToken) =>
+        {
+            return Task.FromResult<ReadOnlyMemory<char>>(applePrivateKey.AsMemory());
+        };
+    });
+}
+
 // Configure Cookie settings
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -87,6 +157,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddScoped<IStripeService, StripeService>();
+builder.Services.AddScoped<IStripeCustomerService, StripeCustomerService>();
 
 // Register Cookie Consent Service
 builder.Services.AddScoped<ICookieConsentService, CookieConsentService>();

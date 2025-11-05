@@ -1,0 +1,217 @@
+@model Kokomija.Models.ViewModels.Account.RegisterViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="auth-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8">
+                <div class="auth-card">
+                    <!-- Logo -->
+                    <div class="text-center mb-4">
+                        <a asp-controller="Home" asp-action="Index" class="auth-logo">
+                            <h2 class="mb-0">Kokomija</h2>
+                        </a>
+                    </div>
+
+                    <!-- Header -->
+                    <div class="auth-header text-center mb-4">
+                        <h3 class="fw-bold mb-2">Create Your Account</h3>
+                        <p class="text-muted">Join us and start shopping exclusive fashion</p>
+                    </div>
+
+                    <!-- Register Form -->
+                    <form asp-action="Register" asp-controller="Account" method="post" class="auth-form">
+                        <input type="hidden" asp-for="ReturnUrl" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Name Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="FirstName" class="form-label">
+                                        <i class="bi bi-person me-2"></i>First Name
+                                    </label>
+                                    <input asp-for="FirstName" class="form-control form-control-lg" 
+                                           placeholder="John" autocomplete="given-name" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="LastName" class="form-label">
+                                        <i class="bi bi-person me-2"></i>Last Name
+                                    </label>
+                                    <input asp-for="LastName" class="form-control form-control-lg" 
+                                           placeholder="Doe" autocomplete="family-name" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">
+                                <i class="bi bi-envelope me-2"></i>Email Address
+                            </label>
+                            <input asp-for="Email" class="form-control form-control-lg" 
+                                   placeholder="your@email.com" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <!-- Phone Number (Optional) -->
+                        <div class="form-group mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">
+                                <i class="bi bi-telephone me-2"></i>Phone Number <small class="text-muted">(Optional)</small>
+                            </label>
+                            <input asp-for="PhoneNumber" class="form-control form-control-lg" 
+                                   placeholder="+48 123 456 789" autocomplete="tel" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label">
+                                <i class="bi bi-lock me-2"></i>Password
+                            </label>
+                            <div class="password-input-group">
+                                <input asp-for="Password" class="form-control form-control-lg" 
+                                       placeholder="Create a strong password" autocomplete="new-password" />
+                                <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">
+                                Minimum 6 characters
+                            </small>
+                            <span asp-validation-for="Password" class="text-danger d-block"></span>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="form-group mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">
+                                <i class="bi bi-lock-fill me-2"></i>Confirm Password
+                            </label>
+                            <div class="password-input-group">
+                                <input asp-for="ConfirmPassword" class="form-control form-control-lg" 
+                                       placeholder="Confirm your password" autocomplete="new-password" />
+                                <button type="button" class="password-toggle" onclick="togglePassword(this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <!-- Terms & Conditions -->
+                        <div class="form-check mb-3">
+                            <input asp-for="AgreeToTerms" class="form-check-input" />
+                            <label asp-for="AgreeToTerms" class="form-check-label">
+                                I agree to the 
+                                <a href="#" target="_blank">Terms & Conditions</a> and 
+                                <a href="#" target="_blank">Privacy Policy</a>
+                            </label>
+                            <span asp-validation-for="AgreeToTerms" class="text-danger d-block"></span>
+                        </div>
+
+                        <!-- Newsletter Subscription -->
+                        <div class="form-check mb-4">
+                            <input asp-for="SubscribeToNewsletter" class="form-check-input" />
+                            <label asp-for="SubscribeToNewsletter" class="form-check-label">
+                                Send me exclusive offers and fashion updates
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </button>
+                    </form>
+
+                    <!-- Social Login -->
+                    <div class="social-login">
+                        <div class="divider">
+                            <span>Or sign up with</span>
+                        </div>
+                        <div class="social-buttons">
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                                <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+                                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                    </svg>
+                                    Continue with Google
+                                </button>
+                            </form>
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                                <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100">
+                                    <i class="bi bi-facebook" style="font-size: 20px;"></i>
+                                    Continue with Facebook
+                                </button>
+                            </form>
+                            @* Apple Sign-In - Uncomment when credentials are configured
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                                <button type="submit" name="provider" value="Apple" class="btn-social btn-apple w-100">
+                                    <i class="bi bi-apple" style="font-size: 20px;"></i>
+                                    Continue with Apple
+                                </button>
+                            </form>
+                            *@
+                        </div>
+                    </div>
+
+                    <!-- Login Link -->
+                    <div class="auth-links">
+                        <p>Already have an account?</p>
+                        <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="link-primary">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Sign In
+                        </a>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div class="auth-benefits mt-4">
+                        <div class="row g-3 text-center">
+                            <div class="col-4">
+                                <i class="bi bi-shield-check text-primary fs-3"></i>
+                                <small class="d-block mt-1 text-muted">Secure</small>
+                            </div>
+                            <div class="col-4">
+                                <i class="bi bi-gift text-primary fs-3"></i>
+                                <small class="d-block mt-1 text-muted">Rewards</small>
+                            </div>
+                            <div class="col-4">
+                                <i class="bi bi-truck text-primary fs-3"></i>
+                                <small class="d-block mt-1 text-muted">Free Ship</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function togglePassword(button) {
+            const input = button.previousElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+    </script>
+}

@@ -20,7 +20,8 @@ namespace Kokomija.Data
 
         public static async Task SeedAdminUserAsync(
             UserManager<ApplicationUser> userManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            Services.IStripeCustomerService stripeCustomerService)
         {
             var adminEmail = configuration["AdminUser:Email"];
             var adminPassword = configuration["AdminUser:Password"];
@@ -57,6 +58,19 @@ namespace Kokomija.Data
             {
                 // Add to Admin role
                 await userManager.AddToRoleAsync(adminUser, "Admin");
+
+                // Create Stripe customer for admin
+                try
+                {
+                    var stripeCustomerId = await stripeCustomerService.CreateCustomerAsync(adminUser);
+                    adminUser.StripeCustomerId = stripeCustomerId;
+                    await userManager.UpdateAsync(adminUser);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail - admin can still be created without Stripe
+                    Console.WriteLine($"Warning: Failed to create Stripe customer for admin: {ex.Message}");
+                }
             }
             else
             {
@@ -76,12 +90,13 @@ namespace Kokomija.Data
             {
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                var stripeCustomerService = services.GetRequiredService<Services.IStripeCustomerService>();
 
                 // Seed roles
                 await SeedRolesAsync(roleManager);
 
                 // Seed admin user
-                await SeedAdminUserAsync(userManager, configuration);
+                await SeedAdminUserAsync(userManager, configuration, stripeCustomerService);
             }
             catch (Exception ex)
             {

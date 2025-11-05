@@ -6,6 +6,7 @@ namespace Kokomija.Data.Abstract
     {
         Task<IEnumerable<ProductVariant>> GetVariantsByProductIdAsync(int productId);
         Task<ProductVariant?> GetVariantBySkuAsync(string sku);
+        Task<ProductVariant?> GetVariantAsync(int productId, int? sizeId, int? colorId);
         Task<IEnumerable<ProductVariant>> GetActiveVariantsAsync();
         Task<IEnumerable<ProductVariant>> GetVariantsWithStockAsync(int productId);
     }

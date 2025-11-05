@@ -35,6 +35,24 @@ namespace Kokomija.Data.Concrete
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Order>> GetOrdersByUserIdAsync(string userId)
+        {
+            return await _dbSet
+                .Where(o => o.UserId == userId)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                            .ThenInclude(p => p.Images)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv.Color)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv.Size)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status)
         {
             return await _dbSet

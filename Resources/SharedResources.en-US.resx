@@ -1113,4 +1113,99 @@
   <data name="Blog_BackToBlog" xml:space="preserve">
     <value>Back to Blog</value>
   </data>
+  
+  <!-- Products Page -->
+  <data name="Products_AllProducts" xml:space="preserve">
+    <value>All Products</value>
+  </data>
+  <data name="Products_SearchResults" xml:space="preserve">
+    <value>Search Results</value>
+  </data>
+  <data name="Products_ItemsFound_Plural" xml:space="preserve">
+    <value>items found</value>
+  </data>
+  <data name="Products_Filters" xml:space="preserve">
+    <value>Filters</value>
+  </data>
+  <data name="Products_FilterBy" xml:space="preserve">
+    <value>Filter By</value>
+  </data>
+  <data name="Products_ClearAll" xml:space="preserve">
+    <value>Clear All</value>
+  </data>
+  <data name="Products_Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Products_PriceRange" xml:space="preserve">
+    <value>Price Range</value>
+  </data>
+  <data name="Products_MinPrice" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="Products_MaxPrice" xml:space="preserve">
+    <value>Max</value>
+  </data>
+  <data name="Products_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Products_Colors" xml:space="preserve">
+    <value>Colors</value>
+  </data>
+  <data name="Products_Sizes" xml:space="preserve">
+    <value>Sizes</value>
+  </data>
+  <data name="Products_SortBy" xml:space="preserve">
+    <value>Sort By</value>
+  </data>
+  <data name="Products_Sort_Newest" xml:space="preserve">
+    <value>Newest First</value>
+  </data>
+  <data name="Products_Sort_PriceAsc" xml:space="preserve">
+    <value>Price: Low to High</value>
+  </data>
+  <data name="Products_Sort_PriceDesc" xml:space="preserve">
+    <value>Price: High to Low</value>
+  </data>
+  <data name="Products_Sort_NameAsc" xml:space="preserve">
+    <value>Name: A-Z</value>
+  </data>
+  <data name="Products_Sort_NameDesc" xml:space="preserve">
+    <value>Name: Z-A</value>
+  </data>
+  <data name="Products_NoProductsFound" xml:space="preserve">
+    <value>No Products Found</value>
+  </data>
+  <data name="Products_NoProductsDesc" xml:space="preserve">
+    <value>Try adjusting your filters or search criteria.</value>
+  </data>
+  <data name="Products_ViewAllProducts" xml:space="preserve">
+    <value>View All Products</value>
+  </data>
+  <data name="Products_TryAdjustingFilters" xml:space="preserve">
+    <value>Try adjusting your filters.</value>
+  </data>
+  <data name="Product_SummerDress_Name" xml:space="preserve">
+    <value>Elegant Summer Dress</value>
+  </data>
+  <data name="Product_SummerDress_Description" xml:space="preserve">
+    <value>Beautiful, airy dress perfect for summer evenings. Made of high-quality material, ensures comfort and style.</value>
+  </data>
+  <data name="Product_BlueShirt_Name" xml:space="preserve">
+    <value>Classic Blue Shirt</value>
+  </data>
+  <data name="Product_BlueShirt_Description" xml:space="preserve">
+    <value>Elegant shirt in a universal blue shade. Perfect for both business meetings and casual occasions.</value>
+  </data>
+  <data name="Product_SpringJacket_Name" xml:space="preserve">
+    <value>Spring Lightweight Jacket</value>
+  </data>
+  <data name="Product_SpringJacket_Description" xml:space="preserve">
+    <value>Stylish jacket ideal for transitional weather. Waterproof material and modern cut guarantee comfort on chilly days.</value>
+  </data>
+  <data name="Blog_FashionTrends_Title" xml:space="preserve">
+    <value>Fashion Trends for 2025</value>
+  </data>
+  <data name="Blog_FashionTrends_Content" xml:space="preserve">
+    <value>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish. This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</value>
+  </data>
 </root>

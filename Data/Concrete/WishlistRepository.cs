@@ -28,6 +28,12 @@ public class WishlistRepository : Repository<Wishlist>, IWishlistRepository
             .ToListAsync();
     }
 
+    public async Task<int> GetWishlistCountAsync(string userId)
+    {
+        return await _context.Wishlists
+            .CountAsync(w => w.UserId == userId);
+    }
+
     public async Task<bool> ExistsAsync(string userId, int productId)
     {
         return await _context.Wishlists
