@@ -173,6 +173,78 @@
   <data name="Products_ItemsFound" xml:space="preserve">
     <value>items found</value>
   </data>
+  <data name="Product_Quality" xml:space="preserve">
+    <value>Premium Quality</value>
+  </data>
+  <data name="Product_Quality_Desc" xml:space="preserve">
+    <value>100% authentic products</value>
+  </data>
+  <data name="Product_FastShipping" xml:space="preserve">
+    <value>Fast Shipping</value>
+  </data>
+  <data name="Product_FastShipping_Desc" xml:space="preserve">
+    <value>2-3 day delivery</value>
+  </data>
+  <data name="Product_Returns" xml:space="preserve">
+    <value>Easy Returns</value>
+  </data>
+  <data name="Product_Returns_Desc" xml:space="preserve">
+    <value>30-day return policy</value>
+  </data>
+  <data name="Product_PricePerPiece" xml:space="preserve">
+    <value>per piece</value>
+  </data>
+  <data name="Product_BestValue" xml:space="preserve">
+    <value>Best Value</value>
+  </data>
+  <data name="Product_PackSize" xml:space="preserve">
+    <value>Select Pack Size</value>
+  </data>
+  <data name="Product_Pack" xml:space="preserve">
+    <value>Pack</value>
+  </data>
+  <data name="Product_Piece" xml:space="preserve">
+    <value>piece</value>
+  </data>
+  <data name="Product_SizeGuide" xml:space="preserve">
+    <value>Size Guide</value>
+  </data>
+  <data name="Product_Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="Product_Material_Cotton" xml:space="preserve">
+    <value>100% Cotton</value>
+  </data>
+  <data name="Product_Care" xml:space="preserve">
+    <value>Care Instructions</value>
+  </data>
+  <data name="Product_Care_Instructions" xml:space="preserve">
+    <value>Machine wash cold, tumble dry low</value>
+  </data>
+  <data name="Product_Brand" xml:space="preserve">
+    <value>Brand</value>
+  </data>
+  <data name="Product_SecurePayment" xml:space="preserve">
+    <value>Secure Payment</value>
+  </data>
+  <data name="Product_Certified" xml:space="preserve">
+    <value>Certified Quality</value>
+  </data>
+  <data name="Product_Adding" xml:space="preserve">
+    <value>Adding...</value>
+  </data>
+  <data name="Product_Added" xml:space="preserve">
+    <value>Added to Cart</value>
+  </data>
+  <data name="Product_SelectSizeFirst" xml:space="preserve">
+    <value>Please select a size first</value>
+  </data>
+  <data name="Previous_Image" xml:space="preserve">
+    <value>Previous Image</value>
+  </data>
+  <data name="Next_Image" xml:space="preserve">
+    <value>Next Image</value>
+  </data>
   
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
@@ -1609,6 +1681,26 @@
   </data>
   <data name="Quantity" xml:space="preserve">
     <value>Quantity</value>
+  </data>
+  
+  <!-- Product Names and Descriptions -->
+  <data name="Product_WomenBriefs5Pack_Name" xml:space="preserve">
+    <value>Women's Cotton High-Waist Briefs - 5 Pack</value>
+  </data>
+  <data name="Product_WomenBriefs5Pack_Description" xml:space="preserve">
+    <value>High-quality women's cotton briefs in a set of 5. Comfortable, breathable, and durable. Perfect choice for everyday wear. Available in various colors and sizes.</value>
+  </data>
+  <data name="Product_WomenBriefs6Pack_Name" xml:space="preserve">
+    <value>Women's Cotton High-Waist Briefs - 6 Pack</value>
+  </data>
+  <data name="Product_WomenBriefs6Pack_Description" xml:space="preserve">
+    <value>High-quality women's cotton briefs in a set of 6. Comfortable, breathable, and durable. Perfect choice for everyday wear. Available in various colors and sizes.</value>
+  </data>
+  <data name="Product_WomenBriefs8Pack_Name" xml:space="preserve">
+    <value>Women's Cotton High-Waist Briefs - 8 Pack</value>
+  </data>
+  <data name="Product_WomenBriefs8Pack_Description" xml:space="preserve">
+    <value>High-quality women's cotton briefs in a set of 8. Comfortable, breathable, and durable. Best value choice! Available in various colors and sizes.</value>
   </data>
 </root>
 

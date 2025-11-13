@@ -615,7 +615,7 @@ namespace Kokomija.Data
                     Id = 11,
                     Key = "FreeShippingThreshold",
                     Value = "200.00", // Free shipping over 200 PLN
-                    Description = "Minimum order amount for free shipping in PLN",
+                    Description = "Minimum order value for free shipping in PLN",
                     Category = "Shipping",
                     DataType = "decimal",
                     UpdatedAt = DateTime.UtcNow

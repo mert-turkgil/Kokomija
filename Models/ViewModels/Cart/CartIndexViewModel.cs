@@ -40,19 +40,4 @@ namespace Kokomija.Models.ViewModels.Cart
     {
         public string CouponCode { get; set; } = string.Empty;
     }
-    
-    public class UpdateCartItemRequest
-    {
-        public int ProductId { get; set; }
-        public int? ColorId { get; set; }
-        public int? SizeId { get; set; }
-        public int Quantity { get; set; }
-    }
-    
-    public class RemoveCartItemRequest
-    {
-        public int ProductId { get; set; }
-        public int? ColorId { get; set; }
-        public int? SizeId { get; set; }
-    }
 }

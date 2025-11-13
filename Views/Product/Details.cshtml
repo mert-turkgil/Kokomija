@@ -37,16 +37,16 @@
                         <div class="image-zoom-wrapper">
                             @if (Model.Images != null && Model.Images.Any())
                             {
-                                <img src="@Url.Content($"~/images/{Model.Images.FirstOrDefault(img => img.IsPrimary)?.ImageUrl ?? Model.Images.First().ImageUrl}")" 
+                                <img src="@Url.Content($"~/img/ProductImage/{Model.Images.FirstOrDefault(img => img.IsPrimary)?.ImageUrl ?? Model.Images.First().ImageUrl}")" 
                                      alt="@productName" 
                                      class="main-product-image" 
                                      id="mainImage"
-                                     onerror="this.onerror=null; this.src='@Url.Content(contentPath: "~/images/logo.png")'; this.classList.add('logo-fallback');" />
+                                     onerror="this.onerror=null; this.src='@Url.Content(contentPath: "~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
                                 <div class="zoom-lens"></div>
                             }
                             else
                             {
-                                <img src="@Url.Content("~/images/logo.png")" 
+                                <img src="@Url.Content("~/img/logo_black.png")" 
                                      alt="Kokomija" 
                                      class="main-product-image logo-fallback" 
                                      id="mainImage" />
@@ -69,10 +69,10 @@
                             @foreach (var image in Model.Images.OrderBy(i => i.DisplayOrder))
                             {
                                 <div class="thumbnail-item @(image.IsPrimary ? "active" : "")" 
-                                     data-image="@Url.Content($"~/images/{image.ImageUrl}")">
-                                    <img src="@Url.Content($"~/images/{image.ImageUrl}")" 
+                                     data-image="@Url.Content($"~/img/ProductImage/{image.ImageUrl}")">
+                                    <img src="@Url.Content($"~/img/ProductImage/{image.ImageUrl}")" 
                                          alt="@productName" 
-                                         onerror="this.onerror=null; this.src='@Url.Content("~/images/logo.png")'; this.parentElement.classList.add('logo-fallback');" />
+                                         onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.parentElement.classList.add('logo-fallback');" />
                                 </div>
                             }
                         </div>

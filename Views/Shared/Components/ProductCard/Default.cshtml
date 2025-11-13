@@ -692,16 +692,18 @@
                     
                     if (isLoggedIn) {
                         // Save to server for authenticated users
-                        const response = await fetch('/api/cart/add', {
+                        const response = await fetch('/Cart/api/add', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify(cartData)
                         });
 
-                        if (!response.ok) {
-                            throw new Error('Failed to add to cart');
+                        const result = await response.json();
+                        
+                        if (!response.ok || !result.success) {
+                            throw new Error(result.message || 'Failed to add to cart');
                         }
                     } else {
                         // Save to localStorage for guest users

@@ -8,7 +8,7 @@
 }
 
 <div class="products-page">
-    <div class="container-fluid py-4">
+    <div class="container py-4">
         <!-- Page Header -->
         <div class="products-header mb-4">
             <div class="row align-items-center">
@@ -152,40 +152,94 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
+            // State management
+            const filterState = {
+                categories: [],
+                colors: [],
+                sizes: [],
+                minPrice: null,
+                maxPrice: null,
+                sortBy: 'newest'
+            };
+
             // Load filter options
             loadCategories();
             loadColors();
             loadSizes();
 
-            // Filter toggle
+            // Filter toggle with overlay
             $('#filterToggle').click(function() {
-                $('#filterSidebar').toggleClass('show');
+                $('#filterSidebar').addClass('show');
+                $('.products-page').addClass('filter-open');
             });
 
-            // View toggle
+            // Close filter sidebar (mobile)
+            $('.filter-sidebar').on('click', function(e) {
+                if ($(e.target).closest('.filter-card').length === 0 || $(e.target).is('.filter-sidebar::before')) {
+                    closeFilterSidebar();
+                }
+            });
+
+            // Close on overlay click
+            $('.products-page').on('click', function(e) {
+                if ($(e.target).is('.products-page.filter-open')) {
+                    closeFilterSidebar();
+                }
+            });
+
+            function closeFilterSidebar() {
+                $('#filterSidebar').removeClass('show');
+                $('.products-page').removeClass('filter-open');
+            }
+
+            // View toggle with smooth transition
             $('#gridView').click(function() {
-                $('#productsGrid').removeClass('row-cols-1').addClass('row');
+                $('#productsGrid').removeClass('list-view').addClass('grid-view');
                 $(this).addClass('active').siblings().removeClass('active');
+                localStorage.setItem('productView', 'grid');
             });
 
             $('#listView').click(function() {
-                $('#productsGrid').removeClass('row').addClass('row-cols-1');
+                $('#productsGrid').removeClass('grid-view').addClass('list-view');
                 $(this).addClass('active').siblings().removeClass('active');
+                localStorage.setItem('productView', 'list');
             });
 
-            // Filter logic
+            // Restore view preference
+            const savedView = localStorage.getItem('productView') || 'grid';
+            if (savedView === 'list') {
+                $('#listView').click();
+            }
+
+            // Filter logic with debouncing
+            let filterTimeout;
+            function triggerFilter() {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(applyFilters, 300);
+            }
+
             function applyFilters() {
-                const selectedCategories = $('input[name="category"]:checked').map(function() {
+                // Update state
+                filterState.categories = $('input[name="category"]:checked').map(function() {
                     return parseInt($(this).val());
                 }).get();
 
-                const minPrice = parseFloat($('#minPrice').val()) || 0;
-                const maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
-                const sortBy = $('#sortBy').val();
+                filterState.colors = $('input[name="color"]:checked').map(function() {
+                    return parseInt($(this).val());
+                }).get();
+
+                filterState.sizes = $('.size-btn.active').map(function() {
+                    return parseInt($(this).data('size'));
+                }).get();
+
+                filterState.minPrice = parseFloat($('#minPrice').val()) || 0;
+                filterState.maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
+                filterState.sortBy = $('#sortBy').val();
 
                 let $products = $('#productsGrid > div');
                 let visibleCount = 0;
 
+                // Filter products
                 $products.each(function() {
                     const $product = $(this);
                     const productCategory = parseInt($product.data('category'));
@@ -194,51 +248,64 @@
                     let showProduct = true;
 
                     // Filter by category
-                    if (selectedCategories.length > 0) {
-                        if (!selectedCategories.includes(productCategory)) {
-                            showProduct = false;
-                        }
-                    }
-
-                    // Filter by price
-                    if (productPrice < minPrice || productPrice > maxPrice) {
+                    if (filterState.categories.length > 0 && !filterState.categories.includes(productCategory)) {
                         showProduct = false;
                     }
 
+                    // Filter by price
+                    if (productPrice < filterState.minPrice || productPrice > filterState.maxPrice) {
+                        showProduct = false;
+                    }
+
+                    // Show/hide with animation
                     if (showProduct) {
-                        $product.show();
+                        $product.fadeIn(300);
                         visibleCount++;
                     } else {
-                        $product.hide();
+                        $product.fadeOut(200);
                     }
                 });
 
                 // Sort products
-                if (sortBy && sortBy !== 'newest') {
-                    sortProducts(sortBy);
-                }
+                sortProducts(filterState.sortBy);
 
-                // Update count
-                $('.products-count').text(visibleCount + ' @L["Products_ItemsFound_Plural"]');
+                // Update count with animation
+                $('.products-count').fadeOut(200, function() {
+                    $(this).text(visibleCount + ' @L["Products_ItemsFound_Plural"]').fadeIn(200);
+                });
 
                 // Show/hide no products message
                 if (visibleCount === 0) {
                     if ($('.no-products-filter').length === 0) {
-                        $('#productsGrid').after('<div class="no-products no-products-filter"><i class="bi bi-inbox display-1"></i><h3>@L["Products_NoProductsFound"]</h3><p>@L["Products_TryAdjustingFilters"]</p></div>');
+                        $('#productsGrid').after(`
+                            <div class="no-products no-products-filter" style="display:none;">
+                                <i class="bi bi-inbox display-1"></i>
+                                <h3>@L["Products_NoProductsFound"]</h3>
+                                <p>@L["Products_TryAdjustingFilters"]</p>
+                                <button class="btn btn-primary" id="resetFiltersBtn">@L["Products_ClearAll"]</button>
+                            </div>
+                        `).find('.no-products-filter').fadeIn(400);
                     }
                 } else {
-                    $('.no-products-filter').remove();
+                    $('.no-products-filter').fadeOut(300, function() { $(this).remove(); });
                 }
 
-                // Scroll to products section smoothly
-                $('html, body').animate({
-                    scrollTop: $('.products-header').offset().top - 100
-                }, 400);
+                // Close filter sidebar on mobile after applying
+                if ($(window).width() < 992) {
+                    setTimeout(closeFilterSidebar, 400);
+                }
+
+                // Smooth scroll to products
+                if ($(window).scrollTop() > $('.products-header').offset().top) {
+                    $('html, body').animate({
+                        scrollTop: $('.products-header').offset().top - 20
+                    }, 400);
+                }
             }
 
             function sortProducts(sortBy) {
                 const $container = $('#productsGrid');
-                const $products = $container.children('div').get();
+                const $products = $container.children('div:visible').get();
 
                 $products.sort(function(a, b) {
                     const $a = $(a);
@@ -254,101 +321,170 @@
                         case 'name-desc':
                             return $b.data('name').toString().localeCompare($a.data('name').toString());
                         case 'newest':
-                            return $b.data('created') - $a.data('created');
                         default:
-                            return 0;
+                            return $b.data('created') - $a.data('created');
                     }
                 });
 
-                $.each($products, function(idx, item) {
-                    $container.append(item);
+                // Smooth reordering
+                $products.forEach((item, idx) => {
+                    $(item).css('order', idx);
                 });
             }
 
             // Event listeners
-            $(document).on('change', 'input[name="category"], #sortBy', applyFilters);
+            $(document).on('change', 'input[name="category"], input[name="color"], #sortBy', triggerFilter);
             $('#applyPriceFilter').click(applyFilters);
+            $('#minPrice, #maxPrice').on('keyup', function(e) {
+                if (e.keyCode === 13) { // Enter key
+                    applyFilters();
+                }
+            });
 
-            $('#clearFilters').click(function() {
+            // Size button toggle
+            $(document).on('click', '.size-btn', function() {
+                $(this).toggleClass('active');
+                triggerFilter();
+            });
+
+            // Clear filters
+            $('#clearFilters, #resetFiltersBtn').click(function() {
                 $('input[type="checkbox"]').prop('checked', false);
+                $('.size-btn').removeClass('active');
                 $('#minPrice, #maxPrice').val('');
                 $('#sortBy').val('newest');
-                $('#productsGrid > div').show();
-                $('.products-count').text($('#productsGrid > div').length + ' @L["Products_ItemsFound_Plural"]');
-                $('.no-products-filter').remove();
                 
-                // Scroll to top of products
+                filterState.categories = [];
+                filterState.colors = [];
+                filterState.sizes = [];
+                filterState.minPrice = null;
+                filterState.maxPrice = null;
+                filterState.sortBy = 'newest';
+
+                $('#productsGrid > div').fadeIn(300);
+                $('.products-count').text($('#productsGrid > div').length + ' @L["Products_ItemsFound_Plural"]');
+                $('.no-products-filter').fadeOut(300, function() { $(this).remove(); });
+                
+                // Scroll to top
                 $('html, body').animate({
-                    scrollTop: $('.products-header').offset().top - 100
+                    scrollTop: $('.products-header').offset().top - 20
                 }, 400);
             });
 
-            // Load categories
+            // Load categories with error handling and grouping
             function loadCategories() {
-                $.get('/Product/GetCategories', function(data) {
-                    // Group categories by parent
-                    const grouped = {};
-                    data.forEach(cat => {
-                        const parent = cat.parentName || 'Other';
-                        if (!grouped[parent]) {
-                            grouped[parent] = [];
+                $.get('/Product/GetCategories')
+                    .done(function(data) {
+                        if (!data || data.length === 0) {
+                            $('#categoryFilters').html('<p class="text-muted small">No categories available</p>');
+                            return;
                         }
-                        grouped[parent].push(cat);
-                    });
 
-                    let html = '';
-                    Object.keys(grouped).sort().forEach(parentName => {
-                        html += `<div class="category-group mb-3">`;
-                        html += `<div class="category-group-title">${parentName}</div>`;
-                        grouped[parentName].forEach(cat => {
-                            html += `
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="category" value="${cat.id}" id="cat${cat.id}">
-                                    <label class="form-check-label" for="cat${cat.id}">
-                                        ${cat.name}
-                                    </label>
-                                </div>
-                            `;
+                        // Group categories by parent
+                        const grouped = {};
+                        data.forEach(cat => {
+                            const parent = cat.parentName || 'Other';
+                            if (!grouped[parent]) {
+                                grouped[parent] = [];
+                            }
+                            grouped[parent].push(cat);
                         });
-                        html += `</div>`;
+
+                        let html = '';
+                        Object.keys(grouped).sort().forEach(parentName => {
+                            html += `<div class="category-group mb-3">`;
+                            html += `<div class="category-group-title">${parentName}</div>`;
+                            grouped[parentName].forEach(cat => {
+                                html += `
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="category" value="${cat.id}" id="cat${cat.id}">
+                                        <label class="form-check-label" for="cat${cat.id}">
+                                            ${cat.name}
+                                        </label>
+                                    </div>
+                                `;
+                            });
+                            html += `</div>`;
+                        });
+                        
+                        $('#categoryFilters').html(html);
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load categories:', error);
+                        $('#categoryFilters').html('<p class="text-danger small">Failed to load categories</p>');
                     });
-                    
-                    $('#categoryFilters').html(html);
-                }).fail(function() {
-                    console.error('Failed to load categories');
-                });
             }
 
-            // Load colors
+            // Load colors with visual swatches
             function loadColors() {
-                $.get('/Product/GetColors', function(data) {
-                    const html = data.map(color => `
-                        <div class="color-option">
-                            <input type="checkbox" name="color" value="${color.id}" id="color${color.id}" class="color-checkbox">
-                            <label for="color${color.id}" class="color-label" title="${color.displayName}">
-                                <span class="color-swatch" style="background-color: ${color.hexCode}"></span>
-                                <span class="color-name">${color.displayName}</span>
-                            </label>
-                        </div>
-                    `).join('');
-                    $('#colorFilters').html(html);
-                }).fail(function() {
-                    console.error('Failed to load colors');
-                });
+                $.get('/Product/GetColors')
+                    .done(function(data) {
+                        if (!data || data.length === 0) {
+                            $('#colorFilters').html('<p class="text-muted small">No colors available</p>');
+                            return;
+                        }
+
+                        const html = data.map(color => `
+                            <div class="color-option">
+                                <input type="checkbox" name="color" value="${color.id}" id="color${color.id}" class="color-checkbox">
+                                <label for="color${color.id}" class="color-label" title="${color.displayName}">
+                                    <span class="color-swatch" style="background-color: ${color.hexCode}"></span>
+                                    <span class="color-name">${color.displayName}</span>
+                                </label>
+                            </div>
+                        `).join('');
+                        $('#colorFilters').html(html);
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load colors:', error);
+                        $('#colorFilters').html('<p class="text-danger small">Failed to load colors</p>');
+                    });
             }
 
-            // Load sizes
+            // Load sizes with toggle buttons
             function loadSizes() {
-                $.get('/Product/GetSizes', function(data) {
-                    const html = data.map(size => `
-                        <button type="button" class="size-btn" data-size="${size.id}">
-                            ${size.displayName}
-                        </button>
-                    `).join('');
-                    $('#sizeFilters').html(html);
-                }).fail(function() {
-                    console.error('Failed to load sizes');
+                $.get('/Product/GetSizes')
+                    .done(function(data) {
+                        if (!data || data.length === 0) {
+                            $('#sizeFilters').html('<p class="text-muted small">No sizes available</p>');
+                            return;
+                        }
+
+                        const html = data.map(size => `
+                            <button type="button" class="size-btn" data-size="${size.id}">
+                                ${size.displayName}
+                            </button>
+                        `).join('');
+                        $('#sizeFilters').html(html);
+                    })
+                    .fail(function(xhr, status, error) {
+                        console.error('Failed to load sizes:', error);
+                        $('#sizeFilters').html('<p class="text-danger small">Failed to load sizes</p>');
+                    });
+            }
+
+            // Keyboard shortcuts
+            $(document).on('keydown', function(e) {
+                // Escape key closes filter sidebar
+                if (e.key === 'Escape' && $('#filterSidebar').hasClass('show')) {
+                    closeFilterSidebar();
+                }
+            });
+
+            // Lazy load product images
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.remove('lazy');
+                            imageObserver.unobserve(img);
+                        }
+                    });
                 });
+
+                document.querySelectorAll('img.lazy').forEach(img => imageObserver.observe(img));
             }
         });
     </script>

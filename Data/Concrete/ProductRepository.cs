@@ -67,7 +67,7 @@ namespace Kokomija.Data.Concrete
                     .ThenInclude(ps => ps.Size)
                 .Include(p => p.Reviews.Where(r => r.IsVisible).OrderByDescending(r => r.CreatedAt))
                     .ThenInclude(r => r.User)
-                .Include(p => p.Reviews.Where(r => r.IsVisible))
+                .Include(p => p.Reviews.Where(r => r.IsVisible).OrderByDescending(r => r.CreatedAt))
                     .ThenInclude(r => r.AdminUser)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }

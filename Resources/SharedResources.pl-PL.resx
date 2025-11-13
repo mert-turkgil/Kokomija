@@ -282,6 +282,78 @@
   <data name="Products_ItemsFound" xml:space="preserve">
     <value>znalezionych przedmiotów</value>
   </data>
+  <data name="Product_Quality" xml:space="preserve">
+    <value>Najwyższa Jakość</value>
+  </data>
+  <data name="Product_Quality_Desc" xml:space="preserve">
+    <value>100% oryginalne produkty</value>
+  </data>
+  <data name="Product_FastShipping" xml:space="preserve">
+    <value>Szybka Wysyłka</value>
+  </data>
+  <data name="Product_FastShipping_Desc" xml:space="preserve">
+    <value>Dostawa w 2-3 dni</value>
+  </data>
+  <data name="Product_Returns" xml:space="preserve">
+    <value>Łatwe Zwroty</value>
+  </data>
+  <data name="Product_Returns_Desc" xml:space="preserve">
+    <value>30-dniowa polityka zwrotów</value>
+  </data>
+  <data name="Product_PricePerPiece" xml:space="preserve">
+    <value>za sztukę</value>
+  </data>
+  <data name="Product_BestValue" xml:space="preserve">
+    <value>Najlepsza Wartość</value>
+  </data>
+  <data name="Product_PackSize" xml:space="preserve">
+    <value>Wybierz rozmiar paczki</value>
+  </data>
+  <data name="Product_Pack" xml:space="preserve">
+    <value>Pakiet</value>
+  </data>
+  <data name="Product_Piece" xml:space="preserve">
+    <value>sztuka</value>
+  </data>
+  <data name="Product_SizeGuide" xml:space="preserve">
+    <value>Przewodnik po rozmiarach</value>
+  </data>
+  <data name="Product_Material" xml:space="preserve">
+    <value>Materiał</value>
+  </data>
+  <data name="Product_Material_Cotton" xml:space="preserve">
+    <value>100% Bawełna</value>
+  </data>
+  <data name="Product_Care" xml:space="preserve">
+    <value>Instrukcje pielęgnacji</value>
+  </data>
+  <data name="Product_Care_Instructions" xml:space="preserve">
+    <value>Prać w pralce w zimnej wodzie, suszyć w niskiej temperaturze</value>
+  </data>
+  <data name="Product_Brand" xml:space="preserve">
+    <value>Marka</value>
+  </data>
+  <data name="Product_SecurePayment" xml:space="preserve">
+    <value>Bezpieczna Płatność</value>
+  </data>
+  <data name="Product_Certified" xml:space="preserve">
+    <value>Certyfikowana Jakość</value>
+  </data>
+  <data name="Product_Adding" xml:space="preserve">
+    <value>Dodawanie...</value>
+  </data>
+  <data name="Product_Added" xml:space="preserve">
+    <value>Dodano do koszyka</value>
+  </data>
+  <data name="Product_SelectSizeFirst" xml:space="preserve">
+    <value>Proszę najpierw wybrać rozmiar</value>
+  </data>
+  <data name="Previous_Image" xml:space="preserve">
+    <value>Poprzedni obraz</value>
+  </data>
+  <data name="Next_Image" xml:space="preserve">
+    <value>Następny obraz</value>
+  </data>
   
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
@@ -1412,6 +1484,26 @@
   </data>
   <data name="Quantity" xml:space="preserve">
     <value>Ilość</value>
+  </data>
+  
+  <!-- Product Names and Descriptions -->
+  <data name="Product_WomenBriefs5Pack_Name" xml:space="preserve">
+    <value>Majtki damskie bawełniane wysokie - 5 pak</value>
+  </data>
+  <data name="Product_WomenBriefs5Pack_Description" xml:space="preserve">
+    <value>Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.</value>
+  </data>
+  <data name="Product_WomenBriefs6Pack_Name" xml:space="preserve">
+    <value>Majtki damskie bawełniane wysokie - 6 pak</value>
+  </data>
+  <data name="Product_WomenBriefs6Pack_Description" xml:space="preserve">
+    <value>Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.</value>
+  </data>
+  <data name="Product_WomenBriefs8Pack_Name" xml:space="preserve">
+    <value>Majtki damskie bawełniane wysokie - 8 pak</value>
+  </data>
+  <data name="Product_WomenBriefs8Pack_Description" xml:space="preserve">
+    <value>Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.</value>
   </data>
 </root>
 

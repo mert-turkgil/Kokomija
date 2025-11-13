@@ -32,8 +32,15 @@ namespace Kokomija.Services
             {
                 _logger.LogInformation("Starting Stripe product seeding...");
 
-                // Get all products and filter those without Stripe IDs
+                // Get all products from database
                 var allProducts = await _unitOfWork.Products.GetAllAsync();
+                
+                // Get all products from Stripe to check for existing products
+                var stripeService = new Stripe.ProductService();
+                var stripePriceService = new Stripe.PriceService();
+                var stripeProducts = await stripeService.ListAsync(new Stripe.ProductListOptions { Limit = 100, Active = true });
+                
+                // Filter products that need seeding (those without Stripe IDs)
                 var products = allProducts.Where(p => string.IsNullOrEmpty(p.StripeProductId)).ToList();
 
                 if (!products.Any())
@@ -46,21 +53,59 @@ namespace Kokomija.Services
                 {
                     try
                     {
-                        _logger.LogInformation($"Creating Stripe product for: {product.Name}");
+                        _logger.LogInformation($"Processing product: {product.Name} (Price: {product.Price} PLN)");
 
-                        // Create Stripe product
-                        var stripeProduct = await _stripeService.CreateProductAsync(product);
-                        product.StripeProductId = stripeProduct.Id;
+                        // Check if a Stripe product with the same price already exists
+                        Stripe.Product? matchingStripeProduct = null;
+                        foreach (var stripeProduct in stripeProducts.Data)
+                        {
+                            // Get prices for this Stripe product
+                            var prices = await stripePriceService.ListAsync(new Stripe.PriceListOptions
+                            {
+                                Product = stripeProduct.Id,
+                                Active = true,
+                                Limit = 10
+                            });
 
-                        // Create a default price for the product (base price)
-                        var stripePrice = await _stripeService.CreatePriceAsync(
-                            stripeProduct.Id, 
-                            product.Price, 
-                            "pln"
-                        );
-                        product.StripePriceId = stripePrice.Id;
+                            // Check if any price matches our product price (convert PLN to grosze)
+                            var productPriceInGrosze = (long)(product.Price * 100);
+                            var matchingPrice = prices.Data.FirstOrDefault(p => 
+                                p.Currency == "pln" && 
+                                p.UnitAmount == productPriceInGrosze);
 
-                        _logger.LogInformation($"Created Stripe product: {stripeProduct.Id} with price: {stripePrice.Id}");
+                            if (matchingPrice != null)
+                            {
+                                matchingStripeProduct = stripeProduct;
+                                product.StripeProductId = stripeProduct.Id;
+                                product.StripePriceId = matchingPrice.Id;
+                                _logger.LogInformation($"Found existing Stripe product: {stripeProduct.Id} with matching price");
+                                break;
+                            }
+                        }
+
+                        // If no matching Stripe product found, create a new one
+                        if (matchingStripeProduct == null)
+                        {
+                            _logger.LogInformation($"Creating new Stripe product for: {product.Name}");
+
+                            // Create Stripe product
+                            var stripeProduct = await _stripeService.CreateProductAsync(product);
+                            product.StripeProductId = stripeProduct.Id;
+
+                            // Create a default price for the product (base price)
+                            var stripePrice = await _stripeService.CreatePriceAsync(
+                                stripeProduct.Id, 
+                                product.Price, 
+                                "pln"
+                            );
+                            product.StripePriceId = stripePrice.Id;
+
+                            _logger.LogInformation($"Created Stripe product: {stripeProduct.Id} with price: {stripePrice.Id}");
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"Using existing Stripe product, skipping creation");
+                        }
 
                         // Now create prices for all variants of this product
                         var allVariants = await _unitOfWork.ProductVariants.GetAllAsync();
