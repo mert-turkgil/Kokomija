@@ -49,5 +49,15 @@ namespace Kokomija.Entity
         public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
         public ICollection<ProductSize> AvailableSizes { get; set; } = new List<ProductSize>();
         public ICollection<ProductColor> AvailableColors { get; set; } = new List<ProductColor>();
+        public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
+
+        // Computed properties
+        [NotMapped]
+        public decimal AverageRating => Reviews?.Any() == true 
+            ? Reviews.Where(r => r.IsVisible).Average(r => r.Rating) 
+            : 0;
+
+        [NotMapped]
+        public int ReviewCount => Reviews?.Count(r => r.IsVisible) ?? 0;
     }
 }

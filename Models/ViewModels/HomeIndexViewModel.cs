@@ -7,6 +7,7 @@ namespace Kokomija.Models.ViewModels
         public List<Category> FeaturedCategories { get; set; } = new();
         public List<ProductCardViewModel> FeaturedProducts { get; set; } = new();
         public HeroAdViewModel? HeroAd { get; set; }
+        public List<CouponBannerViewModel> ActiveCoupons { get; set; } = new();
         
         // SEO Meta Data
         public string MetaTitle { get; set; } = string.Empty;
@@ -69,5 +70,18 @@ namespace Kokomija.Models.ViewModels
         public string ButtonUrl { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public string BackgroundColor { get; set; } = "#F4A261";
+    }
+
+    public class CouponBannerViewModel
+    {
+        public int Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string DiscountType { get; set; } = string.Empty;
+        public decimal DiscountValue { get; set; }
+        public decimal? MinimumOrderAmount { get; set; }
+        public DateTime ValidUntil { get; set; }
+        public bool IsNew { get; set; }
+        public int DaysUntilExpiry { get; set; }
     }
 }

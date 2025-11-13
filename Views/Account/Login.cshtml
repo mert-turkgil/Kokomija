@@ -19,8 +19,8 @@
 
                     <!-- Header -->
                     <div class="auth-header text-center mb-4">
-                        <h3 class="fw-bold mb-2">Welcome Back</h3>
-                        <p class="text-muted">Sign in to your account to continue</p>
+                        <h3 class="fw-bold mb-2">@L["Auth_WelcomeBack"]</h3>
+                        <p class="text-muted">@L["Auth_SignInMessage"]</p>
                     </div>
 
                     <!-- Alert Messages -->
@@ -48,21 +48,21 @@
                         <!-- Email -->
                         <div class="form-group mb-3">
                             <label asp-for="Email" class="form-label">
-                                <i class="bi bi-envelope me-2"></i>Email Address
+                                <i class="bi bi-envelope me-2"></i>@L["Auth_EmailAddress"]
                             </label>
                             <input asp-for="Email" class="form-control form-control-lg" 
-                                   placeholder="your@email.com" autocomplete="email" />
+                                   placeholder="@L["Auth_EmailPlaceholder"]" autocomplete="email" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <!-- Password -->
                         <div class="form-group mb-3">
                             <label asp-for="Password" class="form-label">
-                                <i class="bi bi-lock me-2"></i>Password
+                                <i class="bi bi-lock me-2"></i>@L["Auth_Password"]
                             </label>
                             <div class="password-input-group">
                                 <input asp-for="Password" class="form-control form-control-lg" 
-                                       placeholder="Enter your password" autocomplete="current-password" />
+                                       placeholder="@L["Auth_PasswordPlaceholder"]" autocomplete="current-password" />
                                 <button type="button" class="password-toggle" onclick="togglePassword(this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
@@ -75,25 +75,31 @@
                             <div class="form-check">
                                 <input asp-for="RememberMe" class="form-check-input" />
                                 <label asp-for="RememberMe" class="form-check-label">
-                                    Remember me
+                                    @L["Auth_RememberMe"]
                                 </label>
                             </div>
                             <a asp-action="ForgotPassword" class="text-decoration-none">
-                                Forgot Password?
+                                @L["Auth_ForgotPassword"]
                             </a>
                         </div>
 
                         <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                            <i class="bi bi-box-arrow-in-right me-2"></i>@L["Auth_SignIn"]
                         </button>
                     </form>
 
                     <!-- Social Login -->
                     <div class="social-login">
                         <div class="divider">
-                            <span>Or continue with</span>
+                            <span>@L["Auth_OrContinueWith"]</span>
                         </div>
+                        
+                        @* Developer Note: OAuth buttons below require configuration in appsettings.json *@
+                        @* Add Authentication:Google:ClientId and Authentication:Google:ClientSecret *@
+                        @* Add Authentication:Facebook:AppId and Authentication:Facebook:AppSecret *@
+                        @* See Meta Developers Console screenshot for setup instructions *@
+                        
                         <div class="social-buttons">
                             <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                                 <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100">
@@ -103,32 +109,39 @@
                                         <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
                                         <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
                                     </svg>
-                                    Continue with Google
+                                    <span>@L["Auth_ContinueWithGoogle"]</span>
                                 </button>
                             </form>
                             <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                                 <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100">
                                     <i class="bi bi-facebook" style="font-size: 20px;"></i>
-                                    Continue with Facebook
+                                    <span>@L["Auth_ContinueWithFacebook"]</span>
                                 </button>
                             </form>
                             @* Apple Sign-In - Uncomment when credentials are configured
                             <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                                 <button type="submit" name="provider" value="Apple" class="btn-social btn-apple w-100">
                                     <i class="bi bi-apple" style="font-size: 20px;"></i>
-                                    Continue with Apple
+                                    <span>Continue with Apple</span>
                                 </button>
                             </form>
                             *@
+                        </div>
+                        
+                        @* Helpful note for developers *@
+                        <div class="alert alert-info mt-3" role="alert" style="font-size: 0.85rem;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Developer Note:</strong> To enable social login, configure OAuth credentials in <code>appsettings.json</code>. 
+                            See <a href="https://developers.facebook.com" target="_blank">Meta Developer Console</a> for Facebook setup.
                         </div>
                     </div>
 
                     <!-- Register Link -->
                     <div class="auth-links">
-                        <p>Don't have an account?</p>
+                        <p>@L["Auth_NoAccount"]</p>
                         <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="link-primary">
                             <i class="bi bi-person-plus"></i>
-                            Create Account
+                            @L["Auth_CreateAccount"]
                         </a>
                     </div>
 
@@ -136,7 +149,7 @@
                     <div class="auth-footer">
                         <div class="stripe-badge">
                             <i class="bi bi-shield-check"></i>
-                            Secured by Stripe · SSL Encrypted
+                            @L["Auth_SecuredByStripe"]
                         </div>
                     </div>
                 </div>

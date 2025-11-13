@@ -52,6 +52,25 @@ namespace Kokomija.Controllers
                     return NotFound();
                 }
 
+                // Get related products (same category, different pack sizes for this product family)
+                if (product.CategoryId.HasValue)
+                {
+                    var relatedProducts = await _unitOfWork.Products.GetProductsByCategoryAsync(product.CategoryId.Value);
+                    ViewBag.RelatedProducts = relatedProducts.Where(p => p.Id != id && p.IsActive).ToList();
+                }
+                else
+                {
+                    ViewBag.RelatedProducts = new List<Kokomija.Entity.Product>();
+                }
+
+                // Set page metadata
+                ViewData["Title"] = !string.IsNullOrEmpty(product.NameKey) 
+                    ? _localizationService[product.NameKey] 
+                    : product.Name;
+                ViewData["Description"] = !string.IsNullOrEmpty(product.DescriptionKey) 
+                    ? _localizationService[product.DescriptionKey] 
+                    : product.Description;
+
                 return View(product);
             }
             catch (Exception ex)
@@ -162,6 +181,25 @@ namespace Kokomija.Controllers
             }
         }
 
+        // API: Get specific color by ID
+        [HttpGet("api/colors/{id}")]
+        public async Task<IActionResult> GetColor(int id)
+        {
+            try
+            {
+                var color = await _unitOfWork.Colors.GetByIdAsync(id);
+                if (color == null)
+                    return NotFound();
+
+                return Json(new { id = color.Id, name = color.DisplayName, hexCode = color.HexCode });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving color {ColorId}", id);
+                return BadRequest();
+            }
+        }
+
         // Example: Get available sizes for filtering (AJAX endpoint)
         [HttpGet]
         public async Task<IActionResult> GetSizes()
@@ -182,6 +220,50 @@ namespace Kokomija.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving sizes");
+                return BadRequest();
+            }
+        }
+
+        // API: Get specific size by ID
+        [HttpGet("api/sizes/{id}")]
+        public async Task<IActionResult> GetSize(int id)
+        {
+            try
+            {
+                var size = await _unitOfWork.Sizes.GetByIdAsync(id);
+                if (size == null)
+                    return NotFound();
+
+                return Json(new { id = size.Id, name = size.DisplayName });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving size {SizeId}", id);
+                return BadRequest();
+            }
+        }
+
+        // API: Get product by ID with details
+        [HttpGet("api/products/{id}")]
+        public async Task<IActionResult> GetProductApi(int id)
+        {
+            try
+            {
+                var product = await _unitOfWork.Products.GetProductWithDetailsAsync(id);
+                if (product == null)
+                    return NotFound();
+
+                return Json(new
+                {
+                    id = product.Id,
+                    name = product.Name,
+                    price = product.Price,
+                    images = product.Images?.Select(img => new { imageUrl = img.ImageUrl }).ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving product {ProductId}", id);
                 return BadRequest();
             }
         }

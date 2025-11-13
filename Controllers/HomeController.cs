@@ -86,6 +86,30 @@ public class HomeController : Controller
             BackgroundColor = "#2C5F7E"
         };
 
+        // Get active coupons
+        var allCoupons = await _unitOfWork.Coupons.GetAllAsync();
+        var now = DateTime.UtcNow;
+        model.ActiveCoupons = allCoupons
+            .Where(c => c.IsActive && 
+                       c.ValidFrom <= now && 
+                       c.ValidUntil.HasValue &&
+                       c.ValidUntil.Value >= now)
+            .Select(c => new CouponBannerViewModel
+            {
+                Id = c.Id,
+                Code = c.Code,
+                Description = c.Description ?? string.Empty,
+                DiscountType = c.DiscountType,
+                DiscountValue = c.DiscountValue,
+                MinimumOrderAmount = c.MinimumOrderAmount,
+                ValidUntil = c.ValidUntil!.Value,
+                IsNew = c.CreatedAt >= DateTime.UtcNow.AddDays(-7),
+                DaysUntilExpiry = (int)(c.ValidUntil!.Value - now).TotalDays
+            })
+            .OrderByDescending(c => c.IsNew)
+            .ThenBy(c => c.DaysUntilExpiry)
+            .ToList();
+
         return View(model);
     }
 

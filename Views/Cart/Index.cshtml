@@ -14,7 +14,7 @@
             <i class="bi bi-cart-x display-1 text-muted"></i>
             <h3 class="mt-3">Your cart is empty</h3>
             <p class="text-muted">Start shopping to add items to your cart</p>
-            <a href="/Product" class="btn btn-primary">Continue Shopping</a>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Continue Shopping</a>
         </div>
     }
     else
@@ -31,22 +31,34 @@
                                     <div class="col-md-2">
                                         @if (!string.IsNullOrEmpty(item.ProductImage))
                                         {
-                                            <img src="@item.ProductImage" alt="@item.ProductName" class="img-fluid rounded">
+                                            <img src="@Url.Content("~/images/" + item.ProductImage)" 
+                                                 alt="@item.ProductName" 
+                                                 class="img-fluid rounded product-image"
+                                                 onerror="this.onerror=null; this.src='@Url.Content("~/images/logo.png")'; this.classList.add('logo-fallback');">
                                         }
                                         else
                                         {
-                                            <div class="bg-light rounded" style="height: 100px;"></div>
+                                            <img src="@Url.Content("~/images/logo.png")" 
+                                                 alt="Kokomija" 
+                                                 class="img-fluid rounded logo-fallback">
                                         }
                                     </div>
                                     <div class="col-md-4">
-                                        <h5 class="mb-1">@item.ProductName</h5>
+                                        <h5 class="mb-1">@item.ProductName.Split("-")[0].Trim()</h5>
+                                        @{
+                                            var packMatch = System.Text.RegularExpressions.Regex.Match(item.ProductName, @"(\d+)\s*pak", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                            if (packMatch.Success)
+                                            {
+                                                <span class="badge bg-primary mb-2">@packMatch.Groups[1].Value-pak</span><br />
+                                            }
+                                        }
                                         @if (!string.IsNullOrEmpty(item.ColorName))
                                         {
-                                            <small class="text-muted">Color: @item.ColorName</small><br />
+                                            <small class="text-muted"><i class="bi bi-palette"></i> Color: @item.ColorName</small><br />
                                         }
                                         @if (!string.IsNullOrEmpty(item.SizeName))
                                         {
-                                            <small class="text-muted">Size: @item.SizeName</small>
+                                            <small class="text-muted"><i class="bi bi-rulers"></i> Size: @item.SizeName</small>
                                         }
                                     </div>
                                     <div class="col-md-2">
@@ -164,8 +176,8 @@
                             <h5>@Model.Total.ToString("C")</h5>
                         </div>
 
-                        <a href="/Checkout" class="btn btn-primary w-100 mb-2">Proceed to Checkout</a>
-                        <a href="/Product" class="btn btn-outline-secondary w-100">Continue Shopping</a>
+                        <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary w-100 mb-2">Proceed to Checkout</a>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary w-100">Continue Shopping</a>
                     </div>
                 </div>
             </div>

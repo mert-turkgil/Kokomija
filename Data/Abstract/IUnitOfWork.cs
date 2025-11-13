@@ -22,6 +22,7 @@ namespace Kokomija.Data.Abstract
         ICartRepository Carts { get; }
         IBlogRepository Blogs { get; }
         IBlogCategoryRepository BlogCategories { get; }
+        IProductReviewRepository ProductReviews { get; }
         IRepository<T> Repository<T>() where T : class;
         
         Task<int> SaveChangesAsync();

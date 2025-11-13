@@ -44,6 +44,7 @@ namespace Kokomija.Data
         public DbSet<CarouselSlide> CarouselSlides { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<Cart> Carts { get; set; }
+        public DbSet<ProductReview> ProductReviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,6 +74,7 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new EmailCommandConfiguration());
             modelBuilder.ApplyConfiguration(new AdminEarningsConfiguration());
             modelBuilder.ApplyConfiguration(new CarouselSlideConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductReviewConfiguration());
 
             // Seed initial data
             modelBuilder.SeedSizes();
@@ -83,6 +85,7 @@ namespace Kokomija.Data
             // Note: Blog seeding requires user accounts to be created first
             // modelBuilder.SeedBlogs(); // Uncomment after running IdentitySeeder
             modelBuilder.SeedAdminSettings();
+            modelBuilder.SeedCoupons();
             modelBuilder.SeedProducts();
             modelBuilder.SeedProductImages();
             modelBuilder.SeedProductVariants();

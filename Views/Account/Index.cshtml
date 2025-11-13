@@ -9,11 +9,11 @@
 <div class="account-page container my-5">
     <div class="row mb-4">
         <div class="col-12">
-            <h1>Welcome, @Model.FirstName!</h1>
+            <h1>@Localizer["Account_Welcome"], @Model.FirstName!</h1>
             @if (isAdmin)
             {
-                <a href="/Admin" class="btn btn-primary mt-2">
-                    <i class="bi bi-shield-lock"></i> Admin Panel
+                <a asp-controller="Admin" asp-action="Index" class="btn btn-primary mt-2">
+                    <i class="bi bi-shield-lock"></i> @Localizer["Account_AdminPanel"]
                 </a>
             }
         </div>
@@ -23,7 +23,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Total Orders</h5>
+                    <h5 class="card-title text-muted">@Localizer["Account_TotalOrders"]</h5>
                     <h2 class="display-4">@Model.TotalOrders</h2>
                 </div>
             </div>
@@ -31,7 +31,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Completed</h5>
+                    <h5 class="card-title text-muted">@Localizer["Account_CompletedOrders"]</h5>
                     <h2 class="display-4">@Model.CompletedOrders</h2>
                 </div>
             </div>
@@ -39,7 +39,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Total Spent</h5>
+                    <h5 class="card-title text-muted">@Localizer["Account_TotalSpent"]</h5>
                     <h2 class="display-4">@Model.TotalSpent.ToString("C")</h2>
                 </div>
             </div>
@@ -47,7 +47,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">Wishlist</h5>
+                    <h5 class="card-title text-muted">@Localizer["Account_WishlistItems"]</h5>
                     <h2 class="display-4">@Model.WishlistCount</h2>
                 </div>
             </div>
@@ -56,16 +56,16 @@
 
     <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">@Localizer["Account_Tab_Overview"]</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">Orders</button>
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">@Localizer["Account_Tab_Orders"]</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">VIP Status</button>
+            <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">@Localizer["Account_Tab_VIP"]</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">Settings</button>
+            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">@Localizer["Account_Tab_Settings"]</button>
         </li>
     </ul>
 
@@ -75,8 +75,8 @@
                 <div class="col-lg-8">
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Recent Orders</h5>
-                            <a href="#orders" data-bs-toggle="tab" class="btn btn-sm btn-outline-primary">View All</a>
+                            <h5 class="mb-0">@Localizer["Account_RecentOrders"]</h5>
+                            <a href="#orders" data-bs-toggle="tab" class="btn btn-sm btn-outline-primary">@Localizer["Account_ViewAll"]</a>
                         </div>
                         <div class="card-body">
                             @if (Model.RecentOrders.Any())
@@ -85,11 +85,11 @@
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th>Order #</th>
-                                                <th>Date</th>
-                                                <th>Items</th>
-                                                <th>Total</th>
-                                                <th>Status</th>
+                                                <th>@Localizer["Account_OrderNumber"]</th>
+                                                <th>@Localizer["Account_Date"]</th>
+                                                <th>@Localizer["Account_Items"]</th>
+                                                <th>@Localizer["Account_Total"]</th>
+                                                <th>@Localizer["Account_Status"]</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -113,7 +113,7 @@
                             }
                             else
                             {
-                                <p class="text-muted text-center py-4">No orders yet. <a href="/Product">Start shopping!</a></p>
+                                <p class="text-muted text-center py-4">@Localizer["Account_NoOrders"] <a asp-controller="Product" asp-action="Index">@Localizer["Account_StartShopping"]</a></p>
                             }
                         </div>
                     </div>
@@ -122,7 +122,7 @@
                 <div class="col-lg-4">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="mb-0">VIP Status</h5>
+                            <h5 class="mb-0">@Localizer["Account_VIP_Status"]</h5>
                         </div>
                         <div class="card-body text-center">
                             <div class="mb-3">
@@ -130,14 +130,14 @@
                                     @Model.VIPStatus.TierName
                                 </span>
                             </div>
-                            <p class="mb-2">Discount: <strong>@Model.VIPStatus.DiscountPercentage%</strong></p>
+                            <p class="mb-2">@Localizer["Account_VIP_Discount"]: <strong>@Model.VIPStatus.DiscountPercentage%</strong></p>
                             <div class="progress mb-2" style="height: 20px;">
                                 <div class="progress-bar" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%">
                                     @Model.VIPStatus.ProgressPercentage%
                                 </div>
                             </div>
-                            <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") to next tier</small>
-                            <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">View Benefits</a>
+                            <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") @Localizer["Account_VIP_NextTier"]</small>
+                            <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">@Localizer["Account_VIP_ViewBenefits"]</a>
                         </div>
                     </div>
                 </div>
@@ -162,23 +162,23 @@
                                     </div>
                                     <div class="text-end">
                                         <h4>@order.TotalAmount.ToString("C")</h4>
-                                        <small class="text-muted">@order.ItemCount items</small>
+                                        <small class="text-muted">@order.ItemCount @Localizer["Account_Order_Items"]</small>
                                     </div>
                                 </div>
                                 @if (order.CanCancel)
                                 {
-                                    <button class="btn btn-sm btn-outline-danger">Cancel Order</button>
+                                    <button class="btn btn-sm btn-outline-danger">@Localizer["Account_CancelOrder"]</button>
                                 }
                                 @if (order.CanReturn)
                                 {
-                                    <button class="btn btn-sm btn-outline-warning">Request Return</button>
+                                    <button class="btn btn-sm btn-outline-warning">@Localizer["Account_RequestReturn"]</button>
                                 }
                             </div>
                         }
                     }
                     else
                     {
-                        <p class="text-muted text-center py-5">No orders yet. <a href="/Product">Start shopping!</a></p>
+                        <p class="text-muted text-center py-5">No orders yet. <a asp-controller="Product" asp-action="Index">Start shopping!</a></p>
                     }
                 </div>
             </div>
@@ -187,7 +187,7 @@
         <div class="tab-pane fade" id="vip" role="tabpanel">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Your VIP Benefits</h5>
+                    <h5 class="mb-0">@Localizer["Account_VIP_YourBenefits"]</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -203,7 +203,7 @@
                                                 <p class="small text-muted mb-0">@benefit.Description</p>
                                                 @if (!benefit.IsUnlocked)
                                                 {
-                                                    <small class="text-warning">Locked</small>
+                                                    <small class="text-warning">@Localizer["Account_VIP_Locked"]</small>
                                                 }
                                             </div>
                                         </div>
@@ -217,17 +217,17 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">VIP Tier Comparison</h5>
+                    <h5 class="mb-0">@Localizer["Account_VIP_TierComparison"]</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Tier</th>
-                                    <th>Requirement</th>
-                                    <th>Discount</th>
-                                    <th>Benefits</th>
+                                    <th>@Localizer["Account_VIP_Tier"]</th>
+                                    <th>@Localizer["Account_VIP_Requirement"]</th>
+                                    <th>@Localizer["Account_VIP_Discount"]</th>
+                                    <th>@Localizer["Account_VIP_Benefits"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -235,25 +235,25 @@
                                     <td><span class="badge bg-secondary">Bronze</span></td>
                                     <td>0 PLN</td>
                                     <td>5%</td>
-                                    <td>Basic discount</td>
+                                    <td>@Localizer["Account_VIP_BasicDiscount"]</td>
                                 </tr>
                                 <tr class="@(Model.VIPStatus.TierName == "Silver" ? "table-active" : "")">
                                     <td><span class="badge bg-light text-dark">Silver</span></td>
                                     <td>500 PLN</td>
                                     <td>10%</td>
-                                    <td>Free shipping on all orders</td>
+                                    <td>@Localizer["Account_VIP_FreeShipping"]</td>
                                 </tr>
                                 <tr class="@(Model.VIPStatus.TierName == "Gold" ? "table-active" : "")">
                                     <td><span class="badge bg-warning">Gold</span></td>
                                     <td>1,500 PLN</td>
                                     <td>15%</td>
-                                    <td>Early access to new products</td>
+                                    <td>@Localizer["Account_VIP_EarlyAccess"]</td>
                                 </tr>
                                 <tr class="@(Model.VIPStatus.TierName == "Platinum" ? "table-active" : "")">
                                     <td><span class="badge bg-primary">Platinum</span></td>
                                     <td>5,000 PLN</td>
                                     <td>20%</td>
-                                    <td>Birthday gift + exclusive offers</td>
+                                    <td>@Localizer["Account_VIP_BirthdayGift"]</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -265,30 +265,30 @@
         <div class="tab-pane fade" id="settings" role="tabpanel">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Account Settings</h5>
+                    <h5 class="mb-0">@Localizer["Account_AccountSettings"]</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" asp-action="UpdateProfile">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="firstName" class="form-label">First Name</label>
+                                <label for="firstName" class="form-label">@Localizer["Account_Settings_FirstName"]</label>
                                 <input type="text" class="form-control" id="firstName" name="firstName" value="@Model.FirstName" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="lastName" class="form-label">Last Name</label>
+                                <label for="lastName" class="form-label">@Localizer["Account_Settings_LastName"]</label>
                                 <input type="text" class="form-control" id="lastName" name="lastName" value="@Model.LastName" required>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label">@Localizer["Account_Settings_Email"]</label>
                             <input type="email" class="form-control" id="email" value="@Model.Email" disabled>
-                            <small class="text-muted">Contact support to change email</small>
+                            <small class="text-muted">@Localizer["Account_Settings_EmailNote"]</small>
                         </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="submit" class="btn btn-primary">@Localizer["Account_Settings_SaveChanges"]</button>
                     </form>
                     <hr class="my-4">
-                    <h6>Password</h6>
-                    <a href="/Account/ChangePassword" class="btn btn-outline-secondary">Change Password</a>
+                    <h6>@Localizer["Account_Settings_Password"]</h6>
+                    <a asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-secondary">@Localizer["Account_Settings_ChangePassword"]</a>
                 </div>
             </div>
         </div>

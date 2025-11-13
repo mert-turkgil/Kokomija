@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Kokomija.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreateWithProducts : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -119,12 +119,14 @@ namespace Kokomija.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Slug = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    NameKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ParentCategoryId = table.Column<int>(type: "int", nullable: true),
                     DisplayOrder = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     ShowInNavbar = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     IconCssClass = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ImageUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -491,7 +493,9 @@ namespace Kokomija.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    NameKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DescriptionKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     StripeProductId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     StripePriceId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -614,6 +618,46 @@ namespace Kokomija.Migrations
                         principalTable: "Products",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Carts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    ColorId = table.Column<int>(type: "int", nullable: true),
+                    SizeId = table.Column<int>(type: "int", nullable: true),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    AddedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Carts_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Carts_Colors_ColorId",
+                        column: x => x.ColorId,
+                        principalTable: "Colors",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Carts_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Carts_Sizes_SizeId",
+                        column: x => x.SizeId,
+                        principalTable: "Sizes",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -744,6 +788,33 @@ namespace Kokomija.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Wishlists",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    AddedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Wishlists", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Wishlists_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Wishlists_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CouponUsages",
                 columns: table => new
                 {
@@ -863,20 +934,34 @@ namespace Kokomija.Migrations
                 columns: new[] { "Id", "CreatedAt", "Description", "DisplayOrder", "IconUrl", "IsActive", "Language", "MetaDescription", "Name", "Slug", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 10, 15, 22, 26, 11, 261, DateTimeKind.Utc).AddTicks(7895), "Porady dotyczące zakupów i stylizacji", 1, null, true, "pl", "Porady zakupowe i stylizacyjne dla klientów Kokomija", "Porady", "porady", new DateTime(2025, 10, 15, 22, 26, 11, 261, DateTimeKind.Utc).AddTicks(9735) },
-                    { 2, new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(329), "Najnowsze produkty i kolekcje", 2, null, true, "pl", "Najnowsze produkty i kolekcje w Kokomija", "Nowości", "nowosci", new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(330) },
-                    { 3, new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(334), "Najnowsze trendy w modzie", 3, null, true, "pl", "Najnowsze trendy w modzie i stylizacji", "Trendy", "trendy", new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(335) },
-                    { 4, new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(338), "Inspiracje stylizacyjne i lookbooki", 4, null, true, "pl", "Inspiracje stylizacyjne i lookbooki od Kokomija", "Inspiracje", "inspiracje", new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(339) },
-                    { 5, new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(342), "Informacje o marce Kokomija", 5, null, true, "pl", "Informacje o marce Kokomija i naszej misji", "O marce", "o-marce", new DateTime(2025, 10, 15, 22, 26, 11, 262, DateTimeKind.Utc).AddTicks(344) }
+                    { 1, new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(4886), "Porady dotyczące zakupów i stylizacji", 1, null, true, "pl", "Porady zakupowe i stylizacyjne dla klientów Kokomija", "Porady", "porady", new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5222) },
+                    { 2, new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5694), "Najnowsze produkty i kolekcje", 2, null, true, "pl", "Najnowsze produkty i kolekcje w Kokomija", "Nowości", "nowosci", new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5695) },
+                    { 3, new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5698), "Najnowsze trendy w modzie", 3, null, true, "pl", "Najnowsze trendy w modzie i stylizacji", "Trendy", "trendy", new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5699) },
+                    { 4, new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5702), "Inspiracje stylizacyjne i lookbooki", 4, null, true, "pl", "Inspiracje stylizacyjne i lookbooki od Kokomija", "Inspiracje", "inspiracje", new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5702) },
+                    { 5, new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5705), "Informacje o marce Kokomija", 5, null, true, "pl", "Informacje o marce Kokomija i naszej misji", "O marce", "o-marce", new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5706) }
+                });
+
+            migrationBuilder.InsertData(
+                table: "CarouselSlides",
+                columns: new[] { "Id", "AnimationType", "BackgroundColor", "ButtonClass", "ButtonText", "CategoryId", "CreatedAt", "CreatedBy", "CustomCssClass", "DeletedAt", "DeletedBy", "DisplayOrder", "Duration", "EndDate", "ImageAlt", "ImagePath", "IsActive", "LinkUrl", "Location", "MobileImagePath", "StartDate", "Subtitle", "TextAlign", "TextColor", "Title", "UpdatedAt", "UpdatedBy" },
+                values: new object[,]
+                {
+                    { 1, "fade", null, "btn-primary", "Kup Teraz", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(1622), null, null, null, null, 1, 5000, null, "Nowa kolekcja wiosenna 2025", "1.jpg", true, "/damskie", "home", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(840), "Odkryj najnowsze trendy w modzie damskiej i męskiej", "center", null, "Nowa Kolekcja Wiosna 2025", null, null },
+                    { 2, "fade", null, "btn-primary", "Zobacz Ofertę", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2102), null, null, null, null, 2, 5000, null, "Wielka wyprzedaż do -50%", "2.jpg", true, "/meskie", "home", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2101), "Nie przegap okazji! Setki produktów w obniżonych cenach", "center", null, "Wyprzedaż do -50%", null, null },
+                    { 3, "fade", null, "btn-primary", "Przeglądaj", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2107), null, null, null, null, 3, 5000, null, "Elegancka odzież na specjalne okazje", "3.jpg", true, "/odziez-wierzchnia", "home", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2107), "Koszule, sukienki i dodatki dla wymagających", "center", null, "Elegancja na Każdą Okazję", null, null },
+                    { 4, "fade", null, "btn-primary", "Sprawdź", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2113), null, null, null, null, 4, 5000, null, "Darmowa dostawa powyżej 200 PLN", "4.jpg", true, "/akcesoria", "home", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2112), "Przy zamówieniach powyżej 200 PLN", "center", null, "Darmowa Dostawa", null, null },
+                    { 5, "fade", null, "btn-primary", "Odkryj Więcej", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2117), null, null, null, null, 5, 5000, null, "Kolekcja zimowych kurtek", "5.jpg", true, "/odziez-wierzchnia", "home", null, new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2116), "Przygotuj się na zimę z naszą kolekcją kurtek", "center", null, "Stylowe Kurtki", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "CreatedAt", "Description", "DisplayOrder", "IconCssClass", "IsActive", "Name", "ParentCategoryId", "ShowInNavbar", "Slug" },
+                columns: new[] { "Id", "CreatedAt", "Description", "DisplayOrder", "IconCssClass", "ImageUrl", "IsActive", "Name", "NameKey", "ParentCategoryId", "ShowInNavbar", "Slug" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(7275), null, 1, null, true, "Woman", null, true, "woman" },
-                    { 2, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(7751), null, 2, null, true, "Man", null, true, "man" }
+                    { 1, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(2498), "Odzież damska", 1, "fas fa-female", "categories/women.jpg", true, "Damskie", "Category_Women", null, true, "damskie" },
+                    { 2, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(4065), "Odzież męska", 2, "fas fa-male", "categories/men.jpg", true, "Męskie", "Category_Men", null, true, "meskie" },
+                    { 3, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(4068), "Kurtki i płaszcze", 3, "fas fa-wind", "categories/outerwear.jpg", true, "Odzież Wierzchnia", "Category_Outerwear", null, true, "odziez-wierzchnia" },
+                    { 4, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(4073), "Dodatki i akcesoria", 4, "fas fa-shopping-bag", "categories/accessories.jpg", true, "Akcesoria", "Category_Accessories", null, true, "akcesoria" }
                 });
 
             migrationBuilder.InsertData(
@@ -884,14 +969,14 @@ namespace Kokomija.Migrations
                 columns: new[] { "Id", "CreatedAt", "DisplayName", "DisplayOrder", "HexCode", "IsActive", "Name" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(3458), "Black", 1, "#000000", true, "Black" },
-                    { 2, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(3999), "White", 2, "#FFFFFF", true, "White" },
-                    { 3, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(4034), "Red", 3, "#FF0000", true, "Red" },
-                    { 4, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(4037), "Blue", 4, "#0000FF", true, "Blue" },
-                    { 5, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(4044), "Green", 5, "#00FF00", true, "Green" },
-                    { 6, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(4047), "Yellow", 6, "#FFFF00", true, "Yellow" },
-                    { 7, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(4050), "Navy Blue", 7, "#000080", true, "Navy" },
-                    { 8, new DateTime(2025, 10, 15, 22, 26, 11, 257, DateTimeKind.Utc).AddTicks(4054), "Gray", 8, "#808080", true, "Gray" }
+                    { 1, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2269), "Black", 1, "#000000", true, "Black" },
+                    { 2, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2604), "White", 2, "#FFFFFF", true, "White" },
+                    { 3, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2607), "Red", 3, "#FF0000", true, "Red" },
+                    { 4, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2609), "Blue", 4, "#0000FF", true, "Blue" },
+                    { 5, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2612), "Green", 5, "#00FF00", true, "Green" },
+                    { 6, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2614), "Yellow", 6, "#FFFF00", true, "Yellow" },
+                    { 7, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2617), "Navy Blue", 7, "#000080", true, "Navy" },
+                    { 8, new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2619), "Gray", 8, "#808080", true, "Gray" }
                 });
 
             migrationBuilder.InsertData(
@@ -899,14 +984,14 @@ namespace Kokomija.Migrations
                 columns: new[] { "Id", "Category", "DataType", "Description", "Key", "UpdatedAt", "UpdatedBy", "Value" },
                 values: new object[,]
                 {
-                    { 1, "Security", "string", "Super admin email for site control and emergency commands", "SuperAdminEmail", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(2609), null, "admin@kokomija.com" },
-                    { 2, "Commission", "decimal", "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)", "PlatformCommissionRate", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3149), null, "0.01" },
-                    { 3, "Commission", "decimal", "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)", "StripeProcessingFeeRate", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3151), null, "0.014" },
-                    { 4, "Commission", "decimal", "Stripe fixed fee per transaction in PLN", "StripeFixedFee", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3153), null, "1.00" },
-                    { 5, "Maintenance", "boolean", "Is site currently closed for maintenance", "SiteClosureEnabled", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3155), null, "false" },
-                    { 6, "Maintenance", "string", "Message displayed when site is closed", "SiteClosureMessage", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3158), null, "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji." },
-                    { 7, "Maintenance", "integer", "Automatically reopen site after X days of closure", "AutoReopenAfterDays", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3160), null, "30" },
-                    { 8, "Maintenance", "boolean", "Send daily confirmation emails during site closure", "DailyConfirmationEmailEnabled", new DateTime(2025, 10, 15, 22, 26, 11, 264, DateTimeKind.Utc).AddTicks(3162), null, "true" }
+                    { 1, "Security", "string", "Super admin email for site control and emergency commands", "SuperAdminEmail", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4600), null, "admin@kokomija.com" },
+                    { 2, "Commission", "decimal", "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)", "PlatformCommissionRate", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4972), null, "0.01" },
+                    { 3, "Commission", "decimal", "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)", "StripeProcessingFeeRate", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4974), null, "0.014" },
+                    { 4, "Commission", "decimal", "Stripe fixed fee per transaction in PLN", "StripeFixedFee", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4976), null, "1.00" },
+                    { 5, "Maintenance", "boolean", "Is site currently closed for maintenance", "SiteClosureEnabled", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4978), null, "false" },
+                    { 6, "Maintenance", "string", "Message displayed when site is closed", "SiteClosureMessage", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4980), null, "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji." },
+                    { 7, "Maintenance", "integer", "Automatically reopen site after X days of closure", "AutoReopenAfterDays", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4982), null, "30" },
+                    { 8, "Maintenance", "boolean", "Send daily confirmation emails during site closure", "DailyConfirmationEmailEnabled", new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4985), null, "true" }
                 });
 
             migrationBuilder.InsertData(
@@ -914,40 +999,131 @@ namespace Kokomija.Migrations
                 columns: new[] { "Id", "CreatedAt", "DisplayName", "DisplayOrder", "IsActive", "Name", "Region" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 10, 15, 22, 26, 11, 254, DateTimeKind.Utc).AddTicks(2178), "Extra Small", 1, true, "XS", null },
-                    { 2, new DateTime(2025, 10, 15, 22, 26, 11, 254, DateTimeKind.Utc).AddTicks(2657), "Small", 2, true, "S", null },
-                    { 3, new DateTime(2025, 10, 15, 22, 26, 11, 254, DateTimeKind.Utc).AddTicks(2659), "Medium", 3, true, "M", null },
-                    { 4, new DateTime(2025, 10, 15, 22, 26, 11, 254, DateTimeKind.Utc).AddTicks(2662), "Large", 4, true, "L", null },
-                    { 5, new DateTime(2025, 10, 15, 22, 26, 11, 254, DateTimeKind.Utc).AddTicks(2665), "Extra Large", 5, true, "XL", null },
-                    { 6, new DateTime(2025, 10, 15, 22, 26, 11, 254, DateTimeKind.Utc).AddTicks(2667), "2X Large", 6, true, "XXL", null }
+                    { 1, new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4055), "Extra Small", 1, true, "XS", null },
+                    { 2, new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4417), "Small", 2, true, "S", null },
+                    { 3, new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4420), "Medium", 3, true, "M", null },
+                    { 4, new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4422), "Large", 4, true, "L", null },
+                    { 5, new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4424), "Extra Large", 5, true, "XL", null },
+                    { 6, new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4427), "2X Large", 6, true, "XXL", null }
                 });
 
             migrationBuilder.InsertData(
                 table: "SupportedLanguages",
                 columns: new[] { "Id", "CreatedAt", "CultureCode", "DisplayName", "DisplayOrder", "FlagIcon", "IsDefault", "IsEnabled", "NativeName", "TwoLetterIsoCode" },
-                values: new object[] { 1, new DateTime(2025, 10, 15, 22, 26, 11, 259, DateTimeKind.Utc).AddTicks(9852), "pl-PL", "Polski", 1, "🇵🇱", true, true, "Polski", "pl" });
+                values: new object[] { 1, new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(4947), "pl-PL", "Polski", 1, "🇵🇱", true, true, "Polski", "pl" });
 
             migrationBuilder.InsertData(
                 table: "SupportedLanguages",
                 columns: new[] { "Id", "CreatedAt", "CultureCode", "DisplayName", "DisplayOrder", "FlagIcon", "NativeName", "TwoLetterIsoCode" },
                 values: new object[,]
                 {
-                    { 2, new DateTime(2025, 10, 15, 22, 26, 11, 260, DateTimeKind.Utc).AddTicks(287), "en-US", "English", 2, "🇺🇸", "English", "en" },
-                    { 3, new DateTime(2025, 10, 15, 22, 26, 11, 260, DateTimeKind.Utc).AddTicks(290), "de-DE", "Deutsch", 3, "🇩🇪", "Deutsch", "de" },
-                    { 4, new DateTime(2025, 10, 15, 22, 26, 11, 260, DateTimeKind.Utc).AddTicks(293), "fr-FR", "Français", 4, "🇫🇷", "Français", "fr" }
+                    { 2, new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(5277), "en-US", "English", 2, "🇺🇸", "English", "en" },
+                    { 3, new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(5279), "de-DE", "Deutsch", 3, "🇩🇪", "Deutsch", "de" },
+                    { 4, new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(5282), "fr-FR", "Français", 4, "🇫🇷", "Français", "fr" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "CreatedAt", "Description", "DisplayOrder", "IconCssClass", "IsActive", "Name", "ParentCategoryId", "ShowInNavbar", "Slug" },
+                columns: new[] { "Id", "CreatedAt", "Description", "DisplayOrder", "IconCssClass", "ImageUrl", "IsActive", "Name", "NameKey", "ParentCategoryId", "ShowInNavbar", "Slug" },
                 values: new object[,]
                 {
-                    { 3, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(8209), null, 1, null, true, "T-Shirts", 1, true, "woman-tshirts" },
-                    { 4, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(8216), null, 2, null, true, "Pants", 1, true, "woman-pants" },
-                    { 5, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(8220), null, 3, null, true, "Dresses", 1, true, "woman-dresses" },
-                    { 6, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(8223), null, 1, null, true, "T-Shirts", 2, true, "man-tshirts" },
-                    { 7, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(8226), null, 2, null, true, "Pants", 2, true, "man-pants" },
-                    { 8, new DateTime(2025, 10, 15, 22, 26, 11, 258, DateTimeKind.Utc).AddTicks(8229), null, 3, null, true, "Shirts", 2, true, "man-shirts" }
+                    { 5, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5227), "Eleganckie sukienki damskie", 1, "fas fa-tshirt", null, true, "Sukienki", "Category_Dresses", 1, true, "damskie-sukienki" },
+                    { 6, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5239), "Modne spódnice", 2, "fas fa-tshirt", null, true, "Spódnice", "Category_Skirts", 1, true, "damskie-spodnice" },
+                    { 7, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5242), "Eleganckie bluzki damskie", 3, "fas fa-tshirt", null, true, "Bluzki", "Category_Blouses", 1, true, "damskie-bluzki" },
+                    { 8, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5246), "Spodnie damskie", 4, "fas fa-tshirt", null, true, "Spodnie", "Category_WomenPants", 1, true, "damskie-spodnie" },
+                    { 9, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5249), "Eleganckie koszule męskie", 1, "fas fa-tshirt", null, true, "Koszule", "Category_Shirts", 2, true, "meskie-koszule" },
+                    { 10, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5252), "Spodnie męskie", 2, "fas fa-tshirt", null, true, "Spodnie", "Category_MenPants", 2, true, "meskie-spodnie" },
+                    { 11, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5255), "Koszulki męskie", 3, "fas fa-tshirt", null, true, "T-Shirty", "Category_TShirts", 2, true, "meskie-tshirty" },
+                    { 12, new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5258), "Bluzy męskie", 4, "fas fa-tshirt", null, true, "Bluzy", "Category_Sweatshirts", 2, true, "meskie-bluzy" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Products",
+                columns: new[] { "Id", "CategoryId", "CreatedAt", "Description", "DescriptionKey", "IsActive", "Name", "NameKey", "Price", "StripePriceId", "StripeProductId", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { 1, 1, new DateTime(2025, 11, 13, 17, 24, 50, 269, DateTimeKind.Utc).AddTicks(6817), "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Product_WomenBriefs5Pack_Description", true, "Majtki damskie bawełniane wysokie - 5 pak", "Product_WomenBriefs5Pack_Name", 49.75m, "", "", null },
+                    { 2, 1, new DateTime(2025, 11, 13, 17, 24, 50, 269, DateTimeKind.Utc).AddTicks(7436), "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Product_WomenBriefs6Pack_Description", true, "Majtki damskie bawełniane wysokie - 6 pak", "Product_WomenBriefs6Pack_Name", 59.70m, "", "", null },
+                    { 3, 1, new DateTime(2025, 11, 13, 17, 24, 50, 269, DateTimeKind.Utc).AddTicks(7444), "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.", "Product_WomenBriefs8Pack_Description", true, "Majtki damskie bawełniane wysokie - 8 pak", "Product_WomenBriefs8Pack_Name", 79.60m, "", "", null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ProductImages",
+                columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
+                values: new object[] { 1, "Majtki damskie bawełniane 5-pak - zdjęcie 1", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(6204), 1, "products/briefs-5pack/image-1.jpg", true, 1 });
+
+            migrationBuilder.InsertData(
+                table: "ProductImages",
+                columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
+                values: new object[,]
+                {
+                    { 2, "Majtki damskie bawełniane 5-pak - zdjęcie 2", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7846), 2, "products/briefs-5pack/image-2.jpg", 1 },
+                    { 3, "Majtki damskie bawełniane 5-pak - zdjęcie 3", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7851), 3, "products/briefs-5pack/image-3.jpg", 1 },
+                    { 4, "Majtki damskie bawełniane 5-pak - zdjęcie 4", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7857), 4, "products/briefs-5pack/image-4.jpg", 1 },
+                    { 5, "Majtki damskie bawełniane 5-pak - zdjęcie 5", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7861), 5, "products/briefs-5pack/image-5.jpg", 1 },
+                    { 6, "Majtki damskie bawełniane 5-pak - zdjęcie 6", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7879), 6, "products/briefs-5pack/image-6.jpg", 1 },
+                    { 7, "Majtki damskie bawełniane 5-pak - zdjęcie 7", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7883), 7, "products/briefs-5pack/image-7.jpg", 1 },
+                    { 8, "Majtki damskie bawełniane 5-pak - zdjęcie 8", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7887), 8, "products/briefs-5pack/image-8.jpg", 1 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ProductImages",
+                columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
+                values: new object[] { 9, "Majtki damskie bawełniane 6-pak - zdjęcie 1", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7896), 1, "products/briefs-6pack/image-1.jpg", true, 2 });
+
+            migrationBuilder.InsertData(
+                table: "ProductImages",
+                columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
+                values: new object[,]
+                {
+                    { 10, "Majtki damskie bawełniane 6-pak - zdjęcie 2", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7902), 2, "products/briefs-6pack/image-2.jpg", 2 },
+                    { 11, "Majtki damskie bawełniane 6-pak - zdjęcie 3", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7905), 3, "products/briefs-6pack/image-3.jpg", 2 },
+                    { 12, "Majtki damskie bawełniane 6-pak - zdjęcie 4", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7909), 4, "products/briefs-6pack/image-4.jpg", 2 },
+                    { 13, "Majtki damskie bawełniane 6-pak - zdjęcie 5", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7913), 5, "products/briefs-6pack/image-5.jpg", 2 },
+                    { 14, "Majtki damskie bawełniane 6-pak - zdjęcie 6", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7917), 6, "products/briefs-6pack/image-6.jpg", 2 },
+                    { 15, "Majtki damskie bawełniane 6-pak - zdjęcie 7", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7920), 7, "products/briefs-6pack/image-7.jpg", 2 },
+                    { 16, "Majtki damskie bawełniane 6-pak - zdjęcie 8", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7924), 8, "products/briefs-6pack/image-8.jpg", 2 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ProductImages",
+                columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
+                values: new object[] { 17, "Majtki damskie bawełniane 8-pak - zdjęcie 1", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7930), 1, "products/briefs-8pack/image-1.jpg", true, 3 });
+
+            migrationBuilder.InsertData(
+                table: "ProductImages",
+                columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
+                values: new object[,]
+                {
+                    { 18, "Majtki damskie bawełniane 8-pak - zdjęcie 2", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7973), 2, "products/briefs-8pack/image-2.jpg", 3 },
+                    { 19, "Majtki damskie bawełniane 8-pak - zdjęcie 3", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7977), 3, "products/briefs-8pack/image-3.jpg", 3 },
+                    { 20, "Majtki damskie bawełniane 8-pak - zdjęcie 4", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7981), 4, "products/briefs-8pack/image-4.jpg", 3 },
+                    { 21, "Majtki damskie bawełniane 8-pak - zdjęcie 5", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7985), 5, "products/briefs-8pack/image-5.jpg", 3 },
+                    { 22, "Majtki damskie bawełniane 8-pak - zdjęcie 6", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7989), 6, "products/briefs-8pack/image-6.jpg", 3 },
+                    { 23, "Majtki damskie bawełniane 8-pak - zdjęcie 7", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7992), 7, "products/briefs-8pack/image-7.jpg", 3 },
+                    { 24, "Majtki damskie bawełniane 8-pak - zdjęcie 8", null, new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7996), 8, "products/briefs-8pack/image-8.jpg", 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ProductVariants",
+                columns: new[] { "Id", "ColorId", "CreatedAt", "IsActive", "Price", "ProductId", "SKU", "SizeId", "StockQuantity", "StripePriceId", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { 1, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(260), true, 49.75m, 1, "BRIEFS-5PK-S2", 2, 100, "", null },
+                    { 2, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4752), true, 49.75m, 1, "BRIEFS-5PK-S3", 3, 100, "", null },
+                    { 3, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4756), true, 49.75m, 1, "BRIEFS-5PK-S4", 4, 100, "", null },
+                    { 4, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4762), true, 49.75m, 1, "BRIEFS-5PK-S5", 5, 100, "", null },
+                    { 5, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4765), true, 49.75m, 1, "BRIEFS-5PK-S6", 6, 100, "", null },
+                    { 6, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4788), true, 59.70m, 2, "BRIEFS-6PK-S2", 2, 100, "", null },
+                    { 7, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4792), true, 59.70m, 2, "BRIEFS-6PK-S3", 3, 100, "", null },
+                    { 8, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4795), true, 59.70m, 2, "BRIEFS-6PK-S4", 4, 100, "", null },
+                    { 9, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4798), true, 59.70m, 2, "BRIEFS-6PK-S5", 5, 100, "", null },
+                    { 10, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4803), true, 59.70m, 2, "BRIEFS-6PK-S6", 6, 100, "", null },
+                    { 11, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4807), true, 79.60m, 3, "BRIEFS-8PK-S2", 2, 100, "", null },
+                    { 12, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4811), true, 79.60m, 3, "BRIEFS-8PK-S3", 3, 100, "", null },
+                    { 13, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4818), true, 79.60m, 3, "BRIEFS-8PK-S4", 4, 100, "", null },
+                    { 14, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4821), true, 79.60m, 3, "BRIEFS-8PK-S5", 5, 100, "", null },
+                    { 15, 8, new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4823), true, 79.60m, 3, "BRIEFS-8PK-S6", 6, 100, "", null }
                 });
 
             migrationBuilder.CreateIndex(
@@ -1165,6 +1341,26 @@ namespace Kokomija.Migrations
                 name: "IX_CarouselSlides_StartDate_EndDate",
                 table: "CarouselSlides",
                 columns: new[] { "StartDate", "EndDate" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Carts_ColorId",
+                table: "Carts",
+                column: "ColorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Carts_ProductId",
+                table: "Carts",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Carts_SizeId",
+                table: "Carts",
+                column: "SizeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Carts_UserId",
+                table: "Carts",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_ParentCategoryId",
@@ -1464,6 +1660,16 @@ namespace Kokomija.Migrations
                 name: "IX_SupportedLanguages_TwoLetterIsoCode",
                 table: "SupportedLanguages",
                 column: "TwoLetterIsoCode");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Wishlists_ProductId",
+                table: "Wishlists",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Wishlists_UserId",
+                table: "Wishlists",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -1497,6 +1703,9 @@ namespace Kokomija.Migrations
                 name: "CarouselSlides");
 
             migrationBuilder.DropTable(
+                name: "Carts");
+
+            migrationBuilder.DropTable(
                 name: "CouponUsages");
 
             migrationBuilder.DropTable(
@@ -1522,6 +1731,9 @@ namespace Kokomija.Migrations
 
             migrationBuilder.DropTable(
                 name: "SupportedLanguages");
+
+            migrationBuilder.DropTable(
+                name: "Wishlists");
 
             migrationBuilder.DropTable(
                 name: "OrderItems");

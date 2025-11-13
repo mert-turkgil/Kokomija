@@ -500,6 +500,49 @@ namespace Kokomija.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Orders()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", new { returnUrl = "/Account/Orders" });
+            }
+
+            // Get orders by user ID using the specialized repository method
+            var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
+
+            return View(orders);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not authenticated" });
+            }
+
+            var order = await _unitOfWork.Orders.GetByIdAsync(id);
+            if (order == null || order.UserId != user.Id)
+            {
+                return Json(new { success = false, message = "Order not found" });
+            }
+
+            // Can only cancel pending or processing orders
+            if (order.OrderStatus == "pending" || order.OrderStatus == "processing")
+            {
+                order.OrderStatus = "cancelled";
+                _unitOfWork.Orders.Update(order);
+                await _unitOfWork.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Order cancelled successfully" });
+            }
+
+            return Json(new { success = false, message = "Cannot cancel order at this stage" });
+        }
+
+        [HttpGet]
         public IActionResult AccessDenied(string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;

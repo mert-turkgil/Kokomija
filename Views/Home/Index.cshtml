@@ -8,6 +8,98 @@
     var currentUICulture = CultureInfo.CurrentUICulture.Name;
 }
 
+<!-- Active Coupons Banner -->
+@if (Model.ActiveCoupons.Any())
+{
+    <div class="coupon-banner-container">
+        @foreach (var coupon in Model.ActiveCoupons.Take(1))
+        {
+            <div class="coupon-banner alert alert-dismissible fade show @(coupon.IsNew ? "new-coupon" : "")" role="alert">
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                @if (coupon.IsNew)
+                                {
+                                    <span class="badge bg-success me-3 pulse-animation">
+                                        <i class="bi bi-sparkles"></i> NEW
+                                    </span>
+                                }
+                                <div>
+                                    <strong class="coupon-code">@coupon.Code</strong>
+                                    <span class="coupon-description">- @coupon.Description</span>
+                                    @if (coupon.DaysUntilExpiry <= 3)
+                                    {
+                                        <span class="badge bg-danger ms-2">
+                                            <i class="bi bi-clock"></i> @coupon.DaysUntilExpiry @L["Days"] left
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                            <button type="button" class="btn btn-sm btn-light me-2" onclick="copyCouponCode('@coupon.Code')">
+                                <i class="bi bi-clipboard"></i> @L["Copy"]
+                            </button>
+                            <a asp-controller="Checkout" asp-action="Index" class="btn btn-sm btn-primary">
+                                @L["Shop_Now"] <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    </div>
+}
+
+<!-- New Coupon Modal -->
+@if (Model.ActiveCoupons.Any(c => c.IsNew))
+{
+    var newCoupon = Model.ActiveCoupons.First(c => c.IsNew);
+    <div class="modal fade" id="newCouponModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 bg-gradient-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-gift-fill me-2"></i>@L["Special_Offer"]
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-5">
+                    <div class="coupon-modal-icon mb-4">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                    </div>
+                    <h3 class="mb-3">@newCoupon.Description</h3>
+                    <div class="coupon-code-display mb-4">
+                        <code>@newCoupon.Code</code>
+                    </div>
+                    <p class="text-muted mb-4">
+                        @if (newCoupon.DiscountType == "percentage")
+                        {
+                            <text>@L["Get"] @newCoupon.DiscountValue% @L["Off"]</text>
+                        }
+                        else
+                        {
+                            <text>@L["Get"] @newCoupon.DiscountValue PLN @L["Off"]</text>
+                        }
+                        @if (newCoupon.MinimumOrderAmount.HasValue)
+                        {
+                            <text> @L["On_Orders_Over"] @newCoupon.MinimumOrderAmount PLN</text>
+                        }
+                    </p>
+                    <p class="small text-danger">
+                        <i class="bi bi-clock"></i> @L["Expires"] @newCoupon.ValidUntil.ToString("dd MMM yyyy")
+                    </p>
+                    <button type="button" class="btn btn-primary btn-lg px-5" onclick="copyCouponCode('@newCoupon.Code'); bootstrap.Modal.getInstance(document.getElementById('newCouponModal')).hide();">
+                        <i class="bi bi-clipboard-check"></i> @L["Copy_Code"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Carousel -->
 @await Component.InvokeAsync("CarouselSlide", new { location = "home" })
 
@@ -123,4 +215,55 @@
             </div>
         </div>
     </section>
+}
+
+@section Scripts {
+    <script>
+        function copyCouponCode(code) {
+            navigator.clipboard.writeText(code).then(function() {
+                // Show toast notification
+                const toast = document.createElement('div');
+                toast.className = 'position-fixed top-0 end-0 p-3';
+                toast.style.zIndex = '11000';
+                toast.innerHTML = `
+                    <div class="toast show" role="alert">
+                        <div class="toast-header bg-success text-white">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong class="me-auto">Success</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            Coupon code copied: <strong>${code}</strong>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }).catch(function(err) {
+                alert('Coupon code: ' + code);
+            });
+        }
+
+        // Show new coupon modal if exists and not seen before
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (Model.ActiveCoupons.Any(c => c.IsNew))
+            {
+                var newCoupon = Model.ActiveCoupons.First(c => c.IsNew);
+                <text>
+                const modalShownKey = 'couponModalShown_@newCoupon.Id';
+                const lastShown = localStorage.getItem(modalShownKey);
+                const now = new Date().getTime();
+                
+                // Show modal if not shown in last 24 hours
+                if (!lastShown || (now - parseInt(lastShown)) > 24 * 60 * 60 * 1000) {
+                    setTimeout(function() {
+                        const modal = new bootstrap.Modal(document.getElementById('newCouponModal'));
+                        modal.show();
+                        localStorage.setItem(modalShownKey, now.toString());
+                    }, 2000);
+                }
+                </text>
+            }
+        });
+    </script>
 }

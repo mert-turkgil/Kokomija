@@ -1,0 +1,89 @@
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = L["Checkout_Success_Title"];
+}
+
+<div class="checkout-success-page">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="success-card text-center">
+                    <div class="success-icon mb-4">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+
+                    <h1 class="mb-3">@L["Checkout_Success_Title"]</h1>
+                    <p class="lead mb-4">@L["Checkout_Success_Message"]</p>
+
+                    @if (ViewBag.OrderNumber != null)
+                    {
+                        <div class="order-details mb-4">
+                            <h4>@L["Checkout_OrderNumber"]:</h4>
+                            <div class="order-number">@ViewBag.OrderNumber</div>
+                            
+                            <h5 class="mt-3">@L["Cart_Total"]:</h5>
+                            <div class="order-total">@ViewBag.OrderTotal PLN</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-envelope"></i>
+                            @L["Checkout_EmailConfirmation"]
+                        </div>
+                    }
+
+                    <div class="action-buttons mt-4">
+                        <a asp-controller="Account" asp-action="Index" class="btn btn-primary btn-lg me-2">
+                            <i class="bi bi-person-circle"></i>
+                            @L["Account_MyAccount"]
+                        </a>
+                        <a href="/" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-house"></i>
+                            @L["Nav_Home"]
+                        </a>
+                    </div>
+
+                    <div class="timeline mt-5">
+                        <h5>@L["Checkout_WhatNext"]</h5>
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <strong>@L["Checkout_Step_OrderPlaced"]</strong>
+                                <p>@L["Checkout_Step_OrderPlaced_Desc"]</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <strong>@L["Checkout_Step_Processing"]</strong>
+                                <p>@L["Checkout_Step_Processing_Desc"]</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <strong>@L["Checkout_Step_Shipping"]</strong>
+                                <p>@L["Checkout_Step_Shipping_Desc"]</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="bi bi-house-door"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <strong>@L["Checkout_Step_Delivery"]</strong>
+                                <p>@L["Checkout_Step_Delivery_Desc"]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

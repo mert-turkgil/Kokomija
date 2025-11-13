@@ -5,7 +5,7 @@
     <div class="product-card-inner">
         <!-- Image Gallery with Swiper & Overlay Content -->
         <div class="product-image-wrapper">
-            <a href="/products/@Model.Id" class="image-link">
+            <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.Id" class="image-link">
                 @if (Model.Images.Any())
                 {
                     <div class="swiper product-swiper-@Model.Id">
@@ -55,7 +55,7 @@
         <!-- Compact Product Info -->
         <div class="product-info">
             <h3 class="product-title">
-                <a href="/products/@Model.Id" class="text-decoration-none">
+                <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none">
                     @Model.Name
                 </a>
             </h3>

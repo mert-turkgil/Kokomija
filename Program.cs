@@ -158,6 +158,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IStripeCustomerService, StripeCustomerService>();
+builder.Services.AddScoped<IStripeProductSeeder, StripeProductSeeder>();
 
 // Register Cookie Consent Service
 builder.Services.AddScoped<ICookieConsentService, CookieConsentService>();
@@ -220,6 +221,12 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Seeding Identity data...");
         await IdentitySeeder.EnsureDatabaseSeededAsync(services, builder.Configuration);
         logger.LogInformation("Database seeding completed successfully.");
+        
+        // Seed Stripe products
+        logger.LogInformation("Seeding Stripe products...");
+        var stripeSeeder = services.GetRequiredService<IStripeProductSeeder>();
+        await stripeSeeder.SeedProductsToStripeAsync();
+        logger.LogInformation("Stripe product seeding completed successfully.");
     }
     catch (Exception ex)
     {

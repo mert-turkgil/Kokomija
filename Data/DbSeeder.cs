@@ -589,6 +589,61 @@ namespace Kokomija.Data
                     Category = "Maintenance",
                     DataType = "boolean",
                     UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 9,
+                    Key = "TaxRate",
+                    Value = "0.23", // 23% VAT for Poland
+                    Description = "Tax rate (VAT) applied to orders (decimal, e.g., 0.23 = 23%)",
+                    Category = "Tax",
+                    DataType = "decimal",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 10,
+                    Key = "ShippingRate",
+                    Value = "15.00", // 15 PLN standard shipping
+                    Description = "Standard shipping cost in PLN",
+                    Category = "Shipping",
+                    DataType = "decimal",
+                    UpdatedAt = DateTime.UtcNow
+                },
+                new SiteSetting
+                {
+                    Id = 11,
+                    Key = "FreeShippingThreshold",
+                    Value = "200.00", // Free shipping over 200 PLN
+                    Description = "Minimum order amount for free shipping in PLN",
+                    Category = "Shipping",
+                    DataType = "decimal",
+                    UpdatedAt = DateTime.UtcNow
+                }
+            );
+        }
+
+        public static void SeedCoupons(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Coupon>().HasData(
+                new Coupon
+                {
+                    Id = 1,
+                    Code = "WELCOME10",
+                    Description = "10% off your first order",
+                    DiscountType = "percentage",
+                    DiscountValue = 10.00m,
+                    MinimumOrderAmount = 50.00m,
+                    MaximumDiscountAmount = 50.00m,
+                    UsageLimit = 1000,
+                    UsageCount = 0,
+                    UsageLimitPerUser = 1,
+                    ValidFrom = DateTime.UtcNow,
+                    ValidUntil = DateTime.UtcNow.AddMonths(6),
+                    IsActive = true,
+                    StripeCouponId = "",
+                    StripePromotionCodeId = "",
+                    CreatedAt = DateTime.UtcNow
                 }
             );
         }
@@ -596,50 +651,50 @@ namespace Kokomija.Data
         public static void SeedProducts(this ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Product>().HasData(
-                // Product 1: Women's Summer Dress
+                // Product 1: Women's Cotton Briefs 5-Pack
                 new Product 
                 { 
                     Id = 1, 
-                    Name = "Elegancka Sukienka Letnia", 
-                    NameKey = "Product_SummerDress_Name",
-                    Description = "Piękna, zwiewna sukienka idealna na letnie wieczory. Wykonana z wysokiej jakości materiału, zapewnia komfort i styl.",
-                    DescriptionKey = "Product_SummerDress_Description",
-                    Price = 189.99m,
-                    StripeProductId = "prod_sukienka_letnia_001",
-                    StripePriceId = "price_sukienka_letnia_001",
-                    CategoryId = 5, // Sukienki (Dresses)
+                    Name = "Majtki damskie bawełniane wysokie - 5 pak", 
+                    NameKey = "Product_WomenBriefs5Pack_Name",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    DescriptionKey = "Product_WomenBriefs5Pack_Description",
+                    Price = 49.75m,
+                    StripeProductId = string.Empty, // Will be created by StripeProductSeeder
+                    StripePriceId = string.Empty,
+                    CategoryId = 1, // Damskie
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 },
                 
-                // Product 2: Men's Blue Shirt
+                // Product 2: Women's Cotton Briefs 6-Pack
                 new Product 
                 { 
                     Id = 2, 
-                    Name = "Koszula Męska Niebieska", 
-                    NameKey = "Product_BlueShirt_Name",
-                    Description = "Elegancka niebieska koszula męska. Idealna do garnituru i na oficjalne spotkania.",
-                    DescriptionKey = "Product_BlueShirt_Description",
-                    Price = 159.99m,
-                    StripeProductId = "prod_koszula_niebieska_001",
-                    StripePriceId = "price_koszula_niebieska_001",
-                    CategoryId = 9, // Koszule (Shirts)
+                    Name = "Majtki damskie bawełniane wysokie - 6 pak", 
+                    NameKey = "Product_WomenBriefs6Pack_Name",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    DescriptionKey = "Product_WomenBriefs6Pack_Description",
+                    Price = 59.70m,
+                    StripeProductId = string.Empty, // Will be created by StripeProductSeeder
+                    StripePriceId = string.Empty,
+                    CategoryId = 1, // Damskie
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 },
                 
-                // Product 3: Spring Jacket
+                // Product 3: Women's Cotton Briefs 8-Pack (Best Value)
                 new Product 
                 { 
                     Id = 3, 
-                    Name = "Kurtka Wiosenna", 
-                    NameKey = "Product_SpringJacket_Name",
-                    Description = "Lekka kurtka wiosenna. Wodoodporna i wygodna, idealna na przejściową pogodę.",
-                    DescriptionKey = "Product_SpringJacket_Description",
-                    Price = 299.99m,
-                    StripeProductId = "prod_kurtka_wiosenna_001",
-                    StripePriceId = "price_kurtka_wiosenna_001",
-                    CategoryId = 3, // Odzież Wierzchnia (Outerwear)
+                    Name = "Majtki damskie bawełniane wysokie - 8 pak", 
+                    NameKey = "Product_WomenBriefs8Pack_Name",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
+                    DescriptionKey = "Product_WomenBriefs8Pack_Description",
+                    Price = 79.60m,
+                    StripeProductId = string.Empty, // Will be created by StripeProductSeeder
+                    StripePriceId = string.Empty,
+                    CategoryId = 1, // Damskie
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 }
@@ -651,22 +706,49 @@ namespace Kokomija.Data
             var images = new List<ProductImage>();
             int imageId = 1;
 
-            // Generate 3 images for each product (3 products)
-            for (int productId = 1; productId <= 3; productId++)
+            // Women's Briefs 5-Pack - Product ID 1
+            for (int imageNum = 1; imageNum <= 8; imageNum++)
             {
-                for (int imageNum = 1; imageNum <= 3; imageNum++)
+                images.Add(new ProductImage
                 {
-                    images.Add(new ProductImage
-                    {
-                        Id = imageId++,
-                        ProductId = productId,
-                        ImageUrl = $"{imageNum}.jpg",
-                        AltText = $"Product {productId} Image {imageNum}",
-                        IsPrimary = imageNum == 1,
-                        DisplayOrder = imageNum,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
+                    Id = imageId++,
+                    ProductId = 1,
+                    ImageUrl = $"products/briefs-5pack/image-{imageNum}.jpg",
+                    AltText = $"Majtki damskie bawełniane 5-pak - zdjęcie {imageNum}",
+                    IsPrimary = imageNum == 1,
+                    DisplayOrder = imageNum,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Women's Briefs 6-Pack - Product ID 2
+            for (int imageNum = 1; imageNum <= 8; imageNum++)
+            {
+                images.Add(new ProductImage
+                {
+                    Id = imageId++,
+                    ProductId = 2,
+                    ImageUrl = $"products/briefs-6pack/image-{imageNum}.jpg",
+                    AltText = $"Majtki damskie bawełniane 6-pak - zdjęcie {imageNum}",
+                    IsPrimary = imageNum == 1,
+                    DisplayOrder = imageNum,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Women's Briefs 8-Pack - Product ID 3
+            for (int imageNum = 1; imageNum <= 8; imageNum++)
+            {
+                images.Add(new ProductImage
+                {
+                    Id = imageId++,
+                    ProductId = 3,
+                    ImageUrl = $"products/briefs-8pack/image-{imageNum}.jpg",
+                    AltText = $"Majtki damskie bawełniane 8-pak - zdjęcie {imageNum}",
+                    IsPrimary = imageNum == 1,
+                    DisplayOrder = imageNum,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
 
             modelBuilder.Entity<ProductImage>().HasData(images);
@@ -677,72 +759,63 @@ namespace Kokomija.Data
             var variants = new List<ProductVariant>();
             int variantId = 1;
 
-            // Product 1: Summer Dress - Sizes: S, M, L, XL | Colors: Red, Blue, Black
-            int[] sizes = { 2, 3, 4, 5 }; // S, M, L, XL
-            int[] colors1 = { 3, 4, 1 }; // Red, Blue, Black
+            // Sizes available: XS=1, S=2, M=3, L=4, XL=5, XXL=6
+            // Colors: Multi-color mix (no specific color, use id=8 for "Mix")
+            int[] sizes = { 2, 3, 4, 5, 6 }; // S, M, L, XL, XXL
+            int mixColorId = 8; // Gray/Mix placeholder
+
+            // Product 1: Women's Briefs 5-Pack
             foreach (var sizeId in sizes)
             {
-                foreach (var colorId in colors1)
+                variants.Add(new ProductVariant
                 {
-                    variants.Add(new ProductVariant
-                    {
-                        Id = variantId++,
-                        ProductId = 1,
-                        SizeId = sizeId,
-                        ColorId = colorId,
-                        SKU = $"DRESS-001-{sizeId}-{colorId}",
-                        Price = 189.99m,
-                        StockQuantity = 25,
-                        StripePriceId = $"price_dress_001_{sizeId}_{colorId}",
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
+                    Id = variantId++,
+                    ProductId = 1,
+                    SizeId = sizeId,
+                    ColorId = mixColorId,
+                    SKU = $"BRIEFS-5PK-S{sizeId}",
+                    Price = 49.75m,
+                    StockQuantity = 100,
+                    StripePriceId = string.Empty,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
 
-            // Product 2: Blue Shirt - Sizes: M, L, XL, XXL | Colors: Blue, Navy
-            int[] sizes2 = { 3, 4, 5, 6 }; // M, L, XL, XXL
-            int[] colors2 = { 4, 7 }; // Blue, Navy
-            foreach (var sizeId in sizes2)
-            {
-                foreach (var colorId in colors2)
-                {
-                    variants.Add(new ProductVariant
-                    {
-                        Id = variantId++,
-                        ProductId = 2,
-                        SizeId = sizeId,
-                        ColorId = colorId,
-                        SKU = $"SHIRT-001-{sizeId}-{colorId}",
-                        Price = 159.99m,
-                        StockQuantity = 30,
-                        StripePriceId = $"price_shirt_001_{sizeId}_{colorId}",
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-            }
-
-            // Product 3: Spring Jacket - Sizes: S, M, L, XL | Colors: Black, Gray, Navy
-            int[] colors3 = { 1, 8, 7 }; // Black, Gray, Navy
+            // Product 2: Women's Briefs 6-Pack
             foreach (var sizeId in sizes)
             {
-                foreach (var colorId in colors3)
+                variants.Add(new ProductVariant
                 {
-                    variants.Add(new ProductVariant
-                    {
-                        Id = variantId++,
-                        ProductId = 3,
-                        SizeId = sizeId,
-                        ColorId = colorId,
-                        SKU = $"JACKET-001-{sizeId}-{colorId}",
-                        Price = 299.99m,
-                        StockQuantity = 20,
-                        StripePriceId = $"price_jacket_001_{sizeId}_{colorId}",
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
+                    Id = variantId++,
+                    ProductId = 2,
+                    SizeId = sizeId,
+                    ColorId = mixColorId,
+                    SKU = $"BRIEFS-6PK-S{sizeId}",
+                    Price = 59.70m,
+                    StockQuantity = 100,
+                    StripePriceId = string.Empty,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // Product 3: Women's Briefs 8-Pack (Best Value)
+            foreach (var sizeId in sizes)
+            {
+                variants.Add(new ProductVariant
+                {
+                    Id = variantId++,
+                    ProductId = 3,
+                    SizeId = sizeId,
+                    ColorId = mixColorId,
+                    SKU = $"BRIEFS-8PK-S{sizeId}",
+                    Price = 79.60m,
+                    StockQuantity = 100,
+                    StripePriceId = string.Empty,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
 
             modelBuilder.Entity<ProductVariant>().HasData(variants);

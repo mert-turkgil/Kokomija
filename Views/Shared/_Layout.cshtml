@@ -206,7 +206,7 @@
                     <!-- Right: Search, Account, Cart -->
                     <div class="navbar-actions d-flex align-items-center gap-3">
                         <!-- Search Icon -->
-                        <a href="/search" class="nav-icon" aria-label="@L["Nav_Search"]">
+                        <a asp-controller="Product" asp-action="Search" class="nav-icon" aria-label="@L["Nav_Search"]">
                             <i class="fas fa-search"></i>
                         </a>
                         
@@ -218,8 +218,8 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
-                                    <li><a class="dropdown-item" href="/account/profile"><i class="fas fa-user me-2"></i> @L["Account_MyAccount"]</a></li>
-                                    <li><a class="dropdown-item" href="/account/orders"><i class="fas fa-box me-2"></i> @L["Account_Orders"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Index"><i class="fas fa-user me-2"></i> @L["Account_MyAccount"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Orders"><i class="fas fa-box me-2"></i> @L["Account_Orders"]</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post">
@@ -229,15 +229,15 @@
                                 }
                                 else
                                 {
-                                    <li><a class="dropdown-item" href="/account/login"><i class="fas fa-sign-in-alt me-2"></i> @L["Account_Login"]</a></li>
-                                    <li><a class="dropdown-item" href="/account/register"><i class="fas fa-user-plus me-2"></i> @L["Account_Register"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Login"><i class="fas fa-sign-in-alt me-2"></i> @L["Account_Login"]</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Register"><i class="fas fa-user-plus me-2"></i> @L["Account_Register"]</a></li>
                                 }
                             </ul>
                         </div>
                         
                         <!-- Shopping Cart -->
                         <div class="dropdown dropdown-hover cart-dropdown">
-                            <a href="/cart" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
+                            <a asp-controller="Cart" asp-action="Index" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
                                 <i class="fas fa-shopping-cart"></i>
                                 <span class="badge bg-danger cart-badge" style="display: none;">0</span>
                             </a>
@@ -252,7 +252,7 @@
                                     </div>
                                 </div>
                                 <div class="cart-preview-footer">
-                                    <a href="/cart" class="btn btn-primary w-100">View Cart</a>
+                                    <a asp-controller="Cart" asp-action="Index" class="btn btn-primary w-100">View Cart</a>
                                 </div>
                             </div>
                         </div>
@@ -274,10 +274,10 @@
                     
                     <!-- Mobile Icons (Right) -->
                     <div class="d-flex align-items-center gap-2">
-                        <a href="/search" class="nav-icon" aria-label="@L["Nav_Search"]">
+                        <a asp-controller="Product" asp-action="Search" class="nav-icon" aria-label="@L["Nav_Search"]">
                             <i class="fas fa-search"></i>
                         </a>
-                        <a href="/cart" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
+                        <a asp-controller="Cart" asp-action="Index" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="badge bg-danger cart-badge" style="display: none;">0</span>
                         </a>
@@ -356,14 +356,14 @@
                         }
                         
                         <li class="nav-item border-top mt-2 pt-2">
-                            <a class="nav-link" href="/account/profile">
+                            <a class="nav-link" asp-controller="Account" asp-action="Index">
                                 <i class="fas fa-user me-2"></i> @L["Account_MyAccount"]
                             </a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link" href="/account/orders">
+                                <a class="nav-link" asp-controller="Account" asp-action="Orders">
                                     <i class="fas fa-box me-2"></i> @L["Account_Orders"]
                                 </a>
                             </li>
@@ -378,12 +378,12 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link" href="/account/login">
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">
                                     <i class="fas fa-sign-in-alt me-2"></i> @L["Account_Login"]
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/account/register">
+                                <a class="nav-link" asp-controller="Account" asp-action="Register">
                                     <i class="fas fa-user-plus me-2"></i> @L["Account_Register"]
                                 </a>
                             </li>

@@ -65,6 +65,10 @@ namespace Kokomija.Data.Concrete
                     .ThenInclude(pc => pc.Color)
                 .Include(p => p.AvailableSizes)
                     .ThenInclude(ps => ps.Size)
+                .Include(p => p.Reviews.Where(r => r.IsVisible).OrderByDescending(r => r.CreatedAt))
+                    .ThenInclude(r => r.User)
+                .Include(p => p.Reviews.Where(r => r.IsVisible))
+                    .ThenInclude(r => r.AdminUser)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 

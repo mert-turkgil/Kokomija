@@ -48,6 +48,9 @@ namespace Kokomija.Data.Concrete
             // Initialize blog repositories
             Blogs = new BlogRepository(_context);
             BlogCategories = new BlogCategoryRepository(_context);
+            
+            // Initialize product review repository
+            ProductReviews = new ProductReviewRepository(_context);
         }
 
         public IProductRepository Products { get; private set; }
@@ -68,6 +71,7 @@ namespace Kokomija.Data.Concrete
         public ICartRepository Carts { get; private set; }
         public IBlogRepository Blogs { get; private set; }
         public IBlogCategoryRepository BlogCategories { get; private set; }
+        public IProductReviewRepository ProductReviews { get; private set; }
 
         public IRepository<T> Repository<T>() where T : class
         {

@@ -19,8 +19,8 @@
 
                     <!-- Header -->
                     <div class="auth-header text-center mb-4">
-                        <h3 class="fw-bold mb-2">Create Your Account</h3>
-                        <p class="text-muted">Join us and start shopping exclusive fashion</p>
+                        <h3 class="fw-bold mb-2">@L["Auth_CreateYourAccount"]</h3>
+                        <p class="text-muted">@L["Auth_JoinMessage"]</p>
                     </div>
 
                     <!-- Register Form -->
@@ -33,20 +33,20 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label asp-for="FirstName" class="form-label">
-                                        <i class="bi bi-person me-2"></i>First Name
+                                        <i class="bi bi-person me-2"></i>@L["Auth_FirstName"]
                                     </label>
                                     <input asp-for="FirstName" class="form-control form-control-lg" 
-                                           placeholder="John" autocomplete="given-name" />
+                                           placeholder="@L["Auth_FirstNamePlaceholder"]" autocomplete="given-name" />
                                     <span asp-validation-for="FirstName" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label asp-for="LastName" class="form-label">
-                                        <i class="bi bi-person me-2"></i>Last Name
+                                        <i class="bi bi-person me-2"></i>@L["Auth_LastName"]
                                     </label>
                                     <input asp-for="LastName" class="form-control form-control-lg" 
-                                           placeholder="Doe" autocomplete="family-name" />
+                                           placeholder="@L["Auth_LastNamePlaceholder"]" autocomplete="family-name" />
                                     <span asp-validation-for="LastName" class="text-danger"></span>
                                 </div>
                             </div>
@@ -55,37 +55,37 @@
                         <!-- Email -->
                         <div class="form-group mb-3">
                             <label asp-for="Email" class="form-label">
-                                <i class="bi bi-envelope me-2"></i>Email Address
+                                <i class="bi bi-envelope me-2"></i>@L["Auth_EmailAddress"]
                             </label>
                             <input asp-for="Email" class="form-control form-control-lg" 
-                                   placeholder="your@email.com" autocomplete="email" />
+                                   placeholder="@L["Auth_EmailPlaceholder"]" autocomplete="email" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <!-- Phone Number (Optional) -->
                         <div class="form-group mb-3">
                             <label asp-for="PhoneNumber" class="form-label">
-                                <i class="bi bi-telephone me-2"></i>Phone Number <small class="text-muted">(Optional)</small>
+                                <i class="bi bi-telephone me-2"></i>@L["Auth_PhoneOptional"]
                             </label>
                             <input asp-for="PhoneNumber" class="form-control form-control-lg" 
-                                   placeholder="+48 123 456 789" autocomplete="tel" />
+                                   placeholder="@L["Auth_PhonePlaceholder"]" autocomplete="tel" />
                             <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                         </div>
 
                         <!-- Password -->
                         <div class="form-group mb-3">
                             <label asp-for="Password" class="form-label">
-                                <i class="bi bi-lock me-2"></i>Password
+                                <i class="bi bi-lock me-2"></i>@L["Auth_Password"]
                             </label>
                             <div class="password-input-group">
                                 <input asp-for="Password" class="form-control form-control-lg" 
-                                       placeholder="Create a strong password" autocomplete="new-password" />
+                                       placeholder="@L["Auth_CreatePassword"]" autocomplete="new-password" />
                                 <button type="button" class="password-toggle" onclick="togglePassword(this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
                             </div>
                             <small class="form-text text-muted">
-                                Minimum 6 characters
+                                @L["Auth_PasswordMinimum"]
                             </small>
                             <span asp-validation-for="Password" class="text-danger d-block"></span>
                         </div>
@@ -93,11 +93,11 @@
                         <!-- Confirm Password -->
                         <div class="form-group mb-3">
                             <label asp-for="ConfirmPassword" class="form-label">
-                                <i class="bi bi-lock-fill me-2"></i>Confirm Password
+                                <i class="bi bi-lock-fill me-2"></i>@L["Auth_ConfirmPassword"]
                             </label>
                             <div class="password-input-group">
                                 <input asp-for="ConfirmPassword" class="form-control form-control-lg" 
-                                       placeholder="Confirm your password" autocomplete="new-password" />
+                                       placeholder="@L["Auth_ConfirmPasswordPlaceholder"]" autocomplete="new-password" />
                                 <button type="button" class="password-toggle" onclick="togglePassword(this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
@@ -109,9 +109,9 @@
                         <div class="form-check mb-3">
                             <input asp-for="AgreeToTerms" class="form-check-input" />
                             <label asp-for="AgreeToTerms" class="form-check-label">
-                                I agree to the 
-                                <a href="#" target="_blank">Terms & Conditions</a> and 
-                                <a href="#" target="_blank">Privacy Policy</a>
+                                @L["Auth_AgreeToTerms"] 
+                                <a href="#" target="_blank">@L["Auth_TermsAndConditions"]</a> @L["Auth_And"] 
+                                <a href="#" target="_blank">@L["Auth_PrivacyPolicy"]</a>
                             </label>
                             <span asp-validation-for="AgreeToTerms" class="text-danger d-block"></span>
                         </div>
@@ -120,20 +120,20 @@
                         <div class="form-check mb-4">
                             <input asp-for="SubscribeToNewsletter" class="form-check-input" />
                             <label asp-for="SubscribeToNewsletter" class="form-check-label">
-                                Send me exclusive offers and fashion updates
+                                @L["Auth_SubscribeNewsletter"]
                             </label>
                         </div>
 
                         <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary btn-lg w-100">
-                            <i class="bi bi-person-plus me-2"></i>Create Account
+                            <i class="bi bi-person-plus me-2"></i>@L["Auth_CreateAccount"]
                         </button>
                     </form>
 
                     <!-- Social Login -->
                     <div class="social-login">
                         <div class="divider">
-                            <span>Or sign up with</span>
+                            <span>@L["Auth_OrSignUpWith"]</span>
                         </div>
                         <div class="social-buttons">
                             <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
@@ -144,20 +144,20 @@
                                         <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
                                         <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
                                     </svg>
-                                    Continue with Google
+                                    <span>@L["Auth_ContinueWithGoogle"]</span>
                                 </button>
                             </form>
                             <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                                 <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100">
                                     <i class="bi bi-facebook" style="font-size: 20px;"></i>
-                                    Continue with Facebook
+                                    <span>@L["Auth_ContinueWithFacebook"]</span>
                                 </button>
                             </form>
                             @* Apple Sign-In - Uncomment when credentials are configured
                             <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
                                 <button type="submit" name="provider" value="Apple" class="btn-social btn-apple w-100">
                                     <i class="bi bi-apple" style="font-size: 20px;"></i>
-                                    Continue with Apple
+                                    <span>Continue with Apple</span>
                                 </button>
                             </form>
                             *@
@@ -166,10 +166,10 @@
 
                     <!-- Login Link -->
                     <div class="auth-links">
-                        <p>Already have an account?</p>
+                        <p>@L["Auth_HaveAccount"]</p>
                         <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="link-primary">
                             <i class="bi bi-box-arrow-in-right"></i>
-                            Sign In
+                            @L["Auth_SignInLink"]
                         </a>
                     </div>
 
@@ -178,15 +178,15 @@
                         <div class="row g-3 text-center">
                             <div class="col-4">
                                 <i class="bi bi-shield-check text-primary fs-3"></i>
-                                <small class="d-block mt-1 text-muted">Secure</small>
+                                <small class="d-block mt-1 text-muted">@L["Auth_Secure"]</small>
                             </div>
                             <div class="col-4">
                                 <i class="bi bi-gift text-primary fs-3"></i>
-                                <small class="d-block mt-1 text-muted">Rewards</small>
+                                <small class="d-block mt-1 text-muted">@L["Auth_Rewards"]</small>
                             </div>
                             <div class="col-4">
                                 <i class="bi bi-truck text-primary fs-3"></i>
-                                <small class="d-block mt-1 text-muted">Free Ship</small>
+                                <small class="d-block mt-1 text-muted">@L["Auth_FreeShip"]</small>
                             </div>
                         </div>
                     </div>

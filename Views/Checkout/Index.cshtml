@@ -1,0 +1,253 @@
+@model Kokomija.Models.ViewModels.Checkout.CheckoutViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = L["Checkout_Title"];
+}
+
+<div class="checkout-page">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">@L["Nav_Home"]</a></li>
+                        <li class="breadcrumb-item"><a asp-controller="Cart" asp-action="Index">@L["Cart_Title"]</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">@L["Checkout_Title"]</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="mb-4">
+                    <i class="bi bi-credit-card"></i>
+                    @L["Checkout_Title"]
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Checkout Form -->
+            <div class="col-lg-7">
+                @if (!Model.IsGuest)
+                {
+                    <!-- Order Review -->
+                    <div class="checkout-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-bag-check"></i>
+                            @L["Checkout_OrderReview"]
+                        </h3>
+                        
+                        <div class="order-items">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="checkout-item">
+                                    <div class="item-image">
+                                        <img src="~/img/products/@item.ProductImage" alt="@item.ProductName" />
+                                    </div>
+                                    <div class="item-details">
+                                        <h5 class="item-name">@item.ProductName</h5>
+                                        <p class="item-variant">
+                                            @L["Cart_Color"]: @item.ColorName | 
+                                            @L["Cart_Size"]: @item.SizeName
+                                        </p>
+                                        <p class="item-quantity">@L["Checkout_Quantity"]: @item.Quantity</p>
+                                    </div>
+                                    <div class="item-price">
+                                        <strong>@item.Subtotal.ToString("N2") PLN</strong>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Stripe Checkout -->
+                    <div class="checkout-section">
+                        <h3 class="section-title">
+                            <i class="bi bi-shield-check"></i>
+                            @L["Checkout_SecurePayment"]
+                        </h3>
+                        
+                        <div class="stripe-checkout-info">
+                            <p class="mb-3">@L["Checkout_StripeInfo"]</p>
+                            
+                            <button type="button" id="checkout-button" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-lock"></i>
+                                @L["Checkout_ProceedToPayment"]
+                                <span class="ms-2">@Model.Total.ToString("N2") PLN</span>
+                            </button>
+
+                            <div class="payment-security mt-3">
+                                <div class="d-flex align-items-center justify-content-center gap-3">
+                                    <i class="bi bi-shield-fill-check text-success fs-4"></i>
+                                    <small class="text-muted">@L["Checkout_SecuredByStripe"]</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.SavedPaymentMethods.Any())
+                    {
+                        <div class="checkout-section">
+                            <h3 class="section-title">
+                                <i class="bi bi-credit-card-2-front"></i>
+                                @L["Checkout_SavedCards"]
+                            </h3>
+
+                            <div class="saved-cards">
+                                @foreach (var card in Model.SavedPaymentMethods)
+                                {
+                                    <div class="saved-card @(card.IsDefault ? "default-card" : "")">
+                                        <div class="card-icon">
+                                            @if (card.Brand.ToLower() == "visa")
+                                            {
+                                                <i class="bi bi-credit-card"></i>
+                                            }
+                                            else if (card.Brand.ToLower() == "mastercard")
+                                            {
+                                                <i class="bi bi-credit-card-fill"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-credit-card-2-front"></i>
+                                            }
+                                        </div>
+                                        <div class="card-info">
+                                            <div class="card-brand">@card.Brand.ToUpper()</div>
+                                            <div class="card-number">•••• •••• •••• @card.Last4</div>
+                                            <div class="card-expiry">@card.ExpMonth/@card.ExpYear</div>
+                                        </div>
+                                        @if (card.IsDefault)
+                                        {
+                                            <div class="default-badge">
+                                                <span class="badge bg-primary">@L["Checkout_Default"]</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        @L["Checkout_LoginRequired"]
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Checkout" class="alert-link">@L["Account_Login"]</a>
+                    </div>
+                }
+            </div>
+
+            <!-- Right Column: Order Summary -->
+            <div class="col-lg-5">
+                <div class="order-summary">
+                    <h3 class="summary-title">@L["Cart_OrderSummary"]</h3>
+
+                    <div class="summary-row">
+                        <span>@L["Cart_Subtotal"]</span>
+                        <span>@Model.Subtotal.ToString("N2") PLN</span>
+                    </div>
+
+                    @if (Model.Discount > 0)
+                    {
+                        <div class="summary-row discount">
+                            <span>
+                                @L["Cart_Discount"]
+                                @if (Model.HasCoupon)
+                                {
+                                    <span class="coupon-code">(@Model.CouponCode)</span>
+                                }
+                            </span>
+                            <span class="text-success">-@Model.Discount.ToString("N2") PLN</span>
+                        </div>
+                    }
+
+                    <div class="summary-row">
+                        <span>@L["Cart_Shipping"]</span>
+                        <span>
+                            @if (Model.ShippingCost == 0)
+                            {
+                                <span class="text-success">@L["Cart_FreeShipping"]</span>
+                            }
+                            else
+                            {
+                                @Model.ShippingCost.ToString("N2") <text>PLN</text>
+                            }
+                        </span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>@L["Cart_Tax"] (23%)</span>
+                        <span>@Model.Tax.ToString("N2") PLN</span>
+                    </div>
+
+                    <div class="summary-total">
+                        <span>@L["Cart_Total"]</span>
+                        <span class="total-amount">@Model.Total.ToString("N2") PLN</span>
+                    </div>
+
+                    <div class="security-badges mt-4">
+                        <div class="badge-item">
+                            <i class="bi bi-shield-fill-check text-success"></i>
+                            <span>@L["Checkout_SecureSSL"]</span>
+                        </div>
+                        <div class="badge-item">
+                            <i class="bi bi-credit-card-2-front text-primary"></i>
+                            <span>@L["Checkout_AllCards"]</span>
+                        </div>
+                        <div class="badge-item">
+                            <i class="bi bi-truck text-info"></i>
+                            <span>@L["Checkout_FastShipping"]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        const stripe = Stripe('@Model.StripePublishableKey');
+        
+        document.getElementById('checkout-button').addEventListener('click', async () => {
+            const button = document.getElementById('checkout-button');
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>@L["Checkout_Processing"]';
+
+            try {
+                const response = await fetch('/Checkout/CreateCheckoutSession', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to Stripe Checkout
+                    const result = await stripe.redirectToCheckout({
+                        sessionId: data.sessionId
+                    });
+
+                    if (result.error) {
+                        alert(result.error.message);
+                        button.disabled = false;
+                        button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">@Model.Total.ToString("N2") PLN</span>';
+                    }
+                } else {
+                    alert(data.message || '@L["Checkout_Error"]');
+                    button.disabled = false;
+                    button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">@Model.Total.ToString("N2") PLN</span>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('@L["Checkout_Error"]');
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">@Model.Total.ToString("N2") PLN</span>';
+            }
+        });
+    </script>
+}

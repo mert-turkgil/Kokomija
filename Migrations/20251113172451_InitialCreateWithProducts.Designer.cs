@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kokomija.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251022154153_AddImageUrlToCategory")]
-    partial class AddImageUrlToCategory
+    [Migration("20251113172451_InitialCreateWithProducts")]
+    partial class InitialCreateWithProducts
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -553,7 +553,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3082),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(4886),
                             Description = "Porady dotyczące zakupów i stylizacji",
                             DisplayOrder = 1,
                             IsActive = true,
@@ -562,12 +562,12 @@ namespace Kokomija.Migrations
                             MetaDescription = "Porady zakupowe i stylizacyjne dla klientów Kokomija",
                             Name = "Porady",
                             Slug = "porady",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3389)
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5222)
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3687),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5694),
                             Description = "Najnowsze produkty i kolekcje",
                             DisplayOrder = 2,
                             IsActive = true,
@@ -576,12 +576,12 @@ namespace Kokomija.Migrations
                             MetaDescription = "Najnowsze produkty i kolekcje w Kokomija",
                             Name = "Nowości",
                             Slug = "nowosci",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3688)
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5695)
                         },
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3690),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5698),
                             Description = "Najnowsze trendy w modzie",
                             DisplayOrder = 3,
                             IsActive = true,
@@ -590,12 +590,12 @@ namespace Kokomija.Migrations
                             MetaDescription = "Najnowsze trendy w modzie i stylizacji",
                             Name = "Trendy",
                             Slug = "trendy",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3691)
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5699)
                         },
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3721),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5702),
                             Description = "Inspiracje stylizacyjne i lookbooki",
                             DisplayOrder = 4,
                             IsActive = true,
@@ -604,12 +604,12 @@ namespace Kokomija.Migrations
                             MetaDescription = "Inspiracje stylizacyjne i lookbooki od Kokomija",
                             Name = "Inspiracje",
                             Slug = "inspiracje",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3721)
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5702)
                         },
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3724),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5705),
                             Description = "Informacje o marce Kokomija",
                             DisplayOrder = 5,
                             IsActive = true,
@@ -618,7 +618,7 @@ namespace Kokomija.Migrations
                             MetaDescription = "Informacje o marce Kokomija i naszej misji",
                             Name = "O marce",
                             Slug = "o-marce",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 973, DateTimeKind.Utc).AddTicks(3724)
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 267, DateTimeKind.Utc).AddTicks(5706)
                         });
                 });
 
@@ -774,7 +774,7 @@ namespace Kokomija.Migrations
                             AnimationType = "fade",
                             ButtonClass = "btn-primary",
                             ButtonText = "Kup Teraz",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(7744),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(1622),
                             DisplayOrder = 1,
                             Duration = 5000,
                             ImageAlt = "Nowa kolekcja wiosenna 2025",
@@ -783,7 +783,7 @@ namespace Kokomija.Migrations
                             IsDeleted = false,
                             LinkUrl = "/damskie",
                             Location = "home",
-                            StartDate = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(7252),
+                            StartDate = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(840),
                             Subtitle = "Odkryj najnowsze trendy w modzie damskiej i męskiej",
                             TextAlign = "center",
                             Title = "Nowa Kolekcja Wiosna 2025"
@@ -794,7 +794,7 @@ namespace Kokomija.Migrations
                             AnimationType = "fade",
                             ButtonClass = "btn-primary",
                             ButtonText = "Zobacz Ofertę",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8086),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2102),
                             DisplayOrder = 2,
                             Duration = 5000,
                             ImageAlt = "Wielka wyprzedaż do -50%",
@@ -803,7 +803,7 @@ namespace Kokomija.Migrations
                             IsDeleted = false,
                             LinkUrl = "/meskie",
                             Location = "home",
-                            StartDate = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8085),
+                            StartDate = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2101),
                             Subtitle = "Nie przegap okazji! Setki produktów w obniżonych cenach",
                             TextAlign = "center",
                             Title = "Wyprzedaż do -50%"
@@ -814,7 +814,7 @@ namespace Kokomija.Migrations
                             AnimationType = "fade",
                             ButtonClass = "btn-primary",
                             ButtonText = "Przeglądaj",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8089),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2107),
                             DisplayOrder = 3,
                             Duration = 5000,
                             ImageAlt = "Elegancka odzież na specjalne okazje",
@@ -823,7 +823,7 @@ namespace Kokomija.Migrations
                             IsDeleted = false,
                             LinkUrl = "/odziez-wierzchnia",
                             Location = "home",
-                            StartDate = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8088),
+                            StartDate = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2107),
                             Subtitle = "Koszule, sukienki i dodatki dla wymagających",
                             TextAlign = "center",
                             Title = "Elegancja na Każdą Okazję"
@@ -834,7 +834,7 @@ namespace Kokomija.Migrations
                             AnimationType = "fade",
                             ButtonClass = "btn-primary",
                             ButtonText = "Sprawdź",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8092),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2113),
                             DisplayOrder = 4,
                             Duration = 5000,
                             ImageAlt = "Darmowa dostawa powyżej 200 PLN",
@@ -843,7 +843,7 @@ namespace Kokomija.Migrations
                             IsDeleted = false,
                             LinkUrl = "/akcesoria",
                             Location = "home",
-                            StartDate = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8092),
+                            StartDate = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2112),
                             Subtitle = "Przy zamówieniach powyżej 200 PLN",
                             TextAlign = "center",
                             Title = "Darmowa Dostawa"
@@ -854,7 +854,7 @@ namespace Kokomija.Migrations
                             AnimationType = "fade",
                             ButtonClass = "btn-primary",
                             ButtonText = "Odkryj Więcej",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8095),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2117),
                             DisplayOrder = 5,
                             Duration = 5000,
                             ImageAlt = "Kolekcja zimowych kurtek",
@@ -863,11 +863,51 @@ namespace Kokomija.Migrations
                             IsDeleted = false,
                             LinkUrl = "/odziez-wierzchnia",
                             Location = "home",
-                            StartDate = new DateTime(2025, 10, 22, 15, 41, 50, 981, DateTimeKind.Utc).AddTicks(8095),
+                            StartDate = new DateTime(2025, 11, 13, 17, 24, 50, 279, DateTimeKind.Utc).AddTicks(2116),
                             Subtitle = "Przygotuj się na zimę z naszą kolekcją kurtek",
                             TextAlign = "center",
                             Title = "Stylowe Kurtki"
                         });
+                });
+
+            modelBuilder.Entity("Kokomija.Entity.Cart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ColorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SizeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ColorId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SizeId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Carts");
                 });
 
             modelBuilder.Entity("Kokomija.Entity.Category", b =>
@@ -907,6 +947,10 @@ namespace Kokomija.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("NameKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<int?>("ParentCategoryId")
                         .HasColumnType("int");
 
@@ -933,59 +977,69 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(8716),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(2498),
                             Description = "Odzież damska",
                             DisplayOrder = 1,
                             IconCssClass = "fas fa-female",
+                            ImageUrl = "categories/women.jpg",
                             IsActive = true,
                             Name = "Damskie",
+                            NameKey = "Category_Women",
                             ShowInNavbar = true,
                             Slug = "damskie"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9039),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(4065),
                             Description = "Odzież męska",
                             DisplayOrder = 2,
                             IconCssClass = "fas fa-male",
+                            ImageUrl = "categories/men.jpg",
                             IsActive = true,
                             Name = "Męskie",
+                            NameKey = "Category_Men",
                             ShowInNavbar = true,
                             Slug = "meskie"
                         },
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9041),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(4068),
                             Description = "Kurtki i płaszcze",
                             DisplayOrder = 3,
                             IconCssClass = "fas fa-wind",
+                            ImageUrl = "categories/outerwear.jpg",
                             IsActive = true,
                             Name = "Odzież Wierzchnia",
+                            NameKey = "Category_Outerwear",
                             ShowInNavbar = true,
                             Slug = "odziez-wierzchnia"
                         },
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9044),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(4073),
                             Description = "Dodatki i akcesoria",
                             DisplayOrder = 4,
                             IconCssClass = "fas fa-shopping-bag",
+                            ImageUrl = "categories/accessories.jpg",
                             IsActive = true,
                             Name = "Akcesoria",
+                            NameKey = "Category_Accessories",
                             ShowInNavbar = true,
                             Slug = "akcesoria"
                         },
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9443),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5227),
                             Description = "Eleganckie sukienki damskie",
                             DisplayOrder = 1,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Sukienki",
+                            NameKey = "Category_Dresses",
                             ParentCategoryId = 1,
                             ShowInNavbar = true,
                             Slug = "damskie-sukienki"
@@ -993,11 +1047,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9449),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5239),
                             Description = "Modne spódnice",
                             DisplayOrder = 2,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Spódnice",
+                            NameKey = "Category_Skirts",
                             ParentCategoryId = 1,
                             ShowInNavbar = true,
                             Slug = "damskie-spodnice"
@@ -1005,11 +1061,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9452),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5242),
                             Description = "Eleganckie bluzki damskie",
                             DisplayOrder = 3,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Bluzki",
+                            NameKey = "Category_Blouses",
                             ParentCategoryId = 1,
                             ShowInNavbar = true,
                             Slug = "damskie-bluzki"
@@ -1017,11 +1075,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9455),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5246),
                             Description = "Spodnie damskie",
                             DisplayOrder = 4,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Spodnie",
+                            NameKey = "Category_WomenPants",
                             ParentCategoryId = 1,
                             ShowInNavbar = true,
                             Slug = "damskie-spodnie"
@@ -1029,11 +1089,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 9,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9457),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5249),
                             Description = "Eleganckie koszule męskie",
                             DisplayOrder = 1,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Koszule",
+                            NameKey = "Category_Shirts",
                             ParentCategoryId = 2,
                             ShowInNavbar = true,
                             Slug = "meskie-koszule"
@@ -1041,11 +1103,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 10,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9460),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5252),
                             Description = "Spodnie męskie",
                             DisplayOrder = 2,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Spodnie",
+                            NameKey = "Category_MenPants",
                             ParentCategoryId = 2,
                             ShowInNavbar = true,
                             Slug = "meskie-spodnie"
@@ -1053,11 +1117,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 11,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9463),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5255),
                             Description = "Koszulki męskie",
                             DisplayOrder = 3,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "T-Shirty",
+                            NameKey = "Category_TShirts",
                             ParentCategoryId = 2,
                             ShowInNavbar = true,
                             Slug = "meskie-tshirty"
@@ -1065,11 +1131,13 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 12,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 971, DateTimeKind.Utc).AddTicks(9466),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 265, DateTimeKind.Utc).AddTicks(5258),
                             Description = "Bluzy męskie",
                             DisplayOrder = 4,
+                            IconCssClass = "fas fa-tshirt",
                             IsActive = true,
                             Name = "Bluzy",
+                            NameKey = "Category_Sweatshirts",
                             ParentCategoryId = 2,
                             ShowInNavbar = true,
                             Slug = "meskie-bluzy"
@@ -1121,7 +1189,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(7689),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2269),
                             DisplayName = "Black",
                             DisplayOrder = 1,
                             HexCode = "#000000",
@@ -1131,7 +1199,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8006),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2604),
                             DisplayName = "White",
                             DisplayOrder = 2,
                             HexCode = "#FFFFFF",
@@ -1141,7 +1209,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8008),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2607),
                             DisplayName = "Red",
                             DisplayOrder = 3,
                             HexCode = "#FF0000",
@@ -1151,7 +1219,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8010),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2609),
                             DisplayName = "Blue",
                             DisplayOrder = 4,
                             HexCode = "#0000FF",
@@ -1161,7 +1229,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8013),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2612),
                             DisplayName = "Green",
                             DisplayOrder = 5,
                             HexCode = "#00FF00",
@@ -1171,7 +1239,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8015),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2614),
                             DisplayName = "Yellow",
                             DisplayOrder = 6,
                             HexCode = "#FFFF00",
@@ -1181,7 +1249,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8017),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2617),
                             DisplayName = "Navy Blue",
                             DisplayOrder = 7,
                             HexCode = "#000080",
@@ -1191,7 +1259,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 970, DateTimeKind.Utc).AddTicks(8019),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 263, DateTimeKind.Utc).AddTicks(2619),
                             DisplayName = "Gray",
                             DisplayOrder = 8,
                             HexCode = "#808080",
@@ -1744,6 +1812,10 @@ namespace Kokomija.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DescriptionKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -1753,6 +1825,10 @@ namespace Kokomija.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -1784,182 +1860,44 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            CategoryId = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3534),
-                            Description = "Piękna, zwiewna sukienka idealna na letnie wieczory. Wykonana z wysokiej jakości materiału, zapewnia komfort i styl.",
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 269, DateTimeKind.Utc).AddTicks(6817),
+                            Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                            DescriptionKey = "Product_WomenBriefs5Pack_Description",
                             IsActive = true,
-                            Name = "Elegancka Sukienka Letnia",
-                            Price = 189.99m,
-                            StripePriceId = "price_sukienka_letnia_001",
-                            StripeProductId = "prod_sukienka_letnia_001"
+                            Name = "Majtki damskie bawełniane wysokie - 5 pak",
+                            NameKey = "Product_WomenBriefs5Pack_Name",
+                            Price = 49.75m,
+                            StripePriceId = "",
+                            StripeProductId = ""
                         },
                         new
                         {
                             Id = 2,
-                            CategoryId = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3852),
-                            Description = "Klasyczna plisowana spódnica midi. Doskonała do biura i na specjalne okazje.",
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 269, DateTimeKind.Utc).AddTicks(7436),
+                            Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                            DescriptionKey = "Product_WomenBriefs6Pack_Description",
                             IsActive = true,
-                            Name = "Spódnica Midi Plisowana",
-                            Price = 149.99m,
-                            StripePriceId = "price_spodnica_midi_001",
-                            StripeProductId = "prod_spodnica_midi_001"
+                            Name = "Majtki damskie bawełniane wysokie - 6 pak",
+                            NameKey = "Product_WomenBriefs6Pack_Name",
+                            Price = 59.70m,
+                            StripePriceId = "",
+                            StripeProductId = ""
                         },
                         new
                         {
                             Id = 3,
-                            CategoryId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3855),
-                            Description = "Elegancka biała bluzka z delikatnymi wzorami. Idealna do spodni i spódnic.",
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 269, DateTimeKind.Utc).AddTicks(7444),
+                            Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
+                            DescriptionKey = "Product_WomenBriefs8Pack_Description",
                             IsActive = true,
-                            Name = "Bluzka Elegancka Biała",
-                            Price = 99.99m,
-                            StripePriceId = "price_bluzka_biala_001",
-                            StripeProductId = "prod_bluzka_biala_001"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CategoryId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3858),
-                            Description = "Klasyczne czarne spodnie damskie. Wygodne i eleganckie, pasują do każdej stylizacji.",
-                            IsActive = true,
-                            Name = "Spodnie Damskie Czarne",
-                            Price = 129.99m,
-                            StripePriceId = "price_spodnie_damskie_001",
-                            StripeProductId = "prod_spodnie_damskie_001"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CategoryId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3861),
-                            Description = "Kolorowa bluzka w kwiatowy wzór. Idealna na wiosnę i lato.",
-                            IsActive = true,
-                            Name = "Bluzka Kwiatowa Wzór",
-                            Price = 89.99m,
-                            StripePriceId = "price_bluzka_kwiatowa_001",
-                            StripeProductId = "prod_bluzka_kwiatowa_001"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CategoryId = 9,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3864),
-                            Description = "Elegancka niebieska koszula męska. Idealna do garnituru i na oficjalne spotkania.",
-                            IsActive = true,
-                            Name = "Koszula Męska Niebieska",
-                            Price = 159.99m,
-                            StripePriceId = "price_koszula_niebieska_001",
-                            StripeProductId = "prod_koszula_niebieska_001"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CategoryId = 10,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3866),
-                            Description = "Klasyczne spodnie męskie typu chino. Wygodne i stylowe na co dzień.",
-                            IsActive = true,
-                            Name = "Spodnie Męskie Chino",
-                            Price = 179.99m,
-                            StripePriceId = "price_spodnie_chino_001",
-                            StripeProductId = "prod_spodnie_chino_001"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CategoryId = 11,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3869),
-                            Description = "Podstawowy biały t-shirt męski. Wysokiej jakości bawełna, idealny na co dzień.",
-                            IsActive = true,
-                            Name = "T-Shirt Męski Basic Biały",
-                            Price = 59.99m,
-                            StripePriceId = "price_tshirt_bialy_001",
-                            StripeProductId = "prod_tshirt_bialy_001"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            CategoryId = 11,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3872),
-                            Description = "Podstawowy czarny t-shirt męski. Niezawodny element każdej szafy.",
-                            IsActive = true,
-                            Name = "T-Shirt Męski Basic Czarny",
-                            Price = 59.99m,
-                            StripePriceId = "price_tshirt_czarny_001",
-                            StripeProductId = "prod_tshirt_czarny_001"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            CategoryId = 12,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3875),
-                            Description = "Ciepła i wygodna bluza męska z kapturem. Idealna na chłodniejsze dni.",
-                            IsActive = true,
-                            Name = "Bluza Męska z Kapturem",
-                            Price = 139.99m,
-                            StripePriceId = "price_bluza_kaptur_001",
-                            StripeProductId = "prod_bluza_kaptur_001"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            CategoryId = 9,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3878),
-                            Description = "Klasyczna biała koszula męska. Must-have w każdej szafie.",
-                            IsActive = true,
-                            Name = "Koszula Męska Biała Classic",
-                            Price = 149.99m,
-                            StripePriceId = "price_koszula_biala_001",
-                            StripeProductId = "prod_koszula_biala_001"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            CategoryId = 10,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3880),
-                            Description = "Klasyczne jeansy męskie w kolorze ciemnego denimu. Trwałe i stylowe.",
-                            IsActive = true,
-                            Name = "Spodnie Męskie Jeans",
-                            Price = 199.99m,
-                            StripePriceId = "price_jeans_meskie_001",
-                            StripeProductId = "prod_jeans_meskie_001"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            CategoryId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3883),
-                            Description = "Lekka kurtka wiosenna dla kobiet. Wodoodporna i wygodna.",
-                            IsActive = true,
-                            Name = "Kurtka Wiosenna Damska",
-                            Price = 299.99m,
-                            StripePriceId = "price_kurtka_wiosenna_001",
-                            StripeProductId = "prod_kurtka_wiosenna_001"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            CategoryId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3886),
-                            Description = "Elegancki wełniany płaszcz męski. Ciepły i stylowy na zimę.",
-                            IsActive = true,
-                            Name = "Płaszcz Męski Wełniany",
-                            Price = 449.99m,
-                            StripePriceId = "price_plaszcz_welniany_001",
-                            StripeProductId = "prod_plaszcz_welniany_001"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            CategoryId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(3889),
-                            Description = "Klasyczna kurtka skórzana. Ponadczasowy styl dla mężczyzn i kobiet.",
-                            IsActive = true,
-                            Name = "Kurtka Skórzana",
-                            Price = 599.99m,
-                            StripePriceId = "price_kurtka_skorzana_001",
-                            StripeProductId = "prod_kurtka_skorzana_001"
+                            Name = "Majtki damskie bawełniane wysokie - 8 pak",
+                            NameKey = "Product_WomenBriefs8Pack_Name",
+                            Price = 79.60m,
+                            StripePriceId = "",
+                            StripeProductId = ""
                         });
                 });
 
@@ -2043,452 +1981,242 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            AltText = "Product 1 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9507),
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 1",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(6204),
                             DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
+                            ImageUrl = "products/briefs-5pack/image-1.jpg",
                             IsPrimary = true,
                             ProductId = 1
                         },
                         new
                         {
                             Id = 2,
-                            AltText = "Product 1 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9843),
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 2",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7846),
                             DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
+                            ImageUrl = "products/briefs-5pack/image-2.jpg",
                             IsPrimary = false,
                             ProductId = 1
                         },
                         new
                         {
                             Id = 3,
-                            AltText = "Product 1 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9846),
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 3",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7851),
                             DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            ImageUrl = "products/briefs-5pack/image-3.jpg",
                             IsPrimary = false,
                             ProductId = 1
                         },
                         new
                         {
                             Id = 4,
-                            AltText = "Product 2 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9849),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 2
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 4",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7857),
+                            DisplayOrder = 4,
+                            ImageUrl = "products/briefs-5pack/image-4.jpg",
+                            IsPrimary = false,
+                            ProductId = 1
                         },
                         new
                         {
                             Id = 5,
-                            AltText = "Product 2 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9851),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 5",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7861),
+                            DisplayOrder = 5,
+                            ImageUrl = "products/briefs-5pack/image-5.jpg",
                             IsPrimary = false,
-                            ProductId = 2
+                            ProductId = 1
                         },
                         new
                         {
                             Id = 6,
-                            AltText = "Product 2 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9857),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 6",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7879),
+                            DisplayOrder = 6,
+                            ImageUrl = "products/briefs-5pack/image-6.jpg",
+                            IsPrimary = false,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 7",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7883),
+                            DisplayOrder = 7,
+                            ImageUrl = "products/briefs-5pack/image-7.jpg",
+                            IsPrimary = false,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 8",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7887),
+                            DisplayOrder = 8,
+                            ImageUrl = "products/briefs-5pack/image-8.jpg",
+                            IsPrimary = false,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            Id = 9,
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 1",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7896),
+                            DisplayOrder = 1,
+                            ImageUrl = "products/briefs-6pack/image-1.jpg",
+                            IsPrimary = true,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            Id = 10,
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 2",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7902),
+                            DisplayOrder = 2,
+                            ImageUrl = "products/briefs-6pack/image-2.jpg",
                             IsPrimary = false,
                             ProductId = 2
                         },
                         new
                         {
-                            Id = 7,
-                            AltText = "Product 3 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9859),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            Id = 8,
-                            AltText = "Product 3 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9861),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            Id = 9,
-                            AltText = "Product 3 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9864),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            Id = 10,
-                            AltText = "Product 4 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9896),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 4
-                        },
-                        new
-                        {
                             Id = 11,
-                            AltText = "Product 4 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9899),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 3",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7905),
+                            DisplayOrder = 3,
+                            ImageUrl = "products/briefs-6pack/image-3.jpg",
                             IsPrimary = false,
-                            ProductId = 4
+                            ProductId = 2
                         },
                         new
                         {
                             Id = 12,
-                            AltText = "Product 4 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9901),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 4",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7909),
+                            DisplayOrder = 4,
+                            ImageUrl = "products/briefs-6pack/image-4.jpg",
                             IsPrimary = false,
-                            ProductId = 4
+                            ProductId = 2
                         },
                         new
                         {
                             Id = 13,
-                            AltText = "Product 5 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9903),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 5
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 5",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7913),
+                            DisplayOrder = 5,
+                            ImageUrl = "products/briefs-6pack/image-5.jpg",
+                            IsPrimary = false,
+                            ProductId = 2
                         },
                         new
                         {
                             Id = 14,
-                            AltText = "Product 5 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9906),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 6",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7917),
+                            DisplayOrder = 6,
+                            ImageUrl = "products/briefs-6pack/image-6.jpg",
                             IsPrimary = false,
-                            ProductId = 5
+                            ProductId = 2
                         },
                         new
                         {
                             Id = 15,
-                            AltText = "Product 5 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9908),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 7",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7920),
+                            DisplayOrder = 7,
+                            ImageUrl = "products/briefs-6pack/image-7.jpg",
                             IsPrimary = false,
-                            ProductId = 5
+                            ProductId = 2
                         },
                         new
                         {
                             Id = 16,
-                            AltText = "Product 6 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9910),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 6
+                            AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 8",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7924),
+                            DisplayOrder = 8,
+                            ImageUrl = "products/briefs-6pack/image-8.jpg",
+                            IsPrimary = false,
+                            ProductId = 2
                         },
                         new
                         {
                             Id = 17,
-                            AltText = "Product 6 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9913),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 6
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 1",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7930),
+                            DisplayOrder = 1,
+                            ImageUrl = "products/briefs-8pack/image-1.jpg",
+                            IsPrimary = true,
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 18,
-                            AltText = "Product 6 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9916),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 2",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7973),
+                            DisplayOrder = 2,
+                            ImageUrl = "products/briefs-8pack/image-2.jpg",
                             IsPrimary = false,
-                            ProductId = 6
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 19,
-                            AltText = "Product 7 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9919),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 7
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 3",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7977),
+                            DisplayOrder = 3,
+                            ImageUrl = "products/briefs-8pack/image-3.jpg",
+                            IsPrimary = false,
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 20,
-                            AltText = "Product 7 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9921),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 4",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7981),
+                            DisplayOrder = 4,
+                            ImageUrl = "products/briefs-8pack/image-4.jpg",
                             IsPrimary = false,
-                            ProductId = 7
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 21,
-                            AltText = "Product 7 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9923),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 5",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7985),
+                            DisplayOrder = 5,
+                            ImageUrl = "products/briefs-8pack/image-5.jpg",
                             IsPrimary = false,
-                            ProductId = 7
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 22,
-                            AltText = "Product 8 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9926),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 8
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 6",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7989),
+                            DisplayOrder = 6,
+                            ImageUrl = "products/briefs-8pack/image-6.jpg",
+                            IsPrimary = false,
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 23,
-                            AltText = "Product 8 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9928),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 7",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7992),
+                            DisplayOrder = 7,
+                            ImageUrl = "products/briefs-8pack/image-7.jpg",
                             IsPrimary = false,
-                            ProductId = 8
+                            ProductId = 3
                         },
                         new
                         {
                             Id = 24,
-                            AltText = "Product 8 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9931),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
+                            AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 8",
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 272, DateTimeKind.Utc).AddTicks(7996),
+                            DisplayOrder = 8,
+                            ImageUrl = "products/briefs-8pack/image-8.jpg",
                             IsPrimary = false,
-                            ProductId = 8
-                        },
-                        new
-                        {
-                            Id = 25,
-                            AltText = "Product 9 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9933),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 9
-                        },
-                        new
-                        {
-                            Id = 26,
-                            AltText = "Product 9 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9935),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 9
-                        },
-                        new
-                        {
-                            Id = 27,
-                            AltText = "Product 9 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9938),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 9
-                        },
-                        new
-                        {
-                            Id = 28,
-                            AltText = "Product 10 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9944),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 10
-                        },
-                        new
-                        {
-                            Id = 29,
-                            AltText = "Product 10 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9946),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 10
-                        },
-                        new
-                        {
-                            Id = 30,
-                            AltText = "Product 10 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9949),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 10
-                        },
-                        new
-                        {
-                            Id = 31,
-                            AltText = "Product 11 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9951),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 11
-                        },
-                        new
-                        {
-                            Id = 32,
-                            AltText = "Product 11 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9954),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 11
-                        },
-                        new
-                        {
-                            Id = 33,
-                            AltText = "Product 11 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9956),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 11
-                        },
-                        new
-                        {
-                            Id = 34,
-                            AltText = "Product 12 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9960),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 12
-                        },
-                        new
-                        {
-                            Id = 35,
-                            AltText = "Product 12 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9962),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 12
-                        },
-                        new
-                        {
-                            Id = 36,
-                            AltText = "Product 12 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9964),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 12
-                        },
-                        new
-                        {
-                            Id = 37,
-                            AltText = "Product 13 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9967),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 13
-                        },
-                        new
-                        {
-                            Id = 38,
-                            AltText = "Product 13 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9969),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 13
-                        },
-                        new
-                        {
-                            Id = 39,
-                            AltText = "Product 13 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9971),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 13
-                        },
-                        new
-                        {
-                            Id = 40,
-                            AltText = "Product 14 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9974),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 14
-                        },
-                        new
-                        {
-                            Id = 41,
-                            AltText = "Product 14 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9976),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 14
-                        },
-                        new
-                        {
-                            Id = 42,
-                            AltText = "Product 14 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9979),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 14
-                        },
-                        new
-                        {
-                            Id = 43,
-                            AltText = "Product 15 Image 1",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9981),
-                            DisplayOrder = 1,
-                            ImageUrl = "1.jpg",
-                            IsPrimary = true,
-                            ProductId = 15
-                        },
-                        new
-                        {
-                            Id = 44,
-                            AltText = "Product 15 Image 2",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9983),
-                            DisplayOrder = 2,
-                            ImageUrl = "2.jpg",
-                            IsPrimary = false,
-                            ProductId = 15
-                        },
-                        new
-                        {
-                            Id = 45,
-                            AltText = "Product 15 Image 3",
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 976, DateTimeKind.Utc).AddTicks(9986),
-                            DisplayOrder = 3,
-                            ImageUrl = "3.jpg",
-                            IsPrimary = false,
-                            ProductId = 15
+                            ProductId = 3
                         });
                 });
 
@@ -2587,1770 +2315,197 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6181),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(260),
                             IsActive = true,
-                            Price = 189.99m,
+                            Price = 49.75m,
                             ProductId = 1,
-                            SKU = "SUK-001-2-3",
+                            SKU = "BRIEFS-5PK-S2",
                             SizeId = 2,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_2_3"
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 2,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6567),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4752),
                             IsActive = true,
-                            Price = 189.99m,
+                            Price = 49.75m,
                             ProductId = 1,
-                            SKU = "SUK-001-2-4",
-                            SizeId = 2,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_2_4"
+                            SKU = "BRIEFS-5PK-S3",
+                            SizeId = 3,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 3,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6571),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4756),
                             IsActive = true,
-                            Price = 189.99m,
+                            Price = 49.75m,
                             ProductId = 1,
-                            SKU = "SUK-001-2-1",
-                            SizeId = 2,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_2_1"
+                            SKU = "BRIEFS-5PK-S4",
+                            SizeId = 4,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 4,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6575),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4762),
                             IsActive = true,
-                            Price = 189.99m,
+                            Price = 49.75m,
                             ProductId = 1,
-                            SKU = "SUK-001-3-3",
-                            SizeId = 3,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_3_3"
+                            SKU = "BRIEFS-5PK-S5",
+                            SizeId = 5,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 5,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6578),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4765),
                             IsActive = true,
-                            Price = 189.99m,
+                            Price = 49.75m,
                             ProductId = 1,
-                            SKU = "SUK-001-3-4",
-                            SizeId = 3,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_3_4"
+                            SKU = "BRIEFS-5PK-S6",
+                            SizeId = 6,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 6,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6593),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4788),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_3_1"
+                            Price = 59.70m,
+                            ProductId = 2,
+                            SKU = "BRIEFS-6PK-S2",
+                            SizeId = 2,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 7,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6596),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4792),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-4-3",
-                            SizeId = 4,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_4_3"
+                            Price = 59.70m,
+                            ProductId = 2,
+                            SKU = "BRIEFS-6PK-S3",
+                            SizeId = 3,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 8,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6598),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4795),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-4-4",
+                            Price = 59.70m,
+                            ProductId = 2,
+                            SKU = "BRIEFS-6PK-S4",
                             SizeId = 4,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_4_4"
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 9,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6601),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4798),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_4_1"
+                            Price = 59.70m,
+                            ProductId = 2,
+                            SKU = "BRIEFS-6PK-S5",
+                            SizeId = 5,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 10,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6605),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4803),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-5-3",
-                            SizeId = 5,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_5_3"
+                            Price = 59.70m,
+                            ProductId = 2,
+                            SKU = "BRIEFS-6PK-S6",
+                            SizeId = 6,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 11,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6608),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4807),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-5-4",
-                            SizeId = 5,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_5_4"
+                            Price = 79.60m,
+                            ProductId = 3,
+                            SKU = "BRIEFS-8PK-S2",
+                            SizeId = 2,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 12,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6611),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4811),
                             IsActive = true,
-                            Price = 189.99m,
-                            ProductId = 1,
-                            SKU = "SUK-001-5-1",
-                            SizeId = 5,
-                            StockQuantity = 25,
-                            StripePriceId = "price_suk_001_5_1"
+                            Price = 79.60m,
+                            ProductId = 3,
+                            SKU = "BRIEFS-8PK-S3",
+                            SizeId = 3,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 13,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6642),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4818),
                             IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-1-1",
-                            SizeId = 1,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_1_1"
+                            Price = 79.60m,
+                            ProductId = 3,
+                            SKU = "BRIEFS-8PK-S4",
+                            SizeId = 4,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 14,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6646),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4821),
                             IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-1-2",
-                            SizeId = 1,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_1_2"
+                            Price = 79.60m,
+                            ProductId = 3,
+                            SKU = "BRIEFS-8PK-S5",
+                            SizeId = 5,
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         },
                         new
                         {
                             Id = 15,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6649),
+                            ColorId = 8,
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 276, DateTimeKind.Utc).AddTicks(4823),
                             IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-1-7",
-                            SizeId = 1,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_1_7"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6652),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-2-1",
-                            SizeId = 2,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_2_1"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6655),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-2-2",
-                            SizeId = 2,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_2_2"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6659),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-2-7",
-                            SizeId = 2,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_2_7"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6662),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_3_1"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6665),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-3-2",
-                            SizeId = 3,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_3_2"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6668),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-3-7",
-                            SizeId = 3,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_3_7"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6671),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_4_1"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6673),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-4-2",
-                            SizeId = 4,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_4_2"
-                        },
-                        new
-                        {
-                            Id = 24,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6676),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 2,
-                            SKU = "SPO-001-4-7",
-                            SizeId = 4,
-                            StockQuantity = 30,
-                            StripePriceId = "price_spo_001_4_7"
-                        },
-                        new
-                        {
-                            Id = 25,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6716),
-                            IsActive = true,
-                            Price = 99.99m,
+                            Price = 79.60m,
                             ProductId = 3,
-                            SKU = "BLU-001-2-2",
-                            SizeId = 2,
-                            StockQuantity = 40,
-                            StripePriceId = "price_blu_001_2_2"
-                        },
-                        new
-                        {
-                            Id = 26,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6719),
-                            IsActive = true,
-                            Price = 99.99m,
-                            ProductId = 3,
-                            SKU = "BLU-001-3-2",
-                            SizeId = 3,
-                            StockQuantity = 40,
-                            StripePriceId = "price_blu_001_3_2"
-                        },
-                        new
-                        {
-                            Id = 27,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6722),
-                            IsActive = true,
-                            Price = 99.99m,
-                            ProductId = 3,
-                            SKU = "BLU-001-4-2",
-                            SizeId = 4,
-                            StockQuantity = 40,
-                            StripePriceId = "price_blu_001_4_2"
-                        },
-                        new
-                        {
-                            Id = 28,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6725),
-                            IsActive = true,
-                            Price = 99.99m,
-                            ProductId = 3,
-                            SKU = "BLU-001-5-2",
-                            SizeId = 5,
-                            StockQuantity = 40,
-                            StripePriceId = "price_blu_001_5_2"
-                        },
-                        new
-                        {
-                            Id = 29,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6735),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-2-1",
-                            SizeId = 2,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_2_1"
-                        },
-                        new
-                        {
-                            Id = 30,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6768),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-2-8",
-                            SizeId = 2,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_2_8"
-                        },
-                        new
-                        {
-                            Id = 31,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6771),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_3_1"
-                        },
-                        new
-                        {
-                            Id = 32,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6775),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-3-8",
-                            SizeId = 3,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_3_8"
-                        },
-                        new
-                        {
-                            Id = 33,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6777),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_4_1"
-                        },
-                        new
-                        {
-                            Id = 34,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6781),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-4-8",
-                            SizeId = 4,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_4_8"
-                        },
-                        new
-                        {
-                            Id = 35,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6784),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-5-1",
-                            SizeId = 5,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_5_1"
-                        },
-                        new
-                        {
-                            Id = 36,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6787),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-5-8",
-                            SizeId = 5,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_5_8"
-                        },
-                        new
-                        {
-                            Id = 37,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6790),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-6-1",
+                            SKU = "BRIEFS-8PK-S6",
                             SizeId = 6,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_6_1"
-                        },
-                        new
-                        {
-                            Id = 38,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6793),
-                            IsActive = true,
-                            Price = 129.99m,
-                            ProductId = 4,
-                            SKU = "SPD-001-6-8",
-                            SizeId = 6,
-                            StockQuantity = 35,
-                            StripePriceId = "price_spd_001_6_8"
-                        },
-                        new
-                        {
-                            Id = 39,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6809),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-1-3",
-                            SizeId = 1,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_1_3"
-                        },
-                        new
-                        {
-                            Id = 40,
-                            ColorId = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6813),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-1-6",
-                            SizeId = 1,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_1_6"
-                        },
-                        new
-                        {
-                            Id = 41,
-                            ColorId = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6816),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-1-5",
-                            SizeId = 1,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_1_5"
-                        },
-                        new
-                        {
-                            Id = 42,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6819),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-2-3",
-                            SizeId = 2,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_2_3"
-                        },
-                        new
-                        {
-                            Id = 43,
-                            ColorId = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6822),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-2-6",
-                            SizeId = 2,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_2_6"
-                        },
-                        new
-                        {
-                            Id = 44,
-                            ColorId = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6825),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-2-5",
-                            SizeId = 2,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_2_5"
-                        },
-                        new
-                        {
-                            Id = 45,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6828),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-3-3",
-                            SizeId = 3,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_3_3"
-                        },
-                        new
-                        {
-                            Id = 46,
-                            ColorId = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6831),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-3-6",
-                            SizeId = 3,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_3_6"
-                        },
-                        new
-                        {
-                            Id = 47,
-                            ColorId = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6833),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-3-5",
-                            SizeId = 3,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_3_5"
-                        },
-                        new
-                        {
-                            Id = 48,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6837),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-4-3",
-                            SizeId = 4,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_4_3"
-                        },
-                        new
-                        {
-                            Id = 49,
-                            ColorId = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6839),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-4-6",
-                            SizeId = 4,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_4_6"
-                        },
-                        new
-                        {
-                            Id = 50,
-                            ColorId = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6842),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-4-5",
-                            SizeId = 4,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_4_5"
-                        },
-                        new
-                        {
-                            Id = 51,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6845),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-5-3",
-                            SizeId = 5,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_5_3"
-                        },
-                        new
-                        {
-                            Id = 52,
-                            ColorId = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6848),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-5-6",
-                            SizeId = 5,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_5_6"
-                        },
-                        new
-                        {
-                            Id = 53,
-                            ColorId = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6851),
-                            IsActive = true,
-                            Price = 89.99m,
-                            ProductId = 5,
-                            SKU = "BLK-001-5-5",
-                            SizeId = 5,
-                            StockQuantity = 45,
-                            StripePriceId = "price_blk_001_5_5"
-                        },
-                        new
-                        {
-                            Id = 54,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6860),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-3-4",
-                            SizeId = 3,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_3_4"
-                        },
-                        new
-                        {
-                            Id = 55,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6863),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-3-7",
-                            SizeId = 3,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_3_7"
-                        },
-                        new
-                        {
-                            Id = 56,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6866),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-4-4",
-                            SizeId = 4,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_4_4"
-                        },
-                        new
-                        {
-                            Id = 57,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6869),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-4-7",
-                            SizeId = 4,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_4_7"
-                        },
-                        new
-                        {
-                            Id = 58,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6872),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-5-4",
-                            SizeId = 5,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_5_4"
-                        },
-                        new
-                        {
-                            Id = 59,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6875),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-5-7",
-                            SizeId = 5,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_5_7"
-                        },
-                        new
-                        {
-                            Id = 60,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6878),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-6-4",
-                            SizeId = 6,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_6_4"
-                        },
-                        new
-                        {
-                            Id = 61,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6881),
-                            IsActive = true,
-                            Price = 159.99m,
-                            ProductId = 6,
-                            SKU = "KOS-001-6-7",
-                            SizeId = 6,
-                            StockQuantity = 30,
-                            StripePriceId = "price_kos_001_6_7"
-                        },
-                        new
-                        {
-                            Id = 62,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6912),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-2-1",
-                            SizeId = 2,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_2_1"
-                        },
-                        new
-                        {
-                            Id = 63,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6916),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-2-8",
-                            SizeId = 2,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_2_8"
-                        },
-                        new
-                        {
-                            Id = 64,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6919),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-2-7",
-                            SizeId = 2,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_2_7"
-                        },
-                        new
-                        {
-                            Id = 65,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6922),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_3_1"
-                        },
-                        new
-                        {
-                            Id = 66,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6926),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-3-8",
-                            SizeId = 3,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_3_8"
-                        },
-                        new
-                        {
-                            Id = 67,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6929),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-3-7",
-                            SizeId = 3,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_3_7"
-                        },
-                        new
-                        {
-                            Id = 68,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6932),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_4_1"
-                        },
-                        new
-                        {
-                            Id = 69,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6935),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-4-8",
-                            SizeId = 4,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_4_8"
-                        },
-                        new
-                        {
-                            Id = 70,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6938),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-4-7",
-                            SizeId = 4,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_4_7"
-                        },
-                        new
-                        {
-                            Id = 71,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6940),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-5-1",
-                            SizeId = 5,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_5_1"
-                        },
-                        new
-                        {
-                            Id = 72,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6943),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-5-8",
-                            SizeId = 5,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_5_8"
-                        },
-                        new
-                        {
-                            Id = 73,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6946),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-5-7",
-                            SizeId = 5,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_5_7"
-                        },
-                        new
-                        {
-                            Id = 74,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6949),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-6-1",
-                            SizeId = 6,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_6_1"
-                        },
-                        new
-                        {
-                            Id = 75,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6951),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-6-8",
-                            SizeId = 6,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_6_8"
-                        },
-                        new
-                        {
-                            Id = 76,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6954),
-                            IsActive = true,
-                            Price = 179.99m,
-                            ProductId = 7,
-                            SKU = "CHI-001-6-7",
-                            SizeId = 6,
-                            StockQuantity = 28,
-                            StripePriceId = "price_chi_001_6_7"
-                        },
-                        new
-                        {
-                            Id = 77,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6960),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 8,
-                            SKU = "TSH-W-2",
-                            SizeId = 2,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_w_2"
-                        },
-                        new
-                        {
-                            Id = 78,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6963),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 8,
-                            SKU = "TSH-W-3",
-                            SizeId = 3,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_w_3"
-                        },
-                        new
-                        {
-                            Id = 79,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6966),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 8,
-                            SKU = "TSH-W-4",
-                            SizeId = 4,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_w_4"
-                        },
-                        new
-                        {
-                            Id = 80,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6969),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 8,
-                            SKU = "TSH-W-5",
-                            SizeId = 5,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_w_5"
-                        },
-                        new
-                        {
-                            Id = 81,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6971),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 8,
-                            SKU = "TSH-W-6",
-                            SizeId = 6,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_w_6"
-                        },
-                        new
-                        {
-                            Id = 82,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6976),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 9,
-                            SKU = "TSH-B-2",
-                            SizeId = 2,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_b_2"
-                        },
-                        new
-                        {
-                            Id = 83,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6979),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 9,
-                            SKU = "TSH-B-3",
-                            SizeId = 3,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_b_3"
-                        },
-                        new
-                        {
-                            Id = 84,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6982),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 9,
-                            SKU = "TSH-B-4",
-                            SizeId = 4,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_b_4"
-                        },
-                        new
-                        {
-                            Id = 85,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6985),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 9,
-                            SKU = "TSH-B-5",
-                            SizeId = 5,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_b_5"
-                        },
-                        new
-                        {
-                            Id = 86,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6987),
-                            IsActive = true,
-                            Price = 59.99m,
-                            ProductId = 9,
-                            SKU = "TSH-B-6",
-                            SizeId = 6,
-                            StockQuantity = 50,
-                            StripePriceId = "price_tsh_b_6"
-                        },
-                        new
-                        {
-                            Id = 87,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6994),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_3_1"
-                        },
-                        new
-                        {
-                            Id = 88,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(6998),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-3-8",
-                            SizeId = 3,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_3_8"
-                        },
-                        new
-                        {
-                            Id = 89,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7001),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-3-7",
-                            SizeId = 3,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_3_7"
-                        },
-                        new
-                        {
-                            Id = 90,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7004),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_4_1"
-                        },
-                        new
-                        {
-                            Id = 91,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7008),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-4-8",
-                            SizeId = 4,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_4_8"
-                        },
-                        new
-                        {
-                            Id = 92,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7017),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-4-7",
-                            SizeId = 4,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_4_7"
-                        },
-                        new
-                        {
-                            Id = 93,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7020),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-5-1",
-                            SizeId = 5,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_5_1"
-                        },
-                        new
-                        {
-                            Id = 94,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7023),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-5-8",
-                            SizeId = 5,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_5_8"
-                        },
-                        new
-                        {
-                            Id = 95,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7026),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-5-7",
-                            SizeId = 5,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_5_7"
-                        },
-                        new
-                        {
-                            Id = 96,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7029),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-6-1",
-                            SizeId = 6,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_6_1"
-                        },
-                        new
-                        {
-                            Id = 97,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7032),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-6-8",
-                            SizeId = 6,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_6_8"
-                        },
-                        new
-                        {
-                            Id = 98,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7034),
-                            IsActive = true,
-                            Price = 139.99m,
-                            ProductId = 10,
-                            SKU = "BLZ-001-6-7",
-                            SizeId = 6,
-                            StockQuantity = 32,
-                            StripePriceId = "price_blz_001_6_7"
-                        },
-                        new
-                        {
-                            Id = 99,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7040),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 11,
-                            SKU = "KSH-W-3",
-                            SizeId = 3,
-                            StockQuantity = 35,
-                            StripePriceId = "price_ksh_w_3"
-                        },
-                        new
-                        {
-                            Id = 100,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7043),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 11,
-                            SKU = "KSH-W-4",
-                            SizeId = 4,
-                            StockQuantity = 35,
-                            StripePriceId = "price_ksh_w_4"
-                        },
-                        new
-                        {
-                            Id = 101,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7046),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 11,
-                            SKU = "KSH-W-5",
-                            SizeId = 5,
-                            StockQuantity = 35,
-                            StripePriceId = "price_ksh_w_5"
-                        },
-                        new
-                        {
-                            Id = 102,
-                            ColorId = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7048),
-                            IsActive = true,
-                            Price = 149.99m,
-                            ProductId = 11,
-                            SKU = "KSH-W-6",
-                            SizeId = 6,
-                            StockQuantity = 35,
-                            StripePriceId = "price_ksh_w_6"
-                        },
-                        new
-                        {
-                            Id = 103,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7054),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-2-4",
-                            SizeId = 2,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_2_4"
-                        },
-                        new
-                        {
-                            Id = 104,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7058),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-2-7",
-                            SizeId = 2,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_2_7"
-                        },
-                        new
-                        {
-                            Id = 105,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7061),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-3-4",
-                            SizeId = 3,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_3_4"
-                        },
-                        new
-                        {
-                            Id = 106,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7064),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-3-7",
-                            SizeId = 3,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_3_7"
-                        },
-                        new
-                        {
-                            Id = 107,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7067),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-4-4",
-                            SizeId = 4,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_4_4"
-                        },
-                        new
-                        {
-                            Id = 108,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7070),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-4-7",
-                            SizeId = 4,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_4_7"
-                        },
-                        new
-                        {
-                            Id = 109,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7073),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-5-4",
-                            SizeId = 5,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_5_4"
-                        },
-                        new
-                        {
-                            Id = 110,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7076),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-5-7",
-                            SizeId = 5,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_5_7"
-                        },
-                        new
-                        {
-                            Id = 111,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7079),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-6-4",
-                            SizeId = 6,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_6_4"
-                        },
-                        new
-                        {
-                            Id = 112,
-                            ColorId = 7,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7081),
-                            IsActive = true,
-                            Price = 199.99m,
-                            ProductId = 12,
-                            SKU = "JEA-001-6-7",
-                            SizeId = 6,
-                            StockQuantity = 28,
-                            StripePriceId = "price_jea_001_6_7"
-                        },
-                        new
-                        {
-                            Id = 113,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7089),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-2-3",
-                            SizeId = 2,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_2_3"
-                        },
-                        new
-                        {
-                            Id = 114,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7092),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-2-4",
-                            SizeId = 2,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_2_4"
-                        },
-                        new
-                        {
-                            Id = 115,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7095),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-2-1",
-                            SizeId = 2,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_2_1"
-                        },
-                        new
-                        {
-                            Id = 116,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7099),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-3-3",
-                            SizeId = 3,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_3_3"
-                        },
-                        new
-                        {
-                            Id = 117,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7102),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-3-4",
-                            SizeId = 3,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_3_4"
-                        },
-                        new
-                        {
-                            Id = 118,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7104),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_3_1"
-                        },
-                        new
-                        {
-                            Id = 119,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7107),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-4-3",
-                            SizeId = 4,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_4_3"
-                        },
-                        new
-                        {
-                            Id = 120,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7111),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-4-4",
-                            SizeId = 4,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_4_4"
-                        },
-                        new
-                        {
-                            Id = 121,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7114),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_4_1"
-                        },
-                        new
-                        {
-                            Id = 122,
-                            ColorId = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7116),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-5-3",
-                            SizeId = 5,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_5_3"
-                        },
-                        new
-                        {
-                            Id = 123,
-                            ColorId = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7119),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-5-4",
-                            SizeId = 5,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_5_4"
-                        },
-                        new
-                        {
-                            Id = 124,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7122),
-                            IsActive = true,
-                            Price = 299.99m,
-                            ProductId = 13,
-                            SKU = "KUR-001-5-1",
-                            SizeId = 5,
-                            StockQuantity = 20,
-                            StripePriceId = "price_kur_001_5_1"
-                        },
-                        new
-                        {
-                            Id = 125,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7129),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-3-1",
-                            SizeId = 3,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_3_1"
-                        },
-                        new
-                        {
-                            Id = 126,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7132),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-3-8",
-                            SizeId = 3,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_3_8"
-                        },
-                        new
-                        {
-                            Id = 127,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7136),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-4-1",
-                            SizeId = 4,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_4_1"
-                        },
-                        new
-                        {
-                            Id = 128,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7147),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-4-8",
-                            SizeId = 4,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_4_8"
-                        },
-                        new
-                        {
-                            Id = 129,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7150),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-5-1",
-                            SizeId = 5,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_5_1"
-                        },
-                        new
-                        {
-                            Id = 130,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7154),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-5-8",
-                            SizeId = 5,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_5_8"
-                        },
-                        new
-                        {
-                            Id = 131,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7157),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-6-1",
-                            SizeId = 6,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_6_1"
-                        },
-                        new
-                        {
-                            Id = 132,
-                            ColorId = 8,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7160),
-                            IsActive = true,
-                            Price = 449.99m,
-                            ProductId = 14,
-                            SKU = "PLA-001-6-8",
-                            SizeId = 6,
-                            StockQuantity = 15,
-                            StripePriceId = "price_pla_001_6_8"
-                        },
-                        new
-                        {
-                            Id = 133,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7165),
-                            IsActive = true,
-                            Price = 599.99m,
-                            ProductId = 15,
-                            SKU = "SKO-001-3",
-                            SizeId = 3,
-                            StockQuantity = 10,
-                            StripePriceId = "price_sko_001_3"
-                        },
-                        new
-                        {
-                            Id = 134,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7169),
-                            IsActive = true,
-                            Price = 599.99m,
-                            ProductId = 15,
-                            SKU = "SKO-001-4",
-                            SizeId = 4,
-                            StockQuantity = 10,
-                            StripePriceId = "price_sko_001_4"
-                        },
-                        new
-                        {
-                            Id = 135,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7171),
-                            IsActive = true,
-                            Price = 599.99m,
-                            ProductId = 15,
-                            SKU = "SKO-001-5",
-                            SizeId = 5,
-                            StockQuantity = 10,
-                            StripePriceId = "price_sko_001_5"
-                        },
-                        new
-                        {
-                            Id = 136,
-                            ColorId = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 980, DateTimeKind.Utc).AddTicks(7174),
-                            IsActive = true,
-                            Price = 599.99m,
-                            ProductId = 15,
-                            SKU = "SKO-001-6",
-                            SizeId = 6,
-                            StockQuantity = 10,
-                            StripePriceId = "price_sko_001_6"
+                            StockQuantity = 100,
+                            StripePriceId = ""
                         });
                 });
 
@@ -4512,7 +2667,7 @@ namespace Kokomija.Migrations
                             DataType = "string",
                             Description = "Super admin email for site control and emergency commands",
                             Key = "SuperAdminEmail",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(952),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4600),
                             Value = "admin@kokomija.com"
                         },
                         new
@@ -4522,7 +2677,7 @@ namespace Kokomija.Migrations
                             DataType = "decimal",
                             Description = "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)",
                             Key = "PlatformCommissionRate",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1531),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4972),
                             Value = "0.01"
                         },
                         new
@@ -4532,7 +2687,7 @@ namespace Kokomija.Migrations
                             DataType = "decimal",
                             Description = "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)",
                             Key = "StripeProcessingFeeRate",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1533),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4974),
                             Value = "0.014"
                         },
                         new
@@ -4542,7 +2697,7 @@ namespace Kokomija.Migrations
                             DataType = "decimal",
                             Description = "Stripe fixed fee per transaction in PLN",
                             Key = "StripeFixedFee",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1538),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4976),
                             Value = "1.00"
                         },
                         new
@@ -4552,7 +2707,7 @@ namespace Kokomija.Migrations
                             DataType = "boolean",
                             Description = "Is site currently closed for maintenance",
                             Key = "SiteClosureEnabled",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1540),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4978),
                             Value = "false"
                         },
                         new
@@ -4562,7 +2717,7 @@ namespace Kokomija.Migrations
                             DataType = "string",
                             Description = "Message displayed when site is closed",
                             Key = "SiteClosureMessage",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1542),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4980),
                             Value = "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji."
                         },
                         new
@@ -4572,7 +2727,7 @@ namespace Kokomija.Migrations
                             DataType = "integer",
                             Description = "Automatically reopen site after X days of closure",
                             Key = "AutoReopenAfterDays",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1544),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4982),
                             Value = "30"
                         },
                         new
@@ -4582,7 +2737,7 @@ namespace Kokomija.Migrations
                             DataType = "boolean",
                             Description = "Send daily confirmation emails during site closure",
                             Key = "DailyConfirmationEmailEnabled",
-                            UpdatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 974, DateTimeKind.Utc).AddTicks(1546),
+                            UpdatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 268, DateTimeKind.Utc).AddTicks(4985),
                             Value = "true"
                         });
                 });
@@ -4631,7 +2786,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 968, DateTimeKind.Utc).AddTicks(8859),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4055),
                             DisplayName = "Extra Small",
                             DisplayOrder = 1,
                             IsActive = true,
@@ -4640,7 +2795,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 968, DateTimeKind.Utc).AddTicks(9348),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4417),
                             DisplayName = "Small",
                             DisplayOrder = 2,
                             IsActive = true,
@@ -4649,7 +2804,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 968, DateTimeKind.Utc).AddTicks(9350),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4420),
                             DisplayName = "Medium",
                             DisplayOrder = 3,
                             IsActive = true,
@@ -4658,7 +2813,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 968, DateTimeKind.Utc).AddTicks(9353),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4422),
                             DisplayName = "Large",
                             DisplayOrder = 4,
                             IsActive = true,
@@ -4667,7 +2822,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 968, DateTimeKind.Utc).AddTicks(9355),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4424),
                             DisplayName = "Extra Large",
                             DisplayOrder = 5,
                             IsActive = true,
@@ -4676,7 +2831,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 968, DateTimeKind.Utc).AddTicks(9357),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 261, DateTimeKind.Utc).AddTicks(4427),
                             DisplayName = "2X Large",
                             DisplayOrder = 6,
                             IsActive = true,
@@ -4749,7 +2904,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 972, DateTimeKind.Utc).AddTicks(6046),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(4947),
                             CultureCode = "pl-PL",
                             DisplayName = "Polski",
                             DisplayOrder = 1,
@@ -4762,7 +2917,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 972, DateTimeKind.Utc).AddTicks(6361),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(5277),
                             CultureCode = "en-US",
                             DisplayName = "English",
                             DisplayOrder = 2,
@@ -4775,7 +2930,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 972, DateTimeKind.Utc).AddTicks(6363),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(5279),
                             CultureCode = "de-DE",
                             DisplayName = "Deutsch",
                             DisplayOrder = 3,
@@ -4788,7 +2943,7 @@ namespace Kokomija.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 10, 22, 15, 41, 50, 972, DateTimeKind.Utc).AddTicks(6366),
+                            CreatedAt = new DateTime(2025, 11, 13, 17, 24, 50, 266, DateTimeKind.Utc).AddTicks(5282),
                             CultureCode = "fr-FR",
                             DisplayName = "Français",
                             DisplayOrder = 4,
@@ -5019,6 +3174,37 @@ namespace Kokomija.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Kokomija.Entity.Cart", b =>
+                {
+                    b.HasOne("Kokomija.Entity.Color", "Color")
+                        .WithMany()
+                        .HasForeignKey("ColorId");
+
+                    b.HasOne("Kokomija.Entity.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Kokomija.Entity.Size", "Size")
+                        .WithMany()
+                        .HasForeignKey("SizeId");
+
+                    b.HasOne("Kokomija.Entity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Color");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Size");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Kokomija.Entity.Category", b =>
