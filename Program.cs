@@ -130,6 +130,22 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
+    
+    // Handle authentication timeout gracefully
+    options.Events.OnRedirectToLogin = context =>
+    {
+        // Preserve the original URL as return URL
+        var returnUrl = context.Request.Path + context.Request.QueryString;
+        context.Response.Redirect($"/Account/Login?ReturnUrl={Uri.EscapeDataString(returnUrl)}");
+        return Task.CompletedTask;
+    };
+    
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        var returnUrl = context.Request.Path + context.Request.QueryString;
+        context.Response.Redirect($"/Account/AccessDenied?ReturnUrl={Uri.EscapeDataString(returnUrl)}");
+        return Task.CompletedTask;
+    };
 });
 
 // Configure Localization
@@ -165,6 +181,12 @@ builder.Services.AddScoped<ICookieConsentService, CookieConsentService>();
 
 // Register Email Service (SMTP)
 builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Register Wishlist Notification Service
+builder.Services.AddScoped<IWishlistNotificationService, WishlistNotificationService>();
+
+// Add background services
+builder.Services.AddHostedService<Kokomija.BackgroundServices.WishlistNotificationWorker>();
 
 // Register Cloudflare Turnstile Service
 builder.Services.AddHttpClient(); // Required for TurnstileService

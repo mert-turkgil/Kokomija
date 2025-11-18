@@ -17,6 +17,11 @@ class CartManager {
         this.updateCartCount();
         this.updateCartPreview();
         
+        // Check if user just logged in and merge guest cart
+        if (this.isAuthenticated) {
+            this.mergeGuestCartOnLogin();
+        }
+        
         // Listen for storage events (cart updates in other tabs)
         window.addEventListener('storage', (e) => {
             if (e.key === 'guestCart') {
@@ -30,7 +35,7 @@ class CartManager {
     async getCartItems() {
         if (this.isAuthenticated) {
             try {
-                const response = await fetch('/api/cart/items');
+                const response = await fetch('/Cart/api/items');
                 if (response.ok) {
                     return await response.json();
                 }
@@ -100,7 +105,7 @@ class CartManager {
                     productId: item.productId,
                     name: item.productName,  // API returns productName
                     price: item.price,
-                    image: item.imageUrl?.replace('/img/', '') || 'logo_black.png',
+                    image: item.imageUrl || 'logo_black.png',
                     colorId: item.colorId,
                     colorName: item.colorName,
                     sizeId: item.sizeId,
@@ -133,7 +138,7 @@ class CartManager {
         
         return `
             <div class="cart-preview-item" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
-                <img src="/img/${productImage}" alt="${productName}" onerror="this.src='/img/logo_black.png'">
+                <img src="/img/ProductImage/${productImage}" alt="${productName}" onerror="this.src='/img/logo_black.png'">
                 <div class="cart-item-details">
                     <h6>${productName}</h6>
                     ${meta ? `<div class="cart-item-meta">${meta}</div>` : ''}
@@ -167,7 +172,7 @@ class CartManager {
     async removeFromCart(productId, colorId, sizeId) {
         if (this.isAuthenticated) {
             try {
-                const response = await fetch('/api/cart/remove', {
+                const response = await fetch('/Cart/api/remove', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ productId, colorId, sizeId })
@@ -227,7 +232,7 @@ class CartManager {
         if (guestCart.length === 0) return;
         
         try {
-            const response = await fetch('/api/cart/merge', {
+            const response = await fetch('/Cart/api/merge', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(guestCart)

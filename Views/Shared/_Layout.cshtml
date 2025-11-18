@@ -237,7 +237,11 @@
                         
                         <!-- Shopping Cart -->
                         <div class="dropdown dropdown-hover cart-dropdown">
-                            <a asp-controller="Cart" asp-action="Index" class="nav-icon position-relative" aria-label="@L["Cart_ShoppingCart"]">
+                            <a asp-controller="Cart" asp-action="Index" class="nav-icon position-relative" 
+                               data-bs-toggle="dropdown" 
+                               data-bs-auto-close="outside"
+                               aria-expanded="false"
+                               aria-label="@L["Cart_ShoppingCart"]">
                                 <i class="fas fa-shopping-cart"></i>
                                 <span class="badge bg-danger cart-badge" style="display: none;">0</span>
                             </a>

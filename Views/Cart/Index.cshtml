@@ -1,8 +1,10 @@
 @model Kokomija.Models.ViewModels.Cart.CartIndexViewModel
 @inject Kokomija.Services.ILocalizationService Localizer
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Shopping Cart";
+    var plnCulture = new CultureInfo("pl-PL");
 }
 
 <div class="cart-page container my-5">
@@ -26,31 +28,38 @@
                     <div class="card-body">
                         @foreach (var item in Model.Items)
                         {
-                            <div class="cart-item border-bottom py-3" data-item-id="@item.Id">
+                            <div class="cart-item border-bottom py-3" 
+                                 data-product-id="@item.ProductId" 
+                                 data-color-id="@(item.ColorId?.ToString() ?? "")" 
+                                 data-size-id="@(item.SizeId?.ToString() ?? "")">
                                 <div class="row align-items-center">
                                     <div class="col-md-2">
                                         @if (!string.IsNullOrEmpty(item.ProductImage))
                                         {
-                                            <img src="@Url.Content("~/images/" + item.ProductImage)" 
+                                            <img src="@Url.Content("~/img/ProductImage/" + item.ProductImage)" 
                                                  alt="@item.ProductName" 
                                                  class="img-fluid rounded product-image"
-                                                 onerror="this.onerror=null; this.src='@Url.Content("~/images/logo.png")'; this.classList.add('logo-fallback');">
+                                                 onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');">
                                         }
                                         else
                                         {
-                                            <img src="@Url.Content("~/images/logo.png")" 
+                                            <img src="@Url.Content("~/img/logo_black.png")" 
                                                  alt="Kokomija" 
                                                  class="img-fluid rounded logo-fallback">
                                         }
                                     </div>
                                     <div class="col-md-4">
                                         <h5 class="mb-1">@item.ProductName.Split("-")[0].Trim()</h5>
-                                        @{
-                                            var packMatch = System.Text.RegularExpressions.Regex.Match(item.ProductName, @"(\d+)\s*pak", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                            if (packMatch.Success)
-                                            {
-                                                <span class="badge bg-primary mb-2">@packMatch.Groups[1].Value-pak</span><br />
-                                            }
+                                        @if (item.PackSize > 1)
+                                        {
+                                            <span class="badge bg-primary mb-2">
+                                                <i class="bi bi-box-seam"></i> @item.PackSize @Localizer["Product_ItemsPerPack"]
+                                            </span>
+                                            <br />
+                                            <small class="text-muted">
+                                                <i class="bi bi-stack"></i> @Localizer["Product_TotalItems"]: <strong>@item.TotalItems</strong>
+                                            </small>
+                                            <br />
                                         }
                                         @if (!string.IsNullOrEmpty(item.ColorName))
                                         {
@@ -63,11 +72,11 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="input-group input-group-sm">
-                                            <button class="btn btn-outline-secondary quantity-decrease" type="button" data-item-id="@item.Id">
+                                            <button class="btn btn-outline-secondary quantity-decrease" type="button">
                                                 <i class="bi bi-dash"></i>
                                             </button>
                                             <input type="number" class="form-control text-center quantity-input" value="@item.Quantity" min="1" max="@item.MaxQuantity" readonly>
-                                            <button class="btn btn-outline-secondary quantity-increase" type="button" data-item-id="@item.Id" @(item.Quantity >= item.MaxQuantity ? "disabled" : "")>
+                                            <button class="btn btn-outline-secondary quantity-increase" type="button" @(item.Quantity >= item.MaxQuantity ? "disabled" : "")>
                                                 <i class="bi bi-plus"></i>
                                             </button>
                                         </div>
@@ -81,10 +90,10 @@
                                         }
                                     </div>
                                     <div class="col-md-2 text-end">
-                                        <strong>@item.TotalPrice.ToString("C")</strong>
+                                        <strong>@item.TotalPrice.ToString("C", plnCulture)</strong>
                                     </div>
                                     <div class="col-md-2 text-end">
-                                        <button class="btn btn-sm btn-outline-danger remove-item" data-item-id="@item.Id">
+                                        <button class="btn btn-sm btn-outline-danger remove-item">
                                             <i class="bi bi-trash"></i> Remove
                                         </button>
                                     </div>
@@ -103,12 +112,31 @@
                             <div class="alert alert-success d-flex justify-content-between align-items-center">
                                 <div>
                                     <i class="bi bi-check-circle"></i> Coupon <strong>@Model.AppliedCouponCode</strong> applied!
+                                    @if (Model.CouponDiscountPercentage.HasValue)
+                                    {
+                                        <span class="badge bg-success ms-2">@Model.CouponDiscountPercentage.Value% OFF</span>
+                                    }
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" id="removeCoupon">Remove</button>
                             </div>
                         }
                         else
                         {
+                            @if (Model.AvailableCoupons != null && Model.AvailableCoupons.Any())
+                            {
+                                <div class="available-coupons mb-3">
+                                    <p class="text-muted mb-2"><small><i class="bi bi-ticket-perforated"></i> Available coupons:</small></p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var coupon in Model.AvailableCoupons)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-primary apply-coupon-btn" data-coupon="@coupon">
+                                                <i class="bi bi-tag"></i> @coupon
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            
                             <form id="couponForm" class="row g-3">
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code" required>
@@ -132,26 +160,61 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
-                            <strong>@Model.Subtotal.ToString("C")</strong>
+                            <strong>@Model.Subtotal.ToString("C", plnCulture)</strong>
                         </div>
 
+                        @* Always show VIP tier status *@
+                        @if (Model.VipTier != "None")
+                        {
+                            <div class="vip-discount-row mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="vip-label">
+                                        <i class="bi bi-star-fill"></i> VIP Discount
+                                        <span class="badge bg-gradient-purple ms-2">@Model.VipTier</span>
+                                        <span class="vip-percentage">@Model.VipDiscountPercentage%</span>
+                                    </span>
+                                    <strong class="vip-amount">-@Model.VipDiscountAmount.ToString("C", plnCulture)</strong>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.CouponDiscountAmount > 0)
+                        {
+                            <div class="coupon-discount-row mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="coupon-label">
+                                        <i class="bi bi-ticket-perforated-fill"></i> Coupon Discount
+                                        @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
+                                        {
+                                            <span class="badge bg-success ms-2">@Model.AppliedCouponCode</span>
+                                        }
+                                        @if (Model.CouponDiscountPercentage.HasValue)
+                                        {
+                                            <span class="coupon-percentage">@Model.CouponDiscountPercentage%</span>
+                                        }
+                                    </span>
+                                    <strong class="coupon-amount">-@Model.CouponDiscountAmount.ToString("C", plnCulture)</strong>
+                                </div>
+                            </div>
+                        }
+                        
                         @if (Model.DiscountAmount > 0)
                         {
                             <div class="d-flex justify-content-between mb-2 text-success">
-                                <span>Discount:</span>
-                                <strong>-@Model.DiscountAmount.ToString("C")</strong>
+                                <span><strong>Total Savings:</strong></span>
+                                <strong>-@Model.DiscountAmount.ToString("C", plnCulture)</strong>
                             </div>
                         }
 
                         <div class="d-flex justify-content-between mb-2">
                             <span>Shipping:</span>
-                            <strong>@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C") : "FREE")</strong>
+                            <strong>@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C", plnCulture) : "FREE")</strong>
                         </div>
 
                         @if (!Model.HasFreeShipping && Model.RemainingForFreeShipping > 0)
                         {
                             <div class="free-shipping-progress mb-3">
-                                <small class="text-muted">Add @Model.RemainingForFreeShipping.ToString("C") more for free shipping</small>
+                                <small class="text-muted">Add @Model.RemainingForFreeShipping.ToString("C", plnCulture) more for free shipping</small>
                                 <div class="progress mt-1" style="height: 5px;">
                                     <div class="progress-bar bg-success" role="progressbar" style="width: @((int)(((Model.FreeShippingThreshold - Model.RemainingForFreeShipping) / Model.FreeShippingThreshold) * 100))%"></div>
                                 </div>
@@ -166,17 +229,19 @@
 
                         <div class="d-flex justify-content-between mb-2">
                             <span>Tax (23%):</span>
-                            <strong>@Model.TaxAmount.ToString("C")</strong>
+                            <strong>@Model.TaxAmount.ToString("C", plnCulture)</strong>
                         </div>
 
                         <hr>
 
                         <div class="d-flex justify-content-between mb-3">
                             <h5>Total:</h5>
-                            <h5>@Model.Total.ToString("C")</h5>
+                            <h5>@Model.Total.ToString("C", plnCulture)</h5>
                         </div>
 
-                        <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary w-100 mb-2">Proceed to Checkout</a>
+                        <button type="button" id="proceedToCheckout" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-lock-fill"></i> Proceed to Secure Checkout
+                        </button>
                         <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary w-100">Continue Shopping</a>
                     </div>
                 </div>
@@ -186,13 +251,76 @@
 </div>
 
 @section Scripts {
+    <script src="https://js.stripe.com/v3/"></script>
     <script>
         $(document).ready(function() {
+            // Initialize Stripe
+            const stripe = Stripe('@ViewBag.StripePublishableKey');
+
+            // Get cart item data from DOM
+            function getCartItemData($button) {
+                const $item = $button.closest('.cart-item');
+                return {
+                    productId: parseInt($item.data('product-id')),
+                    colorId: $item.data('color-id') ? parseInt($item.data('color-id')) : null,
+                    sizeId: $item.data('size-id') ? parseInt($item.data('size-id')) : null
+                };
+            }
+
+            // Proceed to checkout - create Stripe session directly
+            $('#proceedToCheckout').on('click', async function() {
+                const $button = $(this);
+                const originalHtml = $button.html();
+                
+                $button.prop('disabled', true);
+                $button.html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
+
+                try {
+                    const response = await fetch('/Checkout/CreateCheckoutSession', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Redirect to Stripe Checkout
+                        const result = await stripe.redirectToCheckout({
+                            sessionId: data.sessionId
+                        });
+
+                        if (result.error) {
+                            alert(result.error.message);
+                            $button.prop('disabled', false);
+                            $button.html(originalHtml);
+                        }
+                    } else {
+                        alert(data.message || 'Failed to create checkout session');
+                        $button.prop('disabled', false);
+                        $button.html(originalHtml);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing checkout');
+                    $button.prop('disabled', false);
+                    $button.html(originalHtml);
+                }
+            });
+
+            // Apply coupon from available coupons list
+            $('.apply-coupon-btn').on('click', function() {
+                const couponCode = $(this).data('coupon');
+                $('#couponCode').val(couponCode);
+                $('#couponForm').submit();
+            });
+
             // Update quantity
             $('.quantity-decrease, .quantity-increase').on('click', function() {
-                const itemId = $(this).data('item-id');
-                const isIncrease = $(this).hasClass('quantity-increase');
-                const $item = $(`.cart-item[data-item-id="${itemId}"]`);
+                const $button = $(this);
+                const isIncrease = $button.hasClass('quantity-increase');
+                const $item = $button.closest('.cart-item');
                 const $input = $item.find('.quantity-input');
                 let quantity = parseInt($input.val());
 
@@ -204,12 +332,15 @@
                     return; // Don't allow quantity below 1
                 }
 
+                const itemData = getCartItemData($button);
+                itemData.quantity = quantity;
+
                 // Update via AJAX
                 $.ajax({
-                    url: '/Cart/UpdateQuantity',
+                    url: '/Cart/api/update-quantity',
                     method: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ cartItemId: itemId, quantity: quantity }),
+                    data: JSON.stringify(itemData),
                     success: function(response) {
                         if (response.success) {
                             location.reload(); // Refresh to update totals
@@ -217,7 +348,8 @@
                             alert(response.message || 'Failed to update quantity');
                         }
                     },
-                    error: function() {
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
                         alert('An error occurred while updating quantity');
                     }
                 });
@@ -227,13 +359,14 @@
             $('.remove-item').on('click', function() {
                 if (!confirm('Remove this item from cart?')) return;
 
-                const itemId = $(this).data('item-id');
+                const $button = $(this);
+                const itemData = getCartItemData($button);
 
                 $.ajax({
-                    url: '/Cart/RemoveItem',
+                    url: '/Cart/api/remove',
                     method: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ cartItemId: itemId }),
+                    data: JSON.stringify(itemData),
                     success: function(response) {
                         if (response.success) {
                             location.reload();
@@ -241,7 +374,8 @@
                             alert(response.message || 'Failed to remove item');
                         }
                     },
-                    error: function() {
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
                         alert('An error occurred while removing item');
                     }
                 });
@@ -253,7 +387,7 @@
                 const couponCode = $('#couponCode').val().trim();
 
                 $.ajax({
-                    url: '/Cart/ApplyCoupon',
+                    url: '/Cart/api/apply-coupon',
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ couponCode: couponCode }),
@@ -264,7 +398,8 @@
                             $('#couponMessage').html(`<div class="alert alert-danger">${response.message}</div>`);
                         }
                     },
-                    error: function() {
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
                         $('#couponMessage').html('<div class="alert alert-danger">An error occurred</div>');
                     }
                 });
@@ -273,12 +408,15 @@
             // Remove coupon
             $('#removeCoupon').on('click', function() {
                 $.ajax({
-                    url: '/Cart/RemoveCoupon',
+                    url: '/Cart/api/remove-coupon',
                     method: 'POST',
                     success: function(response) {
                         if (response.success) {
                             location.reload();
                         }
+                    },
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
                     }
                 });
             });

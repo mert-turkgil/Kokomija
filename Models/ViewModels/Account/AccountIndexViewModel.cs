@@ -35,6 +35,9 @@ namespace Kokomija.Models.ViewModels.Account
         public decimal TotalAmount { get; set; }
         public string OrderStatus { get; set; } = string.Empty;
         public string PaymentStatus { get; set; } = string.Empty;
+        public string Currency { get; set; } = "pln";
+        public string? SessionStatus { get; set; }
+        public string? CustomerCountry { get; set; }
         public int ItemCount { get; set; }
         public bool CanCancel { get; set; }
         public bool CanReturn { get; set; }

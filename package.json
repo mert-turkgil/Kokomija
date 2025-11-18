@@ -13,7 +13,8 @@
     "jquery-validation": "^1.21.0",
     "jquery-validation-unobtrusive": "^4.0.0",
     "sass": "^1.85.1",
-    "swiper": "^11.2.5"
+    "swiper": "^11.2.5",
+    "viewerjs": "^1.11.7"
   },
   "scripts": {
     "install:all": "npm install",

@@ -1,5 +1,6 @@
 using Kokomija.Data.Abstract;
 using Kokomija.Entity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using Stripe.Checkout;
@@ -109,10 +110,24 @@ namespace Kokomija.Controllers
                 order.PaymentStatus = "paid";
                 order.OrderStatus = "processing";
                 order.PaidAt = DateTime.UtcNow;
+                order.SessionStatus = "complete";
                 
                 if (!string.IsNullOrEmpty(session.PaymentIntentId))
                 {
                     order.StripePaymentIntentId = session.PaymentIntentId;
+                }
+
+                // Update currency and country from session metadata
+                if (session.Metadata != null)
+                {
+                    if (session.Metadata.ContainsKey("currency"))
+                    {
+                        order.Currency = session.Metadata["currency"];
+                    }
+                    if (session.Metadata.ContainsKey("country"))
+                    {
+                        order.CustomerCountry = session.Metadata["country"];
+                    }
                 }
 
                 // Update shipping address if available
@@ -123,6 +138,31 @@ namespace Kokomija.Controllers
                     order.ShippingState = session.ShippingDetails.Address.State;
                     order.ShippingPostalCode = session.ShippingDetails.Address.PostalCode;
                     order.ShippingCountry = session.ShippingDetails.Address.Country;
+                }
+
+                // Update user's total spent and VIP tier
+                var userManager = HttpContext.RequestServices.GetRequiredService<UserManager<Entity.ApplicationUser>>();
+                if (!string.IsNullOrEmpty(order.UserId))
+                {
+                    var user = await userManager.FindByIdAsync(order.UserId);
+                    if (user != null)
+                    {
+                        user.TotalSpent += order.TotalAmount;
+                        
+                        // Calculate and update VIP tier
+                        var newTier = CalculateVIPTier(user.TotalSpent);
+                        if (user.VipTier != newTier)
+                        {
+                            user.VipTier = newTier;
+                        }
+                        
+                        await userManager.UpdateAsync(user);
+                        
+                        // Update VIP role
+                        await UpdateUserVIPRoleAsync(userManager, user, newTier);
+                        
+                        _logger.LogInformation($"Updated user {user.Email} total spent to {user.TotalSpent:C}, VIP tier: {user.VipTier}");
+                    }
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -239,6 +279,38 @@ namespace Kokomija.Controllers
                     order.OrderStatus = "cancelled";
                     await _unitOfWork.SaveChangesAsync();
                     _logger.LogInformation($"Order {order.OrderNumber} marked as refunded");
+                }
+            }
+        }
+
+        private string CalculateVIPTier(decimal totalSpent)
+        {
+            if (totalSpent >= 5000) return "Platinum";
+            if (totalSpent >= 1500) return "Gold";
+            if (totalSpent >= 500) return "Silver";
+            if (totalSpent > 0) return "Bronze";
+            return "None";
+        }
+
+        private async Task UpdateUserVIPRoleAsync(UserManager<Entity.ApplicationUser> userManager, Entity.ApplicationUser user, string tierName)
+        {
+            // Remove all existing VIP roles
+            var vipRoles = new[] { "VIPBronze", "VIPSilver", "VIPGold", "VIPPlatinum" };
+            var currentRoles = await userManager.GetRolesAsync(user);
+            var currentVipRoles = currentRoles.Where(r => vipRoles.Contains(r)).ToList();
+            
+            if (currentVipRoles.Any())
+            {
+                await userManager.RemoveFromRolesAsync(user, currentVipRoles);
+            }
+
+            // Add new VIP role based on tier (skip if None)
+            if (tierName != "None")
+            {
+                var newRole = $"VIP{tierName}";
+                if (!await userManager.IsInRoleAsync(user, newRole))
+                {
+                    await userManager.AddToRoleAsync(user, newRole);
                 }
             }
         }

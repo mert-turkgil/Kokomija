@@ -40,12 +40,12 @@ namespace Kokomija.Services
                 var stripePriceService = new Stripe.PriceService();
                 var stripeProducts = await stripeService.ListAsync(new Stripe.ProductListOptions { Limit = 100, Active = true });
                 
-                // Filter products that need seeding (those without Stripe IDs)
-                var products = allProducts.Where(p => string.IsNullOrEmpty(p.StripeProductId)).ToList();
+                // Process all products (both with and without Stripe IDs)
+                var products = allProducts.ToList();
 
                 if (!products.Any())
                 {
-                    _logger.LogInformation("No products need Stripe seeding.");
+                    _logger.LogInformation("No products to process.");
                     return;
                 }
 
@@ -54,6 +54,52 @@ namespace Kokomija.Services
                     try
                     {
                         _logger.LogInformation($"Processing product: {product.Name} (Price: {product.Price} PLN)");
+
+                        // If product already has a Stripe ID, verify and update it
+                        if (!string.IsNullOrEmpty(product.StripeProductId))
+                        {
+                            try
+                            {
+                                var existingProduct = await stripeService.GetAsync(product.StripeProductId);
+                                if (existingProduct != null)
+                                {
+                                    _logger.LogInformation($"Updating existing Stripe product: {product.StripeProductId}");
+                                    await _stripeService.UpdateProductAsync(product.StripeProductId, product);
+                                    
+                                    // Check if price needs updating
+                                    var prices = await stripePriceService.ListAsync(new Stripe.PriceListOptions
+                                    {
+                                        Product = product.StripeProductId,
+                                        Active = true,
+                                        Limit = 10
+                                    });
+                                    
+                                    var productPriceInGrosze = (long)(product.Price * 100);
+                                    var matchingPrice = prices.Data.FirstOrDefault(p => 
+                                        p.Currency == "pln" && 
+                                        p.UnitAmount == productPriceInGrosze);
+                                    
+                                    if (matchingPrice != null)
+                                    {
+                                        product.StripePriceId = matchingPrice.Id;
+                                    }
+                                    else
+                                    {
+                                        // Create new price if none matches
+                                        var newPrice = await _stripeService.CreatePriceAsync(product.StripeProductId, product.Price, "pln");
+                                        product.StripePriceId = newPrice.Id;
+                                    }
+                                    
+                                    await _unitOfWork.SaveChangesAsync();
+                                    continue; // Skip to next product
+                                }
+                            }
+                            catch (StripeException ex) when (ex.StripeError?.Type == "invalid_request_error")
+                            {
+                                _logger.LogWarning($"Stripe product {product.StripeProductId} not found, will create new one");
+                                product.StripeProductId = string.Empty; // Clear invalid ID
+                            }
+                        }
 
                         // Check if a Stripe product with the same price already exists
                         Stripe.Product? matchingStripeProduct = null;

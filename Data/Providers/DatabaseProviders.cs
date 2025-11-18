@@ -27,6 +27,9 @@ namespace Kokomija.Data.Providers
                     maxRetryDelay: TimeSpan.FromSeconds(5),
                     errorNumbersToAdd: null);
                 sqlOptions.CommandTimeout(30);
+                
+                // Use split queries for better performance when loading multiple collections
+                sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
             });
         }
     }

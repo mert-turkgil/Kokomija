@@ -23,6 +23,11 @@ namespace Kokomija.Entity
 
         public bool IsActive { get; set; } = true;
 
+        // VIP Status (based on total spending)
+        public string VipTier { get; set; } = "None"; // None, Bronze, Silver, Gold, Platinum
+        
+        public decimal TotalSpent { get; set; } = 0;
+
         // Navigation properties for orders
         public ICollection<Order> Orders { get; set; } = new List<Order>();
 

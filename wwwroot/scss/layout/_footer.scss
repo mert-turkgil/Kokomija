@@ -8,6 +8,11 @@
   padding: 4rem 0 2rem;
   margin-top: 5rem;
   
+  // Remove margin on auth pages
+  .auth-page & {
+    margin-top: 0;
+  }
+  
   [data-theme="dark"] & {
     background-color: $dark-surface;
     border-top: 1px solid $dark-border;

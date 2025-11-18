@@ -106,6 +106,16 @@ namespace Kokomija.Entity
         [MaxLength(50)]
         public string PaymentStatus { get; set; } = "pending"; // pending, paid, failed, refunded
 
+        [Required]
+        [MaxLength(10)]
+        public string Currency { get; set; } = "pln"; // pln, eur, usd
+
+        [MaxLength(100)]
+        public string? SessionStatus { get; set; } // complete, expired, cancelled
+
+        [MaxLength(100)]
+        public string? CustomerCountry { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? PaidAt { get; set; }
         public DateTime? ShippedAt { get; set; }

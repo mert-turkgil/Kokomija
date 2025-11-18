@@ -52,16 +52,30 @@ namespace Kokomija.Controllers
                     return NotFound();
                 }
 
-                // Get related products (same category, different pack sizes for this product family)
-                if (product.CategoryId.HasValue)
+                // Get related products based on ProductGroup (different pack sizes)
+                List<Kokomija.Entity.Product> relatedProducts;
+                if (product.ProductGroupId.HasValue)
                 {
-                    var relatedProducts = await _unitOfWork.Products.GetProductsByCategoryAsync(product.CategoryId.Value);
-                    ViewBag.RelatedProducts = relatedProducts.Where(p => p.Id != id && p.IsActive).ToList();
+                    // Get all products in the same group (different pack sizes)
+                    relatedProducts = (await _unitOfWork.Products.FindAsync(p => 
+                        p.ProductGroupId == product.ProductGroupId && 
+                        p.Id != id && 
+                        p.IsActive))
+                        .OrderBy(p => p.PackSize)
+                        .ToList();
+                }
+                else if (product.CategoryId.HasValue)
+                {
+                    // Fallback: Get products from same category
+                    var categoryProducts = await _unitOfWork.Products.GetProductsByCategoryAsync(product.CategoryId.Value);
+                    relatedProducts = categoryProducts.Where(p => p.Id != id && p.IsActive).ToList();
                 }
                 else
                 {
-                    ViewBag.RelatedProducts = new List<Kokomija.Entity.Product>();
+                    relatedProducts = new List<Kokomija.Entity.Product>();
                 }
+
+                ViewBag.RelatedProducts = relatedProducts;
 
                 // Set page metadata
                 ViewData["Title"] = !string.IsNullOrEmpty(product.NameKey) 
@@ -283,11 +297,12 @@ namespace Kokomija.Controllers
                     return Json(Array.Empty<object>());
                 }
                 
-                // Only show subcategories (actual product categories like Shorts, T-Shirts)
-                // Filter out parent categories (Male, Female) by checking if they have a ParentCategoryId
+                // Return ALL categories (both parent and subcategories)
+                // This allows the filter sidebar to show the complete category hierarchy
                 var result = categories
-                    .Where(c => c.ParentCategoryId.HasValue && c.IsActive)
-                    .OrderBy(c => c.ParentCategory != null ? c.ParentCategory.DisplayOrder : 0)
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.ParentCategoryId.HasValue ? 1 : 0) // Parents first, then children
+                    .ThenBy(c => c.ParentCategory != null ? c.ParentCategory.DisplayOrder : c.DisplayOrder)
                     .ThenBy(c => c.DisplayOrder)
                     .Select(c => new
                     {
@@ -297,7 +312,8 @@ namespace Kokomija.Controllers
                         parentId = c.ParentCategoryId,
                         parentName = c.ParentCategory != null && !string.IsNullOrEmpty(c.ParentCategory.NameKey) 
                             ? _localizationService[c.ParentCategory.NameKey] 
-                            : (c.ParentCategory?.Name ?? "Other")
+                            : (c.ParentCategory?.Name ?? "Other"),
+                        isParent = !c.ParentCategoryId.HasValue // Indicates if this is a top-level category
                     })
                     .ToList();
 

@@ -31,50 +31,97 @@
         <div class="row g-5">
             <!-- Image Gallery Section -->
             <div class="col-lg-7">
-                <div class="product-gallery">
-                    <!-- Main Image Display -->
-                    <div class="main-image-container">
-                        <div class="image-zoom-wrapper">
-                            @if (Model.Images != null && Model.Images.Any())
-                            {
-                                <img src="@Url.Content($"~/img/ProductImage/{Model.Images.FirstOrDefault(img => img.IsPrimary)?.ImageUrl ?? Model.Images.First().ImageUrl}")" 
-                                     alt="@productName" 
-                                     class="main-product-image" 
-                                     id="mainImage"
-                                     onerror="this.onerror=null; this.src='@Url.Content(contentPath: "~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
-                                <div class="zoom-lens"></div>
-                            }
-                            else
-                            {
-                                <img src="@Url.Content("~/img/logo_black.png")" 
-                                     alt="Kokomija" 
-                                     class="main-product-image logo-fallback" 
-                                     id="mainImage" />
-                            }
-                        </div>
-                        
-                        <!-- Image Navigation Arrows -->
-                        <button class="image-nav prev" id="prevImage" aria-label="@Localizer["Previous_Image"]">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button class="image-nav next" id="nextImage" aria-label="@Localizer["Next_Image"]">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-
-                    <!-- Thumbnail Gallery -->
+                <div class="product-gallery" id="productGallery">
                     @if (Model.Images != null && Model.Images.Any())
                     {
-                        <div class="thumbnail-gallery">
-                            @foreach (var image in Model.Images.OrderBy(i => i.DisplayOrder))
-                            {
-                                <div class="thumbnail-item @(image.IsPrimary ? "active" : "")" 
-                                     data-image="@Url.Content($"~/img/ProductImage/{image.ImageUrl}")">
-                                    <img src="@Url.Content($"~/img/ProductImage/{image.ImageUrl}")" 
-                                         alt="@productName" 
-                                         onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.parentElement.classList.add('logo-fallback');" />
+                        var imageCount = Model.Images.Count();
+                        var orderedImages = Model.Images.OrderBy(i => i.DisplayOrder).ToList();
+                        
+                        @if (imageCount == 1)
+                        {
+                            <!-- Single Large Image -->
+                            var singleImage = orderedImages.First();
+                            var imgUrl = Url.Content($"~/img/ProductImage/{singleImage.ImageUrl}");
+                            
+                            <div class="single-image-container">
+                                <img src="@imgUrl" 
+                                     alt="@productName" 
+                                     class="single-product-image" 
+                                     id="viewerImage"
+                                     onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
+                                <div class="image-click-hint">
+                                    <i class="fas fa-search-plus"></i> @Localizer["Product_ClickToEnlarge"]
                                 </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Multiple Images with Thumbnails and Navigation -->
+                            var mainImage = orderedImages.First();
+                            var mainImageUrl = Url.Content($"~/img/ProductImage/{mainImage.ImageUrl}");
+                            
+                            <div class="main-image-container">
+                                <div class="image-zoom-wrapper">
+                                    <img src="@mainImageUrl" 
+                                         alt="@productName" 
+                                         class="main-product-image" 
+                                         id="mainImage"
+                                         data-index="0"
+                                         onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
+                                    <div class="image-click-hint">
+                                        <i class="fas fa-search-plus"></i> @Localizer["Product_ClickToEnlarge"]
+                                    </div>
+                                </div>
+                                
+                                <!-- Image Navigation Arrows -->
+                                <button class="image-nav prev" id="prevImage" aria-label="@Localizer["Previous"]">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="image-nav next" id="nextImage" aria-label="@Localizer["Next"]">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                
+                                <!-- Image Counter -->
+                                <div class="image-counter">
+                                    <span id="currentImageIndex">1</span> / <span id="totalImages">@imageCount</span>
+                                </div>
+                            </div>
+
+                            <!-- Thumbnail Gallery -->
+                            <div class="thumbnail-gallery">
+                                @for (int i = 0; i < orderedImages.Count; i++)
+                                {
+                                    var image = orderedImages[i];
+                                    var imgUrl = Url.Content($"~/img/ProductImage/{image.ImageUrl}");
+                                    
+                                    <div class="thumbnail-item @(i == 0 ? "active" : "")" 
+                                         data-index="@i"
+                                         data-image="@imgUrl">
+                                        <img src="@imgUrl" 
+                                             alt="@productName" 
+                                             onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.parentElement.classList.add('logo-fallback');" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                        
+                        <!-- Hidden images for viewer -->
+                        <div id="imageViewer" style="display: none;">
+                            @foreach (var image in orderedImages)
+                            {
+                                var imgUrl = Url.Content($"~/img/ProductImage/{image.ImageUrl}");
+                                <img src="@imgUrl" alt="@productName" />
                             }
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- No Images - Show Logo -->
+                        <div class="single-image-container">
+                            <img src="@Url.Content("~/img/logo_black.png")" 
+                                 alt="Kokomija" 
+                                 class="single-product-image logo-fallback" 
+                                 id="viewerImage" />
                         </div>
                     }
                 </div>
@@ -185,9 +232,13 @@
                                     var size = variant.First().Size;
                                     var isAvailable = variant.First().StockQuantity > 0;
                                     var variantId = variant.First().Id;
+                                    var colorId = variant.First().ColorId;
+                                    var sizeId = variant.First().SizeId;
                                     
                                     <button class="size-option @(!isAvailable ? "out-of-stock" : "")" 
                                             data-variant-id="@variantId"
+                                            data-color-id="@colorId"
+                                            data-size-id="@sizeId"
                                             data-size="@size?.Name"
                                             data-stock="@variant.First().StockQuantity"
                                             @(!isAvailable ? "disabled" : "")>
@@ -209,12 +260,14 @@
                             <button type="button" class="qty-btn minus" id="qtyMinus">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="number" class="qty-input" id="quantity" value="1" min="1" max="10" readonly />
+                            <input type="number" class="qty-input" id="quantity" value="1" min="1" max="99" />
                             <button type="button" class="qty-btn plus" id="qtyPlus">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
-                        <span class="stock-info" id="stockInfo">@Localizer["Product_InStock"]</span>
+                        <span class="stock-info" id="stockInfo">
+                            <i class="fas fa-box"></i> @Localizer["Product_InStock"]
+                        </span>
                     </div>
 
                     <!-- Action Buttons -->
@@ -414,11 +467,117 @@
 </div>
 
 @section Scripts {
+    <!-- ViewerJS Library -->
+    <link rel="stylesheet" href="~/lib/viewerjs/viewer.min.css" asp-append-version="true" />
+    <script src="~/lib/viewerjs/viewer.min.js" asp-append-version="true"></script>
+    
     <script>
         $(document).ready(function() {
             let selectedVariantId = null;
+            let selectedColorId = null;
+            let selectedSizeId = null;
             let currentImageIndex = 0;
-            const images = @Html.Raw(Json.Serialize(Model.Images?.OrderBy(i => i.DisplayOrder).Select(i => Url.Content($"~/images/{i.ImageUrl}")).ToList() ?? new List<string>()));
+            let viewer = null;
+            
+            // Initialize ViewerJS for image viewing
+            @if (Model.Images != null && Model.Images.Any())
+            {
+                var imageCount = Model.Images.Count();
+                <text>
+            const imageCount = @imageCount;</text>
+            }
+            else
+            {
+                <text>
+            const imageCount = 1;</text>
+            }
+            <text>
+            
+            if (imageCount === 1) {
+                // Single image - full screen viewer on click
+                const singleImage = document.getElementById('viewerImage');
+                if (singleImage) {
+                    viewer = new Viewer(singleImage, {
+                        inline: false,
+                        toolbar: {
+                            zoomIn: 1,
+                            zoomOut: 1,
+                            oneToOne: 1,
+                            reset: 1,
+                            rotateLeft: 1,
+                            rotateRight: 1,
+                            flipHorizontal: 1,
+                            flipVertical: 1,
+                        },
+                        title: false,
+                        navbar: false,
+                        button: true,
+                        backdrop: true,
+                        keyboard: true,
+                        transition: true,
+                    });
+                }
+            } else {
+                // Multiple images - gallery viewer
+                const imageViewerContainer = document.getElementById('imageViewer');
+                if (imageViewerContainer) {
+                    viewer = new Viewer(imageViewerContainer, {
+                        inline: false,
+                        toolbar: {
+                            zoomIn: 1,
+                            zoomOut: 1,
+                            oneToOne: 1,
+                            reset: 1,
+                            prev: 1,
+                            play: 1,
+                            next: 1,
+                            rotateLeft: 1,
+                            rotateRight: 1,
+                        },
+                        title: true,
+                        navbar: true,
+                        button: true,
+                        backdrop: true,
+                        keyboard: true,
+                        transition: true,
+                    });
+                }
+                
+                // Main image click to open viewer
+                $('#mainImage').click(function() {
+                    const index = parseInt($(this).attr('data-index') || 0);
+                    viewer.view(index);
+                });
+                
+                // Thumbnail navigation
+                $('.thumbnail-item').click(function() {
+                    const index = parseInt($(this).attr('data-index'));
+                    currentImageIndex = index;
+                    updateMainImage(index);
+                });
+                
+                // Arrow navigation
+                $('#prevImage').click(function() {
+                    currentImageIndex = (currentImageIndex - 1 + imageCount) % imageCount;
+                    updateMainImage(currentImageIndex);
+                });
+                
+                $('#nextImage').click(function() {
+                    currentImageIndex = (currentImageIndex + 1) % imageCount;
+                    updateMainImage(currentImageIndex);
+                });
+                
+                function updateMainImage(index) {
+                    const $thumbnail = $('.thumbnail-item').eq(index);
+                    const imageSrc = $thumbnail.data('image');
+                    $('#mainImage').attr('src', imageSrc).attr('data-index', index);
+                    $('.thumbnail-item').removeClass('active');
+                    $thumbnail.addClass('active');
+                    $('#currentImageIndex').text(index + 1);
+                }
+            }
+                </text>
+            }
             
             // Size selection
             $('.size-option').click(function() {
@@ -428,15 +587,17 @@
                 $(this).addClass('selected');
                 
                 selectedVariantId = $(this).data('variant-id');
+                selectedColorId = $(this).data('color-id');
+                selectedSizeId = $(this).data('size-id');
                 const stock = $(this).data('stock');
                 const size = $(this).data('size');
                 
                 // Update stock info
-                $('#stockInfo').text(`${stock} @Localizer["Product_InStock"]`);
-                $('#quantity').attr('max', Math.min(stock, 10));
+                $('#stockInfo').html(`<i class="fas fa-box"></i> ${stock} @Localizer["Product_InStock"]`);
+                $('#quantity').attr('max', stock);
                 
                 // Update SKU
-                $('#productSKU').text(`BRIEFS-${size}`);
+                $('#productSKU').text(`PRODUCT-${size}-@Model.Id`);
                 
                 // Enable add to cart button
                 $('#addToCartBtn').prop('disabled', false);
@@ -445,7 +606,7 @@
             // Quantity controls
             $('#qtyMinus').click(function() {
                 const input = $('#quantity');
-                const val = parseInt(input.val());
+                const val = parseInt(input.val()) || 1;
                 if (val > 1) {
                     input.val(val - 1);
                 }
@@ -453,11 +614,21 @@
             
             $('#qtyPlus').click(function() {
                 const input = $('#quantity');
-                const val = parseInt(input.val());
-                const max = parseInt(input.attr('max'));
+                const val = parseInt(input.val()) || 1;
+                const max = parseInt(input.attr('max')) || 99;
                 if (val < max) {
                     input.val(val + 1);
                 }
+            });
+            
+            // Manual quantity input validation
+            $('#quantity').on('input', function() {
+                const val = parseInt($(this).val()) || 1;
+                const max = parseInt($(this).attr('max')) || 99;
+                const min = parseInt($(this).attr('min')) || 1;
+                
+                if (val > max) $(this).val(max);
+                if (val < min) $(this).val(min);
             });
             
             // Add to Cart
@@ -467,36 +638,89 @@
                     return;
                 }
                 
-                const quantity = parseInt($('#quantity').val());
+                const quantity = parseInt($('#quantity').val()) || 1;
                 const btn = $(this);
                 btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> @Localizer["Product_Adding"]');
                 
+                // Check if user is authenticated
+                const isAuthenticated = @(User.Identity?.IsAuthenticated == true ? "true" : "false");
+                
+                if (!isAuthenticated) {
+                    // Save to localStorage for guest users
+                    let guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                    
+                    // Check if item already exists
+                    const existingItemIndex = guestCart.findIndex(item => 
+                        item.productId === @Model.Id && 
+                        item.colorId === selectedColorId && 
+                        item.sizeId === selectedSizeId
+                    );
+                    
+                    if (existingItemIndex >= 0) {
+                        guestCart[existingItemIndex].quantity += quantity;
+                    } else {
+                        guestCart.push({
+                            productId: @Model.Id,
+                            colorId: selectedColorId,
+                            sizeId: selectedSizeId,
+                            quantity: quantity
+                        });
+                    }
+                    
+                    localStorage.setItem('guestCart', JSON.stringify(guestCart));
+                    
+                    // Update cart badge
+                    const totalItems = guestCart.reduce((sum, item) => sum + item.quantity, 0);
+                    $('.cart-badge').text(totalItems).show();
+                    
+                    // Show success
+                    btn.html('<i class="fas fa-check"></i> @Localizer["Product_Added"]');
+                    setTimeout(() => {
+                        btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
+                    }, 2000);
+                    return;
+                }
+                
+                // Authenticated user - add via API
                 $.ajax({
-                    url: '/Cart/AddToCart',
+                    url: '/Cart/api/add',
                     method: 'POST',
-                    data: {
+                    contentType: 'application/json',
+                    data: JSON.stringify({
                         productId: @Model.Id,
-                        variantId: selectedVariantId,
+                        colorId: selectedColorId,
+                        sizeId: selectedSizeId,
                         quantity: quantity
-                    },
+                    }),
                     success: function(response) {
                         if (response.success) {
                             // Update cart count
-                            $('.cart-count').text(response.cartCount);
+                            if (response.count) {
+                                $('.cart-badge').text(response.count).show();
+                            }
                             
                             // Show success animation
                             btn.html('<i class="fas fa-check"></i> @Localizer["Product_Added"]');
                             setTimeout(() => {
                                 btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
                             }, 2000);
+                        } else if (response.requiresLogin) {
+                            // Redirect to login with return URL
+                            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
                         } else {
-                            alert(response.message);
+                            alert(response.message || '@Localizer["Error_Generic"]');
                             btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
                         }
                     },
-                    error: function() {
-                        alert('@Localizer["Error_Generic"]');
-                        btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
+                        if (xhr.status === 401) {
+                            // Unauthorized - redirect to login
+                            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+                        } else {
+                            alert('@Localizer["Error_Generic"]');
+                            btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
+                        }
                     }
                 });
             });
@@ -520,42 +744,13 @@
                                 btn.removeClass('active');
                             }
                         }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 401) {
+                            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+                        }
                     }
                 });
-            });
-            
-            // Image gallery navigation
-            $('.thumbnail-item').click(function() {
-                const imageSrc = $(this).data('image');
-                $('#mainImage').attr('src', imageSrc);
-                $('.thumbnail-item').removeClass('active');
-                $(this).addClass('active');
-                currentImageIndex = $('.thumbnail-item').index(this);
-            });
-            
-            $('#prevImage').click(function() {
-                currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
-                updateMainImage();
-            });
-            
-            $('#nextImage').click(function() {
-                currentImageIndex = (currentImageIndex + 1) % images.length;
-                updateMainImage();
-            });
-            
-            function updateMainImage() {
-                if (images.length > 0) {
-                    $('#mainImage').attr('src', images[currentImageIndex]);
-                    $('.thumbnail-item').removeClass('active').eq(currentImageIndex).addClass('active');
-                }
-            }
-            
-            // Image zoom effect
-            $('.image-zoom-wrapper').mousemove(function(e) {
-                const offset = $(this).offset();
-                const x = ((e.pageX - offset.left) / $(this).width()) * 100;
-                const y = ((e.pageY - offset.top) / $(this).height()) * 100;
-                $('#mainImage').css('transform-origin', `${x}% ${y}%`);
             });
 
             // Review submission
@@ -566,7 +761,7 @@
                 const comment = $('#reviewComment').val();
                 
                 if (!rating) {
-                    alert('@Localizer["Review_YourRating"]');
+                    alert('@Localizer["Review_SelectRating"]');
                     return;
                 }
                 

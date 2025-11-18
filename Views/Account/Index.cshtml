@@ -7,6 +7,22 @@
 }
 
 <div class="account-page container my-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <div class="row mb-4">
         <div class="col-12">
             <h1>@Localizer["Account_Welcome"], @Model.FirstName!</h1>
@@ -62,6 +78,11 @@
             <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">@Localizer["Account_Tab_Orders"]</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="wishlist-tab" data-bs-toggle="tab" data-bs-target="#wishlist" type="button" role="tab">
+                <i class="fas fa-heart me-1"></i>@Localizer["Account_Tab_Wishlist"] <span class="badge bg-danger ms-1">@Model.WishlistCount</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">@Localizer["Account_Tab_VIP"]</button>
         </li>
         <li class="nav-item" role="presentation">
@@ -89,7 +110,10 @@
                                                 <th>@Localizer["Account_Date"]</th>
                                                 <th>@Localizer["Account_Items"]</th>
                                                 <th>@Localizer["Account_Total"]</th>
+                                                <th>@Localizer["Account_Currency"]</th>
                                                 <th>@Localizer["Account_Status"]</th>
+                                                <th>@Localizer["Account_SessionStatus"]</th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -99,11 +123,33 @@
                                                     <td>#@order.OrderNumber</td>
                                                     <td>@order.OrderDate.ToShortDateString()</td>
                                                     <td>@order.ItemCount</td>
-                                                    <td>@order.TotalAmount.ToString("C")</td>
+                                                    <td>@order.TotalAmount.ToString("N2")</td>
                                                     <td>
-                                                        <span class="badge bg-@(order.OrderStatus == "Completed" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning")">
+                                                        <span class="badge bg-secondary">
+                                                            @Localizer[$"Currency_{order.Currency.ToUpper()}"]
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning")">
                                                             @order.OrderStatus
                                                         </span>
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(order.SessionStatus))
+                                                        {
+                                                            <span class="badge bg-@(order.SessionStatus == "complete" ? "success" : order.SessionStatus == "cancelled" ? "danger" : "secondary")">
+                                                                @Localizer[$"Session_{char.ToUpper(order.SessionStatus[0]) + order.SessionStatus.Substring(1)}"]
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">-</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
+                                                            @Localizer["View_Details"]
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             }
@@ -125,19 +171,46 @@
                             <h5 class="mb-0">@Localizer["Account_VIP_Status"]</h5>
                         </div>
                         <div class="card-body text-center">
-                            <div class="mb-3">
-                                <span class="badge bg-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light text-dark" : Model.VIPStatus.TierName == "Gold" ? "warning" : "primary") fs-4">
-                                    @Model.VIPStatus.TierName
-                                </span>
-                            </div>
-                            <p class="mb-2">@Localizer["Account_VIP_Discount"]: <strong>@Model.VIPStatus.DiscountPercentage%</strong></p>
-                            <div class="progress mb-2" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%">
-                                    @Model.VIPStatus.ProgressPercentage%
+                            @if (Model.VIPStatus.TierName == "None")
+                            {
+                                <div class="mb-3">
+                                    <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
                                 </div>
-                            </div>
-                            <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") @Localizer["Account_VIP_NextTier"]</small>
-                            <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">@Localizer["Account_VIP_ViewBenefits"]</a>
+                                <h5 class="text-muted">@Localizer["Account_VIP_None"]</h5>
+                                <p class="text-muted">@Localizer["Account_VIP_NotVIP_Message"]</p>
+                                <div class="alert alert-info mb-3">
+                                    <small>@Localizer["Account_VIP_SpendToUnlock"].Replace("{0}", Model.VIPStatus.NextTierThreshold.ToString("C"))</small>
+                                </div>
+                                <a asp-controller="Product" asp-action="Index" class="btn btn-primary w-100">
+                                    <i class="bi bi-cart me-2"></i>@Localizer["Account_VIP_ShopNow"]
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="mb-3">
+                                    <span class="badge fs-4 bg-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light text-dark" : Model.VIPStatus.TierName == "Gold" ? "warning" : "primary")">
+                                        <i class="bi bi-star-fill me-1"></i>@Model.VIPStatus.TierName
+                                    </span>
+                                </div>
+                                <p class="mb-2">@Localizer["Account_VIP_Discount"]: <strong>@Model.VIPStatus.DiscountPercentage%</strong></p>
+                                @if (Model.VIPStatus.NextTierThreshold > 0)
+                                {
+                                    <div class="progress mb-2" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%">
+                                            @Model.VIPStatus.ProgressPercentage%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") @Localizer["Account_VIP_NextTier"]</small>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-success mb-0">
+                                        <i class="bi bi-trophy-fill me-2"></i>
+                                        <strong>Maximum VIP Tier!</strong>
+                                    </div>
+                                }
+                                <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">@Localizer["Account_VIP_ViewBenefits"]</a>
+                            }
                         </div>
                     </div>
                 </div>
@@ -154,32 +227,85 @@
                             <div class="order-card border rounded p-3 mb-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
-                                        <h5>Order #@order.OrderNumber</h5>
+                                        <h5>@Localizer["Order_Number"] #@order.OrderNumber</h5>
                                         <p class="text-muted mb-1">@order.OrderDate.ToString("MMMM dd, yyyy")</p>
-                                        <span class="badge bg-@(order.OrderStatus == "Completed" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning")">
-                                            @order.OrderStatus
-                                        </span>
+                                        <div class="mb-2">
+                                            <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning") me-1">
+                                                @order.OrderStatus
+                                            </span>
+                                            @if (!string.IsNullOrEmpty(order.SessionStatus))
+                                            {
+                                                <span class="badge bg-@(order.SessionStatus == "complete" ? "success" : order.SessionStatus == "cancelled" ? "danger" : "secondary")">
+                                                    @Localizer[$"Session_{char.ToUpper(order.SessionStatus[0]) + order.SessionStatus.Substring(1)}"]
+                                                </span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(order.CustomerCountry))
+                                        {
+                                            <small class="text-muted">
+                                                <i class="bi bi-geo-alt me-1"></i>@order.CustomerCountry
+                                            </small>
+                                        }
                                     </div>
                                     <div class="text-end">
-                                        <h4>@order.TotalAmount.ToString("C")</h4>
+                                        <h4>
+                                            @order.TotalAmount.ToString("N2")
+                                            <small class="text-muted">@Localizer[$"Currency_{order.Currency.ToUpper()}"]</small>
+                                        </h4>
                                         <small class="text-muted">@order.ItemCount @Localizer["Account_Order_Items"]</small>
                                     </div>
                                 </div>
-                                @if (order.CanCancel)
-                                {
-                                    <button class="btn btn-sm btn-outline-danger">@Localizer["Account_CancelOrder"]</button>
-                                }
-                                @if (order.CanReturn)
-                                {
-                                    <button class="btn btn-sm btn-outline-warning">@Localizer["Account_RequestReturn"]</button>
-                                }
+                                <div class="btn-group" role="group">
+                                    <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>@Localizer["View_Details"]
+                                    </a>
+                                    @if (order.CanCancel)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(@order.Id)">
+                                            <i class="bi bi-x-circle me-1"></i>@Localizer["Account_CancelOrder"]
+                                        </button>
+                                    }
+                                    @if (order.CanReturn)
+                                    {
+                                        <a asp-action="ReturnRequest" asp-route-orderId="@order.Id" class="btn btn-sm btn-outline-warning">
+                                            <i class="bi bi-arrow-return-left me-1"></i>@Localizer["Account_RequestReturn"]
+                                        </a>
+                                    }
+                                </div>
                             </div>
                         }
                     }
                     else
                     {
-                        <p class="text-muted text-center py-5">No orders yet. <a asp-controller="Product" asp-action="Index">Start shopping!</a></p>
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                            <p class="text-muted mt-3">@Localizer["Account_NoOrders"]</p>
+                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">@Localizer["Account_StartShopping"]</a>
+                        </div>
                     }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="wishlist" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-heart text-danger me-2"></i>
+                        @Localizer["Account_Wishlist_Title"]
+                    </h5>
+                    <a asp-controller="Wishlist" asp-action="Index" class="btn btn-sm btn-primary">
+                        @Localizer["Account_ViewFullWishlist"]
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="wishlistContainer">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,26 +359,26 @@
                             <tbody>
                                 <tr class="@(Model.VIPStatus.TierName == "Bronze" ? "table-active" : "")">
                                     <td><span class="badge bg-secondary">Bronze</span></td>
-                                    <td>0 PLN</td>
-                                    <td>5%</td>
+                                    <td>0 - 500 PLN</td>
+                                    <td>2%</td>
                                     <td>@Localizer["Account_VIP_BasicDiscount"]</td>
                                 </tr>
                                 <tr class="@(Model.VIPStatus.TierName == "Silver" ? "table-active" : "")">
                                     <td><span class="badge bg-light text-dark">Silver</span></td>
-                                    <td>500 PLN</td>
-                                    <td>10%</td>
+                                    <td>500 PLN+</td>
+                                    <td>5%</td>
                                     <td>@Localizer["Account_VIP_FreeShipping"]</td>
                                 </tr>
                                 <tr class="@(Model.VIPStatus.TierName == "Gold" ? "table-active" : "")">
                                     <td><span class="badge bg-warning">Gold</span></td>
-                                    <td>1,500 PLN</td>
-                                    <td>15%</td>
+                                    <td>1,500 PLN+</td>
+                                    <td>8%</td>
                                     <td>@Localizer["Account_VIP_EarlyAccess"]</td>
                                 </tr>
                                 <tr class="@(Model.VIPStatus.TierName == "Platinum" ? "table-active" : "")">
                                     <td><span class="badge bg-primary">Platinum</span></td>
-                                    <td>5,000 PLN</td>
-                                    <td>20%</td>
+                                    <td>5,000 PLN+</td>
+                                    <td>12%</td>
                                     <td>@Localizer["Account_VIP_BirthdayGift"]</td>
                                 </tr>
                             </tbody>
@@ -269,28 +395,189 @@
                 </div>
                 <div class="card-body">
                     <form method="post" asp-action="UpdateProfile">
+                        @Html.AntiForgeryToken()
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="firstName" class="form-label">@Localizer["Account_Settings_FirstName"]</label>
-                                <input type="text" class="form-control" id="firstName" name="firstName" value="@Model.FirstName" required>
+                                <label for="FirstName" class="form-label">@Localizer["Account_Settings_FirstName"]</label>
+                                <input type="text" class="form-control" id="FirstName" name="FirstName" value="@Model.FirstName" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="lastName" class="form-label">@Localizer["Account_Settings_LastName"]</label>
-                                <input type="text" class="form-control" id="lastName" name="lastName" value="@Model.LastName" required>
+                                <label for="LastName" class="form-label">@Localizer["Account_Settings_LastName"]</label>
+                                <input type="text" class="form-control" id="LastName" name="LastName" value="@Model.LastName" required>
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="PhoneNumber" class="form-label">@Localizer["Phone"]</label>
+                            <input type="tel" class="form-control" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber">
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label">@Localizer["Account_Settings_Email"]</label>
                             <input type="email" class="form-control" id="email" value="@Model.Email" disabled>
                             <small class="text-muted">@Localizer["Account_Settings_EmailNote"]</small>
                         </div>
-                        <button type="submit" class="btn btn-primary">@Localizer["Account_Settings_SaveChanges"]</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>@Localizer["Account_Settings_SaveChanges"]
+                        </button>
                     </form>
+                    
                     <hr class="my-4">
+                    
                     <h6>@Localizer["Account_Settings_Password"]</h6>
-                    <a asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-secondary">@Localizer["Account_Settings_ChangePassword"]</a>
+                    <p class="text-muted">Update your password to keep your account secure.</p>
+                    <a asp-action="ChangePassword" class="btn btn-outline-secondary">
+                        <i class="bi bi-key me-2"></i>@Localizer["Account_Settings_ChangePassword"]
+                    </a>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="text-danger">@Localizer["Account_Settings_DeleteAccount"]</h6>
+                    <p class="text-muted">@Localizer["Account_Settings_DeleteAccountWarning"]</p>
+                    <button type="button" class="btn btn-danger" onclick="confirmDeleteAccount()">
+                        <i class="bi bi-trash me-2"></i>@Localizer["Account_Settings_DeleteAccount"]
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Load wishlist when tab is clicked
+        document.getElementById('wishlist-tab')?.addEventListener('click', function() {
+            loadWishlist();
+        });
+
+        function loadWishlist() {
+            const container = document.getElementById('wishlistContainer');
+            if (!container) return;
+
+            fetch('/api/wishlist')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        let html = '<div class="row g-3">';
+                        data.forEach(item => {
+                            html += `
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card h-100">
+                                        <img src="/img/ProductImage/${item.imageUrl}" class="card-img-top" alt="${item.productName}" style="height: 200px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
+                                        <div class="card-body">
+                                            <h6 class="card-title">${item.productName}</h6>
+                                            <p class="card-text">
+                                                <strong>${item.price.toFixed(2)} zł</strong>
+                                            </p>
+                                            <small class="text-muted">${new Date(item.addedAt).toLocaleDateString()}</small>
+                                            <div class="btn-group w-100 mt-2">
+                                                <a href="/Product/Details/${item.productId}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye"></i> @Localizer["View"]
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(${item.productId})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = `
+                            <div class="text-center py-5">
+                                <i class="far fa-heart text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-3">@Localizer["Wishlist_Empty"]</p>
+                                <a href="/Product/Index" class="btn btn-primary">@Localizer["Wishlist_StartShopping"]</a>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wishlist:', error);
+                    container.innerHTML = '<div class="alert alert-danger">Error loading wishlist</div>';
+                });
+        }
+
+        function removeFromWishlist(productId) {
+            if (!confirm('@Localizer["Wishlist_Confirm_Remove"]')) {
+                return;
+            }
+
+            fetch('/Wishlist/Toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ productId: productId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadWishlist();
+                    location.reload(); // Reload to update badge count
+                }
+            });
+        }
+
+        function cancelOrder(orderId) {
+            if (!confirm('@Localizer["Confirm_Cancel_Order"]')) {
+                return;
+            }
+
+            const form = new FormData();
+            form.append('id', orderId);
+
+            fetch('@Url.Action("CancelOrder", "Account")', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: form
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || '@Localizer["Account_Order_CancelError"]');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('@Localizer["Account_Order_CancelError"]');
+            });
+        }
+
+        function confirmDeleteAccount() {
+            if (!confirm('@Localizer["Account_Delete_ConfirmMessage"]')) {
+                return;
+            }
+
+            if (!confirm('@Localizer["Account_Settings_DeleteAccountWarning"]')) {
+                return;
+            }
+
+            fetch('@Url.Action("DeleteAccount", "Account")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('@Localizer["Account_Delete_Success"]');
+                    window.location.href = data.redirectUrl || '/';
+                } else {
+                    alert(data.message || '@Localizer["Account_Delete_Error"]');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('@Localizer["Account_Delete_Error"]');
+            });
+        }
+    </script>
+}

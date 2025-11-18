@@ -1,6 +1,7 @@
 using Kokomija.Data.Abstract;
 using Kokomija.Entity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -26,17 +27,21 @@ namespace Kokomija.Services
         private readonly IEmailService _emailService;
         private readonly ILogger<SiteControlService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
+        private const string SITE_CLOSURE_CACHE_KEY = "SiteClosureEnabled";
 
         public SiteControlService(
             IUnitOfWork unitOfWork,
             IEmailService emailService,
             ILogger<SiteControlService> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _emailService = emailService;
             _logger = logger;
             _configuration = configuration;
+            _cache = cache;
         }
 
         /// <summary>
@@ -85,6 +90,9 @@ namespace Kokomija.Services
                 }
 
                 await _unitOfWork.SaveChangesAsync();
+
+                // Invalidate cache
+                _cache.Remove(SITE_CLOSURE_CACHE_KEY);
 
                 _logger.LogCritical("Site closed by {ClosedBy}. Reason: {Reason}. Scheduled reopen: {ScheduledReopen}",
                     closedBy, reason, scheduledReopen);
@@ -135,6 +143,9 @@ namespace Kokomija.Services
 
                 await _unitOfWork.SaveChangesAsync();
 
+                // Invalidate cache
+                _cache.Remove(SITE_CLOSURE_CACHE_KEY);
+
                 _logger.LogInformation("Site reopened by {ReopenedBy} via {Method}. Was closed for {Days} days",
                     reopenedBy, method, closure.DaysClosed);
 
@@ -155,10 +166,26 @@ namespace Kokomija.Services
         /// </summary>
         public async Task<bool> IsSiteClosedAsync()
         {
+            // Check cache first to avoid hitting DB on every request
+            if (_cache.TryGetValue(SITE_CLOSURE_CACHE_KEY, out bool isClosed))
+            {
+                return isClosed;
+            }
+
+            // Cache miss - query database
             var allSettings = await _unitOfWork.SiteSettings.GetAllAsync();
             var setting = allSettings.FirstOrDefault(s => s.Key == "SiteClosureEnabled");
 
-            return setting != null && setting.Value.Equals("true", StringComparison.OrdinalIgnoreCase);
+            isClosed = setting != null && setting.Value.Equals("true", StringComparison.OrdinalIgnoreCase);
+
+            // Cache for 1 minute with sliding expiration
+            _cache.Set(SITE_CLOSURE_CACHE_KEY, isClosed, new MemoryCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(1),
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+            });
+
+            return isClosed;
         }
 
         /// <summary>

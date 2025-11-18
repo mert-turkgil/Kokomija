@@ -9,39 +9,51 @@
 
 <div class="products-page">
     <div class="container py-4">
-        <!-- Page Header -->
+        <!-- Breadcrumb Navigation & Item Count -->
         <div class="products-header mb-4">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h1 class="products-title">
-                        @if (ViewBag.Category != null)
-                        {
-                            @ViewBag.Category.Name
-                        }
-                        else if (ViewBag.SearchQuery != null)
-                        {
-                            <span>@L["Products_SearchResults"]: "@ViewBag.SearchQuery"</span>
-                        }
-                        else
-                        {
-                            <span>@L["Products_AllProducts"]</span>
-                        }
-                    </h1>
-                    <p class="products-count">@Model.Count() @L["Products_ItemsFound_Plural"]</p>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
+                            @if (ViewBag.Category != null)
+                            {
+                                var category = ViewBag.Category as Kokomija.Entity.Category;
+                                if (category?.ParentCategory != null)
+                                {
+                                    <li class="breadcrumb-item">
+                                        <a asp-controller="Product" asp-action="Category" asp-route-slug="@category.ParentCategory.Slug">
+                                            @(!string.IsNullOrEmpty(category.ParentCategory.NameKey) ? L[category.ParentCategory.NameKey] : category.ParentCategory.Name)
+                                        </a>
+                                    </li>
+                                }
+                                <li class="breadcrumb-item active" aria-current="page">@category?.Name</li>
+                            }
+                            else if (ViewBag.SearchQuery != null)
+                            {
+                                <li class="breadcrumb-item active" aria-current="page">@L["Products_SearchResults"]</li>
+                            }
+                            else
+                            {
+                                <li class="breadcrumb-item active" aria-current="page">@L["Products_AllProducts"]</li>
+                            }
+                        </ol>
+                    </nav>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <button class="btn btn-outline-primary" id="filterToggle">
-                        <i class="bi bi-funnel me-2"></i>@L["Products_Filters"]
-                    </button>
-                    <div class="btn-group ms-2" role="group">
-                        <button type="button" class="btn btn-outline-secondary active" id="gridView">
-                            <i class="bi bi-grid-3x3-gap"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" id="listView">
-                            <i class="bi bi-list"></i>
-                        </button>
-                    </div>
+                    <p class="products-count mb-0">
+                        <strong>@Model.Count()</strong> @L["Products_ItemsFound_Plural"]
+                    </p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Filter Toggle Button -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <button class="btn btn-outline-primary" id="filterToggle">
+                    <i class="bi bi-funnel me-2"></i>@L["Products_Filters"]
+                </button>
             </div>
         </div>
 
@@ -56,9 +68,11 @@
 
                     <!-- Categories Filter -->
                     <div class="filter-section">
-                        <h6 class="filter-title">
-                            <i class="bi bi-tag me-2"></i>@L["Products_Categories"]
-                        </h6>
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-tag me-2"></i>@L["Products_Categories"]
+                            </h6>
+                        </div>
                         <div id="categoryFilters" class="filter-options">
                             <!-- Will be populated dynamically -->
                         </div>
@@ -66,9 +80,11 @@
 
                     <!-- Price Range Filter -->
                     <div class="filter-section">
-                        <h6 class="filter-title">
-                            <i class="bi bi-currency-dollar me-2"></i>@L["Products_PriceRange"]
-                        </h6>
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-currency-dollar me-2"></i>@L["Products_PriceRange"]
+                            </h6>
+                        </div>
                         <div class="price-filter">
                             <div class="row g-2">
                                 <div class="col-6">
@@ -84,9 +100,11 @@
 
                     <!-- Colors Filter -->
                     <div class="filter-section">
-                        <h6 class="filter-title">
-                            <i class="bi bi-palette me-2"></i>@L["Products_Colors"]
-                        </h6>
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-palette me-2"></i>@L["Products_Colors"]
+                            </h6>
+                        </div>
                         <div id="colorFilters" class="filter-options color-options">
                             <!-- Will be populated dynamically -->
                         </div>
@@ -94,9 +112,11 @@
 
                     <!-- Sizes Filter -->
                     <div class="filter-section">
-                        <h6 class="filter-title">
-                            <i class="bi bi-rulers me-2"></i>@L["Products_Sizes"]
-                        </h6>
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-rulers me-2"></i>@L["Products_Sizes"]
+                            </h6>
+                        </div>
                         <div id="sizeFilters" class="filter-options size-options">
                             <!-- Will be populated dynamically -->
                         </div>
@@ -104,9 +124,11 @@
 
                     <!-- Sort Options -->
                     <div class="filter-section">
-                        <h6 class="filter-title">
-                            <i class="bi bi-sort-down me-2"></i>@L["Products_SortBy"]
-                        </h6>
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-sort-down me-2"></i>@L["Products_SortBy"]
+                            </h6>
+                        </div>
                         <select class="form-select form-select-sm" id="sortBy">
                             <option value="newest">@L["Products_Sort_Newest"]</option>
                             <option value="price-asc">@L["Products_Sort_PriceAsc"]</option>
@@ -192,25 +214,6 @@
                 $('.products-page').removeClass('filter-open');
             }
 
-            // View toggle with smooth transition
-            $('#gridView').click(function() {
-                $('#productsGrid').removeClass('list-view').addClass('grid-view');
-                $(this).addClass('active').siblings().removeClass('active');
-                localStorage.setItem('productView', 'grid');
-            });
-
-            $('#listView').click(function() {
-                $('#productsGrid').removeClass('grid-view').addClass('list-view');
-                $(this).addClass('active').siblings().removeClass('active');
-                localStorage.setItem('productView', 'list');
-            });
-
-            // Restore view preference
-            const savedView = localStorage.getItem('productView') || 'grid';
-            if (savedView === 'list') {
-                $('#listView').click();
-            }
-
             // Filter logic with debouncing
             let filterTimeout;
             function triggerFilter() {
@@ -271,7 +274,7 @@
 
                 // Update count with animation
                 $('.products-count').fadeOut(200, function() {
-                    $(this).text(visibleCount + ' @L["Products_ItemsFound_Plural"]').fadeIn(200);
+                    $(this).html('<strong>' + visibleCount + '</strong> @L["Products_ItemsFound_Plural"]').fadeIn(200);
                 });
 
                 // Show/hide no products message
@@ -332,8 +335,8 @@
                 });
             }
 
-            // Event listeners
-            $(document).on('change', 'input[name="category"], input[name="color"], #sortBy', triggerFilter);
+            // Event listeners (excluding category - handled by attachCategoryHandlers)
+            $(document).on('change', 'input[name="color"], #sortBy', triggerFilter);
             $('#applyPriceFilter').click(applyFilters);
             $('#minPrice, #maxPrice').on('keyup', function(e) {
                 if (e.keyCode === 13) { // Enter key
@@ -349,7 +352,7 @@
 
             // Clear filters
             $('#clearFilters, #resetFiltersBtn').click(function() {
-                $('input[type="checkbox"]').prop('checked', false);
+                $('input[type="checkbox"]').prop('checked', false).prop('indeterminate', false);
                 $('.size-btn').removeClass('active');
                 $('#minPrice, #maxPrice').val('');
                 $('#sortBy').val('newest');
@@ -362,7 +365,7 @@
                 filterState.sortBy = 'newest';
 
                 $('#productsGrid > div').fadeIn(300);
-                $('.products-count').text($('#productsGrid > div').length + ' @L["Products_ItemsFound_Plural"]');
+                $('.products-count').html('<strong>' + $('#productsGrid > div').length + '</strong> @L["Products_ItemsFound_Plural"]');
                 $('.no-products-filter').fadeOut(300, function() { $(this).remove(); });
                 
                 // Scroll to top
@@ -380,39 +383,89 @@
                             return;
                         }
 
-                        // Group categories by parent
-                        const grouped = {};
-                        data.forEach(cat => {
-                            const parent = cat.parentName || 'Other';
-                            if (!grouped[parent]) {
-                                grouped[parent] = [];
-                            }
-                            grouped[parent].push(cat);
-                        });
+                        // Separate parent categories and subcategories
+                        const parents = data.filter(cat => cat.isParent);
+                        const children = data.filter(cat => !cat.isParent);
 
                         let html = '';
-                        Object.keys(grouped).sort().forEach(parentName => {
+                        
+                        // Loop through parent categories
+                        parents.forEach(parent => {
+                            const subcategories = children.filter(child => child.parentId === parent.id);
+                            
                             html += `<div class="category-group mb-3">`;
-                            html += `<div class="category-group-title">${parentName}</div>`;
-                            grouped[parentName].forEach(cat => {
-                                html += `
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="category" value="${cat.id}" id="cat${cat.id}">
-                                        <label class="form-check-label" for="cat${cat.id}">
-                                            ${cat.name}
-                                        </label>
-                                    </div>
-                                `;
-                            });
+                            
+                            // Parent category with checkbox
+                            html += `
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input parent-category" type="checkbox" name="category" value="${parent.id}" id="cat${parent.id}" data-parent-id="${parent.id}">
+                                    <label class="form-check-label fw-bold" for="cat${parent.id}">
+                                        ${parent.name}
+                                    </label>
+                                </div>
+                            `;
+                            
+                            // Subcategories indented
+                            if (subcategories.length > 0) {
+                                html += `<div class="ps-3 child-categories" data-parent="${parent.id}">`;
+                                subcategories.forEach(cat => {
+                                    html += `
+                                        <div class="form-check">
+                                            <input class="form-check-input child-category" type="checkbox" name="category" value="${cat.id}" id="cat${cat.id}" data-parent-id="${parent.id}">
+                                            <label class="form-check-label" for="cat${cat.id}">
+                                                ${cat.name}
+                                            </label>
+                                        </div>
+                                    `;
+                                });
+                                html += `</div>`;
+                            }
+                            
                             html += `</div>`;
                         });
                         
                         $('#categoryFilters').html(html);
+                        
+                        // Attach event handlers after DOM is updated
+                        attachCategoryHandlers();
                     })
                     .fail(function(xhr, status, error) {
                         console.error('Failed to load categories:', error);
                         $('#categoryFilters').html('<p class="text-danger small">Failed to load categories</p>');
                     });
+            }
+
+            // Parent/child category checkbox logic
+            function attachCategoryHandlers() {
+                // When parent category is checked/unchecked, toggle all children
+                $(document).on('change', '.parent-category', function() {
+                    const parentId = $(this).data('parent-id');
+                    const isChecked = $(this).prop('checked');
+                    
+                    // Check/uncheck all child categories
+                    $(`.child-category[data-parent-id="${parentId}"]`).prop('checked', isChecked);
+                    
+                    // Trigger filter
+                    triggerFilter();
+                });
+                
+                // When child category changes, update parent state
+                $(document).on('change', '.child-category', function() {
+                    const parentId = $(this).data('parent-id');
+                    const $parent = $(`.parent-category[data-parent-id="${parentId}"]`);
+                    const $siblings = $(`.child-category[data-parent-id="${parentId}"]`);
+                    
+                    // Check if all children are checked
+                    const allChecked = $siblings.length === $siblings.filter(':checked').length;
+                    const someChecked = $siblings.filter(':checked').length > 0;
+                    
+                    // Update parent checkbox state
+                    $parent.prop('checked', allChecked);
+                    $parent.prop('indeterminate', !allChecked && someChecked);
+                    
+                    // Trigger filter
+                    triggerFilter();
+                });
             }
 
             // Load colors with visual swatches

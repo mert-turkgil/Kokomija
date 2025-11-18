@@ -177,6 +177,101 @@
           box-shadow: 0 4px 15px rgba($primary, 0.3);
         }
       }
+
+      // Dynamic thumbnail sizes based on image count
+      &.thumbnail-small {
+        // 4 or fewer images - larger thumbnails
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 1rem;
+      }
+
+      &.thumbnail-medium {
+        // 5-6 images - medium thumbnails
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 0.875rem;
+      }
+
+      &.thumbnail-compact {
+        // 7+ images - compact thumbnails
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 0.625rem;
+      }
+    }
+
+    // Single Image Container (for products with only one image)
+    .single-image-container {
+      position: relative;
+      background: $white;
+      border-radius: $border-radius-xl;
+      overflow: hidden;
+      box-shadow: $box-shadow-lg;
+      margin-bottom: 1.5rem;
+      aspect-ratio: 4/5;
+      cursor: zoom-in;
+
+      .single-product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: scale(1.05);
+        }
+
+        &.logo-fallback {
+          object-fit: contain;
+          padding: 2rem;
+          background: linear-gradient(135deg, rgba($primary, 0.05) 0%, rgba($secondary, 0.05) 100%);
+          
+          &:hover {
+            transform: scale(1.02);
+          }
+        }
+      }
+
+      // Click to enlarge hint
+      &::after {
+        content: '\f00e'; // Font Awesome search-plus icon
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        background: rgba($white, 0.95);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $primary;
+        font-size: 1rem;
+        opacity: 0;
+        transition: $transition-base;
+        box-shadow: $box-shadow;
+      }
+
+      &:hover::after {
+        opacity: 1;
+      }
+    }
+
+    // Image Counter (for multiple images)
+    .image-counter {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba($dark, 0.85);
+      color: $white;
+      padding: 0.5rem 1rem;
+      border-radius: $border-radius-pill;
+      font-size: 0.875rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      box-shadow: $box-shadow;
+      z-index: 5;
+      pointer-events: none;
     }
   }
 
@@ -774,6 +869,39 @@
         &.active {
           border-color: $primary-dark;
           box-shadow: 0 4px 15px rgba($primary-dark, 0.3);
+        }
+      }
+
+      // Single image container dark theme
+      .single-image-container {
+        background: $dark-surface;
+
+        &::after {
+          background: rgba($dark-surface, 0.95);
+          color: $primary-dark;
+        }
+      }
+
+      // Image counter dark theme
+      .image-counter {
+        background: rgba($dark-surface, 0.9);
+        color: $dark-text;
+      }
+
+      // Image navigation arrows dark theme
+      .image-nav {
+        background: rgba($dark-surface, 0.95);
+
+        i {
+          color: $primary-dark;
+        }
+
+        &:hover {
+          background: $primary-dark;
+
+          i {
+            color: $white;
+          }
         }
       }
     }
@@ -1462,6 +1590,43 @@
       p {
         color: $dark-text-muted;
       }
+    }
+  }
+
+  // ViewerJS Dark Theme Overrides
+  .viewer-backdrop {
+    background-color: rgba(0, 0, 0, 0.95) !important;
+  }
+
+  .viewer-container {
+    background-color: transparent !important;
+  }
+
+  .viewer-toolbar {
+    background-color: rgba($dark-surface, 0.95) !important;
+
+    > li > button {
+      background-color: transparent !important;
+      color: $dark-text !important;
+
+      &:hover {
+        background-color: rgba($primary-dark, 0.2) !important;
+        color: $primary-dark !important;
+      }
+    }
+  }
+
+  .viewer-title {
+    color: $dark-text !important;
+  }
+
+  .viewer-button {
+    background-color: rgba($dark-surface, 0.8) !important;
+    color: $dark-text !important;
+
+    &:hover {
+      background-color: rgba($primary-dark, 0.9) !important;
+      color: $white !important;
     }
   }
 }

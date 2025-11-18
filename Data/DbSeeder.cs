@@ -662,6 +662,9 @@ namespace Kokomija.Data
                     Price = 49.75m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
                     StripePriceId = string.Empty,
+                    StripeTaxCode = "txcd_30011000", // Clothing - Apparel
+                    PackSize = 5,
+                    ProductGroupId = 1, // Women's Briefs Pack Collection
                     CategoryId = 1, // Damskie
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -678,6 +681,9 @@ namespace Kokomija.Data
                     Price = 59.70m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
                     StripePriceId = string.Empty,
+                    StripeTaxCode = "txcd_30011000", // Clothing - Apparel
+                    PackSize = 6,
+                    ProductGroupId = 1, // Women's Briefs Pack Collection
                     CategoryId = 1, // Damskie
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -694,6 +700,9 @@ namespace Kokomija.Data
                     Price = 79.60m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
                     StripePriceId = string.Empty,
+                    StripeTaxCode = "txcd_30011000", // Clothing - Apparel
+                    PackSize = 8,
+                    ProductGroupId = 1, // Women's Briefs Pack Collection
                     CategoryId = 1, // Damskie
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -897,6 +906,21 @@ namespace Kokomija.Data
                     IsActive = true,
                     Location = "home",
                     StartDate = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
+        }
+
+        public static void SeedProductGroups(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ProductGroup>().HasData(
+                new ProductGroup
+                {
+                    Id = 1,
+                    Name = "Women's Cotton Briefs Pack Collection",
+                    NameKey = "ProductGroup_WomenBriefs_Name",
+                    Description = "High-quality women's cotton briefs in various pack sizes",
+                    DescriptionKey = "ProductGroup_WomenBriefs_Description",
                     CreatedAt = DateTime.UtcNow
                 }
             );

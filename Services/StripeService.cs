@@ -88,6 +88,7 @@ namespace Kokomija.Services
                 Name = product.Name,
                 Description = product.Description,
                 Active = product.IsActive,
+                TaxCode = product.StripeTaxCode ?? "txcd_99999999", // Default: General tangible goods
                 Metadata = new Dictionary<string, string>
                 {
                     { "product_id", product.Id.ToString() },
@@ -105,6 +106,7 @@ namespace Kokomija.Services
                 Product = stripeProductId,
                 UnitAmount = (long)(amount * 100), // Convert to cents
                 Currency = currency,
+                TaxBehavior = "exclusive", // Tax is added on top of price (23% VAT)
             };
 
             return await _priceService.CreateAsync(options);
@@ -117,6 +119,7 @@ namespace Kokomija.Services
                 Name = product.Name,
                 Description = product.Description,
                 Active = product.IsActive,
+                TaxCode = product.StripeTaxCode ?? "txcd_99999999", // Default: General tangible goods
                 Metadata = new Dictionary<string, string>
                 {
                     { "product_id", product.Id.ToString() },
@@ -134,6 +137,7 @@ namespace Kokomija.Services
                 Product = variant.Product.StripeProductId,
                 UnitAmount = (long)(variant.Price * 100), // Convert to cents
                 Currency = currency,
+                TaxBehavior = "exclusive", // Tax is added on top of price (23% VAT)
                 Metadata = new Dictionary<string, string>
                 {
                     { "variant_id", variant.Id.ToString() },
@@ -293,11 +297,8 @@ namespace Kokomija.Services
                 // Metadata
                 Metadata = metadata ?? new Dictionary<string, string>(),
 
-                // Automatic tax calculation (FREE tier - basic tax)
-                AutomaticTax = new Stripe.Checkout.SessionAutomaticTaxOptions
-                {
-                    Enabled = true // Stripe handles EU VAT automatically
-                },
+                // Automatic tax calculation disabled (requires Stripe Tax subscription)
+                // Tax is calculated in the application and included in line item prices
 
                 // Allow promotion codes
                 AllowPromotionCodes = true,

@@ -21,6 +21,7 @@ namespace Kokomija.Data
         }
 
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductGroup> ProductGroups { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Color> Colors { get; set; }
         public DbSet<Size> Sizes { get; set; }
@@ -43,6 +44,9 @@ namespace Kokomija.Data
         public DbSet<AdminEarnings> AdminEarnings { get; set; }
         public DbSet<CarouselSlide> CarouselSlides { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<WishlistNotification> WishlistNotifications { get; set; }
+        public DbSet<NewsletterSubscription> NewsletterSubscriptions { get; set; }
+        public DbSet<ProductPriceHistory> ProductPriceHistories { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<ProductReview> ProductReviews { get; set; }
 
@@ -53,6 +57,7 @@ namespace Kokomija.Data
             // Apply all configurations from separate files
             modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductGroupConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new ColorConfiguration());
             modelBuilder.ApplyConfiguration(new SizeConfiguration());
@@ -75,6 +80,9 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new AdminEarningsConfiguration());
             modelBuilder.ApplyConfiguration(new CarouselSlideConfiguration());
             modelBuilder.ApplyConfiguration(new ProductReviewConfiguration());
+            modelBuilder.ApplyConfiguration(new NewsletterSubscriptionConfiguration());
+            modelBuilder.ApplyConfiguration(new WishlistNotificationConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductPriceHistoryConfiguration());
 
             // Seed initial data
             modelBuilder.SeedSizes();
@@ -86,6 +94,7 @@ namespace Kokomija.Data
             // modelBuilder.SeedBlogs(); // Uncomment after running IdentitySeeder
             modelBuilder.SeedAdminSettings();
             modelBuilder.SeedCoupons();
+            modelBuilder.SeedProductGroups(); // Seed product groups before products
             modelBuilder.SeedProducts();
             modelBuilder.SeedProductImages();
             modelBuilder.SeedProductVariants();

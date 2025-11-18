@@ -89,6 +89,9 @@ namespace Kokomija.Controllers
 
                 _logger.LogInformation("User {Email} logged in.", model.Email);
 
+                // Store user ID for guest cart merge (will be handled by JavaScript on client side)
+                HttpContext.Session.SetString("JustLoggedIn", "true");
+
                 // Check if user is admin and redirect accordingly
                 var roles = await _userManager.GetRolesAsync(user);
                 if (roles.Contains("Admin"))
@@ -183,7 +186,7 @@ namespace Kokomija.Controllers
                     var stripeCustomerId = await _stripeCustomerService.CreateCustomerAsync(user);
                     user.StripeCustomerId = stripeCustomerId;
                     await _userManager.UpdateAsync(user);
-                    _logger.LogInformation("Stripe customer {StripeCustomerId} created for user {UserId}", stripeCustomerId, user.Id);
+                    _logger.LogInformation("Stripe customer {StripeCustomerId} created/updated for user {UserId}", stripeCustomerId, user.Id);
                 }
                 catch (Exception ex)
                 {
@@ -367,6 +370,16 @@ namespace Kokomija.Controllers
             // Calculate VIP tier based on total spending
             var vipStatus = CalculateVIPStatus(totalSpent, totalOrders);
 
+            // Update user's VIP role to match current tier
+            await UpdateUserVIPRoleAsync(user, vipStatus.TierName);
+
+            // Update user's VIP tier in database if changed
+            if (user.VipTier != vipStatus.TierName)
+            {
+                user.VipTier = vipStatus.TierName;
+                await _userManager.UpdateAsync(user);
+            }
+
             // Map orders to view models
             var orderViewModels = recentOrders.Select(o => new Models.ViewModels.Account.OrderViewModel
             {
@@ -376,6 +389,9 @@ namespace Kokomija.Controllers
                 TotalAmount = o.TotalAmount,
                 OrderStatus = o.OrderStatus,
                 PaymentStatus = o.PaymentStatus,
+                Currency = o.Currency,
+                SessionStatus = o.SessionStatus,
+                CustomerCountry = o.CustomerCountry,
                 ItemCount = o.OrderItems?.Count ?? 0,
                 CanCancel = o.OrderStatus == "Pending" || o.OrderStatus == "Processing",
                 CanReturn = o.OrderStatus == "Delivered" && o.DeliveredAt.HasValue && (DateTime.UtcNow - o.DeliveredAt.Value).TotalDays <= 30,
@@ -427,13 +443,14 @@ namespace Kokomija.Controllers
             bool hasEarlyAccess;
             bool hasBirthdayGift;
 
-            // VIP Tiers: Bronze (0-500), Silver (500-1500), Gold (1500-5000), Platinum (5000+)
+            // VIP Tiers matching database: Bronze (2%), Silver (5%), Gold (8%), Platinum (12%)
+            // Thresholds: Bronze (0), Silver (500), Gold (1500), Platinum (5000)
             if (totalSpent >= 5000)
             {
                 tierName = "Platinum";
                 tierLevel = 4;
                 nextTierThreshold = 0; // Max tier
-                discountPercentage = 20;
+                discountPercentage = 12;
                 hasFreeShipping = true;
                 hasEarlyAccess = true;
                 hasBirthdayGift = true;
@@ -443,7 +460,7 @@ namespace Kokomija.Controllers
                 tierName = "Gold";
                 tierLevel = 3;
                 nextTierThreshold = 5000;
-                discountPercentage = 15;
+                discountPercentage = 8;
                 hasFreeShipping = true;
                 hasEarlyAccess = true;
                 hasBirthdayGift = true;
@@ -453,17 +470,28 @@ namespace Kokomija.Controllers
                 tierName = "Silver";
                 tierLevel = 2;
                 nextTierThreshold = 1500;
-                discountPercentage = 10;
+                discountPercentage = 5;
                 hasFreeShipping = true;
                 hasEarlyAccess = false;
                 hasBirthdayGift = true;
             }
-            else
+            else if (totalSpent > 0)
             {
                 tierName = "Bronze";
                 tierLevel = 1;
                 nextTierThreshold = 500;
-                discountPercentage = 5;
+                discountPercentage = 2;
+                hasFreeShipping = false;
+                hasEarlyAccess = false;
+                hasBirthdayGift = false;
+            }
+            else
+            {
+                // Not a VIP member yet
+                tierName = "None";
+                tierLevel = 0;
+                nextTierThreshold = 500; // To reach Bronze
+                discountPercentage = 0;
                 hasFreeShipping = false;
                 hasEarlyAccess = false;
                 hasBirthdayGift = false;
@@ -475,12 +503,12 @@ namespace Kokomija.Controllers
 
             var benefits = new List<Models.ViewModels.Account.VIPBenefitViewModel>
             {
-                new() { Icon = "fas fa-percent", Title = $"{discountPercentage}% Discount", Description = "On all products", IsUnlocked = true },
-                new() { Icon = "fas fa-shipping-fast", Title = "Free Shipping", Description = "On all orders", IsUnlocked = hasFreeShipping },
-                new() { Icon = "fas fa-clock", Title = "Early Access", Description = "New collections", IsUnlocked = hasEarlyAccess },
-                new() { Icon = "fas fa-gift", Title = "Birthday Gift", Description = "Special surprise", IsUnlocked = hasBirthdayGift },
-                new() { Icon = "fas fa-undo", Title = "Extended Returns", Description = "60 days return window", IsUnlocked = tierLevel >= 3 },
-                new() { Icon = "fas fa-headset", Title = "Priority Support", Description = "24/7 dedicated support", IsUnlocked = tierLevel >= 4 }
+                new() { Icon = "percent", Title = $"{discountPercentage}% Discount", Description = "On all products", IsUnlocked = tierLevel >= 1 },
+                new() { Icon = "truck", Title = "Free Shipping", Description = "On all orders", IsUnlocked = hasFreeShipping },
+                new() { Icon = "clock", Title = "Early Access", Description = "New collections", IsUnlocked = hasEarlyAccess },
+                new() { Icon = "gift", Title = "Birthday Gift", Description = "Special surprise", IsUnlocked = hasBirthdayGift },
+                new() { Icon = "arrow-repeat", Title = "Extended Returns", Description = "60 days return window", IsUnlocked = tierLevel >= 3 },
+                new() { Icon = "headset", Title = "Priority Support", Description = "24/7 dedicated support", IsUnlocked = tierLevel >= 4 }
             };
 
             return new Models.ViewModels.Account.VIPStatusViewModel
@@ -497,6 +525,29 @@ namespace Kokomija.Controllers
                 AvailableCoupons = 0, // TODO: Implement coupon counting
                 Benefits = benefits
             };
+        }
+
+        private async Task UpdateUserVIPRoleAsync(ApplicationUser user, string tierName)
+        {
+            // Remove all existing VIP roles
+            var vipRoles = new[] { "VIPBronze", "VIPSilver", "VIPGold", "VIPPlatinum" };
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            var currentVipRoles = currentRoles.Where(r => vipRoles.Contains(r)).ToList();
+            
+            if (currentVipRoles.Any())
+            {
+                await _userManager.RemoveFromRolesAsync(user, currentVipRoles);
+            }
+
+            // Add new VIP role based on tier (skip if None)
+            if (tierName != "None")
+            {
+                var newRole = $"VIP{tierName}";
+                if (!await _userManager.IsInRoleAsync(user, newRole))
+                {
+                    await _userManager.AddToRoleAsync(user, newRole);
+                }
+            }
         }
 
         [HttpGet]
@@ -547,6 +598,279 @@ namespace Kokomija.Controllers
         {
             ViewData["ReturnUrl"] = returnUrl;
             return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(UpdateProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Invalid profile data";
+                return RedirectToAction("Index");
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.PhoneNumber = model.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User {UserId} updated profile", user.Id);
+                TempData["SuccessMessage"] = "Profile updated successfully";
+            }
+            else
+            {
+                _logger.LogError("Failed to update profile for user {UserId}", user.Id);
+                TempData["ErrorMessage"] = "Failed to update profile";
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (result.Succeeded)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+                _logger.LogInformation("User {UserId} changed password", user.Id);
+                TempData["SuccessMessage"] = "Password changed successfully";
+                return RedirectToAction("Index");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            try
+            {
+                // Delete user's cart items
+                var cartItems = await _unitOfWork.Carts.GetByUserIdAsync(user.Id);
+                foreach (var item in cartItems)
+                {
+                    _unitOfWork.Carts.Remove(item);
+                }
+
+                // Delete user's wishlist items
+                var wishlistItems = await _unitOfWork.Wishlists.GetByUserIdAsync(user.Id);
+                foreach (var item in wishlistItems)
+                {
+                    _unitOfWork.Wishlists.Remove(item);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+
+                // Sign out the user
+                await _signInManager.SignOutAsync();
+
+                // Delete the user account
+                var result = await _userManager.DeleteAsync(user);
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("User {UserId} deleted their account", user.Id);
+                    return Json(new { success = true, message = "Account deleted successfully", redirectUrl = "/" });
+                }
+                else
+                {
+                    _logger.LogError("Failed to delete account for user {UserId}: {Errors}", user.Id, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return Json(new { success = false, message = "Failed to delete account" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting account for user {UserId}", user.Id);
+                return Json(new { success = false, message = "An error occurred while deleting account" });
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> OrderDetails(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", new { returnUrl = $"/Account/OrderDetails/{id}" });
+            }
+
+            var order = await _unitOfWork.Orders.GetByIdAsync(id);
+            if (order == null || order.UserId != user.Id)
+            {
+                return NotFound();
+            }
+
+            var orderViewModel = new Models.ViewModels.Account.OrderViewModel
+            {
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
+                OrderDate = order.CreatedAt,
+                TotalAmount = order.TotalAmount,
+                OrderStatus = order.OrderStatus,
+                PaymentStatus = order.PaymentStatus,
+                Currency = order.Currency,
+                SessionStatus = order.SessionStatus,
+                CustomerCountry = order.CustomerCountry,
+                ItemCount = order.OrderItems?.Count ?? 0,
+                CanCancel = order.OrderStatus == "Pending" || order.OrderStatus == "Processing",
+                CanReturn = order.OrderStatus == "Delivered" && order.DeliveredAt.HasValue && (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays <= 30,
+                Items = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
+                {
+                    Id = oi.Id,
+                    ProductId = oi.ProductVariant?.ProductId ?? 0,
+                    ProductName = oi.ProductName,
+                    ProductImage = oi.ProductVariant?.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                    ColorName = oi.ProductVariant?.Color?.Name ?? oi.Color,
+                    SizeName = oi.ProductVariant?.Size?.Name ?? oi.Size,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    TotalPrice = oi.TotalPrice
+                }) ?? Enumerable.Empty<Models.ViewModels.Account.OrderItemViewModel>()
+            };
+
+            return View(orderViewModel);
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ReturnRequest(int orderId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", new { returnUrl = $"/Account/ReturnRequest?orderId={orderId}" });
+            }
+
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
+            if (order == null || order.UserId != user.Id)
+            {
+                return NotFound();
+            }
+
+            // Check if order is eligible for return (delivered within 30 days)
+            if (order.OrderStatus != "Delivered" || !order.DeliveredAt.HasValue || (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays > 30)
+            {
+                TempData["ErrorMessage"] = "This order is not eligible for return";
+                return RedirectToAction("Index");
+            }
+
+            var model = new ReturnRequestViewModel
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                OrderItems = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
+                {
+                    Id = oi.Id,
+                    ProductId = oi.ProductVariant?.ProductId ?? 0,
+                    ProductName = oi.ProductName,
+                    ProductImage = oi.ProductVariant?.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                    ColorName = oi.ProductVariant?.Color?.Name ?? oi.Color,
+                    SizeName = oi.ProductVariant?.Size?.Name ?? oi.Size,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    TotalPrice = oi.TotalPrice
+                }) ?? Enumerable.Empty<Models.ViewModels.Account.OrderItemViewModel>()
+            };
+
+            return View(model);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReturnRequest(ReturnRequestViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var order = await _unitOfWork.Orders.GetByIdAsync(model.OrderId);
+                if (order != null)
+                {
+                    model.OrderNumber = order.OrderNumber;
+                    model.OrderItems = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
+                    {
+                        Id = oi.Id,
+                        ProductId = oi.ProductVariant?.ProductId ?? 0,
+                        ProductName = oi.ProductName,
+                        ProductImage = oi.ProductVariant?.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                        ColorName = oi.ProductVariant?.Color?.Name ?? oi.Color,
+                        SizeName = oi.ProductVariant?.Size?.Name ?? oi.Size,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice
+                    }) ?? Enumerable.Empty<Models.ViewModels.Account.OrderItemViewModel>();
+                }
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var orderToReturn = await _unitOfWork.Orders.GetByIdAsync(model.OrderId);
+            if (orderToReturn == null || orderToReturn.UserId != user.Id)
+            {
+                TempData["ErrorMessage"] = "Order not found";
+                return RedirectToAction("Index");
+            }
+
+            // TODO: Create a ReturnRequest entity and save to database
+            // For now, just log the request
+            _logger.LogInformation("Return request submitted by user {UserId} for order {OrderNumber}. Reason: {Reason}", 
+                user.Id, orderToReturn.OrderNumber, model.Reason);
+
+            // Update order status to indicate return requested
+            orderToReturn.OrderStatus = "ReturnRequested";
+            _unitOfWork.Orders.Update(orderToReturn);
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Return request submitted successfully. We will contact you shortly.";
+            return RedirectToAction("Index");
         }
 
         #endregion
@@ -662,7 +986,7 @@ namespace Kokomija.Controllers
                             user.StripeCustomerId = stripeCustomerId;
                             await _unitOfWork.SaveChangesAsync();
                             
-                            _logger.LogInformation("Stripe customer created for external login user: {CustomerId}", stripeCustomerId);
+                            _logger.LogInformation("Stripe customer created/updated for external login user: {CustomerId}", stripeCustomerId);
                         }
                         catch (Exception ex)
                         {

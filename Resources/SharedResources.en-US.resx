@@ -1702,6 +1702,56 @@
   <data name="Product_WomenBriefs8Pack_Description" xml:space="preserve">
     <value>High-quality women's cotton briefs in a set of 8. Comfortable, breathable, and durable. Best value choice! Available in various colors and sizes.</value>
   </data>
+  <data name="Currency_PLN" xml:space="preserve">
+    <value>PLN</value>
+  </data>
+  <data name="Currency_EUR" xml:space="preserve">
+    <value>€</value>
+  </data>
+  <data name="Currency_USD" xml:space="preserve">
+    <value>$</value>
+  </data>
+  <data name="Session_Complete" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="Session_Cancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="Session_Expired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="Account_Currency" xml:space="preserve">
+    <value>Currency</value>
+  </data>
+  <data name="Account_SessionStatus" xml:space="preserve">
+    <value>Session Status</value>
+  </data>
+  <data name="Account_Country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="Product_PackQuantity" xml:space="preserve">
+    <value>Pack Quantity</value>
+  </data>
+  <data name="Product_ItemsPerPack" xml:space="preserve">
+    <value>items per pack</value>
+  </data>
+  <data name="Product_TotalItems" xml:space="preserve">
+    <value>Total Items</value>
+  </data>
+  <data name="Checkout_PackInfo" xml:space="preserve">
+    <value>Pack Information</value>
+  </data>
+  <data name="ProductGroup_WomenBriefs_Name" xml:space="preserve">
+    <value>Women's Cotton Briefs Pack Collection</value>
+  </data>
+  <data name="ProductGroup_WomenBriefs_Description" xml:space="preserve">
+    <value>High-quality cotton women's briefs available in packs of 5, 6, and 8 pieces. Comfortable, breathable, and durable. Choose the pack size that works best for you.</value>
+  </data>
+  <data name="Product_ClickToEnlarge" xml:space="preserve">
+    <value>Click to Enlarge</value>
+  </data>
 </root>
+
+
 
 

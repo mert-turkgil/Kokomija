@@ -1,4 +1,5 @@
 using Kokomija.Data.Abstract;
+using Kokomija.Data;
 using Kokomija.Entity;
 using Kokomija.Models.ViewModels.Checkout;
 using Kokomija.Services;
@@ -6,20 +7,33 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Stripe.Checkout;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kokomija.Controllers
 {
     public class CheckoutController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IStripeService _stripeService;
         private readonly ILocalizationService _localizationService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<CheckoutController> _logger;
 
+        private readonly Dictionary<string, string> _currencyMap = new Dictionary<string, string>
+        {
+            { "PL", "pln" }, // Poland
+            { "AT", "eur" }, { "BE", "eur" }, { "HR", "eur" }, { "CY", "eur" },
+            { "EE", "eur" }, { "FI", "eur" }, { "FR", "eur" }, { "DE", "eur" },
+            { "GR", "eur" }, { "IE", "eur" }, { "IT", "eur" }, { "LV", "eur" },
+            { "LT", "eur" }, { "LU", "eur" }, { "MT", "eur" }, { "NL", "eur" },
+            { "PT", "eur" }, { "SK", "eur" }, { "SI", "eur" }, { "ES", "eur" }
+        };
+
         public CheckoutController(
             IUnitOfWork unitOfWork,
+            ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             IStripeService stripeService,
             ILocalizationService localizationService,
@@ -27,6 +41,7 @@ namespace Kokomija.Controllers
             ILogger<CheckoutController> logger)
         {
             _unitOfWork = unitOfWork;
+            _context = context;
             _userManager = userManager;
             _stripeService = stripeService;
             _localizationService = localizationService;
@@ -88,7 +103,7 @@ namespace Kokomija.Controllers
             List<Cart> cartItems;
             if (user != null)
             {
-                cartItems = (await _unitOfWork.Carts.GetAllAsync(c => c.UserId == user.Id)).ToList();
+                cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
             }
             else
             {
@@ -224,22 +239,75 @@ namespace Kokomija.Controllers
                 }
 
                 // Get cart items
-                var cartItems = (await _unitOfWork.Carts.GetAllAsync(c => c.UserId == user.Id)).ToList();
+                var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
                 if (!cartItems.Any())
                 {
                     return Json(new { success = false, message = _localizationService["Cart_Empty"] });
                 }
 
+                // Calculate VIP discount
+                var vipTier = user.VipTier ?? "None";
+                decimal vipDiscountPercentage = vipTier switch
+                {
+                    "Bronze" => 2m,
+                    "Silver" => 5m,
+                    "Gold" => 8m,
+                    "Platinum" => 12m,
+                    _ => 0m
+                };
+
+                // Get coupon discount
+                decimal couponDiscountPercentage = 0m;
+                var couponCode = HttpContext.Session.GetString("AppliedCouponCode");
+                if (!string.IsNullOrEmpty(couponCode))
+                {
+                    var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
+                    if (coupon != null && coupon.IsActive && coupon.DiscountType == "percentage")
+                    {
+                        couponDiscountPercentage = coupon.DiscountValue;
+                    }
+                }
+
+                // Total discount percentage (VIP + Coupon)
+                decimal totalDiscountPercentage = vipDiscountPercentage + couponDiscountPercentage;
+
+                _logger.LogInformation($"Checkout for user {user.Id}: VIP {vipDiscountPercentage}% + Coupon {couponDiscountPercentage}% = Total {totalDiscountPercentage}%");
+
                 // Build Stripe line items
                 var lineItems = new List<SessionLineItemOptions>();
+                var packSizeInfo = new List<string>();
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
                 foreach (var cartItem in cartItems)
                 {
                     var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
                     if (product == null) continue;
 
-                    // Find variant based on ProductId, SizeId, ColorId
-                    var variants = await _unitOfWork.ProductVariants.GetAllAsync(v =>
+                    var packSize = product.PackSize;
+                    var totalItems = packSize * cartItem.Quantity;
+                    packSizeInfo.Add($"{product.Name}|PackSize:{packSize}|Qty:{cartItem.Quantity}|Total:{totalItems}");
+
+                    // Get product image
+                    var firstImage = await _context.ProductImages
+                        .Where(pi => pi.ProductId == product.Id)
+                        .FirstOrDefaultAsync();
+                    
+                    string? imageUrl = null;
+                    if (firstImage != null && !string.IsNullOrEmpty(firstImage.ImageUrl))
+                    {
+                        if (baseUrl.StartsWith("https://") && !baseUrl.Contains("localhost") && !baseUrl.Contains("127.0.0.1"))
+                        {
+                            imageUrl = $"{baseUrl}/img/ProductImage/{firstImage.ImageUrl}";
+                        }
+                    }
+                    
+                    if (imageUrl == null && baseUrl.StartsWith("https://") && !baseUrl.Contains("localhost") && !baseUrl.Contains("127.0.0.1"))
+                    {
+                        imageUrl = $"{baseUrl}/img/logo_black.png";
+                    }
+
+                    // Find variant
+                    var variants = await _unitOfWork.ProductVariants.FindAsync(v =>
                         v.ProductId == cartItem.ProductId &&
                         v.SizeId == cartItem.SizeId &&
                         v.ColorId == cartItem.ColorId);
@@ -247,46 +315,63 @@ namespace Kokomija.Controllers
                     
                     if (variant == null) continue;
 
-                    // Use variant's Stripe Price ID
-                    if (!string.IsNullOrEmpty(variant.StripePriceId))
+                    // Apply discounts to the price
+                    decimal originalPrice = variant.Price;
+                    decimal discountedPrice = originalPrice * (1 - (totalDiscountPercentage / 100));
+                    
+                    // Convert to grosze (cents) for Stripe
+                    long priceInGrosze = (long)(discountedPrice * 100);
+
+                    _logger.LogInformation($"Product {product.Name}: Original {originalPrice} PLN, Discounted {discountedPrice} PLN ({totalDiscountPercentage}% off)");
+
+                    // Always use PriceData with PLN currency
+                    var lineItem = new SessionLineItemOptions
                     {
-                        lineItems.Add(new SessionLineItemOptions
+                        PriceData = new SessionLineItemPriceDataOptions
                         {
-                            Price = variant.StripePriceId,
-                            Quantity = cartItem.Quantity
-                        });
-                    }
-                    else
-                    {
-                        // Fallback: create price on the fly (not recommended for production)
-                        _logger.LogWarning($"Variant {variant.SKU} missing StripePriceId, using fallback");
-                        
-                        lineItems.Add(new SessionLineItemOptions
-                        {
-                            PriceData = new SessionLineItemPriceDataOptions
+                            Currency = "pln", // Always PLN
+                            UnitAmount = priceInGrosze,
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
-                                Currency = "pln",
-                                UnitAmount = (long)(variant.Price * 100),
-                                ProductData = new SessionLineItemPriceDataProductDataOptions
-                                {
-                                    Name = $"{product.Name} ({variant.SKU})",
-                                    Description = product.Description
-                                }
-                            },
-                            Quantity = cartItem.Quantity
-                        });
+                                Name = packSize > 1 
+                                    ? $"{product.Name} ({packSize} items per pack)"
+                                    : $"{product.Name} ({variant.SKU})",
+                                Description = packSize > 1 
+                                    ? $"{product.Description} - {packSize} items per pack, {totalItems} total items"
+                                    : product.Description
+                            }
+                        },
+                        Quantity = cartItem.Quantity
+                    };
+
+                    // Only add images if we have a valid public URL
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        lineItem.PriceData.ProductData.Images = new List<string> { imageUrl };
                     }
+
+                    lineItems.Add(lineItem);
                 }
+
+                // Detect user's country and currency
+                var country = DetectCountry();
+                var currency = "pln"; // Always use PLN
 
                 // Create metadata
                 var metadata = new Dictionary<string, string>
                 {
                     { "user_id", user.Id },
-                    { "cart_items_count", cartItems.Count.ToString() }
+                    { "cart_items_count", cartItems.Count.ToString() },
+                    { "currency", currency },
+                    { "country", country },
+                    { "pack_info", string.Join(";", packSizeInfo) },
+                    { "vip_tier", vipTier },
+                    { "vip_discount_percentage", vipDiscountPercentage.ToString("F2") },
+                    { "coupon_discount_percentage", couponDiscountPercentage.ToString("F2") },
+                    { "total_discount_percentage", totalDiscountPercentage.ToString("F2") }
                 };
 
                 // Add coupon if applied
-                var couponCode = HttpContext.Session.GetString("CouponCode");
                 if (!string.IsNullOrEmpty(couponCode))
                 {
                     metadata.Add("coupon_code", couponCode);
@@ -330,7 +415,11 @@ namespace Kokomija.Controllers
                     if (user != null)
                     {
                         // Create order from cart
-                        var cartItems = (await _unitOfWork.Carts.GetAllAsync(c => c.UserId == user.Id)).ToList();
+                        var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
+
+                        // Extract currency and country from session metadata
+                        var currency = session.Metadata?.ContainsKey("currency") == true ? session.Metadata["currency"] : "pln";
+                        var country = session.Metadata?.ContainsKey("country") == true ? session.Metadata["country"] : "PL";
 
                         var order = new Order
                         {
@@ -341,6 +430,9 @@ namespace Kokomija.Controllers
                             TaxAmount = (session.TotalDetails?.AmountTax ?? 0) / 100m,
                             OrderStatus = "processing",
                             PaymentStatus = "paid",
+                            Currency = currency,
+                            SessionStatus = "complete",
+                            CustomerCountry = country,
                             CustomerEmail = user.Email ?? string.Empty,
                             CustomerName = $"{user.FirstName} {user.LastName}",
                             CustomerPhone = user.PhoneNumber,
@@ -419,10 +511,110 @@ namespace Kokomija.Controllers
         }
 
         [HttpGet]
-        public IActionResult Cancel()
+        public async Task<IActionResult> Cancel(string session_id)
         {
+            // Track cancelled session
+            if (!string.IsNullOrEmpty(session_id))
+            {
+                try
+                {
+                    var session = await _stripeService.GetCheckoutSessionAsync(session_id);
+                    var user = await _userManager.GetUserAsync(User);
+                    
+                    if (user != null && session != null)
+                    {
+                        var currency = session.Metadata?.ContainsKey("currency") == true ? session.Metadata["currency"] : "pln";
+                        var country = session.Metadata?.ContainsKey("country") == true ? session.Metadata["country"] : "PL";
+
+                        // Create order record for cancelled session
+                        var order = new Order
+                        {
+                            UserId = user.Id,
+                            OrderNumber = GenerateOrderNumber(),
+                            TotalAmount = (session.AmountTotal ?? 0) / 100m,
+                            SubtotalAmount = (session.AmountSubtotal ?? 0) / 100m,
+                            OrderStatus = "cancelled",
+                            PaymentStatus = "cancelled",
+                            Currency = currency,
+                            SessionStatus = "cancelled",
+                            CustomerCountry = country,
+                            CustomerEmail = user.Email ?? string.Empty,
+                            CustomerName = $"{user.FirstName} {user.LastName}",
+                            StripeCheckoutSessionId = session.Id,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        await _unitOfWork.Orders.AddAsync(order);
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error tracking cancelled session");
+                }
+            }
+
             TempData["Info"] = _localizationService["Checkout_Cancelled"];
             return RedirectToAction("Index", "Cart");
+        }
+
+        private string DetectCountry()
+        {
+            // Try to get country from request headers (CloudFlare, AWS, etc.)
+            if (Request.Headers.ContainsKey("CF-IPCountry"))
+            {
+                return Request.Headers["CF-IPCountry"].ToString();
+            }
+            
+            // Try Accept-Language header as fallback
+            var languages = Request.Headers["Accept-Language"].ToString().Split(',');
+            if (languages.Length > 0)
+            {
+                var primaryLanguage = languages[0].Split(';')[0].Trim();
+                if (primaryLanguage.Contains("-"))
+                {
+                    var countryCode = primaryLanguage.Split('-')[1].ToUpper();
+                    return countryCode;
+                }
+            }
+            
+            // Default to Poland
+            return "PL";
+        }
+
+        private string DetectCurrency()
+        {
+            var country = DetectCountry();
+            
+            // Check if country uses specific currency
+            if (_currencyMap.ContainsKey(country))
+            {
+                return _currencyMap[country];
+            }
+            
+            // Default to PLN for Poland and unknown countries
+            return "pln";
+        }
+
+        private decimal ConvertCurrency(decimal amount, string fromCurrency, string toCurrency)
+        {
+            if (fromCurrency == toCurrency)
+                return amount;
+
+            // Simple conversion rates (in production, use real-time rates API)
+            var rates = new Dictionary<string, decimal>
+            {
+                { "pln", 1.0m },
+                { "eur", 0.22m }, // 1 PLN ≈ 0.22 EUR
+                { "usd", 0.24m }  // 1 PLN ≈ 0.24 USD
+            };
+
+            if (!rates.ContainsKey(fromCurrency.ToLower()) || !rates.ContainsKey(toCurrency.ToLower()))
+                return amount;
+
+            // Convert to base (PLN) then to target currency
+            var baseAmount = amount / rates[fromCurrency.ToLower()];
+            return baseAmount * rates[toCurrency.ToLower()];
         }
 
         private string GenerateOrderNumber()

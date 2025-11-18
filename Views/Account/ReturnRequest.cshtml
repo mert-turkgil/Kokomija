@@ -1,0 +1,109 @@
+@model Kokomija.Models.ViewModels.Account.ReturnRequestViewModel
+@inject Kokomija.Services.ILocalizationService Localizer
+
+@{
+    ViewData["Title"] = Localizer["Account_ReturnRequest_Title"];
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">@Localizer["Account_ReturnRequest_Title"]</h4>
+                    <small class="text-muted">@Localizer["Order_Number"]: #@Model.OrderNumber</small>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="ReturnRequest">
+                        <input type="hidden" asp-for="OrderId" />
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                        <div class="mb-4">
+                            <h5>@Localizer["Account_ReturnRequest_SelectItems"]</h5>
+                            <div class="list-group">
+                                @{
+                                    int index = 0;
+                                }
+                                @foreach (var item in Model.OrderItems)
+                                {
+                                    <div class="list-group-item">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-1">
+                                                <input type="checkbox" class="form-check-input" name="SelectedItemIds" value="@item.Id" id="item_@item.Id" />
+                                            </div>
+                                            <div class="col-md-2">
+                                                @if (!string.IsNullOrEmpty(item.ProductImage))
+                                                {
+                                                    <img src="@item.ProductImage" alt="@item.ProductName" class="img-fluid rounded" />
+                                                }
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label for="item_@item.Id" class="form-check-label mb-0">
+                                                    <strong>@item.ProductName</strong><br />
+                                                    @if (!string.IsNullOrEmpty(item.ColorName))
+                                                    {
+                                                        <small>@Localizer["Color"]: @item.ColorName</small><text> | </text>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(item.SizeName))
+                                                    {
+                                                        <small>@Localizer["Size"]: @item.SizeName</small>
+                                                    }
+                                                </label>
+                                            </div>
+                                            <div class="col-md-2 text-center">
+                                                <strong>x@item.Quantity</strong>
+                                            </div>
+                                            <div class="col-md-2 text-end">
+                                                <strong>@item.TotalPrice.ToString("C")</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    index++;
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Reason" class="form-label">@Localizer["Account_ReturnRequest_Reason"]</label>
+                            <select asp-for="Reason" class="form-select" required>
+                                <option value="">-- @Localizer["Select"] --</option>
+                                <option value="Defective or damaged item">@Localizer["Account_ReturnRequest_DefectiveItem"]</option>
+                                <option value="Wrong item received">@Localizer["Account_ReturnRequest_WrongItem"]</option>
+                                <option value="Item doesn't match description">@Localizer["Account_ReturnRequest_NotMatching"]</option>
+                                <option value="Wrong size ordered">@Localizer["Account_ReturnRequest_WrongSize"]</option>
+                                <option value="No longer needed">@Localizer["Account_ReturnRequest_NotNeeded"]</option>
+                                <option value="Quality not as expected">@Localizer["Account_ReturnRequest_QualityIssue"]</option>
+                                <option value="Other">@Localizer["Account_ReturnRequest_Other"]</option>
+                            </select>
+                            <span asp-validation-for="Reason" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Details" class="form-label">@Localizer["Account_ReturnRequest_Details"]</label>
+                            <textarea asp-for="Details" class="form-control" rows="5" required 
+                                placeholder="Please provide detailed information about why you want to return this item..."></textarea>
+                            <span asp-validation-for="Details" class="text-danger"></span>
+                            <small class="form-text text-muted">Minimum 20 characters required</small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Return Policy:</strong> Returns are accepted within 30 days of delivery. Items must be unworn, unwashed, and in original packaging with tags attached.
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>@Localizer["Account_ReturnRequest_Submit"]
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">@Localizer["Back_To_Account"]</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

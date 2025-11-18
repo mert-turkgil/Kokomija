@@ -6,10 +6,8 @@ using System.Security.Claims;
 
 namespace Kokomija.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class WishlistController : ControllerBase
+public class WishlistController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<WishlistController> _logger;
@@ -20,7 +18,78 @@ public class WishlistController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("add")]
+    // View wishlist page
+    [HttpGet]
+    public async Task<IActionResult> Index()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var wishlistItems = await _unitOfWork.Wishlists.GetByUserIdAsync(userId);
+        return View(wishlistItems);
+    }
+
+    // Toggle wishlist (add or remove)
+    [HttpPost]
+    public async Task<IActionResult> Toggle(int productId)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "User not authenticated", requiresLogin = true });
+            }
+
+            var exists = await _unitOfWork.Wishlists.ExistsAsync(userId, productId);
+            
+            if (exists)
+            {
+                // Remove from wishlist
+                var wishlistItem = await _unitOfWork.Wishlists.GetByUserAndProductAsync(userId, productId);
+                if (wishlistItem != null)
+                {
+                    _unitOfWork.Wishlists.Remove(wishlistItem);
+                    await _unitOfWork.SaveChangesAsync();
+                    return Json(new { success = true, added = false, message = "Removed from wishlist" });
+                }
+            }
+            else
+            {
+                // Add to wishlist
+                var product = await _unitOfWork.Products.GetByIdAsync(productId);
+                if (product == null)
+                {
+                    return Json(new { success = false, message = "Product not found" });
+                }
+
+                var wishlistItem = new Wishlist
+                {
+                    UserId = userId,
+                    ProductId = productId,
+                    AddedAt = DateTime.UtcNow
+                };
+
+                await _unitOfWork.Wishlists.AddAsync(wishlistItem);
+                await _unitOfWork.SaveChangesAsync();
+                
+                return Json(new { success = true, added = true, message = "Added to wishlist" });
+            }
+
+            return Json(new { success = false, message = "Operation failed" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling wishlist");
+            return Json(new { success = false, message = "An error occurred" });
+        }
+    }
+
+    // API endpoints for AJAX calls
+    [HttpPost("api/wishlist/add")]
     public async Task<IActionResult> AddToWishlist([FromBody] WishlistRequest request)
     {
         try
@@ -68,6 +137,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpPost("remove")]
+    [Route("api/wishlist/remove")]
     public async Task<IActionResult> RemoveFromWishlist([FromBody] WishlistRequest request)
     {
         try
@@ -99,6 +169,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet]
+    [Route("api/wishlist")]
     public async Task<IActionResult> GetWishlist()
     {
         try
@@ -131,6 +202,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet("check/{productId}")]
+    [Route("api/wishlist/check/{productId}")]
     public async Task<IActionResult> CheckWishlist(int productId)
     {
         try

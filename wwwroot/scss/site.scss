@@ -84,12 +84,22 @@ body {
   // Background colors
   --bs-body-bg: #{$dark-bg};
   --bs-body-color: #{$dark-text};
+  --bs-heading-color: #{$white};
+  --bs-secondary-color: #{$dark-text-muted};
+  --bs-border-color: #{$dark-border};
+  --bs-card-bg: #{$dark-surface};
+  --bs-tertiary-bg: rgba(255, 255, 255, 0.05);
   
   // Cards and surfaces
   .card {
     background-color: $dark-surface;
     border-color: $dark-border;
     color: $dark-text;
+    
+    .card-title,
+    h1, h2, h3, h4, h5, h6 {
+      color: $white;
+    }
   }
   
   // Navbar

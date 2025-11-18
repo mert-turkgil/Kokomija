@@ -3,6 +3,7 @@ using Kokomija.Entity;
 using Kokomija.Models.ViewModels.Cart;
 using Kokomija.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kokomija.Controllers
@@ -13,15 +14,21 @@ namespace Kokomija.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILocalizationService _localizationService;
         private readonly ILogger<CartController> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IConfiguration _configuration;
 
         public CartController(
             IUnitOfWork unitOfWork,
             ILocalizationService localizationService,
-            ILogger<CartController> logger)
+            ILogger<CartController> logger,
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _localizationService = localizationService;
             _logger = logger;
+            _userManager = userManager;
+            _configuration = configuration;
         }
 
         #region View Actions
@@ -30,29 +37,33 @@ namespace Kokomija.Controllers
         [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
-            CartIndexViewModel viewModel;
-
-            if (User.Identity?.IsAuthenticated == true)
+            // Redirect to login if not authenticated
+            if (User.Identity?.IsAuthenticated != true)
             {
-                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return RedirectToAction("Login", "Account");
-                }
+                // Store the return URL so user can continue after login
+                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Index", "Cart") });
+            }
 
-                var cartItems = await _unitOfWork.Carts.GetByUserIdAsync(userId);
-                viewModel = await BuildCartViewModel(cartItems);
-            }
-            else
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
-                // Guest cart will be loaded from localStorage via JavaScript
-                viewModel = new CartIndexViewModel
-                {
-                    FreeShippingThreshold = 200.00m // PLN
-                };
+                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Index", "Cart") });
             }
+
+            var cartItems = await _unitOfWork.Carts.GetByUserIdAsync(userId);
+            
+            // Check for applied coupon in session
+            Coupon? appliedCoupon = null;
+            var couponCode = HttpContext.Session.GetString("AppliedCouponCode");
+            if (!string.IsNullOrEmpty(couponCode))
+            {
+                appliedCoupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
+            }
+            
+            var viewModel = await BuildCartViewModel(cartItems, appliedCoupon);
 
             ViewData["Title"] = _localizationService["Cart_Title"];
+            ViewBag.StripePublishableKey = _configuration["Stripe:PublishableKey"];
             return View(viewModel);
         }
 
@@ -60,13 +71,18 @@ namespace Kokomija.Controllers
 
         #region API Actions - Cart Management
 
-        [Authorize]
         [HttpPost("api/add")]
         public async Task<IActionResult> AddToCart([FromBody] CartAddRequest request)
         {
+            // If not authenticated, return unauthorized - client will redirect to login
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return Json(new { success = false, message = "Please login to add items to cart", requiresLogin = true });
+            }
+
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
-                return Json(new { success = false, message = "Unauthorized" });
+                return Json(new { success = false, message = "Unauthorized", requiresLogin = true });
 
             try
             {
@@ -111,7 +127,7 @@ namespace Kokomija.Controllers
         }
 
         [Authorize]
-        [HttpPost("UpdateQuantity")]
+        [HttpPost("api/update-quantity")]
         public async Task<IActionResult> UpdateQuantity([FromBody] UpdateCartItemRequest request)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -169,7 +185,7 @@ namespace Kokomija.Controllers
         }
 
         [Authorize]
-        [HttpPost("RemoveItem")]
+        [HttpPost("api/remove")]
         public async Task<IActionResult> RemoveItem([FromBody] RemoveCartItemRequest request)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -229,14 +245,14 @@ namespace Kokomija.Controllers
             var cartItems = items.Select(c => new
             {
                 productId = c.ProductId,
-                productName = c.Product.Name,
+                productName = c.Product.NameKey != null ? _localizationService[c.Product.NameKey] : c.Product.Name,
                 colorId = c.ColorId,
                 colorName = c.Color?.DisplayName,
                 sizeId = c.SizeId,
                 sizeName = c.Size?.DisplayName,
                 quantity = c.Quantity,
                 price = c.Product.Price,
-                imageUrl = c.Product.Images.FirstOrDefault()?.ImageUrl ?? "/img/logo_black.png"
+                imageUrl = c.Product.Images.FirstOrDefault()?.ImageUrl ?? "logo_black.png"
             });
 
             return Json(cartItems);
@@ -309,7 +325,7 @@ namespace Kokomija.Controllers
         #region Coupon Management
 
         [Authorize]
-        [HttpPost("ApplyCoupon")]
+        [HttpPost("api/apply-coupon")]
         public async Task<IActionResult> ApplyCoupon([FromBody] ApplyCouponRequest request)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -345,9 +361,9 @@ namespace Kokomija.Controllers
 
                 // Check if user has already used this coupon (check per-user limit)
                 var usageCount = await _unitOfWork.Repository<CouponUsage>()
-                    .GetAllAsync(cu => cu.CouponId == coupon.Id && cu.UserId == userId);
+                    .CountAsync(cu => cu.CouponId == coupon.Id && cu.UserId == userId);
 
-                if (coupon.UsageLimitPerUser.HasValue && usageCount.Count() >= coupon.UsageLimitPerUser.Value)
+                if (coupon.UsageLimitPerUser.HasValue && usageCount >= coupon.UsageLimitPerUser.Value)
                 {
                     return Json(new { success = false, message = _localizationService["Cart_Coupon_AlreadyUsed"] });
                 }
@@ -381,7 +397,7 @@ namespace Kokomija.Controllers
         }
 
         [Authorize]
-        [HttpPost("RemoveCoupon")]
+        [HttpPost("api/remove-coupon")]
         public async Task<IActionResult> RemoveCoupon()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -439,7 +455,7 @@ namespace Kokomija.Controllers
                 {
                     Id = cartItem.Id,
                     ProductId = cartItem.ProductId,
-                    ProductName = cartItem.Product.Name,
+                    ProductName = cartItem.Product.NameKey != null ? _localizationService[cartItem.Product.NameKey] : cartItem.Product.Name,
                     ProductImage = cartItem.Product.Images.FirstOrDefault()?.ImageUrl,
                     ProductSlug = cartItem.Product.Category?.Slug ?? "product",
                     ColorId = cartItem.ColorId,
@@ -452,38 +468,93 @@ namespace Kokomija.Controllers
                     TotalPrice = (variant?.Price ?? cartItem.Product.Price) * cartItem.Quantity,
                     StockQuantity = variant?.StockQuantity ?? 0,
                     IsInStock = variant != null && variant.StockQuantity >= cartItem.Quantity,
-                    MaxQuantity = variant?.StockQuantity ?? 10
+                    MaxQuantity = variant?.StockQuantity ?? 10,
+                    PackSize = cartItem.Product.PackSize
                 };
 
                 items.Add(itemViewModel);
                 subtotal += itemViewModel.TotalPrice;
             }
 
-            // Calculate discount
-            decimal discountAmount = 0;
+            // Get VIP discount if user is authenticated
+            decimal vipDiscountPercentage = 0;
+            string vipTier = "None";
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    var currentUser = await _userManager.FindByIdAsync(userId);
+                    if (currentUser != null)
+                    {
+                        vipTier = currentUser.VipTier ?? "None";
+                        vipDiscountPercentage = vipTier switch
+                        {
+                            "Bronze" => 2m,    // 2% discount
+                            "Silver" => 5m,    // 5% discount
+                            "Gold" => 8m,      // 8% discount
+                            "Platinum" => 12m, // 12% discount
+                            _ => 0m
+                        };
+                        
+                        // Log VIP status for debugging
+                        _logger.LogInformation($"User {userId} has VIP tier: {vipTier}, discount: {vipDiscountPercentage}%");
+                    }
+                }
+            }
+
+            // Calculate VIP discount (applied to subtotal first)
+            decimal vipDiscountAmount = subtotal * (vipDiscountPercentage / 100);
+            decimal subtotalAfterVip = subtotal - vipDiscountAmount;
+            
+            _logger.LogInformation($"Subtotal: {subtotal}, VIP Discount: {vipDiscountAmount}, After VIP: {subtotalAfterVip}");
+
+            // Calculate coupon discount (applied to VIP-discounted price)
+            decimal couponDiscountAmount = 0;
             decimal? couponDiscountPercentage = null;
             string? appliedCouponCode = null;
 
             if (appliedCoupon != null)
             {
-                if (appliedCoupon.DiscountType == "percentage")
+                // Apply coupon to subtotal after VIP discount has been applied
+                decimal amountToDiscount = subtotalAfterVip;
+                
+                // Check minimum order requirement (should check against original subtotal)
+                if (appliedCoupon.MinimumOrderAmount.HasValue && subtotal < appliedCoupon.MinimumOrderAmount.Value)
                 {
-                    discountAmount = subtotal * (appliedCoupon.DiscountValue / 100);
-                    couponDiscountPercentage = appliedCoupon.DiscountValue;
+                    // Coupon not applicable, but don't fail - just don't apply it
+                    appliedCouponCode = null;
                 }
-                else // fixed_amount
+                else
                 {
-                    discountAmount = appliedCoupon.DiscountValue;
-                }
+                    if (appliedCoupon.DiscountType == "percentage")
+                    {
+                        couponDiscountAmount = amountToDiscount * (appliedCoupon.DiscountValue / 100);
+                        couponDiscountPercentage = appliedCoupon.DiscountValue;
+                    }
+                    else // fixed_amount
+                    {
+                        couponDiscountAmount = appliedCoupon.DiscountValue;
+                    }
 
-                // Apply maximum discount limit if set
-                if (appliedCoupon.MaximumDiscountAmount.HasValue && discountAmount > appliedCoupon.MaximumDiscountAmount.Value)
-                {
-                    discountAmount = appliedCoupon.MaximumDiscountAmount.Value;
-                }
+                    // Apply maximum discount limit if set
+                    if (appliedCoupon.MaximumDiscountAmount.HasValue && couponDiscountAmount > appliedCoupon.MaximumDiscountAmount.Value)
+                    {
+                        couponDiscountAmount = appliedCoupon.MaximumDiscountAmount.Value;
+                    }
 
-                appliedCouponCode = appliedCoupon.Code;
+                    // Don't let discount exceed the discounted subtotal
+                    if (couponDiscountAmount > amountToDiscount)
+                    {
+                        couponDiscountAmount = amountToDiscount;
+                    }
+
+                    appliedCouponCode = appliedCoupon.Code;
+                }
             }
+
+            // Total discount (VIP + Coupon)
+            decimal totalDiscountAmount = vipDiscountAmount + couponDiscountAmount;
 
             // Calculate shipping
             const decimal freeShippingThreshold = 200.00m; // PLN
@@ -493,7 +564,7 @@ namespace Kokomija.Controllers
             decimal remainingForFreeShipping = hasFreeShipping ? 0 : freeShippingThreshold - subtotal;
 
             // Calculate tax (23% VAT in Poland)
-            decimal subtotalAfterDiscount = subtotal - discountAmount;
+            decimal subtotalAfterDiscount = subtotal - totalDiscountAmount;
             decimal taxAmount = (subtotalAfterDiscount + shippingCost) * 0.23m;
 
             // Calculate total
@@ -507,11 +578,15 @@ namespace Kokomija.Controllers
                 Items = items,
                 Subtotal = subtotal,
                 ShippingCost = shippingCost,
-                DiscountAmount = discountAmount,
+                DiscountAmount = totalDiscountAmount,
+                VipDiscountAmount = vipDiscountAmount,
+                CouponDiscountAmount = couponDiscountAmount,
                 TaxAmount = taxAmount,
                 Total = total,
                 AppliedCouponCode = appliedCouponCode,
                 CouponDiscountPercentage = couponDiscountPercentage,
+                VipTier = vipTier,
+                VipDiscountPercentage = vipDiscountPercentage,
                 HasFreeShipping = hasFreeShipping,
                 FreeShippingThreshold = freeShippingThreshold,
                 RemainingForFreeShipping = remainingForFreeShipping,
@@ -521,30 +596,14 @@ namespace Kokomija.Controllers
 
         private async Task<IEnumerable<string>> GetAvailableCouponsForUser()
         {
-            if (User.Identity?.IsAuthenticated != true)
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Enumerable.Empty<string>();
-            }
-
-            // Get user's order history to calculate VIP tier
-            var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(userId);
-            var totalSpent = orders.Where(o => o.OrderStatus != "Cancelled").Sum(o => o.TotalAmount);
-
-            // Get active coupons based on VIP tier
+            // Get all active coupons - show them all to users
             var activeCoupons = await _unitOfWork.Coupons.GetActiveCouponsAsync();
 
-            var userCoupons = activeCoupons
-                .Where(c => c.MinimumOrderAmount <= totalSpent)
+            var couponCodes = activeCoupons
                 .Select(c => c.Code)
                 .ToList();
 
-            return userCoupons;
+            return couponCodes;
         }
 
         #endregion

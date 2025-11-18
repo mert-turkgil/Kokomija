@@ -5,11 +5,15 @@ namespace Kokomija.Models.ViewModels.Cart
         public IEnumerable<CartItemViewModel> Items { get; set; } = new List<CartItemViewModel>();
         public decimal Subtotal { get; set; }
         public decimal ShippingCost { get; set; }
-        public decimal DiscountAmount { get; set; }
+        public decimal DiscountAmount { get; set; } // Total discount (VIP + Coupon)
+        public decimal VipDiscountAmount { get; set; } // VIP discount only
+        public decimal CouponDiscountAmount { get; set; } // Coupon discount only
         public decimal TaxAmount { get; set; }
         public decimal Total { get; set; }
         public string? AppliedCouponCode { get; set; }
         public decimal? CouponDiscountPercentage { get; set; }
+        public string VipTier { get; set; } = "None";
+        public decimal VipDiscountPercentage { get; set; }
         public bool HasFreeShipping { get; set; }
         public decimal FreeShippingThreshold { get; set; }
         public decimal RemainingForFreeShipping { get; set; }
@@ -34,6 +38,8 @@ namespace Kokomija.Models.ViewModels.Cart
         public int StockQuantity { get; set; }
         public bool IsInStock { get; set; }
         public int MaxQuantity { get; set; }
+        public int PackSize { get; set; } = 1;
+        public int TotalItems => PackSize * Quantity; // Total individual items across all packs
     }
     
     public class ApplyCouponRequest

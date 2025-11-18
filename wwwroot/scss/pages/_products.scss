@@ -11,7 +11,7 @@
 
     .products-header {
         animation: slideDown 0.7s ease-out;
-        padding: 1.5rem 0;
+        padding: 0.5rem 0;
         
         @keyframes slideDown {
             from {
@@ -24,20 +24,45 @@
             }
         }
 
-        .products-title {
-            color: $primary;
-            font-weight: 700;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+        // Breadcrumb in header (inline with count)
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+            font-size: 0.9rem;
 
-            @media (max-width: 768px) {
-                font-size: 1.5rem;
+            .breadcrumb-item {
+                a {
+                    color: lighten($primary, 15%);
+                    text-decoration: none;
+                    transition: color 0.2s ease;
+
+                    &:hover {
+                        color: $primary;
+                        text-decoration: underline;
+                    }
+                }
+
+                &.active {
+                    color: $primary;
+                    font-weight: 600;
+                }
+
+                + .breadcrumb-item::before {
+                    color: lighten($primary, 40%);
+                }
             }
         }
 
         .products-count {
-            color: lighten($primary, 30%);
-            font-size: 0.95rem;
+            color: lighten($primary, 20%);
+            font-size: 1.1rem;
+
+            strong {
+                color: $primary;
+                font-size: 1.4rem;
+                font-weight: 700;
+            }
         }
     }
 
@@ -143,11 +168,17 @@
                     margin-bottom: 0;
                 }
 
+                // Filter section header styling
+                .filter-section-header {
+                    border-bottom: 2px solid rgba($primary, 0.15);
+                    padding-bottom: 0.75rem;
+                    margin-bottom: 1rem;
+                }
+
                 .filter-title {
                     color: $primary;
                     font-weight: 600;
                     font-size: 1rem;
-                    margin-bottom: 1rem;
                     display: flex;
                     align-items: center;
 
@@ -157,6 +188,8 @@
                 }
 
                 .filter-options {
+                    padding-left: 0.5rem; // Add left margin for better spacing
+                    
                     .form-check {
                         margin-bottom: 0.75rem;
                         transition: all 0.2s ease;
@@ -186,6 +219,13 @@
                                 border-color: $primary;
                                 box-shadow: 0 0 0 0.25rem rgba($primary, 0.25);
                             }
+                            
+                            // Indeterminate state for parent categories
+                            &:indeterminate {
+                                background-color: lighten($primary, 20%);
+                                border-color: lighten($primary, 20%);
+                                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
+                            }
                         }
 
                         input:checked + label {
@@ -195,19 +235,24 @@
                     }
 
                     .category-group {
-                        .category-group-title {
-                            font-size: 0.75rem;
-                            font-weight: 700;
-                            color: lighten($primary, 20%);
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                            margin-bottom: 0.75rem;
-                            padding-bottom: 0.5rem;
-                            border-bottom: 1px solid lighten($primary, 50%);
-                        }
-
                         .form-check {
-                            padding-left: 0.5rem;
+                            padding-left: 0;
+                            
+                            // Child categories indentation
+                            &:not(:first-child) {
+                                margin-left: 0;
+                            }
+                        }
+                        
+                        // Styling for indented child categories
+                        .child-categories {
+                            margin-top: 0.5rem;
+                            padding-left: 1.5rem;
+                            border-left: 2px solid rgba($primary, 0.1);
+                            
+                            .form-check {
+                                margin-bottom: 0.5rem;
+                            }
                         }
                     }
                 }
@@ -371,8 +416,8 @@
     }
 
     .products-grid {
-        // Already using Bootstrap row & col system
-        // No need for custom grid
+        // Grid view (default) - uses Bootstrap row & col system
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
         .col-md-6, .col-lg-4 {
             animation: fadeInUp 0.6s ease-out both;
@@ -433,7 +478,7 @@
         }
     }
 
-    // Filter toggle button & view buttons
+    // Filter toggle button
     #filterToggle {
         border-color: $primary;
         color: $primary;
@@ -446,25 +491,6 @@
 
         @media (min-width: 992px) {
             display: none;
-        }
-    }
-
-    .btn-group {
-        .btn-outline-secondary {
-            border-color: lighten($primary, 45%);
-            color: $primary;
-
-            &:hover {
-                background: rgba($primary, 0.1);
-                border-color: $primary;
-                color: $primary;
-            }
-
-            &.active {
-                background: $primary;
-                border-color: $primary;
-                color: white;
-            }
         }
     }
 
@@ -495,12 +521,32 @@
         background: linear-gradient(to bottom, rgba($primary-dark, 0.05) 0%, transparent 100%);
 
         .products-header {
-            .products-title {
-                color: lighten($primary, 30%);
+            .breadcrumb {
+                .breadcrumb-item {
+                    a {
+                        color: lighten($primary, 35%);
+
+                        &:hover {
+                            color: lighten($primary, 25%);
+                        }
+                    }
+
+                    &.active {
+                        color: lighten($primary, 30%);
+                    }
+
+                    + .breadcrumb-item::before {
+                        color: lighten($primary, 50%);
+                    }
+                }
             }
 
             .products-count {
-                color: lighten($primary, 50%);
+                color: lighten($primary, 40%);
+
+                strong {
+                    color: lighten($primary, 30%);
+                }
             }
         }
 

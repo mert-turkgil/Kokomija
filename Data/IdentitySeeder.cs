@@ -7,7 +7,7 @@ namespace Kokomija.Data
     {
         public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
-            var roles = new[] { "Admin", "Customer", "Manager" };
+            var roles = new[] { "Admin", "Customer", "Manager", "VIPBronze", "VIPSilver", "VIPGold", "VIPPlatinum" };
 
             foreach (var role in roles)
             {

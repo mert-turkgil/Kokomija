@@ -33,6 +33,24 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string StripePriceId { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Stripe Tax Code for automatic tax calculation (e.g., txcd_99999999 for general tangible goods)
+        /// </summary>
+        [MaxLength(50)]
+        public string? StripeTaxCode { get; set; }
+
+        /// <summary>
+        /// Number of items in the package/pack. 1 for single items, >1 for packs (e.g., 5-pack, 8-pack)
+        /// </summary>
+        public int PackSize { get; set; } = 1;
+
+        /// <summary>
+        /// Optional: Groups related products (e.g., 5-pack, 6-pack, 8-pack of same item)
+        /// </summary>
+        public int? ProductGroupId { get; set; }
+        [ForeignKey("ProductGroupId")]
+        public ProductGroup? ProductGroup { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public int? CategoryId { get; set; }

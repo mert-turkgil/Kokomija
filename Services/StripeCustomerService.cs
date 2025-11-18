@@ -26,6 +26,41 @@ namespace Kokomija.Services
         {
             try
             {
+                // If user already has a Stripe customer ID, verify it exists and update
+                if (!string.IsNullOrEmpty(user.StripeCustomerId))
+                {
+                    try
+                    {
+                        var existingCustomer = await _customerService.GetAsync(user.StripeCustomerId);
+                        if (existingCustomer != null)
+                        {
+                            // Customer exists, update it with latest info
+                            _logger.LogInformation("Updating existing Stripe customer {CustomerId} for user {UserId}", user.StripeCustomerId, user.Id);
+                            
+                            var updateOptions = new CustomerUpdateOptions
+                            {
+                                Email = user.Email,
+                                Name = $"{user.FirstName} {user.LastName}".Trim(),
+                                Phone = user.PhoneNumber,
+                                Metadata = new Dictionary<string, string>
+                                {
+                                    { "user_id", user.Id },
+                                    { "updated_at", DateTime.UtcNow.ToString("O") }
+                                }
+                            };
+                            
+                            await _customerService.UpdateAsync(user.StripeCustomerId, updateOptions);
+                            return user.StripeCustomerId;
+                        }
+                    }
+                    catch (StripeException ex) when (ex.StripeError?.Type == "invalid_request_error")
+                    {
+                        // Customer doesn't exist, create a new one
+                        _logger.LogWarning("Stripe customer {CustomerId} not found, creating new one for user {UserId}", user.StripeCustomerId, user.Id);
+                    }
+                }
+
+                // Create new customer
                 var options = new CustomerCreateOptions
                 {
                     Email = user.Email,

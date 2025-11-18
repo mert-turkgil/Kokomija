@@ -1505,6 +1505,56 @@
   <data name="Product_WomenBriefs8Pack_Description" xml:space="preserve">
     <value>Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.</value>
   </data>
+  <data name="Currency_PLN" xml:space="preserve">
+    <value>PLN</value>
+  </data>
+  <data name="Currency_EUR" xml:space="preserve">
+    <value>€</value>
+  </data>
+  <data name="Currency_USD" xml:space="preserve">
+    <value>$</value>
+  </data>
+  <data name="Session_Complete" xml:space="preserve">
+    <value>Zakończona</value>
+  </data>
+  <data name="Session_Cancelled" xml:space="preserve">
+    <value>Anulowana</value>
+  </data>
+  <data name="Session_Expired" xml:space="preserve">
+    <value>Wygasła</value>
+  </data>
+  <data name="Account_Currency" xml:space="preserve">
+    <value>Waluta</value>
+  </data>
+  <data name="Account_SessionStatus" xml:space="preserve">
+    <value>Status Sesji</value>
+  </data>
+  <data name="Account_Country" xml:space="preserve">
+    <value>Kraj</value>
+  </data>
+  <data name="Product_PackQuantity" xml:space="preserve">
+    <value>Ilość w Pakiecie</value>
+  </data>
+  <data name="Product_ItemsPerPack" xml:space="preserve">
+    <value>sztuk w pakiecie</value>
+  </data>
+  <data name="Product_TotalItems" xml:space="preserve">
+    <value>Łącznie Sztuk</value>
+  </data>
+  <data name="Checkout_PackInfo" xml:space="preserve">
+    <value>Informacje o Pakiecie</value>
+  </data>
+  <data name="ProductGroup_WomenBriefs_Name" xml:space="preserve">
+    <value>Kolekcja Majtek Damskich Bawełnianych</value>
+  </data>
+  <data name="ProductGroup_WomenBriefs_Description" xml:space="preserve">
+    <value>Wysokiej jakości majtki damskie bawełniane dostępne w zestawach 5, 6 i 8 sztuk. Wygodne, przewiewne i trwałe. Wybierz rozmiar pakietu który najbardziej Ci odpowiada.</value>
+  </data>
+  <data name="Product_ClickToEnlarge" xml:space="preserve">
+    <value>Kliknij aby powiększyć</value>
+  </data>
 </root>
+
+
 
 

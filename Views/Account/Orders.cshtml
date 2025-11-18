@@ -140,15 +140,15 @@
                                             }
                                             @if (!string.IsNullOrEmpty(productImage))
                                             {
-                                                <img src="@Url.Content($"~/images/{productImage}")" 
+                                                <img src="@Url.Content($"~/img/ProductImage/{productImage}")" 
                                                      alt="@item.ProductName" 
                                                      class="rounded"
                                                      style="width: 80px; height: 80px; object-fit: cover;"
-                                                     onerror="this.onerror=null; this.src='@Url.Content("~/images/logo.png")';">
+                                                     onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")';">
                                             }
                                             else
                                             {
-                                                <img src="@Url.Content("~/images/logo.png")" 
+                                                <img src="@Url.Content("~/img/logo_black.png")" 
                                                      alt="Kokomija" 
                                                      class="rounded"
                                                      style="width: 80px; height: 80px; object-fit: contain; padding: 10px; background: #f8f9fa;">
