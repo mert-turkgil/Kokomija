@@ -1,26 +1,24 @@
-@using Microsoft.Extensions.Localization
-@using Kokomija.Resources
-@inject IStringLocalizer<SharedResources> Localizer
+@inject Kokomija.Services.ILocalizationService L
 @inject Kokomija.Services.ICookieConsentService CookieConsentService
 
 @if (!CookieConsentService.HasConsent(Context))
 {
-    <div id="cookieConsent" class="cookie-consent-banner" role="dialog" aria-live="polite" aria-label="@Localizer["CookieConsent.Title"]">
+    <div id="cookieConsent" class="cookie-consent-banner" role="dialog" aria-live="polite" aria-label="@L.GetString("Title", "Cookie")">
         <div class="cookie-consent-content">
             <div class="cookie-consent-message">
-                <h4>@Localizer["CookieConsent.Title"]</h4>
-                <p>@Localizer["CookieConsent.Message"]</p>
-                <a asp-controller="Home" asp-action="Privacy" class="cookie-learn-more">@Localizer["CookieConsent.LearnMore"]</a>
+                <h4>@L.GetString("Title", "Cookie")</h4>
+                <p>@L.GetString("Message", "Cookie")</p>
+                <a asp-controller="Home" asp-action="Privacy" class="cookie-learn-more">@L.GetString("LearnMore", "Cookie")</a>
             </div>
             <div class="cookie-consent-actions">
                 <button type="button" class="btn btn-success" onclick="acceptAllCookies()">
-                    @Localizer["CookieConsent.AcceptAll"]
+                    @L.GetString("AcceptAll", "Cookie")
                 </button>
                 <button type="button" class="btn btn-outline-secondary" onclick="acceptNecessaryCookies()">
-                    @Localizer["CookieConsent.AcceptNecessary"]
+                    @L.GetString("AcceptNecessary", "Cookie")
                 </button>
                 <button type="button" class="btn btn-link" onclick="showCookieSettings()">
-                    @Localizer["CookieConsent.Settings"]
+                    @L.GetString("Settings", "Cookie")
                 </button>
             </div>
         </div>
@@ -30,7 +28,7 @@
     <div id="cookieSettingsModal" class="cookie-settings-modal" style="display: none;" role="dialog" aria-labelledby="cookieSettingsTitle">
         <div class="cookie-settings-content">
             <div class="cookie-settings-header">
-                <h3 id="cookieSettingsTitle">@Localizer["CookieConsent.Settings"]</h3>
+                <h3 id="cookieSettingsTitle">@L.GetString("Settings", "Cookie")</h3>
                 <button type="button" class="close-btn" onclick="hideCookieSettings()" aria-label="Close">&times;</button>
             </div>
             <div class="cookie-settings-body">
@@ -38,49 +36,49 @@
                     <div class="cookie-category-header">
                         <label>
                             <input type="checkbox" id="cookie-essential" checked disabled>
-                            <strong>@Localizer["CookieCategory.Essential"]</strong>
+                            <strong>@L.GetString("Category_Essential", "Cookie")</strong>
                         </label>
-                        <span class="cookie-required">(@Localizer["Required"])</span>
+                        <span class="cookie-required">(@L["Required"])</span>
                     </div>
-                    <p class="cookie-category-description">@Localizer["CookieCategory.EssentialDesc"]</p>
+                    <p class="cookie-category-description">@L.GetString("Category_EssentialDesc", "Cookie")</p>
                 </div>
 
                 <div class="cookie-category">
                     <div class="cookie-category-header">
                         <label>
                             <input type="checkbox" id="cookie-preferences" checked>
-                            <strong>@Localizer["CookieCategory.Preferences"]</strong>
+                            <strong>@L.GetString("Category_Preferences", "Cookie")</strong>
                         </label>
                     </div>
-                    <p class="cookie-category-description">@Localizer["CookieCategory.PreferencesDesc"]</p>
+                    <p class="cookie-category-description">@L.GetString("Category_PreferencesDesc", "Cookie")</p>
                 </div>
 
                 <div class="cookie-category">
                     <div class="cookie-category-header">
                         <label>
                             <input type="checkbox" id="cookie-analytics">
-                            <strong>@Localizer["CookieCategory.Analytics"]</strong>
+                            <strong>@L.GetString("Category_Analytics", "Cookie")</strong>
                         </label>
                     </div>
-                    <p class="cookie-category-description">@Localizer["CookieCategory.AnalyticsDesc"]</p>
+                    <p class="cookie-category-description">@L.GetString("Category_AnalyticsDesc", "Cookie")</p>
                 </div>
 
                 <div class="cookie-category">
                     <div class="cookie-category-header">
                         <label>
                             <input type="checkbox" id="cookie-marketing">
-                            <strong>@Localizer["CookieCategory.Marketing"]</strong>
+                            <strong>@L.GetString("Category_Marketing", "Cookie")</strong>
                         </label>
                     </div>
-                    <p class="cookie-category-description">@Localizer["CookieCategory.MarketingDesc"]</p>
+                    <p class="cookie-category-description">@L.GetString("Category_MarketingDesc", "Cookie")</p>
                 </div>
             </div>
             <div class="cookie-settings-footer">
                 <button type="button" class="btn btn-primary" onclick="saveCustomCookieConsent()">
-                    @Localizer["SavePreferences"]
+                    @L["SavePreferences"]
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="hideCookieSettings()">
-                    @Localizer["Cancel"]
+                    @L["Cancel"]
                 </button>
             </div>
         </div>
@@ -318,3 +316,4 @@
         });
     }
 </script>
+

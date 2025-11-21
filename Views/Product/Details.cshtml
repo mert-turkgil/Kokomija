@@ -1,10 +1,10 @@
 @model Kokomija.Entity.Product
-@inject Kokomija.Services.ILocalizationService Localizer
+@inject Kokomija.Services.ILocalizationService L
 
 @{
     var relatedProducts = ViewBag.RelatedProducts as List<Kokomija.Entity.Product> ?? new List<Kokomija.Entity.Product>();
-    var productName = !string.IsNullOrEmpty(Model.NameKey) ? Localizer[Model.NameKey] : Model.Name;
-    var productDescription = !string.IsNullOrEmpty(Model.DescriptionKey) ? Localizer[Model.DescriptionKey] : Model.Description;
+    var productName = !string.IsNullOrEmpty(Model.NameKey) ? L[Model.NameKey] : Model.Name;
+    var productDescription = !string.IsNullOrEmpty(Model.DescriptionKey) ? L[Model.DescriptionKey] : Model.Description;
 }
 
 <div class="product-detail-page">
@@ -12,13 +12,13 @@
     <nav aria-label="breadcrumb" class="product-breadcrumb">
         <div class="container">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@Localizer["Home"]</a></li>
-                <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">@Localizer["Products"]</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Home"]</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">@L["Products"]</a></li>
                 @if (Model.Category != null)
                 {
                     <li class="breadcrumb-item">
                         <a asp-controller="Product" asp-action="Category" asp-route-slug="@Model.Category.Slug">
-                            @(!string.IsNullOrEmpty(Model.Category.NameKey) ? Localizer[Model.Category.NameKey] : Model.Category.Name)
+                            @(!string.IsNullOrEmpty(Model.Category.NameKey) ? L[Model.Category.NameKey] : Model.Category.Name)
                         </a>
                     </li>
                 }
@@ -50,7 +50,7 @@
                                      id="viewerImage"
                                      onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
                                 <div class="image-click-hint">
-                                    <i class="fas fa-search-plus"></i> @Localizer["Product_ClickToEnlarge"]
+                                    <i class="fas fa-search-plus"></i> @L.GetString("ClickToEnlarge", "Product")
                                 </div>
                             </div>
                         }
@@ -69,15 +69,15 @@
                                          data-index="0"
                                          onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
                                     <div class="image-click-hint">
-                                        <i class="fas fa-search-plus"></i> @Localizer["Product_ClickToEnlarge"]
+                                        <i class="fas fa-search-plus"></i> @L.GetString("ClickToEnlarge", "Product")
                                     </div>
                                 </div>
                                 
                                 <!-- Image Navigation Arrows -->
-                                <button class="image-nav prev" id="prevImage" aria-label="@Localizer["Previous"]">
+                                <button class="image-nav prev" id="prevImage" aria-label="@L["Previous"]">
                                     <i class="fas fa-chevron-left"></i>
                                 </button>
-                                <button class="image-nav next" id="nextImage" aria-label="@Localizer["Next"]">
+                                <button class="image-nav next" id="nextImage" aria-label="@L["Next"]">
                                     <i class="fas fa-chevron-right"></i>
                                 </button>
                                 
@@ -132,22 +132,22 @@
                         <div class="col-md-4">
                             <div class="feature-card">
                                 <i class="fas fa-shield-alt"></i>
-                                <h6>@Localizer["Product_Quality"]</h6>
-                                <p>@Localizer["Product_Quality_Desc"]</p>
+                                <h6>@L.GetString("Quality", "Product")</h6>
+                                <p>@L.GetString("QualityDesc", "Product")</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="feature-card">
                                 <i class="fas fa-truck-fast"></i>
-                                <h6>@Localizer["Product_FastShipping"]</h6>
-                                <p>@Localizer["Product_FastShipping_Desc"]</p>
+                                <h6>@L.GetString("FastShipping", "Product")</h6>
+                                <p>@L.GetString("FastShippingDesc", "Product")</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="feature-card">
                                 <i class="fas fa-rotate-left"></i>
-                                <h6>@Localizer["Product_Returns"]</h6>
-                                <p>@Localizer["Product_Returns_Desc"]</p>
+                                <h6>@L.GetString("Returns", "Product")</h6>
+                                <p>@L.GetString("ReturnsDesc", "Product")</p>
                             </div>
                         </div>
                     </div>
@@ -169,47 +169,67 @@
                             <i class="fas fa-star"></i>
                             <i class="fas fa-star-half-alt"></i>
                         </div>
-                        <span class="rating-text">4.89 <span class="review-count">(56 @Localizer["Product_Reviews"])</span></span>
+                        <span class="rating-text">4.89 <span class="review-count">(56 @L.GetString("Reviews", "Product"))</span></span>
                     </div>
 
                     <!-- Price -->
                     <div class="product-price-section">
                         <div class="price-display">
-                            <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
-                            <span class="price-per-piece">(@Localizer["Product_PricePerPiece"])</span>
+                            @if (Model.PackSize > 1)
+                            {
+                                var pricePerPiece = Model.Price / Model.PackSize;
+                                <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
+                                <span class="price-per-piece">(@pricePerPiece.ToString("N2") zł / @L.GetString("Piece", "Product"))</span>
+                            }
+                            else
+                            {
+                                <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
+                            }
                         </div>
                         @if (Model.Price > 60)
                         {
                             <div class="savings-badge">
                                 <i class="fas fa-tag"></i>
-                                @Localizer["Product_BestValue"]
+                                @L.GetString("BestValue", "Product")
                             </div>
                         }
                     </div>
 
                     <!-- Pack Size Switcher -->
-                    @if (relatedProducts.Any())
+                    @{
+                        var hasRelatedProducts = relatedProducts.Any();
+                        var allPackOptions = new List<Kokomija.Entity.Product>();
+                        
+                        if (Model.ProductGroupId.HasValue)
+                        {
+                            // Build complete list of all packs including current
+                            allPackOptions = relatedProducts.ToList();
+                            allPackOptions.Add(Model);
+                            allPackOptions = allPackOptions.OrderBy(p => p.PackSize).ToList();
+                        }
+                    }
+                    
+                    @if (allPackOptions.Any())
                     {
                         <div class="pack-switcher">
-                            <label class="section-label">@Localizer["Product_PackSize"]</label>
+                            <label class="section-label">@L.GetString("PackSize", "Product")</label>
                             <div class="pack-options">
-                                @foreach (var relatedProduct in relatedProducts.OrderBy(p => p.Price))
+                                @foreach (var pack in allPackOptions)
                                 {
-                                    var isCurrentProduct = relatedProduct.Id == Model.Id;
-                                    var packSize = relatedProduct.Name.Contains("5 pak") ? "5" : 
-                                                  relatedProduct.Name.Contains("6 pak") ? "6" : "8";
-                                    var perPiecePrice = relatedProduct.Price / decimal.Parse(packSize);
-                                    var isBestValue = packSize == "8";
+                                    var isCurrentProduct = pack.Id == Model.Id;
+                                    var packSize = pack.PackSize;
+                                    var perPiecePrice = pack.Price / packSize;
+                                    var isBestValue = packSize == allPackOptions.Max(p => p.PackSize);
                                     
-                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@relatedProduct.Id" 
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@pack.Id" 
                                        class="pack-option @(isCurrentProduct ? "active" : "") @(isBestValue ? "best-value" : "")">
                                         @if (isBestValue)
                                         {
-                                            <span class="best-value-tag">@Localizer["Product_BestValue"]</span>
+                                            <span class="best-value-tag">@L.GetString("BestValue", "Product")</span>
                                         }
-                                        <div class="pack-count">@packSize @Localizer["Product_Pack"]</div>
-                                        <div class="pack-price">@relatedProduct.Price.ToString("N2") zł</div>
-                                        <div class="pack-unit-price">@perPiecePrice.ToString("N2") zł/@Localizer["Product_Piece"]</div>
+                                        <div class="pack-count">@packSize @L.GetString("Pack", "Product")</div>
+                                        <div class="pack-price">@pack.Price.ToString("N2") zł</div>
+                                        <div class="pack-unit-price">@perPiecePrice.ToString("N2") zł/@L.GetString("Piece", "Product")</div>
                                     </a>
                                 }
                             </div>
@@ -221,9 +241,9 @@
                     {
                         <div class="size-selection">
                             <label class="section-label">
-                                @Localizer["Product_SelectSize"]
+                                @L.GetString("SelectSize", "Product")
                                 <a href="#sizeGuide" class="size-guide-link">
-                                    <i class="fas fa-ruler"></i> @Localizer["Product_SizeGuide"]
+                                    <i class="fas fa-ruler"></i> @L.GetString("SizeGuide", "Product")
                                 </a>
                             </label>
                             <div class="size-options">
@@ -245,7 +265,7 @@
                                         <span class="size-name">@size?.Name</span>
                                         @if (!isAvailable)
                                         {
-                                            <span class="stock-status">@Localizer["Product_OutOfStock"]</span>
+                                            <span class="stock-status">@L.GetString("OutOfStock", "Product")</span>
                                         }
                                     </button>
                                 }
@@ -255,26 +275,26 @@
 
                     <!-- Quantity Selector -->
                     <div class="quantity-selector">
-                        <label class="section-label">@Localizer["Product_Quantity"]</label>
+                        <label class="section-label">@L.GetString("Quantity", "Product")</label>
                         <div class="quantity-controls">
                             <button type="button" class="qty-btn minus" id="qtyMinus">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="number" class="qty-input" id="quantity" value="1" min="1" max="99" />
+                            <input type="number" class="qty-input" id="quantity" value="1" min="1" max="99" readonly />
                             <button type="button" class="qty-btn plus" id="qtyPlus">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
                         <span class="stock-info" id="stockInfo">
-                            <i class="fas fa-box"></i> @Localizer["Product_InStock"]
+                            <i class="fas fa-box"></i> @L.GetString("InStock", "Product")
                         </span>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="product-actions">
-                        <button class="btn btn-primary btn-add-cart" id="addToCartBtn" disabled>
+                        <button class="btn btn-primary btn-add-cart" id="addToCartBtn" @(Model.Variants == null || !Model.Variants.Any() ? "" : "disabled")>
                             <i class="fas fa-shopping-cart"></i>
-                            @Localizer["Product_AddToCart"]
+                            @L.GetString("AddToCart", "Product")
                         </button>
                         <button class="btn btn-outline-secondary btn-wishlist" id="addToWishlistBtn">
                             <i class="far fa-heart"></i>
@@ -283,24 +303,24 @@
 
                     <!-- Product Description -->
                     <div class="product-description">
-                        <h5 class="description-title">@Localizer["Product_Description"]</h5>
+                        <h5 class="description-title">@L["Product_Description"]</h5>
                         <p>@productDescription</p>
                     </div>
 
                     <!-- Product Specifications -->
                     <div class="product-specifications">
-                        <h5 class="specs-title">@Localizer["Product_Specifications"]</h5>
+                        <h5 class="specs-title">@L["Product_Specifications"]</h5>
                         <ul class="specs-list">
                             <li>
-                                <span class="spec-label">@Localizer["Product_Material"]:</span>
-                                <span class="spec-value">@Localizer["Product_Material_Cotton"]</span>
+                                <span class="spec-label">@L["Product_Material"]:</span>
+                                <span class="spec-value">@L["Product_Material_Cotton"]</span>
                             </li>
                             <li>
-                                <span class="spec-label">@Localizer["Product_Care"]:</span>
-                                <span class="spec-value">@Localizer["Product_Care_Instructions"]</span>
+                                <span class="spec-label">@L["Product_Care"]:</span>
+                                <span class="spec-value">@L["Product_Care_Instructions"]</span>
                             </li>
                             <li>
-                                <span class="spec-label">@Localizer["Product_Brand"]:</span>
+                                <span class="spec-label">@L["Product_Brand"]:</span>
                                 <span class="spec-value">Kokomija</span>
                             </li>
                             <li>
@@ -314,11 +334,11 @@
                     <div class="trust-badges">
                         <div class="badge-item">
                             <i class="fas fa-lock"></i>
-                            <span>@Localizer["Product_SecurePayment"]</span>
+                            <span>@L["Product_SecurePayment"]</span>
                         </div>
                         <div class="badge-item">
                             <i class="fas fa-certificate"></i>
-                            <span>@Localizer["Product_Certified"]</span>
+                            <span>@L["Product_Certified"]</span>
                         </div>
                     </div>
                 </div>
@@ -331,7 +351,7 @@
 <div class="container my-5">
     <div class="reviews-section">
         <div class="reviews-header">
-            <h2>@Localizer["Review_Title"]</h2>
+            <h2>@L.GetString("Title", "Review")</h2>
             @if (Model.Reviews?.Any() == true)
             {
                 <div class="rating-summary">
@@ -354,7 +374,7 @@
                                 }
                             }
                         </div>
-                        <span class="review-count">@Localizer["Review_BasedOn"] @Model.ReviewCount @Localizer["Review_Reviews"]</span>
+                        <span class="review-count">@L.GetString("BasedOn", "Review") @Model.ReviewCount @L.GetString("Reviews", "Review")</span>
                     </div>
                 </div>
             }
@@ -377,7 +397,7 @@
                                     @if (review.IsVerifiedPurchase)
                                     {
                                         <span class="verified-badge">
-                                            <i class="fas fa-check-circle"></i> @Localizer["Review_VerifiedPurchase"]
+                                            <i class="fas fa-check-circle"></i> @L.GetString("VerifiedPurchase", "Review")
                                         </span>
                                     }
                                 </div>
@@ -406,7 +426,7 @@
                             <div class="admin-reply">
                                 <div class="admin-reply-header">
                                     <i class="fas fa-reply"></i>
-                                    <strong>@Localizer["Review_AdminReply"]</strong>
+                                    <strong>@L.GetString("AdminReply", "Review")</strong>
                                     @if (review.AdminReplyAt.HasValue)
                                     {
                                         <span class="reply-date">@review.AdminReplyAt.Value.ToString("dd MMM yyyy")</span>
@@ -424,8 +444,8 @@
             {
                 <div class="no-reviews">
                     <i class="fas fa-comment-slash"></i>
-                    <h3>@Localizer["Review_NoReviews"]</h3>
-                    <p>@Localizer["Review_NoReviews_Message"]</p>
+                    <h3>@L.GetString("NoReviews", "Review")</h3>
+                    <p>@L.GetString("NoReviews_Message", "Review")</p>
                 </div>
             }
         </div>
@@ -434,10 +454,14 @@
         @if (User.Identity?.IsAuthenticated == true)
         {
             <div class="write-review-section">
-                <h3>@Localizer["Review_WriteReview"]</h3>
+                <h3>@L.GetString("WriteReview", "Review")</h3>
+                <p class="text-muted mb-3">
+                    <i class="fas fa-info-circle"></i> @L.GetString("PurchaseRequired", "Review")
+                </p>
                 <form id="reviewForm">
+                    @Html.AntiForgeryToken()
                     <div class="form-group">
-                        <label>@Localizer["Review_YourRating"]</label>
+                        <label>@L.GetString("YourRating", "Review")</label>
                         <div class="star-rating-input">
                             @for (int i = 5; i >= 1; i--)
                             {
@@ -447,11 +471,11 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="reviewComment">@Localizer["Review_YourComment"]</label>
+                        <label for="reviewComment">@L.GetString("YourComment", "Review")</label>
                         <textarea id="reviewComment" name="comment" class="form-control" rows="4" 
-                                  placeholder="@Localizer["Review_CommentPlaceholder"]" required></textarea>
+                                  placeholder="@L.GetString("CommentPlaceholder", "Review")" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">@Localizer["Review_Submit"]</button>
+                    <button type="submit" class="btn btn-primary">@L.GetString("Submit", "Review")</button>
                 </form>
             </div>
         }
@@ -459,8 +483,8 @@
         {
             <div class="login-prompt">
                 <i class="fas fa-sign-in-alt"></i>
-                <p>@Localizer["Review_LoginRequired"]</p>
-                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary">@Localizer["Account_Login"]</a>
+                <p>@L.GetString("LoginRequired", "Review")</p>
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary">@L["Account_Login"]</a>
             </div>
         }
     </div>
@@ -472,336 +496,177 @@
     <script src="~/lib/viewerjs/viewer.min.js" asp-append-version="true"></script>
     
     <script>
-        $(document).ready(function() {
-            let selectedVariantId = null;
-            let selectedColorId = null;
-            let selectedSizeId = null;
-            let currentImageIndex = 0;
-            let viewer = null;
-            
-            // Initialize ViewerJS for image viewing
-            @if (Model.Images != null && Model.Images.Any())
-            {
-                var imageCount = Model.Images.Count();
-                <text>
-            const imageCount = @imageCount;</text>
+        var selectedVariantId = null;
+        var selectedColorId = null;
+        var selectedSizeId = null;
+        var hasVariants = @(Model.Variants != null && Model.Variants.Any() ? "true" : "false");
+        var isAuthenticated = @(User.Identity?.IsAuthenticated == true ? "true" : "false");
+        
+        // Size button click
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.size-option')) {
+                var btn = e.target.closest('.size-option');
+                if (btn.disabled) return;
+                
+                document.querySelectorAll('.size-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                
+                selectedVariantId = btn.getAttribute('data-variant-id');
+                selectedColorId = btn.getAttribute('data-color-id');
+                selectedSizeId = btn.getAttribute('data-size-id');
+                var stock = btn.getAttribute('data-stock');
+                
+                document.getElementById('quantity').max = stock;
+                document.getElementById('quantity').readOnly = false;
+                document.getElementById('quantity').value = 1;
+                document.getElementById('addToCartBtn').disabled = false;
             }
-            else
-            {
-                <text>
-            const imageCount = 1;</text>
-            }
-            <text>
-            
-            if (imageCount === 1) {
-                // Single image - full screen viewer on click
-                const singleImage = document.getElementById('viewerImage');
-                if (singleImage) {
-                    viewer = new Viewer(singleImage, {
-                        inline: false,
-                        toolbar: {
-                            zoomIn: 1,
-                            zoomOut: 1,
-                            oneToOne: 1,
-                            reset: 1,
-                            rotateLeft: 1,
-                            rotateRight: 1,
-                            flipHorizontal: 1,
-                            flipVertical: 1,
-                        },
-                        title: false,
-                        navbar: false,
-                        button: true,
-                        backdrop: true,
-                        keyboard: true,
-                        transition: true,
-                    });
-                }
-            } else {
-                // Multiple images - gallery viewer
-                const imageViewerContainer = document.getElementById('imageViewer');
-                if (imageViewerContainer) {
-                    viewer = new Viewer(imageViewerContainer, {
-                        inline: false,
-                        toolbar: {
-                            zoomIn: 1,
-                            zoomOut: 1,
-                            oneToOne: 1,
-                            reset: 1,
-                            prev: 1,
-                            play: 1,
-                            next: 1,
-                            rotateLeft: 1,
-                            rotateRight: 1,
-                        },
-                        title: true,
-                        navbar: true,
-                        button: true,
-                        backdrop: true,
-                        keyboard: true,
-                        transition: true,
-                    });
-                }
-                
-                // Main image click to open viewer
-                $('#mainImage').click(function() {
-                    const index = parseInt($(this).attr('data-index') || 0);
-                    viewer.view(index);
-                });
-                
-                // Thumbnail navigation
-                $('.thumbnail-item').click(function() {
-                    const index = parseInt($(this).attr('data-index'));
-                    currentImageIndex = index;
-                    updateMainImage(index);
-                });
-                
-                // Arrow navigation
-                $('#prevImage').click(function() {
-                    currentImageIndex = (currentImageIndex - 1 + imageCount) % imageCount;
-                    updateMainImage(currentImageIndex);
-                });
-                
-                $('#nextImage').click(function() {
-                    currentImageIndex = (currentImageIndex + 1) % imageCount;
-                    updateMainImage(currentImageIndex);
-                });
-                
-                function updateMainImage(index) {
-                    const $thumbnail = $('.thumbnail-item').eq(index);
-                    const imageSrc = $thumbnail.data('image');
-                    $('#mainImage').attr('src', imageSrc).attr('data-index', index);
-                    $('.thumbnail-item').removeClass('active');
-                    $thumbnail.addClass('active');
-                    $('#currentImageIndex').text(index + 1);
-                }
-            }
-                </text>
-            }
-            
-            // Size selection
-            $('.size-option').click(function() {
-                if ($(this).hasClass('out-of-stock')) return;
-                
-                $('.size-option').removeClass('selected');
-                $(this).addClass('selected');
-                
-                selectedVariantId = $(this).data('variant-id');
-                selectedColorId = $(this).data('color-id');
-                selectedSizeId = $(this).data('size-id');
-                const stock = $(this).data('stock');
-                const size = $(this).data('size');
-                
-                // Update stock info
-                $('#stockInfo').html(`<i class="fas fa-box"></i> ${stock} @Localizer["Product_InStock"]`);
-                $('#quantity').attr('max', stock);
-                
-                // Update SKU
-                $('#productSKU').text(`PRODUCT-${size}-@Model.Id`);
-                
-                // Enable add to cart button
-                $('#addToCartBtn').prop('disabled', false);
-            });
-            
-            // Quantity controls
-            $('#qtyMinus').click(function() {
-                const input = $('#quantity');
-                const val = parseInt(input.val()) || 1;
-                if (val > 1) {
-                    input.val(val - 1);
-                }
-            });
-            
-            $('#qtyPlus').click(function() {
-                const input = $('#quantity');
-                const val = parseInt(input.val()) || 1;
-                const max = parseInt(input.attr('max')) || 99;
-                if (val < max) {
-                    input.val(val + 1);
-                }
-            });
-            
-            // Manual quantity input validation
-            $('#quantity').on('input', function() {
-                const val = parseInt($(this).val()) || 1;
-                const max = parseInt($(this).attr('max')) || 99;
-                const min = parseInt($(this).attr('min')) || 1;
-                
-                if (val > max) $(this).val(max);
-                if (val < min) $(this).val(min);
-            });
-            
-            // Add to Cart
-            $('#addToCartBtn').click(function() {
-                if (!selectedVariantId) {
-                    alert('@Localizer["Product_SelectSizeFirst"]');
-                    return;
-                }
-                
-                const quantity = parseInt($('#quantity').val()) || 1;
-                const btn = $(this);
-                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> @Localizer["Product_Adding"]');
-                
-                // Check if user is authenticated
-                const isAuthenticated = @(User.Identity?.IsAuthenticated == true ? "true" : "false");
-                
-                if (!isAuthenticated) {
-                    // Save to localStorage for guest users
-                    let guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
-                    
-                    // Check if item already exists
-                    const existingItemIndex = guestCart.findIndex(item => 
-                        item.productId === @Model.Id && 
-                        item.colorId === selectedColorId && 
-                        item.sizeId === selectedSizeId
-                    );
-                    
-                    if (existingItemIndex >= 0) {
-                        guestCart[existingItemIndex].quantity += quantity;
-                    } else {
-                        guestCart.push({
-                            productId: @Model.Id,
-                            colorId: selectedColorId,
-                            sizeId: selectedSizeId,
-                            quantity: quantity
-                        });
-                    }
-                    
-                    localStorage.setItem('guestCart', JSON.stringify(guestCart));
-                    
-                    // Update cart badge
-                    const totalItems = guestCart.reduce((sum, item) => sum + item.quantity, 0);
-                    $('.cart-badge').text(totalItems).show();
-                    
-                    // Show success
-                    btn.html('<i class="fas fa-check"></i> @Localizer["Product_Added"]');
-                    setTimeout(() => {
-                        btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
-                    }, 2000);
-                    return;
-                }
-                
-                // Authenticated user - add via API
-                $.ajax({
-                    url: '/Cart/api/add',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        productId: @Model.Id,
-                        colorId: selectedColorId,
-                        sizeId: selectedSizeId,
-                        quantity: quantity
-                    }),
-                    success: function(response) {
-                        if (response.success) {
-                            // Update cart count
-                            if (response.count) {
-                                $('.cart-badge').text(response.count).show();
-                            }
-                            
-                            // Show success animation
-                            btn.html('<i class="fas fa-check"></i> @Localizer["Product_Added"]');
-                            setTimeout(() => {
-                                btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
-                            }, 2000);
-                        } else if (response.requiresLogin) {
-                            // Redirect to login with return URL
-                            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-                        } else {
-                            alert(response.message || '@Localizer["Error_Generic"]');
-                            btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error:', xhr);
-                        if (xhr.status === 401) {
-                            // Unauthorized - redirect to login
-                            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-                        } else {
-                            alert('@Localizer["Error_Generic"]');
-                            btn.prop('disabled', false).html('<i class="fas fa-shopping-cart"></i> @Localizer["Product_AddToCart"]');
-                        }
-                    }
-                });
-            });
-            
-            // Add to Wishlist
-            $('#addToWishlistBtn').click(function() {
-                const btn = $(this);
-                const icon = btn.find('i');
-                
-                $.ajax({
-                    url: '/Wishlist/Toggle',
-                    method: 'POST',
-                    data: { productId: @Model.Id },
-                    success: function(response) {
-                        if (response.success) {
-                            if (response.added) {
-                                icon.removeClass('far').addClass('fas');
-                                btn.addClass('active');
-                            } else {
-                                icon.removeClass('fas').addClass('far');
-                                btn.removeClass('active');
-                            }
-                        }
-                    },
-                    error: function(xhr) {
-                        if (xhr.status === 401) {
-                            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-                        }
-                    }
-                });
-            });
-
-            // Review submission
-            $('#reviewForm').submit(function(e) {
-                e.preventDefault();
-                
-                const rating = $('input[name="rating"]:checked').val();
-                const comment = $('#reviewComment').val();
-                
-                if (!rating) {
-                    alert('@Localizer["Review_SelectRating"]');
-                    return;
-                }
-                
-                $.ajax({
-                    url: '/Review/Create',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        productId: @Model.Id,
-                        rating: parseFloat(rating),
-                        comment: comment
-                    }),
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.message);
-                            location.reload();
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('@Localizer["Review_Error"]');
-                    }
-                });
-            });
-
-            // Star rating hover effect
-            $('.star-rating-input label').hover(
-                function() {
-                    const rating = $(this).prev('input').val();
-                    $('.star-rating-input label').each(function(index) {
-                        if (index >= (5 - rating)) {
-                            $(this).addClass('hover');
-                        }
-                    });
-                },
-                function() {
-                    $('.star-rating-input label').removeClass('hover');
-                }
-            );
         });
+        
+        // Quantity minus
+        document.getElementById('qtyMinus').onclick = function() {
+            var input = document.getElementById('quantity');
+            var val = parseInt(input.value) || 1;
+            if (val > 1) input.value = val - 1;
+        };
+        
+        // Quantity plus
+        document.getElementById('qtyPlus').onclick = function() {
+            var input = document.getElementById('quantity');
+            var val = parseInt(input.value) || 1;
+            var max = parseInt(input.max) || 99;
+            if (val < max) input.value = val + 1;
+        };
+        
+        // Add to cart
+        document.getElementById('addToCartBtn').onclick = function() {
+            if (hasVariants && !selectedVariantId) {
+                alert('Please select a size first');
+                return;
+            }
+            
+            var quantity = parseInt(document.getElementById('quantity').value) || 1;
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            
+            if (!isAuthenticated) {
+                var guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                var itemColorId = hasVariants ? selectedColorId : null;
+                var itemSizeId = hasVariants ? selectedSizeId : null;
+                
+                var existingIndex = -1;
+                for (var i = 0; i < guestCart.length; i++) {
+                    if (guestCart[i].productId === @Model.Id && 
+                        guestCart[i].colorId === itemColorId && 
+                        guestCart[i].sizeId === itemSizeId) {
+                        existingIndex = i;
+                        break;
+                    }
+                }
+                
+                if (existingIndex >= 0) {
+                    guestCart[existingIndex].quantity += quantity;
+                } else {
+                    guestCart.push({
+                        productId: @Model.Id,
+                        colorId: itemColorId,
+                        sizeId: itemSizeId,
+                        quantity: quantity
+                    });
+                }
+                
+                localStorage.setItem('guestCart', JSON.stringify(guestCart));
+                
+                var totalItems = 0;
+                for (var i = 0; i < guestCart.length; i++) {
+                    totalItems += guestCart[i].quantity;
+                }
+                var badge = document.querySelector('.cart-badge');
+                if (badge) {
+                    badge.textContent = totalItems;
+                    badge.style.display = 'block';
+                }
+                
+                // Trigger cart update event
+                window.dispatchEvent(new Event('cartUpdated'));
+                
+                btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+                setTimeout(function() {
+                    btn.disabled = hasVariants && !selectedVariantId;
+                    btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                }, 2000);
+                return;
+            }
+            
+            fetch('/Cart/api/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: @Model.Id,
+                    colorId: hasVariants ? selectedColorId : null,
+                    sizeId: hasVariants ? selectedSizeId : null,
+                    quantity: quantity
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    var badge = document.querySelector('.cart-badge');
+                    if (badge && data.count) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'block';
+                    }
+                    
+                    // Trigger cart update event
+                    window.dispatchEvent(new Event('cartUpdated'));
+                    
+                    btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+                    setTimeout(function() {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                    }, 2000);
+                } else {
+                    alert(data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
+            });
+        };
+        
+        // Wishlist
+        document.getElementById('addToWishlistBtn').onclick = function() {
+            if (!isAuthenticated) {
+                window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+            
+            var btn = this;
+            fetch('/Wishlist/Toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'productId=@Model.Id'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    var icon = btn.querySelector('i');
+                    if (data.added) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                    }
+                }
+            });
+        };
     </script>
 }
+
+

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  
+  <!-- Common UI -->
+  <data name="Save" xml:space="preserve"><value>Zapisz</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Anuluj</value></data>
+  <data name="Submit" xml:space="preserve"><value>Wyślij</value></data>
+  <data name="Delete" xml:space="preserve"><value>Usuń</value></data>
+  <data name="Edit" xml:space="preserve"><value>Edytuj</value></data>
+  <data name="View" xml:space="preserve"><value>Zobacz</value></data>
+  <data name="Close" xml:space="preserve"><value>Zamknij</value></data>
+  <data name="Back" xml:space="preserve"><value>Wstecz</value></data>
+  <data name="Next" xml:space="preserve"><value>Dalej</value></data>
+  <data name="Previous" xml:space="preserve"><value>Poprzedni</value></data>
+  <data name="Search" xml:space="preserve"><value>Szukaj</value></data>
+  <data name="Filter" xml:space="preserve"><value>Filtruj</value></data>
+  <data name="Sort" xml:space="preserve"><value>Sortuj</value></data>
+  <data name="Loading" xml:space="preserve"><value>Ładowanie...</value></data>
+  <data name="Error" xml:space="preserve"><value>Wystąpił błąd</value></data>
+  <data name="Success" xml:space="preserve"><value>Sukces</value></data>
+  <data name="Required" xml:space="preserve"><value>Wymagane</value></data>
+  <data name="Optional" xml:space="preserve"><value>Opcjonalne</value></data>
+  <data name="New" xml:space="preserve"><value>Nowy</value></data>
+  <data name="Sale" xml:space="preserve"><value>Wyprzedaż</value></data>
+  <data name="FreeShipping" xml:space="preserve"><value>Darmowa wysyłka przy zamówieniach powyżej 200 zł</value></data>
+  <data name="Adding" xml:space="preserve"><value>Dodawanie</value></data>
+  <data name="Added" xml:space="preserve"><value>Dodano</value></data>
+  <data name="ViewDetails" xml:space="preserve"><value>Zobacz Szczegóły</value></data>
+  <data name="Quantity" xml:space="preserve"><value>Ilość</value></data>
+  <data name="Each" xml:space="preserve"><value>sztuka</value></data>
+  <data name="Home" xml:space="preserve"><value>Strona Główna</value></data>
+  <data name="Products" xml:space="preserve"><value>Produkty</value></data>
+  
+  <!-- Errors -->
+  <data name="Error_Generic" xml:space="preserve"><value>Wystąpił błąd. Spróbuj ponownie.</value></data>
+  <data name="Error_AddToCart" xml:space="preserve"><value>Nie udało się dodać produktu do koszyka</value></data>
+  
+  <!-- Accessibility -->
+  <data name="Accessibility_SkipToContent" xml:space="preserve"><value>Przejdź do treści</value></data>
+  <data name="Accessibility_BackToTop" xml:space="preserve"><value>Powrót na górę</value></data>
+  <data name="Accessibility_ToggleDarkMode" xml:space="preserve"><value>Przełącz tryb ciemny</value></data>
+  <data name="Accessibility_ToggleNavigation" xml:space="preserve"><value>Przełącz nawigację</value></data>
+  
+  <!-- Top Bar -->
+  <data name="TopBar_Home" xml:space="preserve"><value>Strona Główna</value></data>
+  <data name="TopBar_Shop" xml:space="preserve"><value>Sklep</value></data>
+  <data name="TopBar_Info" xml:space="preserve"><value>Informacje</value></data>
+  <data name="TopBar_FreeShipping" xml:space="preserve"><value>Darmowa wysyłka przy zamówieniach powyżej 200 PLN</value></data>
+  
+  <!-- Cookie Consent -->
+  <data name="SavePreferences" xml:space="preserve"><value>Zapisz Preferencje</value></data>
+</root>

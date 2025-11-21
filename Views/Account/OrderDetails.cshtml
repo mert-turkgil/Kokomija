@@ -1,8 +1,8 @@
 @model Kokomija.Models.ViewModels.Account.OrderViewModel
-@inject Kokomija.Services.ILocalizationService Localizer
+@inject Kokomija.Services.ILocalizationService L
 
 @{
-    ViewData["Title"] = Localizer["Account_Order_Details"] + " #" + Model.OrderNumber;
+    ViewData["Title"] = L["Account_Order_Details"] + " #" + Model.OrderNumber;
 }
 
 <div class="container my-5">
@@ -10,9 +10,9 @@
         <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@Localizer["Home"]</a></li>
-                    <li class="breadcrumb-item"><a asp-action="Index">@Localizer["Account_MyAccount"]</a></li>
-                    <li class="breadcrumb-item active">@Localizer["Account_Order_Details"] #@Model.OrderNumber</li>
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Home"]</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Index">@L["Account_MyAccount"]</a></li>
+                    <li class="breadcrumb-item active">@L["Account_Order_Details"] #@Model.OrderNumber</li>
                 </ol>
             </nav>
         </div>
@@ -22,7 +22,7 @@
         <div class="col-md-8">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">@Localizer["Order_Items"]</h5>
+                    <h5 class="mb-0">@L["Order_Items"]</h5>
                     <span class="badge bg-@(Model.OrderStatus == "Completed" || Model.OrderStatus == "Delivered" ? "success" : Model.OrderStatus == "Cancelled" ? "danger" : "warning")">
                         @Model.OrderStatus
                     </span>
@@ -50,11 +50,11 @@
                                 <h6 class="mb-1">@item.ProductName</h6>
                                 @if (!string.IsNullOrEmpty(item.ColorName))
                                 {
-                                    <small class="text-muted">@Localizer["Color"]: @item.ColorName</small><br />
+                                    <small class="text-muted">@L["Color"]: @item.ColorName</small><br />
                                 }
                                 @if (!string.IsNullOrEmpty(item.SizeName))
                                 {
-                                    <small class="text-muted">@Localizer["Size"]: @item.SizeName</small>
+                                    <small class="text-muted">@L["Size"]: @item.SizeName</small>
                                 }
                             </div>
                             <div class="col-md-2 text-center">
@@ -62,7 +62,7 @@
                             </div>
                             <div class="col-md-2 text-end">
                                 <p class="mb-0"><strong>@item.TotalPrice.ToString("C")</strong></p>
-                                <small class="text-muted">@item.UnitPrice.ToString("C") @Localizer["Each"]</small>
+                                <small class="text-muted">@item.UnitPrice.ToString("C") @L["Each"]</small>
                             </div>
                         </div>
                     }
@@ -73,24 +73,24 @@
         <div class="col-md-4">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">@Localizer["Order_Status"]</h5>
+                    <h5 class="mb-0">@L["Order_Status"]</h5>
                 </div>
                 <div class="card-body">
                     <dl class="row mb-0">
-                        <dt class="col-sm-6">@Localizer["Order_Number"]:</dt>
+                        <dt class="col-sm-6">@L["Order_Number"]:</dt>
                         <dd class="col-sm-6">#@Model.OrderNumber</dd>
 
-                        <dt class="col-sm-6">@Localizer["Order_Date"]:</dt>
+                        <dt class="col-sm-6">@L["Order_Date"]:</dt>
                         <dd class="col-sm-6">@Model.OrderDate.ToString("MMMM dd, yyyy")</dd>
 
-                        <dt class="col-sm-6">@Localizer["Order_Status"]:</dt>
+                        <dt class="col-sm-6">@L["Order_Status"]:</dt>
                         <dd class="col-sm-6">
                             <span class="badge bg-@(Model.OrderStatus == "Completed" || Model.OrderStatus == "Delivered" ? "success" : Model.OrderStatus == "Cancelled" ? "danger" : "warning")">
                                 @Model.OrderStatus
                             </span>
                         </dd>
 
-                        <dt class="col-sm-6">@Localizer["Payment_Status"]:</dt>
+                        <dt class="col-sm-6">@L["Payment_Status"]:</dt>
                         <dd class="col-sm-6">
                             <span class="badge bg-@(Model.PaymentStatus == "Paid" ? "success" : Model.PaymentStatus == "Failed" ? "danger" : "warning")">
                                 @Model.PaymentStatus
@@ -102,11 +102,11 @@
 
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">@Localizer["Order_Total"]</h5>
+                    <h5 class="mb-0">@L["Order_Total"]</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
-                        <span>@Localizer["Subtotal"]:</span>
+                        <span>@L["Subtotal"]:</span>
                         <strong>@Model.TotalAmount.ToString("C")</strong>
                     </div>
                 </div>
@@ -116,17 +116,17 @@
                 @if (Model.CanCancel)
                 {
                     <button type="button" class="btn btn-outline-danger" onclick="cancelOrder(@Model.Id)">
-                        <i class="bi bi-x-circle me-2"></i>@Localizer["Account_CancelOrder"]
+                        <i class="bi bi-x-circle me-2"></i>@L["Account_CancelOrder"]
                     </button>
                 }
                 @if (Model.CanReturn)
                 {
                     <a asp-action="ReturnRequest" asp-route-orderId="@Model.Id" class="btn btn-outline-warning">
-                        <i class="bi bi-arrow-return-left me-2"></i>@Localizer["Account_RequestReturn"]
+                        <i class="bi bi-arrow-return-left me-2"></i>@L["Account_RequestReturn"]
                     </a>
                 }
                 <a asp-action="Index" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>@Localizer["Back_To_Account"]
+                    <i class="bi bi-arrow-left me-2"></i>@L["Back_To_Account"]
                 </a>
             </div>
         </div>
@@ -136,7 +136,7 @@
 @section Scripts {
     <script>
         function cancelOrder(orderId) {
-            if (!confirm('@Localizer["Confirm_Cancel_Order"]')) {
+            if (!confirm('@L["Confirm_Cancel_Order"]')) {
                 return;
             }
 
@@ -153,12 +153,12 @@
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert(data.message || '@Localizer["Error_Cancelling_Order"]');
+                    alert(data.message || '@L["Error_Cancelling_Order"]');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('@Localizer["Error_Cancelling_Order"]');
+                alert('@L["Error_Cancelling_Order"]');
             });
         }
     </script>

@@ -49,6 +49,9 @@ namespace Kokomija.Entity
         public decimal DiscountAmount { get; set; } = 0;
 
         [Column(TypeName = "decimal(18,2)")]
+        public decimal ShippingCost { get; set; } = 0;
+
+        [Column(TypeName = "decimal(18,2)")]
         public decimal SubtotalAmount { get; set; }
 
         [Required]

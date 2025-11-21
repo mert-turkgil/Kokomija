@@ -54,12 +54,38 @@ namespace Kokomija.Data.Concrete
                     oi.Order.OrderStatus == "completed");
         }
 
+        public async Task<bool> HasUserPurchasedProductGroupAsync(string userId, int productGroupId)
+        {
+            // Check if user purchased ANY product in the same group
+            return await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Include(oi => oi.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                .AnyAsync(oi => 
+                    oi.Order.UserId == userId && 
+                    oi.ProductVariant.Product.ProductGroupId == productGroupId &&
+                    oi.Order.OrderStatus == "completed");
+        }
+
         public async Task<ProductReview?> GetUserReviewForProductAsync(string userId, int productId)
         {
             return await _context.ProductReviews
                 .Include(r => r.User)
                 .Include(r => r.AdminUser)
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.ProductId == productId);
+        }
+
+        public async Task<ProductReview?> GetUserReviewForProductGroupAsync(string userId, int productGroupId)
+        {
+            // Check if user already reviewed ANY product in the same group
+            return await _context.ProductReviews
+                .Include(r => r.User)
+                .Include(r => r.AdminUser)
+                .Include(r => r.Product)
+                .FirstOrDefaultAsync(r => 
+                    r.UserId == userId && 
+                    r.Product != null &&
+                    r.Product.ProductGroupId == productGroupId);
         }
     }
 }

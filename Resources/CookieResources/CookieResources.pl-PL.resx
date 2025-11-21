@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  
+  <!-- Cookie Consent -->
+  <data name="Title" xml:space="preserve"><value>Preferencje plików cookie</value></data>
+  <data name="Message" xml:space="preserve"><value>Używamy plików cookie, aby poprawić Twoje doświadczenia, personalizować treści i analizować ruch. Klikając "Akceptuj wszystkie", wyrażasz zgodę na używanie plików cookie.</value></data>
+  <data name="LearnMore" xml:space="preserve"><value>Dowiedz się więcej w Polityce prywatności</value></data>
+  <data name="AcceptAll" xml:space="preserve"><value>Akceptuj wszystkie</value></data>
+  <data name="AcceptNecessary" xml:space="preserve"><value>Tylko niezbędne</value></data>
+  <data name="Settings" xml:space="preserve"><value>Ustawienia plików cookie</value></data>
+  
+  <!-- Cookie Categories -->
+  <data name="Category_Essential" xml:space="preserve"><value>Niezbędne pliki cookie</value></data>
+  <data name="Category_EssentialDesc" xml:space="preserve"><value>Te pliki cookie są niezbędne do działania witryny i nie można ich wyłączyć. Są zazwyczaj ustawiane w odpowiedzi na Twoje działania, takie jak logowanie lub wypełnianie formularzy.</value></data>
+  <data name="Category_Preferences" xml:space="preserve"><value>Preferencyjne pliki cookie</value></data>
+  <data name="Category_PreferencesDesc" xml:space="preserve"><value>Te pliki cookie pozwalają stronie zapamiętać Twoje wybory (takie jak język lub motyw) i zapewniają ulepszone, bardziej osobiste funkcje.</value></data>
+  <data name="Category_Analytics" xml:space="preserve"><value>Analityczne pliki cookie</value></data>
+  <data name="Category_AnalyticsDesc" xml:space="preserve"><value>Te pliki cookie pomagają nam zrozumieć, jak odwiedzający wchodzą w interakcję z naszą witryną, zbierając i raportując informacje anonimowo.</value></data>
+  <data name="Category_Marketing" xml:space="preserve"><value>Marketingowe pliki cookie</value></data>
+  <data name="Category_MarketingDesc" xml:space="preserve"><value>Te pliki cookie służą do śledzenia odwiedzających w witrynach w celu wyświetlania odpowiednich i angażujących reklam dla poszczególnych użytkowników.</value></data>
+</root>

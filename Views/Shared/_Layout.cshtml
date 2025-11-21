@@ -132,7 +132,7 @@
                                 {
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@menCategory.Slug">
-                                            @L["Footer_AllProducts"] - @L["Nav_Men"]
+                                            @L.GetString("AllProducts", "Footer") - @L["Nav_Men"]
                                         </a>
                                     </li>
                                     @if (menSubCategories.Any())
@@ -175,7 +175,7 @@
                                 {
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@womenCategory.Slug">
-                                            @L["Footer_AllProducts"] - @L["Nav_Women"]
+                                            @L.GetString("AllProducts", "Footer") - @L["Nav_Women"]
                                         </a>
                                     </li>
                                     @if (womenSubCategories.Any())
@@ -302,7 +302,7 @@
                                 <ul class="dropdown-menu w-100" aria-labelledby="menDropdownMobile">
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@menCategory.Slug">
-                                            @L["Footer_AllProducts"] - @L["Nav_Men"]
+                                            @L.GetString("AllProducts", "Footer") - @L["Nav_Men"]
                                         </a>
                                     </li>
                                     @if (menSubCategories.Any())
@@ -336,7 +336,7 @@
                                 <ul class="dropdown-menu w-100" aria-labelledby="womenDropdownMobile">
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@womenCategory.Slug">
-                                            @L["Footer_AllProducts"] - @L["Nav_Women"]
+                                            @L.GetString("AllProducts", "Footer") - @L["Nav_Women"]
                                         </a>
                                     </li>
                                     @if (womenSubCategories.Any())
@@ -410,7 +410,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="footer-brand">Kokomija</div>
                     <p class="footer-description">
-                        @L["Footer_Brand_Description"]
+                        @L.GetString("Brand_Description", "Footer")
                     </p>
                     <div class="social-links mt-3">
                         <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
@@ -422,42 +422,42 @@
                 
                 <!-- Quick Links -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">@L["Footer_QuickLinks"]</h5>
+                    <h5 class="footer-title">@L.GetString("QuickLinks", "Footer")</h5>
                     <ul class="footer-links">
                         <li><a asp-controller="Home" asp-action="Index">@L["TopBar_Home"]</a></li>
-                        <li><a asp-controller="Product" asp-action="Index">@L["Footer_Shop"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Index">@L.GetString("Shop", "Footer")</a></li>
                         <li><a asp-controller="Blog" asp-action="Index">@L["Blog_Title"]</a></li>
                         <li><a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">@L.GetString("PrivacyPolicy", "Footer")</a></li>
                     </ul>
                 </div>
                 
                 <!-- Categories -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">@L["Footer_Categories"]</h5>
+                    <h5 class="footer-title">@L.GetString("Categories", "Footer")</h5>
                     <ul class="footer-links">
                         <li><a asp-controller="Product" asp-action="Category" asp-route-slug="damskie">@L["Nav_Women"]</a></li>
                         <li><a asp-controller="Product" asp-action="Category" asp-route-slug="meskie">@L["Nav_Men"]</a></li>
-                        <li><a asp-controller="Product" asp-action="Index">@L["Footer_AllProducts"]</a></li>
-                        <li><a asp-controller="Home" asp-action="Index">@L["Footer_NewArrivals"]</a></li>
+                        <li><a asp-controller="Product" asp-action="Index">@L.GetString("AllProducts", "Footer")</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">@L.GetString("NewArrivals", "Footer")</a></li>
                     </ul>
                 </div>
                 
                 <!-- Customer Service -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">@L["Footer_CustomerService"]</h5>
+                    <h5 class="footer-title">@L.GetString("CustomerService", "Footer")</h5>
                     <ul class="footer-links">
                         <li><a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">@L["Footer_ShippingInfo"]</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">@L["Footer_Returns"]</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">@L["Footer_SizeGuide"]</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L.GetString("ShippingInfo", "Footer")</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L.GetString("Returns", "Footer")</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@L.GetString("SizeGuide", "Footer")</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">@L.GetString("PrivacyPolicy", "Footer")</a></li>
                     </ul>
                 </div>
                 
                 <!-- Contact -->
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-title">@L["Footer_Contact"]</h5>
+                    <h5 class="footer-title">@L.GetString("Contact", "Footer")</h5>
                     <ul class="footer-links">
                         <li><i class="fas fa-phone me-2"></i> +48 123 456 789</li>
                         <li>
@@ -473,10 +473,10 @@
             <!-- Footer Bottom -->
             <div class="footer-bottom">
                 <p class="mb-0">
-                    &copy; @DateTime.Now.Year Kokomija. @L["Footer_AllRightsReserved"] | 
+                    &copy; @DateTime.Now.Year Kokomija. @L.GetString("AllRightsReserved", "Footer") | 
                     <a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a> |
-                    <a asp-controller="Home" asp-action="Privacy">@L["Footer_PrivacyPolicy"]</a> | 
-                    <a asp-controller="Home" asp-action="Privacy">@L["Footer_Terms"]</a>
+                    <a asp-controller="Home" asp-action="Privacy">@L.GetString("PrivacyPolicy", "Footer")</a> | 
+                    <a asp-controller="Home" asp-action="Privacy">@L.GetString("Terms", "Footer")</a>
                 </p>
             </div>
         </div>
@@ -526,3 +526,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

@@ -7,7 +7,7 @@
 @import 'variables';
 
 // 2. Import Bootstrap
-@import '../../node_modules/bootstrap/scss/bootstrap';
+@import '../lib/bootstrap/scss/bootstrap';
 
 // 3. Import Utilities
 @import 'utilities/mixins';
@@ -38,6 +38,9 @@
 @import 'pages/cart-page';
 @import 'pages/checkout';
 @import 'pages/product-detail';
+@import 'pages/admin';
+@import 'pages/settings';
+@import 'pages/admin-carousel';
 
 // ============================================
 // GLOBAL STYLES

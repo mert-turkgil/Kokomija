@@ -9,6 +9,7 @@ namespace Kokomija.Models.ViewModels
         public string Title { get; set; } = string.Empty;
         public string? Subtitle { get; set; }
         public string ImagePath { get; set; } = string.Empty;
+        public string? TabletImagePath { get; set; }
         public string? MobileImagePath { get; set; }
         public string ImageAlt { get; set; } = string.Empty;
         public string? LinkUrl { get; set; }
@@ -20,9 +21,14 @@ namespace Kokomija.Models.ViewModels
         public int DisplayOrder { get; set; }
         
         /// <summary>
-        /// Full URL path for the image
+        /// Full URL path for the desktop image
         /// </summary>
         public string FullImagePath { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Full URL path for tablet image
+        /// </summary>
+        public string? FullTabletImagePath { get; set; }
         
         /// <summary>
         /// Full URL path for mobile image

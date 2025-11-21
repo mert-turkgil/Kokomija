@@ -18,6 +18,7 @@ namespace Kokomija.Data.Abstract
         IRepository<EmailCommand> EmailCommands { get; }
         IRepository<AdminEarnings> AdminEarnings { get; }
         ICarouselSlideRepository CarouselSlides { get; }
+        ICarouselSlideTranslationRepository CarouselSlideTranslations { get; }
         IWishlistRepository Wishlists { get; }
         ICartRepository Carts { get; }
         IBlogRepository Blogs { get; }

@@ -21,6 +21,10 @@ namespace Kokomija.Models.ViewModels.Checkout
         public string? UserPhone { get; set; }
         public List<SavedPaymentMethodViewModel> SavedPaymentMethods { get; set; } = new();
         public bool IsGuest { get; set; }
+        public decimal FreeShippingThreshold { get; set; } = 100m;
+        public bool QualifiesForFreeShipping { get; set; }
+        public List<ShippingOptionViewModel> ShippingOptions { get; set; } = new();
+        public string SelectedShippingOption { get; set; } = "standard";
     }
 
     public class CheckoutItemViewModel
@@ -62,10 +66,25 @@ namespace Kokomija.Models.ViewModels.Checkout
         public bool IsDefault { get; set; }
     }
 
+    public class ShippingOptionViewModel
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal Cost { get; set; }
+        public string DeliveryTime { get; set; } = string.Empty;
+        public bool IsDefault { get; set; }
+    }
+
     public class ProcessPaymentRequest
     {
         public string PaymentMethodId { get; set; } = string.Empty;
         public ShippingAddressViewModel ShippingAddress { get; set; } = new();
         public bool SavePaymentMethod { get; set; }
+    }
+
+    public class CreateCheckoutSessionRequest
+    {
+        public string ShippingOption { get; set; } = "standard";
     }
 }

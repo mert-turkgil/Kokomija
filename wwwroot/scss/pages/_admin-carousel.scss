@@ -1,0 +1,520 @@
+// Admin Carousel Management Styles - Dark Theme Ready
+.carousel-admin-container {
+    // Image Upload Containers
+    .image-upload-container {
+        position: relative;
+        min-height: 250px;
+        
+        .upload-dropzone {
+            border: 2px dashed var(--bs-border-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bs-body-bg);
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            i {
+                color: var(--bs-secondary-color);
+                transition: all 0.3s ease;
+            }
+
+            p {
+                margin: 0.75rem 0 0.25rem;
+                color: var(--bs-secondary-color);
+                font-weight: 500;
+            }
+
+            small {
+                color: var(--bs-tertiary-color);
+                font-size: 0.875rem;
+            }
+
+            &:hover {
+                border-color: #667eea;
+                background: rgba(102, 126, 234, 0.05);
+                
+                i {
+                    color: #667eea;
+                    transform: translateY(-4px) scale(1.05);
+                }
+
+                [data-bs-theme="dark"] & {
+                    background: rgba(102, 126, 234, 0.1);
+                    border-color: #a8b7ff;
+
+                    i {
+                        color: #a8b7ff;
+                    }
+                }
+            }
+
+            &.drag-over {
+                border-color: #667eea;
+                background: rgba(102, 126, 234, 0.1);
+                border-style: solid;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+
+                i {
+                    color: #667eea;
+                    transform: scale(1.1);
+                }
+
+                [data-bs-theme="dark"] & {
+                    background: rgba(102, 126, 234, 0.15);
+                    border-color: #a8b7ff;
+                    box-shadow: 0 4px 12px rgba(168, 183, 255, 0.3);
+
+                    i {
+                        color: #a8b7ff;
+                    }
+                }
+            }
+
+            [data-bs-theme="dark"] & {
+                background: rgba(255, 255, 255, 0.03);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        .image-preview {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bs-card-bg);
+            padding: 1rem;
+            border: 1px solid var(--bs-border-color);
+
+            img {
+                width: 100%;
+                max-height: 200px;
+                object-fit: contain;
+                border-radius: 8px;
+                margin-bottom: 0.75rem;
+            }
+
+            .remove-image {
+                width: 100%;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+                }
+            }
+
+            [data-bs-theme="dark"] & {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+    }
+
+    // Translation Cards
+    .translation-card {
+        .card-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+            border-bottom: 1px solid var(--bs-border-color);
+            
+            h6 {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-weight: 700;
+                color: var(--bs-heading-color);
+                margin: 0;
+            }
+
+            [data-bs-theme="dark"] & {
+                background: rgba(102, 126, 234, 0.15);
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .card-body {
+            background: var(--bs-card-bg);
+            
+            [data-bs-theme="dark"] & {
+                background: rgba(255, 255, 255, 0.03);
+            }
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--bs-heading-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+
+            .text-danger {
+                font-weight: 700;
+            }
+        }
+
+        .form-control,
+        .form-select {
+            border: 1px solid var(--bs-border-color);
+            background: var(--bs-body-bg);
+            color: var(--bs-body-color);
+            transition: all 0.2s ease;
+
+            &:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+                background: var(--bs-body-bg);
+
+                [data-bs-theme="dark"] & {
+                    border-color: #a8b7ff;
+                    box-shadow: 0 0 0 0.2rem rgba(168, 183, 255, 0.25);
+                }
+            }
+
+            [data-bs-theme="dark"] & {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.15);
+                color: rgba(255, 255, 255, 0.9);
+
+                &::placeholder {
+                    color: rgba(255, 255, 255, 0.5);
+                }
+            }
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .text-muted {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+
+            [data-bs-theme="dark"] & {
+                color: rgba(255, 255, 255, 0.5) !important;
+            }
+        }
+    }
+
+    // Slide Settings Section
+    .slide-settings {
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--bs-border-color);
+
+            i {
+                color: #667eea;
+                font-size: 1.25rem;
+
+                [data-bs-theme="dark"] & {
+                    color: #a8b7ff;
+                }
+            }
+
+            h5 {
+                margin: 0;
+                font-weight: 700;
+                color: var(--bs-heading-color);
+            }
+
+            [data-bs-theme="dark"] & {
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+
+            [data-bs-theme="dark"] & {
+                background-color: #a8b7ff;
+                border-color: #a8b7ff;
+            }
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            color: var(--bs-body-color);
+        }
+
+        input[type="color"] {
+            height: 38px;
+            cursor: pointer;
+            border-radius: 6px;
+
+            &::-webkit-color-swatch-wrapper {
+                padding: 2px;
+            }
+
+            &::-webkit-color-swatch {
+                border-radius: 4px;
+                border: 1px solid var(--bs-border-color);
+            }
+        }
+    }
+
+    // Alert Info Boxes
+    .alert-info {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-left: 4px solid #667eea;
+        color: var(--bs-body-color);
+        border-radius: 8px;
+
+        i {
+            color: #667eea;
+        }
+
+        strong {
+            color: var(--bs-heading-color);
+        }
+
+        [data-bs-theme="dark"] & {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: rgba(168, 183, 255, 0.3);
+            border-left-color: #a8b7ff;
+
+            i {
+                color: #a8b7ff;
+            }
+        }
+    }
+
+    // Form Actions
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 0;
+        margin-top: 2rem;
+        border-top: 2px solid var(--bs-border-color);
+
+        [data-bs-theme="dark"] & {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            padding: 0.625rem 2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+
+            .spinner-border-sm {
+                width: 1rem;
+                height: 1rem;
+                margin-right: 0.5rem;
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+
+            &:hover {
+                background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+
+            [data-bs-theme="dark"] & {
+                background: linear-gradient(135deg, #a8b7ff 0%, #b08dd7 100%);
+                
+                &:hover {
+                    background: linear-gradient(135deg, #97a6ff 0%, #9f7cc4 100%);
+                    box-shadow: 0 4px 12px rgba(168, 183, 255, 0.4);
+                }
+            }
+        }
+    }
+
+    // Card Styling
+    .card {
+        border-radius: 16px;
+        border: 1px solid var(--bs-border-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+
+        .card-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-bottom: 1px solid var(--bs-border-color);
+            padding: 1.25rem 1.5rem;
+
+            h4 {
+                margin: 0;
+                font-weight: 700;
+                color: var(--bs-heading-color);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+
+                i {
+                    color: #667eea;
+
+                    [data-bs-theme="dark"] & {
+                        color: #a8b7ff;
+                    }
+                }
+            }
+
+            .btn-light {
+                background: rgba(255, 255, 255, 0.9);
+                border: none;
+                
+                &:hover {
+                    background: white;
+                    transform: translateX(-4px);
+                }
+
+                [data-bs-theme="dark"] & {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: rgba(255, 255, 255, 0.9);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.15);
+                        border-color: rgba(255, 255, 255, 0.3);
+                    }
+                }
+            }
+
+            [data-bs-theme="dark"] & {
+                background: rgba(102, 126, 234, 0.15);
+                border-bottom-color: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .card-body {
+            padding: 2rem;
+            background: var(--bs-card-bg);
+
+            [data-bs-theme="dark"] & {
+                background: rgba(255, 255, 255, 0.03);
+            }
+        }
+
+        [data-bs-theme="dark"] & {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+    }
+}
+
+// Toastr Customization for Dark Theme
+[data-bs-theme="dark"] {
+    #toast-container {
+        .toast {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            color: rgba(255, 255, 255, 0.95);
+
+            .toast-message {
+                color: rgba(255, 255, 255, 0.95);
+            }
+
+            &.toast-success {
+                background: rgba(67, 233, 123, 0.2);
+                border-color: rgba(67, 233, 123, 0.4);
+            }
+
+            &.toast-error {
+                background: rgba(245, 87, 108, 0.2);
+                border-color: rgba(245, 87, 108, 0.4);
+            }
+
+            &.toast-warning {
+                background: rgba(250, 112, 154, 0.2);
+                border-color: rgba(250, 112, 154, 0.4);
+            }
+
+            &.toast-info {
+                background: rgba(79, 172, 254, 0.2);
+                border-color: rgba(79, 172, 254, 0.4);
+            }
+        }
+    }
+}
+
+// Responsive Adjustments
+@media (max-width: 768px) {
+    .carousel-admin-container {
+        .image-upload-container {
+            min-height: 200px;
+
+            .upload-dropzone {
+                padding: 30px 15px;
+                min-height: 180px;
+
+                i {
+                    font-size: 2rem;
+                }
+
+                p {
+                    font-size: 0.875rem;
+                }
+
+                small {
+                    font-size: 0.75rem;
+                }
+            }
+
+            .image-preview img {
+                max-height: 150px;
+            }
+        }
+
+        .translation-card {
+            margin-bottom: 1rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            gap: 0.75rem;
+
+            .btn {
+                width: 100%;
+                padding: 0.75rem 1.5rem;
+            }
+        }
+
+        .card .card-body {
+            padding: 1.5rem;
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .carousel-admin-container {
+        .card .card-header {
+            padding: 1rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+
+            .btn {
+                width: 100%;
+            }
+        }
+    }
+}

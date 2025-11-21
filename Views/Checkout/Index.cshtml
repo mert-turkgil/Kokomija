@@ -163,7 +163,7 @@
 
                     <div class="summary-row">
                         <span>@L["Cart_Shipping"]</span>
-                        <span>
+                        <span id="shippingCostDisplay">
                             @if (Model.ShippingCost == 0)
                             {
                                 <span class="text-success">@L["Cart_FreeShipping"]</span>
@@ -174,15 +174,62 @@
                             }
                         </span>
                     </div>
-
-                    <div class="summary-row">
-                        <span>@L["Cart_Tax"] (23%)</span>
-                        <span>@Model.Tax.ToString("N2") PLN</span>
+                    
+                    <!-- Shipping Selection -->
+                    <div class="shipping-selection mt-3 mb-3">
+                        <h6 class="mb-2">@L["Checkout_SelectShipping"]</h6>
+                        
+                        @if (Model.QualifiesForFreeShipping)
+                        {
+                            <div class="alert alert-success py-2 px-3 mb-2">
+                                <i class="bi bi-check-circle"></i>
+                                @L["Checkout_FreeShippingQualified"]
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info py-2 px-3 mb-2">
+                                <i class="bi bi-info-circle"></i>
+                                @L["Checkout_FreeShippingInfo"]: <strong>@(Model.FreeShippingThreshold - (Model.Subtotal - Model.Discount)).ToString("N2") PLN</strong>
+                            </div>
+                        }
+                        
+                        @foreach (var option in Model.ShippingOptions)
+                        {
+                            <div class="form-check shipping-option @(option.IsDefault ? "selected" : "")" data-cost="@option.Cost" data-option-id="@option.Id">
+                                <input class="form-check-input" type="radio" name="shippingOption" id="shipping_@option.Id" 
+                                       value="@option.Id" @(option.IsDefault ? "checked" : "") data-cost="@option.Cost">
+                                <label class="form-check-label w-100" for="shipping_@option.Id">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>@option.Name</strong>
+                                            <div class="text-muted small">@option.Description</div>
+                                            <div class="text-muted small">@option.DeliveryTime</div>
+                                        </div>
+                                        <div class="text-end">
+                                            @if (option.Cost == 0)
+                                            {
+                                                <span class="badge bg-success">@L["Cart_FreeShipping"]</span>
+                                            }
+                                            else
+                                            {
+                                                <strong>@option.Cost.ToString("N2") PLN</strong>
+                                            }
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        }
                     </div>
 
                     <div class="summary-total">
                         <span>@L["Cart_Total"]</span>
                         <span class="total-amount">@Model.Total.ToString("N2") PLN</span>
+                    </div>
+                    
+                    <div class="text-muted small mt-2 px-2">
+                        <i class="bi bi-info-circle"></i>
+                        İçindeki KDV (%23): @Model.Tax.ToString("N2") PLN
                     </div>
 
                     <div class="security-badges mt-4">
@@ -209,6 +256,39 @@
     <script src="https://js.stripe.com/v3/"></script>
     <script>
         const stripe = Stripe('@Model.StripePublishableKey');
+        let currentSubtotal = @Model.Subtotal;
+        let currentDiscount = @Model.Discount;
+        let currentTax = @Model.Tax;
+        let currentShipping = @Model.ShippingCost;
+        let currentTotal = @Model.Total;
+        
+        // Handle shipping option change
+        document.querySelectorAll('input[name="shippingOption"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const selectedCost = parseFloat(this.dataset.cost);
+                currentShipping = selectedCost;
+                
+                // Update shipping display
+                const shippingDisplay = document.getElementById('shippingCostDisplay');
+                if (selectedCost === 0) {
+                    shippingDisplay.innerHTML = '<span class="text-success">@L["Cart_FreeShipping"]</span>';
+                } else {
+                    shippingDisplay.innerHTML = selectedCost.toFixed(2) + ' PLN';
+                }
+                
+                // Recalculate total (VAT is inclusive - already in the price)
+                const subtotalAfterDiscount = currentSubtotal - currentDiscount;
+                currentTotal = subtotalAfterDiscount + currentShipping; // Tax already included
+                
+                // Update displays
+                document.querySelector('.total-amount').textContent = currentTotal.toFixed(2) + ' PLN';
+                document.querySelector('#checkout-button .ms-2').textContent = currentTotal.toFixed(2) + ' PLN';
+                
+                // Update styling
+                document.querySelectorAll('.shipping-option').forEach(opt => opt.classList.remove('selected'));
+                this.closest('.shipping-option').classList.add('selected');
+            });
+        });
         
         document.getElementById('checkout-button').addEventListener('click', async () => {
             const button = document.getElementById('checkout-button');
@@ -216,12 +296,17 @@
             button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>@L["Checkout_Processing"]';
 
             try {
+                const selectedShipping = document.querySelector('input[name="shippingOption"]:checked').value;
+                
                 const response = await fetch('/Checkout/CreateCheckoutSession', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                    }
+                    },
+                    body: JSON.stringify({
+                        shippingOption: selectedShipping
+                    })
                 });
 
                 const data = await response.json();
@@ -235,18 +320,18 @@
                     if (result.error) {
                         alert(result.error.message);
                         button.disabled = false;
-                        button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">@Model.Total.ToString("N2") PLN</span>';
+                        button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">' + currentTotal.toFixed(2) + ' PLN</span>';
                     }
                 } else {
                     alert(data.message || '@L["Checkout_Error"]');
                     button.disabled = false;
-                    button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">@Model.Total.ToString("N2") PLN</span>';
+                    button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">' + currentTotal.toFixed(2) + ' PLN</span>';
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('@L["Checkout_Error"]');
                 button.disabled = false;
-                button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">@Model.Total.ToString("N2") PLN</span>';
+                button.innerHTML = '<i class="bi bi-lock"></i> @L["Checkout_ProceedToPayment"] <span class="ms-2">' + currentTotal.toFixed(2) + ' PLN</span>';
             }
         });
     </script>

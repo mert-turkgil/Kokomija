@@ -52,6 +52,26 @@ namespace Kokomija.Controllers
                     return NotFound();
                 }
 
+                // If product is part of a group, load reviews for ALL products in the group
+                if (product.ProductGroupId.HasValue)
+                {
+                    var groupProductIds = (await _unitOfWork.Products.FindAsync(p => 
+                        p.ProductGroupId == product.ProductGroupId && p.IsActive))
+                        .Select(p => p.Id)
+                        .ToList();
+                    
+                    // Get all reviews for all products in the group
+                    var allGroupReviews = new List<Kokomija.Entity.ProductReview>();
+                    foreach (var productId in groupProductIds)
+                    {
+                        var reviews = await _unitOfWork.ProductReviews.GetProductReviewsAsync(productId, false);
+                        allGroupReviews.AddRange(reviews);
+                    }
+                    
+                    // Replace product reviews with combined group reviews
+                    product.Reviews = allGroupReviews.OrderByDescending(r => r.CreatedAt).ToList();
+                }
+
                 // Get related products based on ProductGroup (different pack sizes)
                 List<Kokomija.Entity.Product> relatedProducts;
                 if (product.ProductGroupId.HasValue)

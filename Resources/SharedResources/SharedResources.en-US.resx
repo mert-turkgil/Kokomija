@@ -1,0 +1,1809 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" msdata:Ordinal="5" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Navigation -->
+  <data name="Nav_Men" xml:space="preserve">
+    <value>Men</value>
+  </data>
+  <data name="Nav_Women" xml:space="preserve">
+    <value>Women</value>
+  </data>
+  <data name="Nav_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Nav_Account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="Nav_Cart" xml:space="preserve">
+    <value>Cart</value>
+  </data>
+  <data name="Nav_Blog" xml:space="preserve">
+    <value>Blog</value>
+  </data>
+  <data name="Nav_Contact" xml:space="preserve">
+    <value>Contact</value>
+  </data>
+  <data name="Nav_FAQ" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Nav_AboutUs" xml:space="preserve">
+    <value>About Us</value>
+  </data>
+  
+  <!-- Breadcrumb Navigation -->
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Products" xml:space="preserve">
+    <value>Products</value>
+  </data>
+  
+  <!-- Generic Error -->
+  <data name="Error_Generic" xml:space="preserve">
+    <value>An error occurred. Please try again.</value>
+  </data>
+  
+  <!-- Homepage -->
+  <data name="Home_Welcome" xml:space="preserve">
+    <value>Welcome</value>
+  </data>
+  <data name="Home.Welcome" xml:space="preserve">
+    <value>Welcome to Kokomija</value>
+  </data>
+  <data name="Home.MetaTitle" xml:space="preserve">
+    <value>Kokomija - Premium Textile &amp; Fashion</value>
+  </data>
+  <data name="Home.MetaDescription" xml:space="preserve">
+    <value>Discover high-quality clothing and textiles. Shop men's and women's fashion with free shipping on orders over 200 PLN.</value>
+  </data>
+  <data name="Home_FeaturedCategories" xml:space="preserve">
+    <value>Featured Categories</value>
+  </data>
+  <data name="Home_ShopByCategory" xml:space="preserve">
+    <value>Shop by Category</value>
+  </data>
+  <data name="Home_FeaturedProducts" xml:space="preserve">
+    <value>Featured Products</value>
+  </data>
+  <data name="Home_ViewAll" xml:space="preserve">
+    <value>View All</value>
+  </data>
+  <data name="Home_ViewAllProducts" xml:space="preserve">
+    <value>View All Products</value>
+  </data>
+  <data name="Home_ShopNow" xml:space="preserve">
+    <value>Shop Now</value>
+  </data>
+  <data name="Home_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Home_SearchProducts" xml:space="preserve">
+    <value>Search products</value>
+  </data>
+  <data name="Home_SearchPlaceholder" xml:space="preserve">
+    <value>Search for clothing, accessories...</value>
+  </data>
+  
+  <!-- Products -->
+  <data name="Product_AddToCart" xml:space="preserve">
+    <value>Add to Cart</value>
+  </data>
+  <data name="Product_OutOfStock" xml:space="preserve">
+    <value>Out of Stock</value>
+  </data>
+  <data name="Product_SelectSize" xml:space="preserve">
+    <value>Select Size</value>
+  </data>
+  <data name="Product_SelectColor" xml:space="preserve">
+    <value>Select Color</value>
+  </data>
+  <data name="Product_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Product_Specifications" xml:space="preserve">
+    <value>Specifications</value>
+  </data>
+  <data name="Product_Reviews" xml:space="preserve">
+    <value>Reviews</value>
+  </data>
+  <data name="Product_Price" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="Product_Quantity" xml:space="preserve">
+    <value>Quantity</value>
+  </data>
+  <data name="Products_ItemsFound" xml:space="preserve">
+    <value>items found</value>
+  </data>
+  <data name="Product_Quality" xml:space="preserve">
+    <value>Premium Quality</value>
+  </data>
+  <data name="Product_Quality_Desc" xml:space="preserve">
+    <value>100% authentic products</value>
+  </data>
+  <data name="Product_FastShipping" xml:space="preserve">
+    <value>Fast Shipping</value>
+  </data>
+  <data name="Product_FastShipping_Desc" xml:space="preserve">
+    <value>2-3 day delivery</value>
+  </data>
+  <data name="Product_Returns" xml:space="preserve">
+    <value>Easy Returns</value>
+  </data>
+  <data name="Product_Returns_Desc" xml:space="preserve">
+    <value>30-day return policy</value>
+  </data>
+  <data name="Product_PricePerPiece" xml:space="preserve">
+    <value>per piece</value>
+  </data>
+  <data name="Product_BestValue" xml:space="preserve">
+    <value>Best Value</value>
+  </data>
+  <data name="Product_PackSize" xml:space="preserve">
+    <value>Select Pack Size</value>
+  </data>
+  <data name="Product_Pack" xml:space="preserve">
+    <value>Pack</value>
+  </data>
+  <data name="Product_Piece" xml:space="preserve">
+    <value>piece</value>
+  </data>
+  <data name="Product_SizeGuide" xml:space="preserve">
+    <value>Size Guide</value>
+  </data>
+  <data name="Product_Material" xml:space="preserve">
+    <value>Material</value>
+  </data>
+  <data name="Product_Material_Cotton" xml:space="preserve">
+    <value>100% Cotton</value>
+  </data>
+  <data name="Product_Care" xml:space="preserve">
+    <value>Care Instructions</value>
+  </data>
+  <data name="Product_Care_Instructions" xml:space="preserve">
+    <value>Machine wash cold, tumble dry low</value>
+  </data>
+  <data name="Product_Brand" xml:space="preserve">
+    <value>Brand</value>
+  </data>
+  <data name="Product_SecurePayment" xml:space="preserve">
+    <value>Secure Payment</value>
+  </data>
+  <data name="Product_Certified" xml:space="preserve">
+    <value>Certified Quality</value>
+  </data>
+  <data name="Product_Adding" xml:space="preserve">
+    <value>Adding...</value>
+  </data>
+  <data name="Product_Added" xml:space="preserve">
+    <value>Added to Cart</value>
+  </data>
+  <data name="Product_SelectSizeFirst" xml:space="preserve">
+    <value>Please select a size first</value>
+  </data>
+  <data name="Previous_Image" xml:space="preserve">
+    <value>Previous Image</value>
+  </data>
+  <data name="Next_Image" xml:space="preserve">
+    <value>Next Image</value>
+  </data>
+  
+  <!-- Categories -->
+  <data name="Category_Men" xml:space="preserve">
+    <value>Men</value>
+  </data>
+  <data name="Category_Women" xml:space="preserve">
+    <value>Women</value>
+  </data>
+  <data name="Category_Outerwear" xml:space="preserve">
+    <value>Outerwear</value>
+  </data>
+  <data name="Category_Accessories" xml:space="preserve">
+    <value>Accessories</value>
+  </data>
+  <data name="Category_Dresses" xml:space="preserve">
+    <value>Dresses</value>
+  </data>
+  <data name="Category_Skirts" xml:space="preserve">
+    <value>Skirts</value>
+  </data>
+  <data name="Category_Blouses" xml:space="preserve">
+    <value>Blouses</value>
+  </data>
+  <data name="Category_WomenPants" xml:space="preserve">
+    <value>Pants</value>
+  </data>
+  <data name="Category_Shirts" xml:space="preserve">
+    <value>Shirts</value>
+  </data>
+  <data name="Category_MenPants" xml:space="preserve">
+    <value>Pants</value>
+  </data>
+  <data name="Category_TShirts" xml:space="preserve">
+    <value>T-Shirts</value>
+  </data>
+  <data name="Category_Sweatshirts" xml:space="preserve">
+    <value>Sweatshirts</value>
+  </data>
+  
+  <!-- Common -->
+  <data name="Common_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Common_Sale" xml:space="preserve">
+    <value>Sale</value>
+  </data>
+  <data name="Common_FreeShipping" xml:space="preserve">
+    <value>Free shipping over $50</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>An error occurred</value>
+  </data>
+  
+  <!-- Product Card -->
+  <data name="Product_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Product_Sale" xml:space="preserve">
+    <value>Sale</value>
+  </data>
+  <data name="Product_Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Product_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Product_InStock" xml:space="preserve">
+    <value>In Stock</value>
+  </data>
+  <data name="Product_Available" xml:space="preserve">
+    <value>available</value>
+  </data>
+  <data name="Product_SelectOptions" xml:space="preserve">
+    <value>Select size and color to add to cart</value>
+  </data>
+  <data name="Product_ViewDetails" xml:space="preserve">
+    <value>View Details</value>
+  </data>
+  <data name="Auth_LoginToOrder" xml:space="preserve">
+    <value>Login to Order</value>
+  </data>
+  <data name="Common_Adding" xml:space="preserve">
+    <value>Adding</value>
+  </data>
+  <data name="Common_Added" xml:space="preserve">
+    <value>Added</value>
+  </data>
+  <data name="Error_AddToCart" xml:space="preserve">
+    <value>Failed to add product to cart</value>
+  </data>
+  <data name="Home_FeaturedProducts_Subtitle" xml:space="preserve">
+    <value>Discover our best products</value>
+  </data>
+  
+  <!-- Top Bar -->
+  <data name="TopBar_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="TopBar_Shop" xml:space="preserve">
+    <value>Shop</value>
+  </data>
+  <data name="TopBar_Info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="TopBar_FreeShipping" xml:space="preserve">
+    <value>Free shipping over 200 PLN</value>
+  </data>
+  
+  <!-- Footer -->
+  <data name="Footer_Brand_Description" xml:space="preserve">
+    <value>Discover premium textile products that combine comfort, quality, and style. Your trusted source for fashion excellence.</value>
+  </data>
+  <data name="Footer_QuickLinks" xml:space="preserve">
+    <value>Quick Links</value>
+  </data>
+  <data name="Footer_Shop" xml:space="preserve">
+    <value>Shop</value>
+  </data>
+  <data name="Footer_Categories" xml:space="preserve">
+    <value>Shop</value>
+  </data>
+  <data name="Footer_AllProducts" xml:space="preserve">
+    <value>All Products</value>
+  </data>
+  <data name="Footer_NewArrivals" xml:space="preserve">
+    <value>New Arrivals</value>
+  </data>
+  <data name="Footer_CustomerService" xml:space="preserve">
+    <value>Customer Service</value>
+  </data>
+  <data name="Footer_ShippingInfo" xml:space="preserve">
+    <value>Shipping Info</value>
+  </data>
+  <data name="Footer_Returns" xml:space="preserve">
+    <value>Returns</value>
+  </data>
+  <data name="Footer_SizeGuide" xml:space="preserve">
+    <value>Size Guide</value>
+  </data>
+  <data name="Footer_PrivacyPolicy" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="Footer_Contact" xml:space="preserve">
+    <value>Contact</value>
+  </data>
+  <data name="Footer_AllRightsReserved" xml:space="preserve">
+    <value>All rights reserved.</value>
+  </data>
+  <data name="Footer_Terms" xml:space="preserve">
+    <value>Terms &amp; Conditions</value>
+  </data>
+  
+  <!-- Account -->
+  <data name="Account_MyAccount" xml:space="preserve">
+    <value>My Account</value>
+  </data>
+  <data name="Account_Profile" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Account_Orders" xml:space="preserve">
+    <value>Orders</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="Account_Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Account_Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  
+  <!-- Cart -->
+  <data name="Cart_ShoppingCart" xml:space="preserve">
+    <value>Shopping Cart</value>
+  </data>
+  <data name="Cart_Empty" xml:space="preserve">
+    <value>Your cart is empty</value>
+  </data>
+  <data name="Cart_StartShopping" xml:space="preserve">
+    <value>Start Shopping</value>
+  </data>
+  <data name="Cart_Subtotal" xml:space="preserve">
+    <value>Subtotal</value>
+  </data>
+  <data name="Cart_ViewCart" xml:space="preserve">
+    <value>View Cart</value>
+  </data>
+  <data name="Cart_Checkout" xml:space="preserve">
+    <value>Checkout</value>
+  </data>
+  
+  <!-- Accessibility -->
+  <data name="Accessibility_SkipToContent" xml:space="preserve">
+    <value>Skip to content</value>
+  </data>
+  <data name="Accessibility_BackToTop" xml:space="preserve">
+    <value>Back to top</value>
+  </data>
+  <data name="Accessibility_ToggleDarkMode" xml:space="preserve">
+    <value>Toggle dark mode</value>
+  </data>
+  <data name="Accessibility_ToggleNavigation" xml:space="preserve">
+    <value>Toggle navigation</value>
+  </data>
+  
+  <!-- FAQ Page -->
+  <data name="FAQ_Title" xml:space="preserve">
+    <value>Frequently Asked Questions</value>
+  </data>
+  <data name="FAQ_Subtitle" xml:space="preserve">
+    <value>Find answers to common questions about our products and services</value>
+  </data>
+  <data name="FAQ_SearchPlaceholder" xml:space="preserve">
+    <value>Search for answers...</value>
+  </data>
+  <data name="FAQ_Category_All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="FAQ_Category_General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="FAQ_Category_Ordering" xml:space="preserve">
+    <value>Ordering</value>
+  </data>
+  <data name="FAQ_Category_Shipping" xml:space="preserve">
+    <value>Shipping</value>
+  </data>
+  <data name="FAQ_Category_Returns" xml:space="preserve">
+    <value>Returns</value>
+  </data>
+  <data name="FAQ_Category_Payment" xml:space="preserve">
+    <value>Payment</value>
+  </data>
+  <data name="FAQ_Category_Account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="FAQ_NoResults" xml:space="preserve">
+    <value>No results found</value>
+  </data>
+  <data name="FAQ_NoResults_Text" xml:space="preserve">
+    <value>Try different keywords or browse all categories</value>
+  </data>
+  <data name="FAQ_NeedHelp_Title" xml:space="preserve">
+    <value>Still need help?</value>
+  </data>
+  <data name="FAQ_NeedHelp_Text" xml:space="preserve">
+    <value>Can't find the answer you're looking for? Our customer support team is here to help.</value>
+  </data>
+  <data name="FAQ_ContactSupport" xml:space="preserve">
+    <value>Contact Support</value>
+  </data>
+  
+  <!-- FAQ Questions -->
+  <data name="FAQ_Q1_Title" xml:space="preserve">
+    <value>What is Kokomija?</value>
+  </data>
+  <data name="FAQ_Q1_Answer" xml:space="preserve">
+    <value>Kokomija is a premium online fashion retailer offering high-quality clothing and textiles for both men and women. We curate the latest trends and timeless classics to help you express your unique style.</value>
+  </data>
+  <data name="FAQ_Q2_Title" xml:space="preserve">
+    <value>Where are you located?</value>
+  </data>
+  <data name="FAQ_Q2_Answer" xml:space="preserve">
+    <value>We are based in Poland and ship to customers across Europe. Our warehouse is located in Warsaw, ensuring fast and reliable delivery to your doorstep.</value>
+  </data>
+  <data name="FAQ_Q3_Title" xml:space="preserve">
+    <value>How do I place an order?</value>
+  </data>
+  <data name="FAQ_Q3_Answer" xml:space="preserve">
+    <value>Simply browse our products, select your desired size and color, and add items to your cart. When ready, proceed to checkout, enter your shipping information, and complete payment. You'll receive an order confirmation email immediately.</value>
+  </data>
+  <data name="FAQ_Q4_Title" xml:space="preserve">
+    <value>Can I modify or cancel my order?</value>
+  </data>
+  <data name="FAQ_Q4_Answer" xml:space="preserve">
+    <value>You can modify or cancel your order within 2 hours of placing it. After this time, orders are processed and shipped. Please contact our customer service immediately if you need to make changes.</value>
+  </data>
+  <data name="FAQ_Q5_Title" xml:space="preserve">
+    <value>Do you offer gift wrapping?</value>
+  </data>
+  <data name="FAQ_Q5_Answer" xml:space="preserve">
+    <value>Yes! We offer elegant gift wrapping on all orders. Simply select the gift wrapping option during checkout and add a personalized message for the recipient. Perfect for birthdays, holidays, or any special occasion.</value>
+  </data>
+  <data name="FAQ_Q6_Title" xml:space="preserve">
+    <value>What are the shipping costs?</value>
+  </data>
+  <data name="FAQ_Q6_Answer" xml:space="preserve">
+    <value>Standard shipping is 15 PLN for orders under 200 PLN. We offer FREE shipping on all orders over 200 PLN. Express shipping (1-2 business days) is available for 25 PLN.</value>
+  </data>
+  <data name="FAQ_Q7_Title" xml:space="preserve">
+    <value>How long does delivery take?</value>
+  </data>
+  <data name="FAQ_Q7_Answer" xml:space="preserve">
+    <value>Standard delivery takes 3-5 business days within Poland. For international orders, delivery typically takes 5-10 business days depending on your location. You'll receive tracking information once your order ships.</value>
+  </data>
+  <data name="FAQ_Q8_Title" xml:space="preserve">
+    <value>Do you ship internationally?</value>
+  </data>
+  <data name="FAQ_Q8_Answer" xml:space="preserve">
+    <value>Yes, we ship to most European countries. International shipping costs vary by destination. Additional customs fees may apply for non-EU countries and are the responsibility of the customer.</value>
+  </data>
+  <data name="FAQ_Q9_Title" xml:space="preserve">
+    <value>Can I track my order?</value>
+  </data>
+  <data name="FAQ_Q9_Answer" xml:space="preserve">
+    <value>Absolutely! Once your order ships, you'll receive an email with tracking information. You can also track your order status by logging into your account and viewing your order history.</value>
+  </data>
+  <data name="FAQ_Q10_Title" xml:space="preserve">
+    <value>What is your return policy?</value>
+  </data>
+  <data name="FAQ_Q10_Answer" xml:space="preserve">
+    <value>We offer a 14-day return policy from the date of delivery, in accordance with Allegro standards. Items must be unworn, unwashed, with original tags attached. Returns are free for Polish customers. International return shipping costs are the customer's responsibility.</value>
+  </data>
+  <data name="FAQ_Q11_Title" xml:space="preserve">
+    <value>How do I initiate a return?</value>
+  </data>
+  <data name="FAQ_Q11_Answer" xml:space="preserve">
+    <value>Log into your account, go to "My Orders," select the order you want to return, and click "Request Return." Choose the items and reason, and we'll provide you with a return label and instructions.</value>
+  </data>
+  <data name="FAQ_Q12_Title" xml:space="preserve">
+    <value>When will I receive my refund?</value>
+  </data>
+  <data name="FAQ_Q12_Answer" xml:space="preserve">
+    <value>Refunds are processed within 5-7 business days after we receive and inspect your returned items. The refund will be credited to your original payment method through Stripe's secure system. Bank processing times may vary by 2-3 additional business days.</value>
+  </data>
+  <data name="FAQ_Q13_Title" xml:space="preserve">
+    <value>Can I exchange an item?</value>
+  </data>
+  <data name="FAQ_Q13_Answer" xml:space="preserve">
+    <value>Yes! We offer free exchanges for different sizes or colors. Simply indicate "Exchange" when initiating your return, and specify your preferred replacement. We'll ship it as soon as we receive your original item.</value>
+  </data>
+  <data name="FAQ_Q14_Title" xml:space="preserve">
+    <value>What payment methods do you accept?</value>
+  </data>
+  <data name="FAQ_Q14_Answer" xml:space="preserve">
+    <value>We accept all major credit and debit cards (Visa, Mastercard, American Express), digital wallets, and bank transfers. All payments are processed securely through Stripe, the world's leading payment platform trusted by millions of businesses worldwide.</value>
+  </data>
+  <data name="FAQ_Q15_Title" xml:space="preserve">
+    <value>Is my payment information secure?</value>
+  </data>
+  <data name="FAQ_Q15_Answer" xml:space="preserve">
+    <value>100% secure. All transactions are processed through Stripe with military-grade SSL encryption and PCI-DSS Level 1 compliance (the highest security standard). Your payment information is never stored on our servers – Stripe handles everything securely. Our membership system is also fully powered by Stripe for maximum security.</value>
+  </data>
+  <data name="FAQ_Q16_Title" xml:space="preserve">
+    <value>What about membership payments?</value>
+  </data>
+  <data name="FAQ_Q16_Answer" xml:space="preserve">
+    <value>Our premium membership is managed entirely through Stripe, ensuring 100% secure recurring payments. You can upgrade, downgrade, or cancel your membership at any time directly from your account dashboard. All billing is transparent with no hidden fees.</value>
+  </data>
+  <data name="FAQ_Q17_Title" xml:space="preserve">
+    <value>Can I use discount codes?</value>
+  </data>
+  <data name="FAQ_Q17_Answer" xml:space="preserve">
+    <value>Yes! Enter your discount code at checkout to apply it to your order. Codes cannot be combined with other promotions. Sign up for our newsletter to receive exclusive discount codes and early access to sales.</value>
+  </data>
+  <data name="FAQ_Q18_Title" xml:space="preserve">
+    <value>Do I need an account to place an order?</value>
+  </data>
+  <data name="FAQ_Q18_Answer" xml:space="preserve">
+    <value>No, you can checkout as a guest. However, creating an account allows you to track orders, save multiple addresses, view order history, and receive exclusive member benefits and discounts.</value>
+  </data>
+  <data name="FAQ_Q19_Title" xml:space="preserve">
+    <value>How do I reset my password?</value>
+  </data>
+  <data name="FAQ_Q19_Answer" xml:space="preserve">
+    <value>Click "Login" at the top of the page, then select "Forgot Password?" Enter your email address, and we'll send you a link to reset your password. The link is valid for 24 hours.</value>
+  </data>
+  <data name="FAQ_Q20_Title" xml:space="preserve">
+    <value>How do I update my account information?</value>
+  </data>
+  <data name="FAQ_Q20_Answer" xml:space="preserve">
+    <value>Log into your account and go to "Account Settings." From there, you can update your email, password, shipping addresses, and communication preferences. Changes are saved automatically.</value>
+  </data>
+  <data name="FAQ_Q21_Title" xml:space="preserve">
+    <value>How can I contact customer service?</value>
+  </data>
+  <data name="FAQ_Q21_Answer" xml:space="preserve">
+    <value>You can reach us via email at support@kokomija.com, or use the contact form on our website. We respond to all inquiries within 24 hours during business days.</value>
+  </data>
+  <data name="FAQ_Q22_Title" xml:space="preserve">
+    <value>How do I find the right size?</value>
+  </data>
+  <data name="FAQ_Q22_Answer" xml:space="preserve">
+    <value>Each product page includes a detailed size guide with measurements. We recommend measuring yourself and comparing to our size charts. If you're between sizes, we suggest ordering the larger size for comfort.</value>
+  </data>
+  
+  <!-- Contact Page -->
+  <data name="Contact_Title" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="Contact_Subtitle" xml:space="preserve">
+    <value>Get in touch with us for any questions or inquiries</value>
+  </data>
+  <data name="Contact_GetInTouch" xml:space="preserve">
+    <value>Get In Touch</value>
+  </data>
+  <data name="Contact_Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Contact_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Contact_Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Contact_Hours" xml:space="preserve">
+    <value>Business Hours</value>
+  </data>
+  <data name="Contact_Hours_Weekdays" xml:space="preserve">
+    <value>Mon - Fri: 9:00 AM - 6:00 PM</value>
+  </data>
+  <data name="Contact_Hours_Weekend" xml:space="preserve">
+    <value>Sat - Sun: 10:00 AM - 4:00 PM</value>
+  </data>
+  <data name="Contact_FollowUs" xml:space="preserve">
+    <value>Follow Us</value>
+  </data>
+  <data name="Contact_SendMessage" xml:space="preserve">
+    <value>Send us a Message</value>
+  </data>
+  <data name="Contact_Form_Name" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="Contact_Form_Name_Placeholder" xml:space="preserve">
+    <value>Enter your full name</value>
+  </data>
+  <data name="Contact_Form_Email" xml:space="preserve">
+    <value>Email Address</value>
+  </data>
+  <data name="Contact_Form_Email_Placeholder" xml:space="preserve">
+    <value>your.email@example.com</value>
+  </data>
+  <data name="Contact_Form_Phone" xml:space="preserve">
+    <value>Phone Number (Optional)</value>
+  </data>
+  <data name="Contact_Form_Phone_Placeholder" xml:space="preserve">
+    <value>+48 123 456 789</value>
+  </data>
+  <data name="Contact_Form_Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="Contact_Form_Subject_Placeholder" xml:space="preserve">
+    <value>How can we help you?</value>
+  </data>
+  <data name="Contact_Form_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="Contact_Form_Message_Placeholder" xml:space="preserve">
+    <value>Write your message here...</value>
+  </data>
+  <data name="Contact_Form_Submit" xml:space="preserve">
+    <value>Send Message</value>
+  </data>
+  <data name="Contact_FindUs" xml:space="preserve">
+    <value>Find Us on the Map</value>
+  </data>
+  <data name="Contact_SuccessMessage" xml:space="preserve">
+    <value>Thank you for contacting us! We'll get back to you as soon as possible.</value>
+  </data>
+  <data name="Contact_ErrorMessage" xml:space="preserve">
+    <value>An error occurred while sending your message. Please try again later.</value>
+  </data>
+  
+  <!-- Cookie Consent -->
+  <data name="CookieConsent.Title" xml:space="preserve">
+    <value>Cookie Preferences</value>
+  </data>
+  <data name="CookieConsent.Message" xml:space="preserve">
+    <value>We use cookies to improve your browsing experience, personalize content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.</value>
+  </data>
+  <data name="CookieConsent.LearnMore" xml:space="preserve">
+    <value>Learn more in our Privacy Policy</value>
+  </data>
+  <data name="CookieConsent.AcceptAll" xml:space="preserve">
+    <value>Accept All</value>
+  </data>
+  <data name="CookieConsent.AcceptNecessary" xml:space="preserve">
+    <value>Necessary Only</value>
+  </data>
+  <data name="CookieConsent.Settings" xml:space="preserve">
+    <value>Cookie Settings</value>
+  </data>
+  <data name="CookieCategory.Essential" xml:space="preserve">
+    <value>Essential Cookies</value>
+  </data>
+  <data name="CookieCategory.EssentialDesc" xml:space="preserve">
+    <value>These cookies are necessary for the website to function and cannot be disabled. They are usually set in response to your actions such as logging in or filling in forms.</value>
+  </data>
+  <data name="CookieCategory.Preferences" xml:space="preserve">
+    <value>Preference Cookies</value>
+  </data>
+  <data name="CookieCategory.PreferencesDesc" xml:space="preserve">
+    <value>These cookies allow the website to remember your choices (such as your language or theme preference) and provide enhanced, more personal features.</value>
+  </data>
+  <data name="CookieCategory.Analytics" xml:space="preserve">
+    <value>Analytics Cookies</value>
+  </data>
+  <data name="CookieCategory.AnalyticsDesc" xml:space="preserve">
+    <value>These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.</value>
+  </data>
+  <data name="CookieCategory.Marketing" xml:space="preserve">
+    <value>Marketing Cookies</value>
+  </data>
+  <data name="CookieCategory.MarketingDesc" xml:space="preserve">
+    <value>These cookies are used to track visitors across websites to display relevant and engaging advertisements for individual users.</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="SavePreferences" xml:space="preserve">
+    <value>Save Preferences</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  
+  <!-- Privacy Policy Page -->
+  <data name="Privacy_MetaTitle" xml:space="preserve">
+    <value>Privacy Policy - Kokomija</value>
+  </data>
+  <data name="Privacy_MetaDescription" xml:space="preserve">
+    <value>Learn how Kokomija protects your privacy and data. Information about Stripe payments, Cloudflare security, account management, and loyalty benefits.</value>
+  </data>
+  <data name="Privacy_MetaKeywords" xml:space="preserve">
+    <value>privacy policy, data protection, GDPR, Stripe, Cloudflare, security, account management</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="Privacy_Subtitle" xml:space="preserve">
+    <value>Your privacy is important to us. This policy explains how we collect, use, and protect your information.</value>
+  </data>
+  <data name="Privacy_LastUpdated" xml:space="preserve">
+    <value>Last Updated</value>
+  </data>
+  <data name="Privacy_Intro_Title" xml:space="preserve">
+    <value>Introduction</value>
+  </data>
+  <data name="Privacy_Intro_Text" xml:space="preserve">
+    <value>Welcome to Kokomija. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we handle your personal data when you visit our website and tell you about your privacy rights.</value>
+  </data>
+  <data name="Privacy_InfoCollect_Title" xml:space="preserve">
+    <value>Information We Collect</value>
+  </data>
+  <data name="Privacy_InfoCollect_Text" xml:space="preserve">
+    <value>We collect various types of information to provide and improve our services:</value>
+  </data>
+  <data name="Privacy_InfoCollect_Personal" xml:space="preserve">
+    <value>Personal Information You Provide</value>
+  </data>
+  <data name="Privacy_InfoCollect_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Privacy_InfoCollect_Name_Desc" xml:space="preserve">
+    <value>To personalize your experience and process orders</value>
+  </data>
+  <data name="Privacy_InfoCollect_Email" xml:space="preserve">
+    <value>Email Address</value>
+  </data>
+  <data name="Privacy_InfoCollect_Email_Desc" xml:space="preserve">
+    <value>For account creation, order confirmations, and communication</value>
+  </data>
+  <data name="Privacy_InfoCollect_Phone" xml:space="preserve">
+    <value>Phone Number</value>
+  </data>
+  <data name="Privacy_InfoCollect_Phone_Desc" xml:space="preserve">
+    <value>For delivery updates and customer support</value>
+  </data>
+  <data name="Privacy_InfoCollect_Address" xml:space="preserve">
+    <value>Shipping Address</value>
+  </data>
+  <data name="Privacy_InfoCollect_Address_Desc" xml:space="preserve">
+    <value>To deliver your orders accurately</value>
+  </data>
+  <data name="Privacy_InfoCollect_Payment" xml:space="preserve">
+    <value>Payment Information</value>
+  </data>
+  <data name="Privacy_InfoCollect_Payment_Desc" xml:space="preserve">
+    <value>Securely processed by Stripe (we never store full card details)</value>
+  </data>
+  <data name="Privacy_InfoCollect_Auto" xml:space="preserve">
+    <value>Automatically Collected Information</value>
+  </data>
+  <data name="Privacy_InfoCollect_Cookies" xml:space="preserve">
+    <value>Cookies</value>
+  </data>
+  <data name="Privacy_InfoCollect_Cookies_Desc" xml:space="preserve">
+    <value>To remember your preferences and improve your experience</value>
+  </data>
+  <data name="Privacy_InfoCollect_Usage" xml:space="preserve">
+    <value>Usage Data</value>
+  </data>
+  <data name="Privacy_InfoCollect_Usage_Desc" xml:space="preserve">
+    <value>Pages visited, time spent, and browsing patterns</value>
+  </data>
+  <data name="Privacy_InfoCollect_Device" xml:space="preserve">
+    <value>Device Information</value>
+  </data>
+  <data name="Privacy_InfoCollect_Device_Desc" xml:space="preserve">
+    <value>IP address, browser type, and device identifiers</value>
+  </data>
+  <data name="Privacy_Stripe_Title" xml:space="preserve">
+    <value>Payment Processing with Stripe</value>
+  </data>
+  <data name="Privacy_Stripe_Text" xml:space="preserve">
+    <value>All payment transactions are processed by Stripe, a PCI-DSS Level 1 certified payment processor. Stripe handles all payment card information securely.</value>
+  </data>
+  <data name="Privacy_Stripe_Important" xml:space="preserve">
+    <value>Important</value>
+  </data>
+  <data name="Privacy_Stripe_Important_Text" xml:space="preserve">
+    <value>Stripe is responsible for the security and privacy of all payment information. We never store your complete credit card details on our servers.</value>
+  </data>
+  <data name="Privacy_Stripe_Process" xml:space="preserve">
+    <value>When you make a purchase, your payment information is encrypted and transmitted directly to Stripe's secure servers. Stripe complies with industry-leading security standards and is regularly audited for compliance.</value>
+  </data>
+  <data name="Privacy_Stripe_LearnMore" xml:space="preserve">
+    <value>Learn more about Stripe's privacy practices</value>
+  </data>
+  <data name="Privacy_Cloudflare_Title" xml:space="preserve">
+    <value>Security with Cloudflare</value>
+  </data>
+  <data name="Privacy_Cloudflare_Text" xml:space="preserve">
+    <value>We use Cloudflare to protect our website and your data with enterprise-grade security features:</value>
+  </data>
+  <data name="Privacy_Cloudflare_DDoS" xml:space="preserve">
+    <value>DDoS Protection</value>
+  </data>
+  <data name="Privacy_Cloudflare_DDoS_Desc" xml:space="preserve">
+    <value>Protects against malicious attacks to ensure website availability</value>
+  </data>
+  <data name="Privacy_Cloudflare_SSL" xml:space="preserve">
+    <value>SSL/TLS Encryption</value>
+  </data>
+  <data name="Privacy_Cloudflare_SSL_Desc" xml:space="preserve">
+    <value>All data transmitted is encrypted using industry-standard protocols</value>
+  </data>
+  <data name="Privacy_Cloudflare_CDN" xml:space="preserve">
+    <value>Global CDN</value>
+  </data>
+  <data name="Privacy_Cloudflare_CDN_Desc" xml:space="preserve">
+    <value>Fast and secure content delivery from servers closest to you</value>
+  </data>
+  <data name="Privacy_Cloudflare_WAF" xml:space="preserve">
+    <value>Web Application Firewall</value>
+  </data>
+  <data name="Privacy_Cloudflare_WAF_Desc" xml:space="preserve">
+    <value>Blocks malicious traffic and protects against common vulnerabilities</value>
+  </data>
+  <data name="Privacy_Cloudflare_LearnMore" xml:space="preserve">
+    <value>Learn more about Cloudflare's privacy policy</value>
+  </data>
+  <data name="Privacy_Use_Title" xml:space="preserve">
+    <value>How We Use Your Information</value>
+  </data>
+  <data name="Privacy_Use_Orders" xml:space="preserve">
+    <value>Process and fulfill your orders</value>
+  </data>
+  <data name="Privacy_Use_Communication" xml:space="preserve">
+    <value>Communicate with you about your orders and account</value>
+  </data>
+  <data name="Privacy_Use_Improve" xml:space="preserve">
+    <value>Improve our website, products, and services</value>
+  </data>
+  <data name="Privacy_Use_Personalize" xml:space="preserve">
+    <value>Personalize your shopping experience</value>
+  </data>
+  <data name="Privacy_Use_Marketing" xml:space="preserve">
+    <value>Send you marketing communications (with your consent)</value>
+  </data>
+  <data name="Privacy_Use_Fraud" xml:space="preserve">
+    <value>Detect and prevent fraud and security issues</value>
+  </data>
+  <data name="Privacy_Use_Legal" xml:space="preserve">
+    <value>Comply with legal obligations</value>
+  </data>
+  <data name="Privacy_Account_Title" xml:space="preserve">
+    <value>Your Account Management Rights</value>
+  </data>
+  <data name="Privacy_Account_Text" xml:space="preserve">
+    <value>You have full control over your account and personal data. You can easily:</value>
+  </data>
+  <data name="Privacy_Account_Update" xml:space="preserve">
+    <value>Update Information</value>
+  </data>
+  <data name="Privacy_Account_Update_Desc" xml:space="preserve">
+    <value>Edit your personal details, addresses, and preferences anytime</value>
+  </data>
+  <data name="Privacy_Account_Delete" xml:space="preserve">
+    <value>Delete Account</value>
+  </data>
+  <data name="Privacy_Account_Delete_Desc" xml:space="preserve">
+    <value>Permanently remove your account and associated data</value>
+  </data>
+  <data name="Privacy_Account_View" xml:space="preserve">
+    <value>View Your Data</value>
+  </data>
+  <data name="Privacy_Account_View_Desc" xml:space="preserve">
+    <value>Access all personal information we store about you</value>
+  </data>
+  <data name="Privacy_Account_Export" xml:space="preserve">
+    <value>Export Data</value>
+  </data>
+  <data name="Privacy_Account_Export_Desc" xml:space="preserve">
+    <value>Download your data in a portable format</value>
+  </data>
+  <data name="Privacy_Loyalty_Title" xml:space="preserve">
+    <value>Loyalty Program Benefits</value>
+  </data>
+  <data name="Privacy_Loyalty_Text" xml:space="preserve">
+    <value>Registered customers and returning shoppers receive exclusive advantages through our loyalty program:</value>
+  </data>
+  <data name="Privacy_Loyalty_Discounts" xml:space="preserve">
+    <value>Exclusive Discounts</value>
+  </data>
+  <data name="Privacy_Loyalty_Rewards" xml:space="preserve">
+    <value>Reward Points</value>
+  </data>
+  <data name="Privacy_Loyalty_Shipping" xml:space="preserve">
+    <value>Free Shipping Benefits</value>
+  </data>
+  <data name="Privacy_Loyalty_Early" xml:space="preserve">
+    <value>Early Access to Sales</value>
+  </data>
+  <data name="Privacy_Loyalty_Birthday" xml:space="preserve">
+    <value>Birthday Surprises</value>
+  </data>
+  <data name="Privacy_Loyalty_VIP" xml:space="preserve">
+    <value>VIP Customer Status</value>
+  </data>
+  <data name="Privacy_Security_Title" xml:space="preserve">
+    <value>Data Security</value>
+  </data>
+  <data name="Privacy_Security_Text" xml:space="preserve">
+    <value>We implement industry-standard security measures to protect your data:</value>
+  </data>
+  <data name="Privacy_Security_Encryption" xml:space="preserve">
+    <value>End-to-end encryption for all sensitive data</value>
+  </data>
+  <data name="Privacy_Security_Access" xml:space="preserve">
+    <value>Restricted access to personal information</value>
+  </data>
+  <data name="Privacy_Security_Monitoring" xml:space="preserve">
+    <value>24/7 security monitoring and threat detection</value>
+  </data>
+  <data name="Privacy_Security_Backup" xml:space="preserve">
+    <value>Regular security audits and backups</value>
+  </data>
+  <data name="Privacy_Cookies_Title" xml:space="preserve">
+    <value>Cookies and Tracking</value>
+  </data>
+  <data name="Privacy_Cookies_Text" xml:space="preserve">
+    <value>We use cookies to enhance your browsing experience, remember your preferences, and analyze website traffic. You can manage your cookie preferences at any time.</value>
+  </data>
+  <data name="Privacy_Cookies_Manage" xml:space="preserve">
+    <value>You can manage your cookie preferences through your browser settings or our cookie consent banner.</value>
+  </data>
+  <data name="Privacy_Retention_Title" xml:space="preserve">
+    <value>Data Retention</value>
+  </data>
+  <data name="Privacy_Retention_Text" xml:space="preserve">
+    <value>We retain your personal information only for as long as necessary to fulfill the purposes outlined in this privacy policy or as required by law. When data is no longer needed, it is securely deleted or anonymized.</value>
+  </data>
+  <data name="Privacy_ThirdParty_Title" xml:space="preserve">
+    <value>Third-Party Services</value>
+  </data>
+  <data name="Privacy_ThirdParty_Text" xml:space="preserve">
+    <value>We work with trusted third-party service providers who help us operate our business:</value>
+  </data>
+  <data name="Privacy_ThirdParty_Stripe" xml:space="preserve">
+    <value>Payment processing (PCI-DSS compliant)</value>
+  </data>
+  <data name="Privacy_ThirdParty_Cloudflare" xml:space="preserve">
+    <value>Security, performance, and DDoS protection</value>
+  </data>
+  <data name="Privacy_ThirdParty_Analytics" xml:space="preserve">
+    <value>Analytics Services</value>
+  </data>
+  <data name="Privacy_ThirdParty_Analytics_Desc" xml:space="preserve">
+    <value>Website usage analysis and improvements</value>
+  </data>
+  <data name="Privacy_Rights_Title" xml:space="preserve">
+    <value>Your Privacy Rights (GDPR)</value>
+  </data>
+  <data name="Privacy_Rights_Text" xml:space="preserve">
+    <value>Under GDPR, you have the following rights regarding your personal data:</value>
+  </data>
+  <data name="Privacy_Rights_Access" xml:space="preserve">
+    <value>Right to access your personal data</value>
+  </data>
+  <data name="Privacy_Rights_Rectification" xml:space="preserve">
+    <value>Right to rectify inaccurate data</value>
+  </data>
+  <data name="Privacy_Rights_Erasure" xml:space="preserve">
+    <value>Right to erasure ("right to be forgotten")</value>
+  </data>
+  <data name="Privacy_Rights_Restriction" xml:space="preserve">
+    <value>Right to restrict processing</value>
+  </data>
+  <data name="Privacy_Rights_Portability" xml:space="preserve">
+    <value>Right to data portability</value>
+  </data>
+  <data name="Privacy_Rights_Object" xml:space="preserve">
+    <value>Right to object to processing</value>
+  </data>
+  <data name="Privacy_Rights_Withdraw" xml:space="preserve">
+    <value>Right to withdraw consent at any time</value>
+  </data>
+  <data name="Privacy_Contact_Title" xml:space="preserve">
+    <value>Contact Us About Privacy</value>
+  </data>
+  <data name="Privacy_Contact_Text" xml:space="preserve">
+    <value>If you have questions about this privacy policy or how we handle your data, please contact us:</value>
+  </data>
+  <data name="Privacy_Contact_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Privacy_Contact_Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Privacy_Contact_Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Privacy_Contact_Button" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="Privacy_Changes_Title" xml:space="preserve">
+    <value>Changes to This Policy</value>
+  </data>
+  <data name="Privacy_Changes_Text" xml:space="preserve">
+    <value>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.</value>
+  </data>
+  <data name="Blog_Title" xml:space="preserve">
+    <value>Our Blog</value>
+  </data>
+  <data name="Blog_Subtitle" xml:space="preserve">
+    <value>Discover fashion trends, style tips, and the latest news from the textile world</value>
+  </data>
+  <data name="Blog_SearchPlaceholder" xml:space="preserve">
+    <value>Search articles...</value>
+  </data>
+  <data name="Blog_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Blog_ActiveFilters" xml:space="preserve">
+    <value>Active Filters</value>
+  </data>
+  <data name="Blog_RemoveFilter" xml:space="preserve">
+    <value>Remove filter</value>
+  </data>
+  <data name="Blog_ClearFilters" xml:space="preserve">
+    <value>Clear All Filters</value>
+  </data>
+  <data name="Blog_PostsFound" xml:space="preserve">
+    <value>posts found</value>
+  </data>
+  <data name="Blog_MinRead" xml:space="preserve">
+    <value>min read</value>
+  </data>
+  <data name="Blog_Min" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="Blog_Views" xml:space="preserve">
+    <value>views</value>
+  </data>
+  <data name="Blog_NoPosts" xml:space="preserve">
+    <value>No Posts Found</value>
+  </data>
+  <data name="Blog_NoPostsDesc" xml:space="preserve">
+    <value>Sorry, we couldn't find any blog posts matching your criteria. Try adjusting your filters or search query.</value>
+  </data>
+  <data name="Blog_BackToAll" xml:space="preserve">
+    <value>Back to All Posts</value>
+  </data>
+  <data name="Blog_Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Blog_AllCategories" xml:space="preserve">
+    <value>All Categories</value>
+  </data>
+  <data name="Blog_RecentPosts" xml:space="preserve">
+    <value>Recent Posts</value>
+  </data>
+  <data name="Blog_PopularTags" xml:space="preserve">
+    <value>Popular Tags</value>
+  </data>
+  <data name="Blog_Newsletter" xml:space="preserve">
+    <value>Newsletter</value>
+  </data>
+  <data name="Blog_NewsletterDesc" xml:space="preserve">
+    <value>Subscribe to get the latest articles and fashion tips delivered to your inbox.</value>
+  </data>
+  <data name="Blog_EmailPlaceholder" xml:space="preserve">
+    <value>Your email address</value>
+  </data>
+  <data name="Blog_Subscribe" xml:space="preserve">
+    <value>Subscribe</value>
+  </data>
+  <data name="Blog_SearchResults" xml:space="preserve">
+    <value>Search Results</value>
+  </data>
+  <data name="Blog_Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="Blog_Updated" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="Blog_Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Blog_Share" xml:space="preserve">
+    <value>Share this article</value>
+  </data>
+  <data name="Blog_ShareFacebook" xml:space="preserve">
+    <value>Share on Facebook</value>
+  </data>
+  <data name="Blog_ShareTwitter" xml:space="preserve">
+    <value>Share on Twitter</value>
+  </data>
+  <data name="Blog_ShareLinkedIn" xml:space="preserve">
+    <value>Share on LinkedIn</value>
+  </data>
+  <data name="Blog_SharePinterest" xml:space="preserve">
+    <value>Share on Pinterest</value>
+  </data>
+  <data name="Blog_CopyLink" xml:space="preserve">
+    <value>Copy Link</value>
+  </data>
+  <data name="Blog_LinkCopied" xml:space="preserve">
+    <value>Link copied to clipboard!</value>
+  </data>
+  <data name="Blog_CopyFailed" xml:space="preserve">
+    <value>Failed to copy link</value>
+  </data>
+  <data name="Blog_AuthorDefaultBio" xml:space="preserve">
+    <value>Passionate about fashion and textiles, sharing insights and trends with our community.</value>
+  </data>
+  <data name="Blog_FeaturedProduct" xml:space="preserve">
+    <value>Featured Product</value>
+  </data>
+  <data name="Blog_ViewProduct" xml:space="preserve">
+    <value>View Product</value>
+  </data>
+  <data name="Blog_RelatedPosts" xml:space="preserve">
+    <value>Related Articles</value>
+  </data>
+  <data name="Blog_BackToBlog" xml:space="preserve">
+    <value>Back to Blog</value>
+  </data>
+  
+  <!-- Products Page -->
+  <data name="Products_AllProducts" xml:space="preserve">
+    <value>All Products</value>
+  </data>
+  <data name="Products_SearchResults" xml:space="preserve">
+    <value>Search Results</value>
+  </data>
+  <data name="Products_ItemsFound_Plural" xml:space="preserve">
+    <value>items found</value>
+  </data>
+  <data name="Products_Filters" xml:space="preserve">
+    <value>Filters</value>
+  </data>
+  <data name="Products_FilterBy" xml:space="preserve">
+    <value>Filter By</value>
+  </data>
+  <data name="Products_ClearAll" xml:space="preserve">
+    <value>Clear All</value>
+  </data>
+  <data name="Products_Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Products_PriceRange" xml:space="preserve">
+    <value>Price Range</value>
+  </data>
+  <data name="Products_MinPrice" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="Products_MaxPrice" xml:space="preserve">
+    <value>Max</value>
+  </data>
+  <data name="Products_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Products_Colors" xml:space="preserve">
+    <value>Colors</value>
+  </data>
+  <data name="Products_Sizes" xml:space="preserve">
+    <value>Sizes</value>
+  </data>
+  <data name="Products_SortBy" xml:space="preserve">
+    <value>Sort By</value>
+  </data>
+  <data name="Products_Sort_Newest" xml:space="preserve">
+    <value>Newest First</value>
+  </data>
+  <data name="Products_Sort_PriceAsc" xml:space="preserve">
+    <value>Price: Low to High</value>
+  </data>
+  <data name="Products_Sort_PriceDesc" xml:space="preserve">
+    <value>Price: High to Low</value>
+  </data>
+  <data name="Products_Sort_NameAsc" xml:space="preserve">
+    <value>Name: A-Z</value>
+  </data>
+  <data name="Products_Sort_NameDesc" xml:space="preserve">
+    <value>Name: Z-A</value>
+  </data>
+  <data name="Products_NoProductsFound" xml:space="preserve">
+    <value>No Products Found</value>
+  </data>
+  <data name="Products_NoProductsDesc" xml:space="preserve">
+    <value>Try adjusting your filters or search criteria.</value>
+  </data>
+  <data name="Products_ViewAllProducts" xml:space="preserve">
+    <value>View All Products</value>
+  </data>
+  <data name="Products_TryAdjustingFilters" xml:space="preserve">
+    <value>Try adjusting your filters.</value>
+  </data>
+  <data name="Product_SummerDress_Name" xml:space="preserve">
+    <value>Elegant Summer Dress</value>
+  </data>
+  <data name="Product_SummerDress_Description" xml:space="preserve">
+    <value>Beautiful, airy dress perfect for summer evenings. Made of high-quality material, ensures comfort and style.</value>
+  </data>
+  <data name="Product_BlueShirt_Name" xml:space="preserve">
+    <value>Classic Blue Shirt</value>
+  </data>
+  <data name="Product_BlueShirt_Description" xml:space="preserve">
+    <value>Elegant shirt in a universal blue shade. Perfect for both business meetings and casual occasions.</value>
+  </data>
+  <data name="Product_SpringJacket_Name" xml:space="preserve">
+    <value>Spring Lightweight Jacket</value>
+  </data>
+  <data name="Product_SpringJacket_Description" xml:space="preserve">
+    <value>Stylish jacket ideal for transitional weather. Waterproof material and modern cut guarantee comfort on chilly days.</value>
+  </data>
+  <data name="Blog_FashionTrends_Title" xml:space="preserve">
+    <value>Fashion Trends for 2025</value>
+  </data>
+  <data name="Blog_FashionTrends_Content" xml:space="preserve">
+    <value>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish. This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</value>
+  </data>
+  
+  <!-- Product Reviews -->
+  <data name="Review_Title" xml:space="preserve">
+    <value>Customer Reviews</value>
+  </data>
+  <data name="Review_NoReviews" xml:space="preserve">
+    <value>No reviews yet</value>
+  </data>
+  <data name="Review_NoReviews_Message" xml:space="preserve">
+    <value>Be the first to review this product!</value>
+  </data>
+  <data name="Review_WriteReview" xml:space="preserve">
+    <value>Write a Review</value>
+  </data>
+  <data name="Review_YourRating" xml:space="preserve">
+    <value>Your Rating</value>
+  </data>
+  <data name="Review_YourComment" xml:space="preserve">
+    <value>Your Review</value>
+  </data>
+  <data name="Review_CommentPlaceholder" xml:space="preserve">
+    <value>Share your experience with this product...</value>
+  </data>
+  <data name="Review_Submit" xml:space="preserve">
+    <value>Submit Review</value>
+  </data>
+  <data name="Review_VerifiedPurchase" xml:space="preserve">
+    <value>Verified Purchase</value>
+  </data>
+  <data name="Review_AdminReply" xml:space="preserve">
+    <value>Admin Response</value>
+  </data>
+  <data name="Review_LoginRequired" xml:space="preserve">
+    <value>Please log in to write a review</value>
+  </data>
+  <data name="Review_AlreadyReviewed" xml:space="preserve">
+    <value>You have already reviewed this product</value>
+  </data>
+  <data name="Review_SubmitSuccess" xml:space="preserve">
+    <value>Thank you for your review!</value>
+  </data>
+  <data name="Review_NotFound" xml:space="preserve">
+    <value>Review not found</value>
+  </data>
+  <data name="Review_ReplySuccess" xml:space="preserve">
+    <value>Reply added successfully</value>
+  </data>
+  <data name="Review_UpdateSuccess" xml:space="preserve">
+    <value>Review updated successfully</value>
+  </data>
+  <data name="Review_AverageRating" xml:space="preserve">
+    <value>Average Rating</value>
+  </data>
+  <data name="Review_BasedOn" xml:space="preserve">
+    <value>based on</value>
+  </data>
+  <data name="Review_Reviews" xml:space="preserve">
+    <value>reviews</value>
+  </data>
+  <data name="Review_Stars" xml:space="preserve">
+    <value>stars</value>
+  </data>
+  <data name="Review_Error" xml:space="preserve">
+    <value>An error occurred. Please try again.</value>
+  </data>
+  
+  <!-- Authentication Pages -->
+  <data name="Auth_WelcomeBack" xml:space="preserve">
+    <value>Welcome Back</value>
+  </data>
+  <data name="Auth_SignInMessage" xml:space="preserve">
+    <value>Sign in to your account to continue</value>
+  </data>
+  <data name="Auth_EmailAddress" xml:space="preserve">
+    <value>Email Address</value>
+  </data>
+  <data name="Auth_EmailPlaceholder" xml:space="preserve">
+    <value>your@email.com</value>
+  </data>
+  <data name="Auth_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Auth_PasswordPlaceholder" xml:space="preserve">
+    <value>Enter your password</value>
+  </data>
+  <data name="Auth_RememberMe" xml:space="preserve">
+    <value>Remember me</value>
+  </data>
+  <data name="Auth_ForgotPassword" xml:space="preserve">
+    <value>Forgot Password?</value>
+  </data>
+  <data name="Auth_SignIn" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="Auth_OrContinueWith" xml:space="preserve">
+    <value>Or continue with</value>
+  </data>
+  <data name="Auth_ContinueWithGoogle" xml:space="preserve">
+    <value>Continue with Google</value>
+  </data>
+  <data name="Auth_ContinueWithFacebook" xml:space="preserve">
+    <value>Continue with Facebook</value>
+  </data>
+  <data name="Auth_ContinueWithApple" xml:space="preserve">
+    <value>Continue with Apple</value>
+  </data>
+  <data name="Auth_NoAccount" xml:space="preserve">
+    <value>Don't have an account?</value>
+  </data>
+  <data name="Auth_CreateAccount" xml:space="preserve">
+    <value>Create Account</value>
+  </data>
+  <data name="Auth_SecuredByStripe" xml:space="preserve">
+    <value>Secured by Stripe · SSL Encrypted</value>
+  </data>
+  
+  <!-- Register Page -->
+  <data name="Auth_CreateYourAccount" xml:space="preserve">
+    <value>Create Your Account</value>
+  </data>
+  <data name="Auth_JoinMessage" xml:space="preserve">
+    <value>Join us and start shopping exclusive fashion</value>
+  </data>
+  <data name="Auth_FirstName" xml:space="preserve">
+    <value>First Name</value>
+  </data>
+  <data name="Auth_FirstNamePlaceholder" xml:space="preserve">
+    <value>John</value>
+  </data>
+  <data name="Auth_LastName" xml:space="preserve">
+    <value>Last Name</value>
+  </data>
+  <data name="Auth_LastNamePlaceholder" xml:space="preserve">
+    <value>Doe</value>
+  </data>
+  <data name="Auth_PhoneNumber" xml:space="preserve">
+    <value>Phone Number</value>
+  </data>
+  <data name="Auth_PhoneOptional" xml:space="preserve">
+    <value>Phone Number (Optional)</value>
+  </data>
+  <data name="Auth_PhonePlaceholder" xml:space="preserve">
+    <value>+48 123 456 789</value>
+  </data>
+  <data name="Auth_CreatePassword" xml:space="preserve">
+    <value>Create a strong password</value>
+  </data>
+  <data name="Auth_PasswordMinimum" xml:space="preserve">
+    <value>Minimum 6 characters</value>
+  </data>
+  <data name="Auth_ConfirmPassword" xml:space="preserve">
+    <value>Confirm Password</value>
+  </data>
+  <data name="Auth_ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Confirm your password</value>
+  </data>
+  <data name="Auth_AgreeToTerms" xml:space="preserve">
+    <value>I agree to the</value>
+  </data>
+  <data name="Auth_TermsAndConditions" xml:space="preserve">
+    <value>Terms &amp; Conditions</value>
+  </data>
+  <data name="Auth_And" xml:space="preserve">
+    <value>and</value>
+  </data>
+  <data name="Auth_PrivacyPolicy" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="Auth_SubscribeNewsletter" xml:space="preserve">
+    <value>Send me exclusive offers and fashion updates</value>
+  </data>
+  <data name="Auth_OrSignUpWith" xml:space="preserve">
+    <value>Or sign up with</value>
+  </data>
+  <data name="Auth_HaveAccount" xml:space="preserve">
+    <value>Already have an account?</value>
+  </data>
+  <data name="Auth_SignInLink" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="Auth_Secure" xml:space="preserve">
+    <value>Secure</value>
+  </data>
+  <data name="Auth_Rewards" xml:space="preserve">
+    <value>Rewards</value>
+  </data>
+  <data name="Auth_FreeShip" xml:space="preserve">
+    <value>Free Ship</value>
+  </data>
+  
+  <!-- Orders Page -->
+  <data name="Orders_Title" xml:space="preserve">
+    <value>My Orders</value>
+  </data>
+  <data name="Nav_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Account_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Back_To_Account" xml:space="preserve">
+    <value>Back to Account</value>
+  </data>
+  <data name="Orders_No_Orders" xml:space="preserve">
+    <value>No orders yet</value>
+  </data>
+  <data name="Orders_Start_Shopping" xml:space="preserve">
+    <value>Start shopping to see your orders here!</value>
+  </data>
+  <data name="Continue_Shopping" xml:space="preserve">
+    <value>Continue Shopping</value>
+  </data>
+  <data name="Order_Number" xml:space="preserve">
+    <value>Order Number</value>
+  </data>
+  <data name="Order_Date" xml:space="preserve">
+    <value>Order Date</value>
+  </data>
+  <data name="Order_Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Payment_Status" xml:space="preserve">
+    <value>Payment Status</value>
+  </data>
+  <data name="Payment_Paid" xml:space="preserve">
+    <value>Paid</value>
+  </data>
+  <data name="Payment_Pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="Payment_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Payment_Refunded" xml:space="preserve">
+    <value>Refunded</value>
+  </data>
+  <data name="Order_Status" xml:space="preserve">
+    <value>Order Status</value>
+  </data>
+  <data name="Status_Pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="Status_Processing" xml:space="preserve">
+    <value>Processing</value>
+  </data>
+  <data name="Status_Shipped" xml:space="preserve">
+    <value>Shipped</value>
+  </data>
+  <data name="Status_Delivered" xml:space="preserve">
+    <value>Delivered</value>
+  </data>
+  <data name="Status_Cancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="Status_Returned" xml:space="preserve">
+    <value>Returned</value>
+  </data>
+  <data name="Order_ViewDetails" xml:space="preserve">
+    <value>View Details</value>
+  </data>
+  <data name="Order_DownloadInvoice" xml:space="preserve">
+    <value>Download Invoice</value>
+  </data>
+  <data name="Order_Items" xml:space="preserve">
+    <value>Order Items</value>
+  </data>
+  <data name="Order_ItemsCount" xml:space="preserve">
+    <value>items</value>
+  </data>
+  <data name="Order_ShippingAddress" xml:space="preserve">
+    <value>Shipping Address</value>
+  </data>
+  <data name="Order_PaymentMethod" xml:space="preserve">
+    <value>Payment Method</value>
+  </data>
+  <data name="Order_Stripe" xml:space="preserve">
+    <value>Stripe</value>
+  </data>
+  <data name="Order_StripePaymentID" xml:space="preserve">
+    <value>Stripe Payment ID</value>
+  </data>
+  <data name="Order_SessionID" xml:space="preserve">
+    <value>Session ID</value>
+  </data>
+  <data name="Account_VIP_Discount" xml:space="preserve">
+    <value>Discount</value>
+  </data>
+  <data name="Account_VIP_NextTier" xml:space="preserve">
+    <value>to next tier</value>
+  </data>
+  <data name="Account_VIP_ViewBenefits" xml:space="preserve">
+    <value>View Benefits</value>
+  </data>
+  <data name="Account_Order_Items" xml:space="preserve">
+    <value>items</value>
+  </data>
+  <data name="Account_CancelOrder" xml:space="preserve">
+    <value>Cancel Order</value>
+  </data>
+  <data name="Account_RequestReturn" xml:space="preserve">
+    <value>Request Return</value>
+  </data>
+  <data name="Account_VIP_YourBenefits" xml:space="preserve">
+    <value>Your VIP Benefits</value>
+  </data>
+  <data name="Account_VIP_Locked" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="Account_VIP_TierComparison" xml:space="preserve">
+    <value>VIP Tier Comparison</value>
+  </data>
+  <data name="Account_VIP_Tier" xml:space="preserve">
+    <value>Tier</value>
+  </data>
+  <data name="Account_VIP_Requirement" xml:space="preserve">
+    <value>Requirement</value>
+  </data>
+  <data name="Account_VIP_Benefits" xml:space="preserve">
+    <value>Benefits</value>
+  </data>
+  <data name="Account_VIP_BasicDiscount" xml:space="preserve">
+    <value>Basic discount</value>
+  </data>
+  <data name="Account_VIP_FreeShipping" xml:space="preserve">
+    <value>Free shipping on all orders</value>
+  </data>
+  <data name="Account_VIP_EarlyAccess" xml:space="preserve">
+    <value>Early access to new products</value>
+  </data>
+  <data name="Account_VIP_BirthdayGift" xml:space="preserve">
+    <value>Birthday gift + exclusive offers</value>
+  </data>
+  <data name="Account_AccountSettings" xml:space="preserve">
+    <value>Account Settings</value>
+  </data>
+  <data name="Account_Settings_FirstName" xml:space="preserve">
+    <value>First Name</value>
+  </data>
+  <data name="Account_Settings_LastName" xml:space="preserve">
+    <value>Last Name</value>
+  </data>
+  <data name="Account_Settings_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Account_Settings_EmailNote" xml:space="preserve">
+    <value>Contact support to change email</value>
+  </data>
+  <data name="Account_Settings_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+  <data name="Account_Settings_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Account_Settings_ChangePassword" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="Each" xml:space="preserve">
+    <value>each</value>
+  </data>
+  <data name="Payment_Details" xml:space="preserve">
+    <value>Payment Details</value>
+  </data>
+  <data name="Payment_Intent_ID" xml:space="preserve">
+    <value>Payment Intent ID</value>
+  </data>
+  <data name="Error_Message" xml:space="preserve">
+    <value>Error Message</value>
+  </data>
+  <data name="Orders_PaymentFailedMessage" xml:space="preserve">
+    <value>Payment processing failed. Please try again or contact support.</value>
+  </data>
+  <data name="View_Details" xml:space="preserve">
+    <value>View Details</value>
+  </data>
+  <data name="Cancel_Order" xml:space="preserve">
+    <value>Cancel Order</value>
+  </data>
+  <data name="Download_Invoice" xml:space="preserve">
+    <value>Download Invoice</value>
+  </data>
+  <data name="Confirm_Cancel_Order" xml:space="preserve">
+    <value>Are you sure you want to cancel this order?</value>
+  </data>
+  <data name="Error_Cancelling_Order" xml:space="preserve">
+    <value>Error cancelling order. Please try again or contact support.</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Quantity</value>
+  </data>
+  
+  <!-- Product Names and Descriptions -->
+  <data name="Product_WomenBriefs5Pack_Name" xml:space="preserve">
+    <value>Women's Cotton High-Waist Briefs - 5 Pack</value>
+  </data>
+  <data name="Product_WomenBriefs5Pack_Description" xml:space="preserve">
+    <value>High-quality women's cotton briefs in a set of 5. Comfortable, breathable, and durable. Perfect choice for everyday wear. Available in various colors and sizes.</value>
+  </data>
+  <data name="Product_WomenBriefs6Pack_Name" xml:space="preserve">
+    <value>Women's Cotton High-Waist Briefs - 6 Pack</value>
+  </data>
+  <data name="Product_WomenBriefs6Pack_Description" xml:space="preserve">
+    <value>High-quality women's cotton briefs in a set of 6. Comfortable, breathable, and durable. Perfect choice for everyday wear. Available in various colors and sizes.</value>
+  </data>
+  <data name="Product_WomenBriefs8Pack_Name" xml:space="preserve">
+    <value>Women's Cotton High-Waist Briefs - 8 Pack</value>
+  </data>
+  <data name="Product_WomenBriefs8Pack_Description" xml:space="preserve">
+    <value>High-quality women's cotton briefs in a set of 8. Comfortable, breathable, and durable. Best value choice! Available in various colors and sizes.</value>
+  </data>
+  <data name="Currency_PLN" xml:space="preserve">
+    <value>PLN</value>
+  </data>
+  <data name="Currency_EUR" xml:space="preserve">
+    <value>€</value>
+  </data>
+  <data name="Currency_USD" xml:space="preserve">
+    <value>$</value>
+  </data>
+  <data name="Session_Complete" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="Session_Cancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="Session_Expired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="Account_Currency" xml:space="preserve">
+    <value>Currency</value>
+  </data>
+  <data name="Account_SessionStatus" xml:space="preserve">
+    <value>Session Status</value>
+  </data>
+  <data name="Account_Country" xml:space="preserve">
+    <value>Country</value>
+  </data>
+  <data name="Product_PackQuantity" xml:space="preserve">
+    <value>Pack Quantity</value>
+  </data>
+  <data name="Product_ItemsPerPack" xml:space="preserve">
+    <value>items per pack</value>
+  </data>
+  <data name="Product_TotalItems" xml:space="preserve">
+    <value>Total Items</value>
+  </data>
+  <data name="Checkout_PackInfo" xml:space="preserve">
+    <value>Pack Information</value>
+  </data>
+  <data name="ProductGroup_WomenBriefs_Name" xml:space="preserve">
+    <value>Women's Cotton Briefs Pack Collection</value>
+  </data>
+  <data name="ProductGroup_WomenBriefs_Description" xml:space="preserve">
+    <value>High-quality cotton women's briefs available in packs of 5, 6, and 8 pieces. Comfortable, breathable, and durable. Choose the pack size that works best for you.</value>
+  </data>
+  <data name="Product_ClickToEnlarge" xml:space="preserve">
+    <value>Click to Enlarge</value>
+  </data>
+  
+  <!-- Coupon Banner Translations -->
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Shop_Now" xml:space="preserve">
+    <value>Shop Now</value>
+  </data>
+  <data name="Special_Offer" xml:space="preserve">
+    <value>Special Offer</value>
+  </data>
+  <data name="Get" xml:space="preserve">
+    <value>Get</value>
+  </data>
+  <data name="Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="On_Orders_Over" xml:space="preserve">
+    <value>On Orders Over</value>
+  </data>
+  <data name="Expires" xml:space="preserve">
+    <value>Expires</value>
+  </data>
+  <data name="Copy_Code" xml:space="preserve">
+    <value>Copy Code</value>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>Days</value>
+  </data>
+  
+  <!-- Carousel Slide Translations (Generic) -->
+  <data name="Carousel_NewCollection" xml:space="preserve">
+    <value>New Spring 2025 Collection</value>
+  </data>
+  <data name="Carousel_NewCollection_Subtitle" xml:space="preserve">
+    <value>Discover the latest trends in women's and men's fashion</value>
+  </data>
+  <data name="Carousel_ShopNow" xml:space="preserve">
+    <value>Shop Now</value>
+  </data>
+  <data name="Carousel_ViewOffer" xml:space="preserve">
+    <value>View Offer</value>
+  </data>
+  <data name="Carousel_Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Carousel_Check" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="Carousel_DiscoverMore" xml:space="preserve">
+    <value>Discover More</value>
+  </data>
+</root>
+
+
+
+

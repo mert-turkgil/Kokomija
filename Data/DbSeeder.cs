@@ -358,32 +358,6 @@ namespace Kokomija.Data
                     IsDefault = false,
                     DisplayOrder = 2,
                     CreatedAt = DateTime.UtcNow
-                },
-                new SupportedLanguage
-                {
-                    Id = 3,
-                    CultureCode = "de-DE",
-                    DisplayName = "Deutsch",
-                    NativeName = "Deutsch",
-                    TwoLetterIsoCode = "de",
-                    FlagIcon = "🇩🇪",
-                    IsEnabled = false, // Disabled by default
-                    IsDefault = false,
-                    DisplayOrder = 3,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new SupportedLanguage
-                {
-                    Id = 4,
-                    CultureCode = "fr-FR",
-                    DisplayName = "Français",
-                    NativeName = "Français",
-                    TwoLetterIsoCode = "fr",
-                    FlagIcon = "🇫🇷",
-                    IsEnabled = false, // Disabled by default
-                    IsDefault = false,
-                    DisplayOrder = 4,
-                    CreatedAt = DateTime.UtcNow
                 }
             );
         }
@@ -625,6 +599,8 @@ namespace Kokomija.Data
 
         public static void SeedCoupons(this ModelBuilder modelBuilder)
         {
+            // Note: HasData only inserts if the Id doesn't exist
+            // If coupon with Id=1 exists, it will be skipped automatically
             modelBuilder.Entity<Coupon>().HasData(
                 new Coupon
                 {
@@ -650,6 +626,8 @@ namespace Kokomija.Data
 
         public static void SeedProducts(this ModelBuilder modelBuilder)
         {
+            // Note: HasData only inserts if the Id doesn't exist
+            // If products with these Ids exist, they will be skipped automatically
             modelBuilder.Entity<Product>().HasData(
                 // Product 1: Women's Cotton Briefs 5-Pack
                 new Product 
@@ -836,76 +814,55 @@ namespace Kokomija.Data
                 new CarouselSlide
                 {
                     Id = 1,
-                    Title = "Nowa Kolekcja Wiosna 2025",
-                    Subtitle = "Odkryj najnowsze trendy w modzie damskiej i męskiej",
-                    ImagePath = "1.jpg",
-                    ImageAlt = "Nowa kolekcja wiosenna 2025",
-                    LinkUrl = "/damskie",
-                    ButtonText = "Kup Teraz",
+                    Title = "Carousel_NewCollection", // Resource key
+                    Subtitle = "Carousel_NewCollection_Subtitle", // Resource key
+                    ImagePath = "/img/Carousel/1.jpg", // Desktop image
+                    TabletImagePath = "/img/Carousel/2.jpg", // Tablet image
+                    MobileImagePath = "/img/Carousel/3.jpg", // Mobile image
+                    ImageAlt = "New Spring 2025 Collection",
+                    ButtonText = "Carousel_ShopNow", // Resource key
                     DisplayOrder = 1,
                     IsActive = true,
-                    Location = "home",
+                    Location = "Home",
                     StartDate = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow
+                }
+            );
+        }
+
+        public static void SeedCarouselSlideTranslations(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CarouselSlideTranslation>().HasData(
+                // Slide 1 - English
+                new CarouselSlideTranslation
+                {
+                    Id = 1,
+                    CarouselSlideId = 1,
+                    CultureCode = "en-US",
+                    Title = "New Spring 2025 Collection",
+                    Subtitle = "Discover the latest trends in women's fashion",
+                    ButtonText = "Shop Now",
+                    ControllerName = "Product",
+                    ActionName = "Index",
+                    AreaName = null,
+                    RouteParameters = "{\"category\":\"women\"}",
+                    ImageAlt = "New Spring 2025 Collection - Premium women's fashion",
+                    CreatedAt = DateTime.UtcNow
                 },
-                new CarouselSlide
+                // Slide 1 - Polish
+                new CarouselSlideTranslation
                 {
                     Id = 2,
-                    Title = "Wyprzedaż do -50%",
-                    Subtitle = "Nie przegap okazji! Setki produktów w obniżonych cenach",
-                    ImagePath = "2.jpg",
-                    ImageAlt = "Wielka wyprzedaż do -50%",
-                    LinkUrl = "/meskie",
-                    ButtonText = "Zobacz Ofertę",
-                    DisplayOrder = 2,
-                    IsActive = true,
-                    Location = "home",
-                    StartDate = DateTime.UtcNow,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new CarouselSlide
-                {
-                    Id = 3,
-                    Title = "Elegancja na Każdą Okazję",
-                    Subtitle = "Koszule, sukienki i dodatki dla wymagających",
-                    ImagePath = "3.jpg",
-                    ImageAlt = "Elegancka odzież na specjalne okazje",
-                    LinkUrl = "/odziez-wierzchnia",
-                    ButtonText = "Przeglądaj",
-                    DisplayOrder = 3,
-                    IsActive = true,
-                    Location = "home",
-                    StartDate = DateTime.UtcNow,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new CarouselSlide
-                {
-                    Id = 4,
-                    Title = "Darmowa Dostawa",
-                    Subtitle = "Przy zamówieniach powyżej 200 PLN",
-                    ImagePath = "4.jpg",
-                    ImageAlt = "Darmowa dostawa powyżej 200 PLN",
-                    LinkUrl = "/akcesoria",
-                    ButtonText = "Sprawdź",
-                    DisplayOrder = 4,
-                    IsActive = true,
-                    Location = "home",
-                    StartDate = DateTime.UtcNow,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new CarouselSlide
-                {
-                    Id = 5,
-                    Title = "Stylowe Kurtki",
-                    Subtitle = "Przygotuj się na zimę z naszą kolekcją kurtek",
-                    ImagePath = "5.jpg",
-                    ImageAlt = "Kolekcja zimowych kurtek",
-                    LinkUrl = "/odziez-wierzchnia",
-                    ButtonText = "Odkryj Więcej",
-                    DisplayOrder = 5,
-                    IsActive = true,
-                    Location = "home",
-                    StartDate = DateTime.UtcNow,
+                    CarouselSlideId = 1,
+                    CultureCode = "pl-PL",
+                    Title = "Nowa Kolekcja Wiosna 2025",
+                    Subtitle = "Odkryj najnowsze trendy w modzie damskiej",
+                    ButtonText = "Kup Teraz",
+                    ControllerName = "Product",
+                    ActionName = "Index",
+                    AreaName = null,
+                    RouteParameters = "{\"category\":\"damskie\"}",
+                    ImageAlt = "Nowa Kolekcja Wiosna 2025 - Wysokiej jakości moda damska",
                     CreatedAt = DateTime.UtcNow
                 }
             );

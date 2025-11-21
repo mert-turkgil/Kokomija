@@ -20,22 +20,12 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.0" />
     <PackageReference Include="Stripe.net" Version="45.14.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     
     <!-- External Authentication Providers -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.0" />
     <PackageReference Include="AspNet.Security.OAuth.Apple" Version="9.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\SharedResources.pl-PL.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>SharedResources.pl-PL.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Resources\SharedResources.en-US.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>SharedResources.en-US.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

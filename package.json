@@ -18,7 +18,7 @@
   },
   "scripts": {
     "install:all": "npm install",
-    "copy:bootstrap": "copyfiles -u 2 \"node_modules/bootstrap/dist/**/*\" wwwroot/lib/bootstrap",
+    "copy:bootstrap": "copyfiles -u 2 \"node_modules/bootstrap/dist/**/*\" wwwroot/lib/bootstrap && copyfiles -u 2 \"node_modules/bootstrap/scss/**/*\" wwwroot/lib/bootstrap/scss",
     "copy:jquery": "copyfiles -u 2 \"node_modules/jquery/dist/*.min.js\" wwwroot/lib/jquery && copyfiles -u 2 \"node_modules/jquery/dist/*.min.map\" wwwroot/lib/jquery",
     "copy:jquery-validation": "copyfiles -u 2 \"node_modules/jquery-validation/dist/*.min.js\" wwwroot/lib/jquery-validation && copyfiles -u 2 \"node_modules/jquery-validation-unobtrusive/dist/*.min.js\" wwwroot/lib/jquery-validation-unobtrusive",
     "copy:fontawesome": "copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/css/*.min.css\" wwwroot/lib/fontawesome/css && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/webfonts/*\" wwwroot/lib/fontawesome/webfonts",

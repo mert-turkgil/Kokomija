@@ -29,6 +29,12 @@ class CartManager {
                 this.updateCartPreview();
             }
         });
+        
+        // Listen for cart update events from add to cart
+        window.addEventListener('cartUpdated', () => {
+            this.updateCartCount();
+            this.updateCartPreview();
+        });
     }
     
     // Get cart items

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Homepage Content -->
+  <data name="Welcome" xml:space="preserve">
+    <value>Welcome to Kokomija</value>
+  </data>
+  <data name="MetaTitle" xml:space="preserve">
+    <value>Kokomija - Premium Textile &amp; Fashion</value>
+  </data>
+  <data name="MetaDescription" xml:space="preserve">
+    <value>Discover high-quality clothing and textiles. Shop men's and women's fashion with free shipping on orders over 200 PLN.</value>
+  </data>
+  <data name="ShopByCategory" xml:space="preserve">
+    <value>Shop by Category</value>
+  </data>
+  <data name="FeaturedProducts" xml:space="preserve">
+    <value>Featured Products</value>
+  </data>
+  <data name="FeaturedProducts_Subtitle" xml:space="preserve">
+    <value>Discover our best products</value>
+  </data>
+  <data name="ViewAllProducts" xml:space="preserve">
+    <value>View All Products</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Search for clothing, accessories...</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="SearchProducts" xml:space="preserve">
+    <value>Search products</value>
+  </data>
+  
+  <!-- Coupon Banner -->
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Shop_Now" xml:space="preserve">
+    <value>Shop Now</value>
+  </data>
+  <data name="Special_Offer" xml:space="preserve">
+    <value>Special Offer</value>
+  </data>
+  <data name="Get" xml:space="preserve">
+    <value>Get</value>
+  </data>
+  <data name="Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="On_Orders_Over" xml:space="preserve">
+    <value>On Orders Over</value>
+  </data>
+  <data name="Expires" xml:space="preserve">
+    <value>Expires</value>
+  </data>
+  <data name="Copy_Code" xml:space="preserve">
+    <value>Copy Code</value>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>Days</value>
+  </data>
+</root>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  
+  <!-- FAQ Page Header -->
+  <data name="Title" xml:space="preserve"><value>Frequently Asked Questions</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>Find answers to common questions about our products and services</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search for answers...</value></data>
+  
+  <!-- FAQ Categories -->
+  <data name="Category_All" xml:space="preserve"><value>All</value></data>
+  <data name="Category_General" xml:space="preserve"><value>General</value></data>
+  <data name="Category_Ordering" xml:space="preserve"><value>Ordering</value></data>
+  <data name="Category_Shipping" xml:space="preserve"><value>Shipping</value></data>
+  <data name="Category_Returns" xml:space="preserve"><value>Returns</value></data>
+  <data name="Category_Payment" xml:space="preserve"><value>Payment</value></data>
+  <data name="Category_Account" xml:space="preserve"><value>Account</value></data>
+  
+  <!-- FAQ Actions -->
+  <data name="NoResults" xml:space="preserve"><value>No results found</value></data>
+  <data name="NoResults_Text" xml:space="preserve"><value>Try different keywords or browse all categories</value></data>
+  <data name="NeedHelp_Title" xml:space="preserve"><value>Still need help?</value></data>
+  <data name="NeedHelp_Text" xml:space="preserve"><value>Can't find the answer you're looking for? Our customer support team is here to help.</value></data>
+  <data name="ContactSupport" xml:space="preserve"><value>Contact Support</value></data>
+  
+  <!-- FAQ Questions & Answers -->
+  <data name="Q1_Title" xml:space="preserve"><value>What is Kokomija?</value></data>
+  <data name="Q1_Answer" xml:space="preserve"><value>Kokomija is a premium online fashion retailer offering high-quality clothing and textiles for both men and women. We curate the latest trends and timeless classics to help you express your unique style.</value></data>
+  
+  <data name="Q2_Title" xml:space="preserve"><value>Where are you located?</value></data>
+  <data name="Q2_Answer" xml:space="preserve"><value>We are based in Poland and ship to customers across Europe. Our warehouse is located in Warsaw, ensuring fast and reliable delivery to your doorstep.</value></data>
+  
+  <data name="Q3_Title" xml:space="preserve"><value>How do I place an order?</value></data>
+  <data name="Q3_Answer" xml:space="preserve"><value>Simply browse our products, select your desired size and color, and add items to your cart. When ready, proceed to checkout, enter your shipping information, and complete payment. You'll receive an order confirmation email immediately.</value></data>
+  
+  <data name="Q4_Title" xml:space="preserve"><value>Can I modify or cancel my order?</value></data>
+  <data name="Q4_Answer" xml:space="preserve"><value>You can modify or cancel your order within 2 hours of placing it. After this time, orders are processed and shipped. Please contact our customer service immediately if you need to make changes.</value></data>
+  
+  <data name="Q5_Title" xml:space="preserve"><value>Do you offer gift wrapping?</value></data>
+  <data name="Q5_Answer" xml:space="preserve"><value>Yes! We offer elegant gift wrapping on all orders. Simply select the gift wrapping option during checkout and add a personalized message for the recipient. Perfect for birthdays, holidays, or any special occasion.</value></data>
+  
+  <data name="Q6_Title" xml:space="preserve"><value>What are the shipping costs?</value></data>
+  <data name="Q6_Answer" xml:space="preserve"><value>Standard shipping is 15 PLN for orders under 200 PLN. We offer FREE shipping on all orders over 200 PLN. Express shipping (1-2 business days) is available for 25 PLN.</value></data>
+  
+  <data name="Q7_Title" xml:space="preserve"><value>How long does delivery take?</value></data>
+  <data name="Q7_Answer" xml:space="preserve"><value>Standard delivery takes 3-5 business days within Poland. For international orders, delivery typically takes 5-10 business days depending on your location. You'll receive tracking information once your order ships.</value></data>
+  
+  <data name="Q8_Title" xml:space="preserve"><value>Do you ship internationally?</value></data>
+  <data name="Q8_Answer" xml:space="preserve"><value>Yes, we ship to most European countries. International shipping costs vary by destination. Additional customs fees may apply for non-EU countries and are the responsibility of the customer.</value></data>
+  
+  <data name="Q9_Title" xml:space="preserve"><value>Can I track my order?</value></data>
+  <data name="Q9_Answer" xml:space="preserve"><value>Absolutely! Once your order ships, you'll receive an email with tracking information. You can also track your order status by logging into your account and viewing your order history.</value></data>
+  
+  <data name="Q10_Title" xml:space="preserve"><value>What is your return policy?</value></data>
+  <data name="Q10_Answer" xml:space="preserve"><value>We offer a 14-day return policy from the date of delivery, in accordance with Allegro standards. Items must be unworn, unwashed, with original tags attached. Returns are free for Polish customers. International return shipping costs are the customer's responsibility.</value></data>
+  
+  <data name="Q11_Title" xml:space="preserve"><value>How do I initiate a return?</value></data>
+  <data name="Q11_Answer" xml:space="preserve"><value>Log into your account, go to "My Orders," select the order you want to return, and click "Request Return." Choose the items and reason, and we'll provide you with a return label and instructions.</value></data>
+  
+  <data name="Q12_Title" xml:space="preserve"><value>When will I receive my refund?</value></data>
+  <data name="Q12_Answer" xml:space="preserve"><value>Refunds are processed within 5-7 business days after we receive and inspect your returned items. The refund will be credited to your original payment method through Stripe's secure system. Bank processing times may vary by 2-3 additional business days.</value></data>
+  
+  <data name="Q13_Title" xml:space="preserve"><value>Can I exchange an item?</value></data>
+  <data name="Q13_Answer" xml:space="preserve"><value>Yes! We offer free exchanges for different sizes or colors. Simply indicate "Exchange" when initiating your return, and specify your preferred replacement. We'll ship it as soon as we receive your original item.</value></data>
+  
+  <data name="Q14_Title" xml:space="preserve"><value>What payment methods do you accept?</value></data>
+  <data name="Q14_Answer" xml:space="preserve"><value>We accept all major credit and debit cards (Visa, Mastercard, American Express), digital wallets, and bank transfers. All payments are processed securely through Stripe, the world's leading payment platform trusted by millions of businesses worldwide.</value></data>
+  
+  <data name="Q15_Title" xml:space="preserve"><value>Is my payment information secure?</value></data>
+  <data name="Q15_Answer" xml:space="preserve"><value>100% secure. All transactions are processed through Stripe with military-grade SSL encryption and PCI-DSS Level 1 compliance (the highest security standard). Your payment information is never stored on our servers – Stripe handles everything securely. Our membership system is also fully powered by Stripe for maximum security.</value></data>
+  
+  <data name="Q16_Title" xml:space="preserve"><value>What about membership payments?</value></data>
+  <data name="Q16_Answer" xml:space="preserve"><value>Our premium membership is managed entirely through Stripe, ensuring 100% secure recurring payments. You can upgrade, downgrade, or cancel your membership at any time directly from your account dashboard. All billing is transparent with no hidden fees.</value></data>
+  
+  <data name="Q17_Title" xml:space="preserve"><value>Can I use discount codes?</value></data>
+  <data name="Q17_Answer" xml:space="preserve"><value>Yes! Enter your discount code at checkout to apply it to your order. Codes cannot be combined with other promotions. Sign up for our newsletter to receive exclusive discount codes and early access to sales.</value></data>
+  
+  <data name="Q18_Title" xml:space="preserve"><value>Do I need an account to place an order?</value></data>
+  <data name="Q18_Answer" xml:space="preserve"><value>No, you can checkout as a guest. However, creating an account allows you to track orders, save multiple addresses, view order history, and receive exclusive member benefits and discounts.</value></data>
+  
+  <data name="Q19_Title" xml:space="preserve"><value>How do I reset my password?</value></data>
+  <data name="Q19_Answer" xml:space="preserve"><value>Click "Login" at the top of the page, then select "Forgot Password?" Enter your email address, and we'll send you a link to reset your password. The link is valid for 24 hours.</value></data>
+  
+  <data name="Q20_Title" xml:space="preserve"><value>How do I update my account information?</value></data>
+  <data name="Q20_Answer" xml:space="preserve"><value>Log into your account and go to "Account Settings." From there, you can update your email, password, shipping addresses, and communication preferences. Changes are saved automatically.</value></data>
+  
+  <data name="Q21_Title" xml:space="preserve"><value>How can I contact customer service?</value></data>
+  <data name="Q21_Answer" xml:space="preserve"><value>You can reach us via email at support@kokomija.com, or use the contact form on our website. We respond to all inquiries within 24 hours during business days.</value></data>
+  
+  <data name="Q22_Title" xml:space="preserve"><value>How do I find the right size?</value></data>
+  <data name="Q22_Answer" xml:space="preserve"><value>Each product page includes a detailed size guide with measurements. We recommend measuring yourself and comparing to our size charts. If you're between sizes, we suggest ordering the larger size for comfort.</value></data>
+</root>

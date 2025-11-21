@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Kokomija.Entity
 {
@@ -26,6 +27,7 @@ namespace Kokomija.Entity
         // VIP Status (based on total spending)
         public string VipTier { get; set; } = "None"; // None, Bronze, Silver, Gold, Platinum
         
+        [Column(TypeName = "decimal(18,2)")]
         public decimal TotalSpent { get; set; } = 0;
 
         // Navigation properties for orders

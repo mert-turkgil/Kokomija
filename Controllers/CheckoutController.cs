@@ -160,7 +160,7 @@ namespace Kokomija.Controllers
             model.Subtotal = model.Items.Sum(i => i.Subtotal);
 
             // Check for applied coupon
-            var couponCode = HttpContext.Session.GetString("CouponCode");
+            var couponCode = HttpContext.Session.GetString("AppliedCouponCode");
             if (!string.IsNullOrEmpty(couponCode))
             {
                 var coupon = (await _unitOfWork.Coupons.GetAllAsync(c => c.Code == couponCode && c.IsActive)).FirstOrDefault();
@@ -188,6 +188,32 @@ namespace Kokomija.Controllers
             decimal freeShippingThreshold = 100;
             var subtotalAfterDiscount = model.Subtotal - model.Discount;
             
+            model.FreeShippingThreshold = freeShippingThreshold;
+            model.QualifiesForFreeShipping = subtotalAfterDiscount >= freeShippingThreshold;
+            
+            // Build shipping options
+            model.ShippingOptions = new List<ShippingOptionViewModel>
+            {
+                new ShippingOptionViewModel
+                {
+                    Id = "standard",
+                    Name = _localizationService["Shipping_Standard"],
+                    Description = _localizationService["Shipping_Standard_Desc"],
+                    Cost = model.QualifiesForFreeShipping ? 0 : 9.99m,
+                    DeliveryTime = "3-7 " + _localizationService["Shipping_BusinessDays"],
+                    IsDefault = true
+                },
+                new ShippingOptionViewModel
+                {
+                    Id = "express",
+                    Name = _localizationService["Shipping_Express"],
+                    Description = _localizationService["Shipping_Express_Desc"],
+                    Cost = model.QualifiesForFreeShipping ? 5m : 19.99m,
+                    DeliveryTime = "1-2 " + _localizationService["Shipping_BusinessDays"],
+                    IsDefault = false
+                }
+            };
+            
             if (user != null)
             {
                 // Check VIP status
@@ -198,26 +224,30 @@ namespace Kokomija.Controllers
                 if (totalSpent >= 500)
                 {
                     model.ShippingCost = 0;
-                }
-                else if (subtotalAfterDiscount >= freeShippingThreshold)
-                {
-                    model.ShippingCost = 0;
+                    model.QualifiesForFreeShipping = true;
+                    foreach (var option in model.ShippingOptions)
+                    {
+                        option.Cost = 0;
+                    }
                 }
                 else
                 {
-                    model.ShippingCost = 15; // 15 PLN standard shipping
+                    model.ShippingCost = model.ShippingOptions.First(o => o.IsDefault).Cost;
                 }
             }
             else
             {
-                model.ShippingCost = subtotalAfterDiscount >= freeShippingThreshold ? 0 : 15;
+                model.ShippingCost = model.ShippingOptions.First(o => o.IsDefault).Cost;
             }
 
-            // Tax (23% VAT for Poland)
-            model.Tax = (subtotalAfterDiscount + model.ShippingCost) * 0.23m;
+            // Tax (23% VAT for Poland - INCLUSIVE, meaning it's already in the price)
+            // To calculate inclusive tax: price * (tax_rate / (100 + tax_rate))
+            // For 23% VAT: price * (23 / 123) = price * 0.1869918699...
+            var taxableAmount = subtotalAfterDiscount + model.ShippingCost;
+            model.Tax = taxableAmount * (23m / 123m); // Tax component that's already included in price
 
-            // Total
-            model.Total = subtotalAfterDiscount + model.ShippingCost + model.Tax;
+            // Total (tax is already included in prices, so total = subtotal after discount + shipping)
+            model.Total = subtotalAfterDiscount + model.ShippingCost;
 
             // Stripe publishable key
             model.StripePublishableKey = _configuration["Stripe:PublishableKey"];
@@ -228,7 +258,7 @@ namespace Kokomija.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> CreateCheckoutSession()
+        public async Task<IActionResult> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest? request)
         {
             try
             {
@@ -237,6 +267,9 @@ namespace Kokomija.Controllers
                 {
                     return Json(new { success = false, message = "User not found" });
                 }
+
+                // Get selected shipping option
+                var shippingOption = request?.ShippingOption ?? "standard";
 
                 // Get cart items
                 var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
@@ -256,27 +289,34 @@ namespace Kokomija.Controllers
                     _ => 0m
                 };
 
-                // Get coupon discount
-                decimal couponDiscountPercentage = 0m;
+                // Store coupon code for Stripe (don't apply to price, let Stripe handle it)
                 var couponCode = HttpContext.Session.GetString("AppliedCouponCode");
-                if (!string.IsNullOrEmpty(couponCode))
-                {
-                    var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
-                    if (coupon != null && coupon.IsActive && coupon.DiscountType == "percentage")
-                    {
-                        couponDiscountPercentage = coupon.DiscountValue;
-                    }
-                }
 
-                // Total discount percentage (VIP + Coupon)
-                decimal totalDiscountPercentage = vipDiscountPercentage + couponDiscountPercentage;
-
-                _logger.LogInformation($"Checkout for user {user.Id}: VIP {vipDiscountPercentage}% + Coupon {couponDiscountPercentage}% = Total {totalDiscountPercentage}%");
+                _logger.LogInformation($"Checkout for user {user.Id}: VIP {vipDiscountPercentage}%");
 
                 // Build Stripe line items
                 var lineItems = new List<SessionLineItemOptions>();
                 var packSizeInfo = new List<string>();
                 var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                
+                // Get the VAT 23% tax rate from Stripe
+                var taxRateService = new Stripe.TaxRateService();
+                var taxRates = await taxRateService.ListAsync(new Stripe.TaxRateListOptions
+                {
+                    Active = true,
+                    Limit = 10
+                });
+                var vat23TaxRate = taxRates.Data.FirstOrDefault(t => 
+                    t.Percentage == 23.0m && 
+                    t.Jurisdiction == "PL" && 
+                    t.DisplayName == "VAT");
+                
+                var taxRateIds = new List<string>();
+                if (vat23TaxRate != null)
+                {
+                    taxRateIds.Add(vat23TaxRate.Id);
+                    _logger.LogInformation($"Using tax rate: {vat23TaxRate.Id} (23% VAT)");
+                }
 
                 foreach (var cartItem in cartItems)
                 {
@@ -315,14 +355,14 @@ namespace Kokomija.Controllers
                     
                     if (variant == null) continue;
 
-                    // Apply discounts to the price
+                    // Apply VIP discount to the price (Stripe will handle coupon separately)
                     decimal originalPrice = variant.Price;
-                    decimal discountedPrice = originalPrice * (1 - (totalDiscountPercentage / 100));
+                    decimal discountedPrice = originalPrice * (1 - (vipDiscountPercentage / 100));
                     
                     // Convert to grosze (cents) for Stripe
                     long priceInGrosze = (long)(discountedPrice * 100);
 
-                    _logger.LogInformation($"Product {product.Name}: Original {originalPrice} PLN, Discounted {discountedPrice} PLN ({totalDiscountPercentage}% off)");
+                    _logger.LogInformation($"Product {product.Name}: Original {originalPrice} PLN, VIP Discounted {discountedPrice} PLN ({vipDiscountPercentage}% off)");
 
                     // Always use PriceData with PLN currency
                     var lineItem = new SessionLineItemOptions
@@ -343,6 +383,12 @@ namespace Kokomija.Controllers
                         },
                         Quantity = cartItem.Quantity
                     };
+                    
+                    // Apply tax rates if available
+                    if (taxRateIds.Any())
+                    {
+                        lineItem.TaxRates = taxRateIds;
+                    }
 
                     // Only add images if we have a valid public URL
                     if (!string.IsNullOrEmpty(imageUrl))
@@ -356,6 +402,19 @@ namespace Kokomija.Controllers
                 // Detect user's country and currency
                 var country = DetectCountry();
                 var currency = "pln"; // Always use PLN
+                
+                // Check if user qualifies for free shipping
+                var subtotalAfterDiscount = cartItems.Sum(c => _unitOfWork.Products.GetByIdAsync(c.ProductId).Result?.Price ?? 0) * (1 - (vipDiscountPercentage / 100));
+                var freeShippingThreshold = 100m;
+                var qualifiesForFreeShipping = subtotalAfterDiscount >= freeShippingThreshold;
+                
+                // Check VIP status for free shipping
+                var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
+                var totalSpent = orders.Sum(o => o.TotalAmount);
+                if (totalSpent >= 500)
+                {
+                    qualifiesForFreeShipping = true;
+                }
 
                 // Create metadata
                 var metadata = new Dictionary<string, string>
@@ -366,9 +425,7 @@ namespace Kokomija.Controllers
                     { "country", country },
                     { "pack_info", string.Join(";", packSizeInfo) },
                     { "vip_tier", vipTier },
-                    { "vip_discount_percentage", vipDiscountPercentage.ToString("F2") },
-                    { "coupon_discount_percentage", couponDiscountPercentage.ToString("F2") },
-                    { "total_discount_percentage", totalDiscountPercentage.ToString("F2") }
+                    { "vip_discount_percentage", vipDiscountPercentage.ToString("F2") }
                 };
 
                 // Add coupon if applied
@@ -377,15 +434,119 @@ namespace Kokomija.Controllers
                     metadata.Add("coupon_code", couponCode);
                 }
 
-                // Create Stripe Checkout Session
+                // Create Stripe Checkout Session with shipping options
                 var domain = $"{Request.Scheme}://{Request.Host}";
-                var session = await _stripeService.CreateCheckoutSessionAsync(
-                    lineItems,
-                    $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
-                    $"{domain}/Checkout/Cancel",
-                    user.StripeCustomerId,
-                    metadata
-                );
+                
+                var options = new SessionCreateOptions
+                {
+                    LineItems = lineItems,
+                    Mode = "payment",
+                    SuccessUrl = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
+                    CancelUrl = $"{domain}/Checkout/Cancel",
+                    Metadata = metadata,
+                    ShippingAddressCollection = new SessionShippingAddressCollectionOptions
+                    {
+                        AllowedCountries = new List<string> { "PL", "DE", "FR", "IT", "ES", "NL", "BE", "AT" }
+                    },
+                    CustomerUpdate = new SessionCustomerUpdateOptions
+                    {
+                        Shipping = "auto"
+                    },
+                    ShippingOptions = new List<SessionShippingOptionOptions>()
+                };
+                
+                // Add shipping options based on selection
+                if (shippingOption == "express")
+                {
+                    var expressCost = qualifiesForFreeShipping ? 500 : 1999; // 5 PLN or 19.99 PLN
+                    options.ShippingOptions.Add(new SessionShippingOptionOptions
+                    {
+                        ShippingRateData = new SessionShippingOptionShippingRateDataOptions
+                        {
+                            Type = "fixed_amount",
+                            FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
+                            {
+                                Amount = expressCost,
+                                Currency = "pln"
+                            },
+                            DisplayName = qualifiesForFreeShipping ? "Express Shipping (Discounted)" : "Express Shipping",
+                            DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
+                            {
+                                Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                {
+                                    Unit = "business_day",
+                                    Value = 1
+                                },
+                                Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                {
+                                    Unit = "business_day",
+                                    Value = 2
+                                }
+                            }
+                        }
+                    });
+                }
+                else // standard
+                {
+                    var standardCost = qualifiesForFreeShipping ? 0 : 999; // Free or 9.99 PLN
+                    options.ShippingOptions.Add(new SessionShippingOptionOptions
+                    {
+                        ShippingRateData = new SessionShippingOptionShippingRateDataOptions
+                        {
+                            Type = "fixed_amount",
+                            FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
+                            {
+                                Amount = standardCost,
+                                Currency = "pln"
+                            },
+                            DisplayName = qualifiesForFreeShipping ? "Standard Shipping (Free)" : "Standard Shipping",
+                            DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
+                            {
+                                Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                {
+                                    Unit = "business_day",
+                                    Value = 3
+                                },
+                                Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                {
+                                    Unit = "business_day",
+                                    Value = 7
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Set customer or email (not both)
+                if (!string.IsNullOrEmpty(user.StripeCustomerId))
+                {
+                    options.Customer = user.StripeCustomerId;
+                }
+                else if (!string.IsNullOrEmpty(user.Email))
+                {
+                    options.CustomerEmail = user.Email;
+                }
+                
+                // Apply coupon discount if exists, otherwise allow promotion codes
+                if (!string.IsNullOrEmpty(couponCode))
+                {
+                    var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
+                    if (coupon != null && coupon.IsActive && !string.IsNullOrEmpty(coupon.StripePromotionCodeId))
+                    {
+                        options.Discounts = new List<SessionDiscountOptions>
+                        {
+                            new SessionDiscountOptions { PromotionCode = coupon.StripePromotionCodeId }
+                        };
+                    }
+                }
+                else
+                {
+                    // If no coupon applied, allow users to enter promotion codes at checkout
+                    options.AllowPromotionCodes = true;
+                }
+
+                var sessionService = new SessionService();
+                var session = await sessionService.CreateAsync(options);
 
                 return Json(new { success = true, sessionId = session.Id, url = session.Url });
             }
@@ -428,6 +589,7 @@ namespace Kokomija.Controllers
                             TotalAmount = (session.AmountTotal ?? 0) / 100m, // Convert from cents
                             SubtotalAmount = (session.AmountSubtotal ?? 0) / 100m,
                             TaxAmount = (session.TotalDetails?.AmountTax ?? 0) / 100m,
+                            ShippingCost = (session.TotalDetails?.AmountShipping ?? 0) / 100m,
                             OrderStatus = "processing",
                             PaymentStatus = "paid",
                             Currency = currency,
@@ -491,7 +653,7 @@ namespace Kokomija.Controllers
                         await _unitOfWork.Carts.ClearCartAsync(user.Id);
 
                         // Clear coupon session
-                        HttpContext.Session.Remove("CouponCode");
+                        HttpContext.Session.Remove("AppliedCouponCode");
 
                         await _unitOfWork.SaveChangesAsync();
 

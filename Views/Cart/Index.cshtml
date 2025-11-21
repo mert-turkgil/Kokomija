@@ -1,5 +1,5 @@
 @model Kokomija.Models.ViewModels.Cart.CartIndexViewModel
-@inject Kokomija.Services.ILocalizationService Localizer
+@inject Kokomija.Services.ILocalizationService L
 @using System.Globalization
 
 @{
@@ -53,11 +53,11 @@
                                         @if (item.PackSize > 1)
                                         {
                                             <span class="badge bg-primary mb-2">
-                                                <i class="bi bi-box-seam"></i> @item.PackSize @Localizer["Product_ItemsPerPack"]
+                                                <i class="bi bi-box-seam"></i> @item.PackSize @L["Product_ItemsPerPack"]
                                             </span>
                                             <br />
                                             <small class="text-muted">
-                                                <i class="bi bi-stack"></i> @Localizer["Product_TotalItems"]: <strong>@item.TotalItems</strong>
+                                                <i class="bi bi-stack"></i> @L["Product_TotalItems"]: <strong>@item.TotalItems</strong>
                                             </small>
                                             <br />
                                         }

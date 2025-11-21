@@ -153,7 +153,7 @@ var supportedCultures = builder.Configuration.GetSection("Localization:Supported
     ?? new[] { "pl-PL", "en-US" };
 var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "pl-PL";
 
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(defaultCulture);
@@ -175,6 +175,7 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IStripeCustomerService, StripeCustomerService>();
 builder.Services.AddScoped<IStripeProductSeeder, StripeProductSeeder>();
+builder.Services.AddScoped<IPriceHistoryService, PriceHistoryService>();
 
 // Register Cookie Consent Service
 builder.Services.AddScoped<ICookieConsentService, CookieConsentService>();
@@ -206,6 +207,7 @@ builder.Services.AddScoped<IEmailCommandService, EmailCommandService>();
 
 // Register Carousel Service (Homepage and category carousels)
 builder.Services.AddScoped<ICarouselService, CarouselService>();
+builder.Services.AddScoped<ICarouselImageService, CarouselImageService>();
 
 // Register Localization Service (Translation wrapper with logging)
 builder.Services.AddScoped<ILocalizationService, LocalizationService>();
@@ -244,9 +246,14 @@ using (var scope = app.Services.CreateScope())
         await IdentitySeeder.EnsureDatabaseSeededAsync(services, builder.Configuration);
         logger.LogInformation("Database seeding completed successfully.");
         
+        // Seed Stripe configuration (tax, shipping, coupons)
+        logger.LogInformation("Seeding Stripe configuration...");
+        var stripeSeeder = services.GetRequiredService<IStripeProductSeeder>();
+        await stripeSeeder.SeedStripeConfigurationAsync();
+        logger.LogInformation("Stripe configuration seeding completed successfully.");
+        
         // Seed Stripe products
         logger.LogInformation("Seeding Stripe products...");
-        var stripeSeeder = services.GetRequiredService<IStripeProductSeeder>();
         await stripeSeeder.SeedProductsToStripeAsync();
         logger.LogInformation("Stripe product seeding completed successfully.");
     }

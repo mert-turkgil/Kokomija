@@ -3,16 +3,16 @@
 @using System.Globalization
 
 @{
-    ViewData["Title"] = Model.MetaTitle;
-    var currentCulture = CultureInfo.CurrentCulture.Name;
-    var currentUICulture = CultureInfo.CurrentUICulture.Name;
+    ViewData[index: "Title"] = L.GetString(key: "MetaTitle", resourceName: "Home");
+    string? currentCulture = CultureInfo.CurrentCulture.Name;
+    string? currentUICulture = CultureInfo.CurrentUICulture.Name;
 }
 
 <!-- Active Coupons Banner -->
 @if (Model.ActiveCoupons.Any())
 {
     <div class="coupon-banner-container">
-        @foreach (var coupon in Model.ActiveCoupons.Take(1))
+        @foreach (Kokomija.Models.ViewModels.CouponBannerViewModel coupon in Model.ActiveCoupons.Take(count: 1))
         {
             <div class="coupon-banner alert alert-dismissible fade show @(coupon.IsNew ? "new-coupon" : "")" role="alert">
                 <div class="container">
@@ -31,7 +31,7 @@
                                     @if (coupon.DaysUntilExpiry <= 3)
                                     {
                                         <span class="badge bg-danger ms-2">
-                                            <i class="bi bi-clock"></i> @coupon.DaysUntilExpiry @L["Days"] left
+                                            <i class="bi bi-clock"></i> @coupon.DaysUntilExpiry @L.GetString(key: "Days", resourceName: "Home") left
                                         </span>
                                     }
                                 </div>
@@ -39,10 +39,10 @@
                         </div>
                         <div class="col-md-4 text-md-end mt-2 mt-md-0">
                             <button type="button" class="btn btn-sm btn-light me-2" onclick="copyCouponCode('@coupon.Code')">
-                                <i class="bi bi-clipboard"></i> @L["Copy"]
+                                <i class="bi bi-clipboard"></i> @L.GetString(key: "Copy", resourceName: "Home")
                             </button>
                             <a asp-controller="Checkout" asp-action="Index" class="btn btn-sm btn-primary">
-                                @L["Shop_Now"] <i class="bi bi-arrow-right"></i>
+                                @L.GetString(key: "Shop_Now", resourceName: "Home") <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </div>
@@ -56,13 +56,13 @@
 <!-- New Coupon Modal -->
 @if (Model.ActiveCoupons.Any(c => c.IsNew))
 {
-    var newCoupon = Model.ActiveCoupons.First(c => c.IsNew);
+    Kokomija.Models.ViewModels.CouponBannerViewModel? newCoupon = Model.ActiveCoupons.First(c => c.IsNew);
     <div class="modal fade" id="newCouponModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 bg-gradient-primary text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-gift-fill me-2"></i>@L["Special_Offer"]
+                        <i class="bi bi-gift-fill me-2"></i>@L.GetString(key: "Special_Offer", resourceName: "Home")
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -77,22 +77,22 @@
                     <p class="text-muted mb-4">
                         @if (newCoupon.DiscountType == "percentage")
                         {
-                            <text>@L["Get"] @newCoupon.DiscountValue% @L["Off"]</text>
+                            <text>@L.GetString(key: "Get", resourceName: "Home") @newCoupon.DiscountValue% @L.GetString(key: "Off", resourceName: "Home")</text>
                         }
                         else
                         {
-                            <text>@L["Get"] @newCoupon.DiscountValue PLN @L["Off"]</text>
+                            <text>@L.GetString(key: "Get", resourceName: "Home") @newCoupon.DiscountValue PLN @L.GetString(key: "Off", resourceName: "Home")</text>
                         }
                         @if (newCoupon.MinimumOrderAmount.HasValue)
                         {
-                            <text> @L["On_Orders_Over"] @newCoupon.MinimumOrderAmount PLN</text>
+                            <text> @L.GetString(key: "On_Orders_Over", resourceName: "Home") @newCoupon.MinimumOrderAmount PLN</text>
                         }
                     </p>
                     <p class="small text-danger">
-                        <i class="bi bi-clock"></i> @L["Expires"] @newCoupon.ValidUntil.ToString("dd MMM yyyy")
+                        <i class="bi bi-clock"></i> @L.GetString(key: "Expires", resourceName: "Home") @newCoupon.ValidUntil.ToString(format: "dd MMM yyyy")
                     </p>
                     <button type="button" class="btn btn-primary btn-lg px-5" onclick="copyCouponCode('@newCoupon.Code'); bootstrap.Modal.getInstance(document.getElementById('newCouponModal')).hide();">
-                        <i class="bi bi-clipboard-check"></i> @L["Copy_Code"]
+                        <i class="bi bi-clipboard-check"></i> @L.GetString(key: "Copy_Code", resourceName: "Home")
                     </button>
                 </div>
             </div>
@@ -101,7 +101,7 @@
 }
 
 <!-- Carousel -->
-@await Component.InvokeAsync("CarouselSlide", new { location = "home" })
+@await Component.InvokeAsync(name: "CarouselSlide", new { location = "home" })
 
 <!-- Hero Banner -->
 @if (Model.HeroAd != null)
@@ -120,11 +120,11 @@
                                 <input type="text" 
                                        name="q" 
                                        class="form-control" 
-                                       placeholder="@L["Home_SearchPlaceholder"]"
-                                       aria-label="@L["Home_SearchProducts"]"
+                                       placeholder="@L.GetString(key: "SearchPlaceholder", resourceName: "Home")"
+                                       aria-label="@L.GetString(key: "SearchProducts", resourceName: "Home")"
                                        required>
                                 <button class="btn btn-light px-4" type="submit">
-                                    <i class="bi bi-search me-2"></i>@L["Home_Search"]
+                                    <i class="bi bi-search me-2"></i>@L.GetString(key: "Search", resourceName: "Home")
                                 </button>
                             </div>
                         </form>
@@ -144,7 +144,7 @@
 {
     <section class="py-5 categories-section">
         <div class="container">
-            <h2 class="text-center mb-5">@L["Home_ShopByCategory"]</h2>
+            <h2 class="text-center mb-5">@L.GetString("ShopByCategory", "Home")</h2>
             <div class="row g-4">
                 @foreach (var category in Model.FeaturedCategories)
                 {
@@ -184,7 +184,7 @@
                             {
                                 <div class="text-center py-3">
                                     <a asp-controller="Product" asp-action="Category" asp-route-slug="@category.Slug" class="btn btn-outline-primary">
-                                        @L["Home_ViewAllProducts"]
+                                        @L.GetString("ViewAllProducts", "Home")
                                     </a>
                                 </div>
                             }
@@ -202,8 +202,8 @@
     <section class="py-5 products-section">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="display-5 fw-bold">@L["Home_FeaturedProducts"]</h2>
-                <p class="text-muted products-subtitle">@L["Home_FeaturedProducts_Subtitle"]</p>
+                <h2 class="display-5 fw-bold">@L.GetString("FeaturedProducts", "Home")</h2>
+                <p class="text-muted products-subtitle">@L.GetString("FeaturedProducts_Subtitle", "Home")</p>
             </div>
             <div class="row g-4">
                 @foreach (var product in Model.FeaturedProducts)

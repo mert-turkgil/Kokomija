@@ -1,17 +1,17 @@
 @model IEnumerable<Kokomija.Entity.Wishlist>
-@inject Kokomija.Services.ILocalizationService Localizer
+@inject Kokomija.Services.ILocalizationService L
 
 @{
-    ViewData["Title"] = Localizer["Wishlist_Title"];
+    ViewData["Title"] = L["Wishlist_Title"];
 }
 
 <div class="wishlist-page container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="mb-0">
             <i class="fas fa-heart text-danger me-2"></i>
-            @Localizer["Wishlist_Title"]
+            @L.GetString("Title", "Wishlist")
         </h1>
-        <span class="badge bg-primary">@Model.Count() @Localizer["Wishlist_Items"]</span>
+        <span class="badge bg-primary">@Model.Count() @L.GetString("Items", "Wishlist")</span>
     </div>
 
     @if (Model.Any())
@@ -20,7 +20,7 @@
             @foreach (var item in Model)
             {
                 var product = item.Product;
-                var productName = !string.IsNullOrEmpty(product.NameKey) ? Localizer[product.NameKey] : product.Name;
+                var productName = !string.IsNullOrEmpty(product.NameKey) ? L[product.NameKey] : product.Name;
                 var imageUrl = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl ?? "logo_black.png";
                 var hasDiscount = product.Price < (product.Price * 1.1m); // Example discount check
 
@@ -31,7 +31,7 @@
                         {
                             <div class="position-absolute top-0 end-0 m-2">
                                 <span class="badge bg-danger">
-                                    <i class="fas fa-tag"></i> @Localizer["Wishlist_OnSale"]
+                                    <i class="fas fa-tag"></i> @L.GetString("OnSale", "Wishlist")
                                 </span>
                             </div>
                         }
@@ -61,7 +61,7 @@
                                 {
                                     var perPiece = product.Price / product.PackSize;
                                     <small class="text-muted">
-                                        @perPiece.ToString("N2") zł / @Localizer["Product_Piece"]
+                                        @perPiece.ToString("N2") zł / @L["Product_Piece"]
                                     </small>
                                 }
                             </div>
@@ -69,14 +69,14 @@
                             <!-- Added Date -->
                             <small class="text-muted mt-2">
                                 <i class="fas fa-clock me-1"></i>
-                                @Localizer["Wishlist_AddedOn"] @item.AddedAt.ToString("dd MMM yyyy")
+                                @L.GetString("AddedOn", "Wishlist") @item.AddedAt.ToString("dd MMM yyyy")
                             </small>
 
                             <!-- Actions -->
                             <div class="btn-group mt-3" role="group">
                                 <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id" class="btn btn-sm btn-primary flex-fill">
                                     <i class="fas fa-eye me-1"></i>
-                                    @Localizer["Wishlist_View"]
+                                    @L.GetString("View", "Wishlist")
                                 </a>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(@product.Id)">
                                     <i class="fas fa-trash"></i>
@@ -92,11 +92,11 @@
     {
         <div class="empty-wishlist text-center py-5">
             <i class="far fa-heart text-muted" style="font-size: 5rem;"></i>
-            <h3 class="mt-4 text-muted">@Localizer["Wishlist_Empty"]</h3>
-            <p class="text-muted">@Localizer["Wishlist_Empty_Message"]</p>
+            <h3 class="mt-4 text-muted">@L.GetString("Empty", "Wishlist")</h3>
+            <p class="text-muted">@L.GetString("Empty_Message", "Wishlist")</p>
             <a asp-controller="Product" asp-action="Index" class="btn btn-primary mt-3">
                 <i class="fas fa-shopping-bag me-2"></i>
-                @Localizer["Wishlist_StartShopping"]
+                @L.GetString("StartShopping", "Wishlist")
             </a>
         </div>
     }
@@ -145,7 +145,7 @@
 @section Scripts {
     <script>
         function removeFromWishlist(productId) {
-            if (!confirm('@Localizer["Wishlist_Confirm_Remove"]')) {
+            if (!confirm('@L.GetString("Confirm_Remove", "Wishlist")')) {
                 return;
             }
 
@@ -163,13 +163,14 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert(data.message || '@Localizer["Error_Generic"]');
+                    alert(data.message || '@L["Error_Generic"]');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('@Localizer["Error_Generic"]');
+                alert('@L["Error_Generic"]');
             });
         }
     </script>
 }
+

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Tytuły Slajdów Karuzeli -->
+  <data name="Carousel_NewCollection" xml:space="preserve">
+    <value>Nowa Kolekcja Wiosna 2025</value>
+  </data>
+  <data name="Carousel_SummerSale" xml:space="preserve">
+    <value>Letnia Wyprzedaż - Do 50% Taniej</value>
+  </data>
+  <data name="Carousel_ExclusiveOffer" xml:space="preserve">
+    <value>Ekskluzywna Oferta</value>
+  </data>
+  <data name="Carousel_BestSellers" xml:space="preserve">
+    <value>Nasze Bestsellery</value>
+  </data>
+  <data name="Carousel_QualityGuarantee" xml:space="preserve">
+    <value>Gwarancja Najwyższej Jakości</value>
+  </data>
+  
+  <!-- Podtytuły Slajdów Karuzeli -->
+  <data name="Carousel_NewCollection_Subtitle" xml:space="preserve">
+    <value>Odkryj najnowsze trendy w modzie damskiej</value>
+  </data>
+  <data name="Carousel_SummerSale_Subtitle" xml:space="preserve">
+    <value>Oferta ograniczona czasowo na wybrane produkty</value>
+  </data>
+  <data name="Carousel_ExclusiveOffer_Subtitle" xml:space="preserve">
+    <value>Zestawy bawełnianej bielizny dla codziennego komfortu</value>
+  </data>
+  <data name="Carousel_BestSellers_Subtitle" xml:space="preserve">
+    <value>Najlepiej oceniane produkty pokochane przez klientów</value>
+  </data>
+  <data name="Carousel_QualityGuarantee_Subtitle" xml:space="preserve">
+    <value>100% bawełna, przewiewna i trwała</value>
+  </data>
+  
+  <!-- Teksty Przycisków Karuzeli -->
+  <data name="Carousel_ShopNow" xml:space="preserve">
+    <value>Kup Teraz</value>
+  </data>
+  <data name="Carousel_ExploreCollection" xml:space="preserve">
+    <value>Odkryj Kolekcję</value>
+  </data>
+  <data name="Carousel_ViewDetails" xml:space="preserve">
+    <value>Zobacz Szczegóły</value>
+  </data>
+  <data name="Carousel_DiscoverMore" xml:space="preserve">
+    <value>Odkryj Więcej</value>
+  </data>
+  <data name="Carousel_BrowseProducts" xml:space="preserve">
+    <value>Przeglądaj Produkty</value>
+  </data>
+  <data name="Carousel_ViewOffer" xml:space="preserve">
+    <value>Zobacz Ofertę</value>
+  </data>
+  <data name="Carousel_ShopWomen" xml:space="preserve">
+    <value>Kup Damskie</value>
+  </data>
+  <data name="Carousel_LearnMore" xml:space="preserve">
+    <value>Dowiedz Się Więcej</value>
+  </data>
+
+  <!-- Zarządzanie Karuzelą Admin -->
+  <data name="Admin_Carousel_Title" xml:space="preserve">
+    <value>Zarządzanie Slajdami Karuzeli</value>
+  </data>
+  <data name="Admin_Carousel_CreateNew" xml:space="preserve">
+    <value>Utwórz Nowy Slajd</value>
+  </data>
+  <data name="Admin_Carousel_EditSlide" xml:space="preserve">
+    <value>Edytuj Slajd</value>
+  </data>
+  <data name="Admin_Carousel_DeleteSlide" xml:space="preserve">
+    <value>Usuń Slajd</value>
+  </data>
+  <data name="Admin_Carousel_DesktopImage" xml:space="preserve">
+    <value>Obraz Desktop (1920x800px)</value>
+  </data>
+  <data name="Admin_Carousel_TabletImage" xml:space="preserve">
+    <value>Obraz Tablet (1024x600px)</value>
+  </data>
+  <data name="Admin_Carousel_MobileImage" xml:space="preserve">
+    <value>Obraz Mobile (768x600px)</value>
+  </data>
+  <data name="Admin_Carousel_UploadInstructions" xml:space="preserve">
+    <value>Przeciągnij i upuść obrazy lub kliknij, aby przeglądać. Wgraj w kolejności: 1.jpg (Desktop), 2.jpg (Tablet), 3.jpg (Mobile)</value>
+  </data>
+  <data name="Admin_Carousel_TranslationTitle" xml:space="preserve">
+    <value>Tytuł Slajdu</value>
+  </data>
+  <data name="Admin_Carousel_TranslationSubtitle" xml:space="preserve">
+    <value>Podtytuł Slajdu</value>
+  </data>
+  <data name="Admin_Carousel_TranslationButtonText" xml:space="preserve">
+    <value>Tekst Przycisku</value>
+  </data>
+  <data name="Admin_Carousel_TranslationImageAlt" xml:space="preserve">
+    <value>Tekst Alternatywny Obrazu (SEO)</value>
+  </data>
+  <data name="Admin_Carousel_DisplayOrder" xml:space="preserve">
+    <value>Kolejność Wyświetlania</value>
+  </data>
+  <data name="Admin_Carousel_IsActive" xml:space="preserve">
+    <value>Aktywny</value>
+  </data>
+  <data name="Admin_Carousel_StartDate" xml:space="preserve">
+    <value>Data Rozpoczęcia (Opcjonalnie)</value>
+  </data>
+  <data name="Admin_Carousel_EndDate" xml:space="preserve">
+    <value>Data Zakończenia (Opcjonalnie)</value>
+  </data>
+  <data name="Admin_Carousel_Location" xml:space="preserve">
+    <value>Lokalizacja</value>
+  </data>
+  <data name="Admin_Carousel_SaveSlide" xml:space="preserve">
+    <value>Zapisz Slajd</value>
+  </data>
+  <data name="Admin_Carousel_Cancel" xml:space="preserve">
+    <value>Anuluj</value>
+  </data>
+  <data name="Admin_Carousel_ConfirmDelete" xml:space="preserve">
+    <value>Czy na pewno chcesz usunąć ten slajd?</value>
+  </data>
+  <data name="Admin_Carousel_SuccessCreated" xml:space="preserve">
+    <value>Slajd karuzeli został utworzony pomyślnie!</value>
+  </data>
+  <data name="Admin_Carousel_SuccessUpdated" xml:space="preserve">
+    <value>Slajd karuzeli został zaktualizowany pomyślnie!</value>
+  </data>
+  <data name="Admin_Carousel_SuccessDeleted" xml:space="preserve">
+    <value>Slajd karuzeli został usunięty pomyślnie!</value>
+  </data>
+  <data name="Admin_Carousel_ErrorUpload" xml:space="preserve">
+    <value>Błąd podczas przesyłania obrazu. Spróbuj ponownie.</value>
+  </data>
+  <data name="Admin_Carousel_ErrorSave" xml:space="preserve">
+    <value>Błąd podczas zapisywania slajdu. Sprawdź wszystkie wymagane pola.</value>
+  </data>
+  <data name="Admin_Carousel_LinkUrl" xml:space="preserve">
+    <value>Adres URL Linku (Opcjonalnie)</value>
+  </data>
+  <data name="Admin_Carousel_BackgroundColor" xml:space="preserve">
+    <value>Kolor Tła</value>
+  </data>
+  <data name="Admin_Carousel_TextColor" xml:space="preserve">
+    <value>Kolor Tekstu</value>
+  </data>
+  <data name="Admin_Carousel_TextAlign" xml:space="preserve">
+    <value>Wyrównanie Tekstu</value>
+  </data>
+  <data name="Admin_Carousel_AnimationType" xml:space="preserve">
+    <value>Typ Animacji</value>
+  </data>
+  <data name="Admin_Carousel_Duration" xml:space="preserve">
+    <value>Czas Trwania Slajdu (ms)</value>
+  </data>
+</root>

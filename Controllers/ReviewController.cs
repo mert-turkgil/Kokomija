@@ -26,8 +26,7 @@ namespace Kokomija.Controllers
 
         [HttpPost("Create")]
         [Authorize]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int productId, decimal rating, string comment)
+        public async Task<IActionResult> Create([FromBody] ReviewCreateModel model)
         {
             try
             {
@@ -37,23 +36,52 @@ namespace Kokomija.Controllers
                     return Json(new { success = false, message = _localizationService.GetString("Review_LoginRequired") });
                 }
 
-                // Check if user has already reviewed this product
-                var existingReview = await _unitOfWork.ProductReviews.GetUserReviewForProductAsync(userId, productId);
+                // Get the product to check ProductGroup
+                var product = await _unitOfWork.Products.GetByIdAsync(model.ProductId);
+                if (product == null)
+                {
+                    return Json(new { success = false, message = _localizationService.GetString("Product_NotFound") });
+                }
+
+                // Check if user has already reviewed this product OR any product in the same group
+                ProductReview? existingReview = null;
+                if (product.ProductGroupId.HasValue)
+                {
+                    existingReview = await _unitOfWork.ProductReviews.GetUserReviewForProductGroupAsync(userId, product.ProductGroupId.Value);
+                }
+                else
+                {
+                    existingReview = await _unitOfWork.ProductReviews.GetUserReviewForProductAsync(userId, model.ProductId);
+                }
+                
                 if (existingReview != null)
                 {
                     return Json(new { success = false, message = _localizationService.GetString("Review_AlreadyReviewed") });
                 }
 
-                // Check if user has purchased the product
-                var hasPurchased = await _unitOfWork.ProductReviews.HasUserPurchasedProductAsync(userId, productId);
+                // Check if user has purchased the product or any product in the same group
+                bool hasPurchased;
+                if (product.ProductGroupId.HasValue)
+                {
+                    hasPurchased = await _unitOfWork.ProductReviews.HasUserPurchasedProductGroupAsync(userId, product.ProductGroupId.Value);
+                }
+                else
+                {
+                    hasPurchased = await _unitOfWork.ProductReviews.HasUserPurchasedProductAsync(userId, model.ProductId);
+                }
+
+                if (!hasPurchased)
+                {
+                    return Json(new { success = false, message = _localizationService.GetString("Review_MustPurchaseFirst") });
+                }
 
                 var review = new ProductReview
                 {
-                    ProductId = productId,
+                    ProductId = model.ProductId,
                     UserId = userId,
-                    Rating = rating,
-                    Comment = comment.Trim(),
-                    IsVerifiedPurchase = hasPurchased,
+                    Rating = model.Rating,
+                    Comment = model.Comment.Trim(),
+                    IsVerifiedPurchase = true, // Always verified since we check purchase
                     IsVisible = true,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -61,15 +89,22 @@ namespace Kokomija.Controllers
                 await _unitOfWork.ProductReviews.AddAsync(review);
                 await _unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("User {UserId} created review {ReviewId} for product {ProductId}", userId, review.Id, productId);
+                _logger.LogInformation("User {UserId} created review {ReviewId} for product {ProductId}", userId, review.Id, model.ProductId);
 
                 return Json(new { success = true, message = _localizationService.GetString("Review_SubmitSuccess") });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating review for product {ProductId}", productId);
+                _logger.LogError(ex, "Error creating review for product {ProductId}", model.ProductId);
                 return Json(new { success = false, message = _localizationService.GetString("Error_Generic") });
             }
+        }
+        
+        public class ReviewCreateModel
+        {
+            public int ProductId { get; set; }
+            public decimal Rating { get; set; }
+            public string Comment { get; set; } = string.Empty;
         }
 
         [HttpPost("AdminReply")]

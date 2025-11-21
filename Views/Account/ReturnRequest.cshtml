@@ -1,8 +1,8 @@
 @model Kokomija.Models.ViewModels.Account.ReturnRequestViewModel
-@inject Kokomija.Services.ILocalizationService Localizer
+@inject Kokomija.Services.ILocalizationService L
 
 @{
-    ViewData["Title"] = Localizer["Account_ReturnRequest_Title"];
+    ViewData["Title"] = L["Account_ReturnRequest_Title"];
 }
 
 <div class="container my-5">
@@ -10,8 +10,8 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="mb-0">@Localizer["Account_ReturnRequest_Title"]</h4>
-                    <small class="text-muted">@Localizer["Order_Number"]: #@Model.OrderNumber</small>
+                    <h4 class="mb-0">@L["Account_ReturnRequest_Title"]</h4>
+                    <small class="text-muted">@L["Order_Number"]: #@Model.OrderNumber</small>
                 </div>
                 <div class="card-body">
                     <form method="post" asp-action="ReturnRequest">
@@ -19,7 +19,7 @@
                         <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                         <div class="mb-4">
-                            <h5>@Localizer["Account_ReturnRequest_SelectItems"]</h5>
+                            <h5>@L["Account_ReturnRequest_SelectItems"]</h5>
                             <div class="list-group">
                                 @{
                                     int index = 0;
@@ -42,11 +42,11 @@
                                                     <strong>@item.ProductName</strong><br />
                                                     @if (!string.IsNullOrEmpty(item.ColorName))
                                                     {
-                                                        <small>@Localizer["Color"]: @item.ColorName</small><text> | </text>
+                                                        <small>@L["Color"]: @item.ColorName</small><text> | </text>
                                                     }
                                                     @if (!string.IsNullOrEmpty(item.SizeName))
                                                     {
-                                                        <small>@Localizer["Size"]: @item.SizeName</small>
+                                                        <small>@L["Size"]: @item.SizeName</small>
                                                     }
                                                 </label>
                                             </div>
@@ -64,22 +64,22 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Reason" class="form-label">@Localizer["Account_ReturnRequest_Reason"]</label>
+                            <label asp-for="Reason" class="form-label">@L["Account_ReturnRequest_Reason"]</label>
                             <select asp-for="Reason" class="form-select" required>
-                                <option value="">-- @Localizer["Select"] --</option>
-                                <option value="Defective or damaged item">@Localizer["Account_ReturnRequest_DefectiveItem"]</option>
-                                <option value="Wrong item received">@Localizer["Account_ReturnRequest_WrongItem"]</option>
-                                <option value="Item doesn't match description">@Localizer["Account_ReturnRequest_NotMatching"]</option>
-                                <option value="Wrong size ordered">@Localizer["Account_ReturnRequest_WrongSize"]</option>
-                                <option value="No longer needed">@Localizer["Account_ReturnRequest_NotNeeded"]</option>
-                                <option value="Quality not as expected">@Localizer["Account_ReturnRequest_QualityIssue"]</option>
-                                <option value="Other">@Localizer["Account_ReturnRequest_Other"]</option>
+                                <option value="">-- @L["Select"] --</option>
+                                <option value="Defective or damaged item">@L["Account_ReturnRequest_DefectiveItem"]</option>
+                                <option value="Wrong item received">@L["Account_ReturnRequest_WrongItem"]</option>
+                                <option value="Item doesn't match description">@L["Account_ReturnRequest_NotMatching"]</option>
+                                <option value="Wrong size ordered">@L["Account_ReturnRequest_WrongSize"]</option>
+                                <option value="No longer needed">@L["Account_ReturnRequest_NotNeeded"]</option>
+                                <option value="Quality not as expected">@L["Account_ReturnRequest_QualityIssue"]</option>
+                                <option value="Other">@L["Account_ReturnRequest_Other"]</option>
                             </select>
                             <span asp-validation-for="Reason" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Details" class="form-label">@Localizer["Account_ReturnRequest_Details"]</label>
+                            <label asp-for="Details" class="form-label">@L["Account_ReturnRequest_Details"]</label>
                             <textarea asp-for="Details" class="form-control" rows="5" required 
                                 placeholder="Please provide detailed information about why you want to return this item..."></textarea>
                             <span asp-validation-for="Details" class="text-danger"></span>
@@ -93,9 +93,9 @@
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-send me-2"></i>@Localizer["Account_ReturnRequest_Submit"]
+                                <i class="bi bi-send me-2"></i>@L["Account_ReturnRequest_Submit"]
                             </button>
-                            <a asp-action="Index" class="btn btn-secondary">@Localizer["Back_To_Account"]</a>
+                            <a asp-action="Index" class="btn btn-secondary">@L["Back_To_Account"]</a>
                         </div>
                     </form>
                 </div>

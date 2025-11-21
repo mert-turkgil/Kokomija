@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" /></xsd:sequence><xsd:attribute name="name" use="required" type="xsd:string" /><xsd:attribute name="type" type="xsd:string" /><xsd:attribute name="mimetype" type="xsd:string" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="assembly"><xsd:complexType><xsd:attribute name="alias" type="xsd:string" /><xsd:attribute name="name" type="xsd:string" /></xsd:complexType></xsd:element>
+          <xsd:element name="data"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /><xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" /><xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" /><xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" /><xsd:attribute ref="xml:space" /></xsd:complexType></xsd:element>
+          <xsd:element name="resheader"><xsd:complexType><xsd:sequence><xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" /></xsd:sequence><xsd:attribute name="name" type="xsd:string" use="required" /></xsd:complexType></xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  
+  <!-- Account Navigation -->
+  <data name="MyAccount" xml:space="preserve"><value>Moje konto</value></data>
+  <data name="Profile" xml:space="preserve"><value>Profil</value></data>
+  <data name="Orders" xml:space="preserve"><value>Zamówienia</value></data>
+  <data name="Logout" xml:space="preserve"><value>Wyloguj</value></data>
+  <data name="Login" xml:space="preserve"><value>Zaloguj</value></data>
+  <data name="Register" xml:space="preserve"><value>Zarejestruj</value></data>
+  <data name="Dashboard" xml:space="preserve"><value>Panel</value></data>
+  
+  <!-- Authentication - Login -->
+  <data name="WelcomeBack" xml:space="preserve"><value>Witaj ponownie</value></data>
+  <data name="SignInMessage" xml:space="preserve"><value>Zaloguj się, aby kontynuować</value></data>
+  <data name="EmailAddress" xml:space="preserve"><value>Adres email</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>twoj.email@przyklad.pl</value></data>
+  <data name="Password" xml:space="preserve"><value>Hasło</value></data>
+  <data name="PasswordPlaceholder" xml:space="preserve"><value>Wprowadź hasło</value></data>
+  <data name="RememberMe" xml:space="preserve"><value>Zapamiętaj mnie</value></data>
+  <data name="ForgotPassword" xml:space="preserve"><value>Zapomniałeś hasła?</value></data>
+  <data name="SignIn" xml:space="preserve"><value>Zaloguj się</value></data>
+  <data name="OrContinueWith" xml:space="preserve"><value>Lub kontynuuj z</value></data>
+  <data name="ContinueWithGoogle" xml:space="preserve"><value>Kontynuuj z Google</value></data>
+  <data name="ContinueWithFacebook" xml:space="preserve"><value>Kontynuuj z Facebook</value></data>
+  <data name="ContinueWithApple" xml:space="preserve"><value>Kontynuuj z Apple</value></data>
+  <data name="NoAccount" xml:space="preserve"><value>Nie masz konta?</value></data>
+  <data name="CreateAccount" xml:space="preserve"><value>Utwórz konto</value></data>
+  <data name="SecuredByStripe" xml:space="preserve"><value>Zabezpieczone przez Stripe</value></data>
+  
+  <!-- Authentication - Register -->
+  <data name="CreateYourAccount" xml:space="preserve"><value>Utwórz konto</value></data>
+  <data name="JoinMessage" xml:space="preserve"><value>Dołącz do nas i zacznij zakupy</value></data>
+  <data name="FirstName" xml:space="preserve"><value>Imię</value></data>
+  <data name="FirstNamePlaceholder" xml:space="preserve"><value>Wprowadź imię</value></data>
+  <data name="LastName" xml:space="preserve"><value>Nazwisko</value></data>
+  <data name="LastNamePlaceholder" xml:space="preserve"><value>Wprowadź nazwisko</value></data>
+  <data name="PhoneNumber" xml:space="preserve"><value>Numer telefonu</value></data>
+  <data name="PhoneOptional" xml:space="preserve"><value>Numer telefonu (opcjonalny)</value></data>
+  <data name="PhonePlaceholder" xml:space="preserve"><value>+48 123 456 789</value></data>
+  <data name="CreatePassword" xml:space="preserve"><value>Utwórz hasło</value></data>
+  <data name="PasswordMinimum" xml:space="preserve"><value>Minimum 8 znaków</value></data>
+  <data name="ConfirmPassword" xml:space="preserve"><value>Potwierdź hasło</value></data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve"><value>Wprowadź ponownie hasło</value></data>
+  <data name="AgreeToTerms" xml:space="preserve"><value>Akceptuję</value></data>
+  <data name="TermsAndConditions" xml:space="preserve"><value>Regulamin</value></data>
+  <data name="And" xml:space="preserve"><value>oraz</value></data>
+  <data name="PrivacyPolicy" xml:space="preserve"><value>Politykę prywatności</value></data>
+  <data name="SubscribeNewsletter" xml:space="preserve"><value>Zapisz się do newslettera z ekskluzywnymi ofertami</value></data>
+  <data name="OrSignUpWith" xml:space="preserve"><value>Lub zarejestruj się przez</value></data>
+  <data name="HaveAccount" xml:space="preserve"><value>Masz już konto?</value></data>
+  <data name="SignInLink" xml:space="preserve"><value>Zaloguj się</value></data>
+  <data name="Secure" xml:space="preserve"><value>100% Bezpieczne</value></data>
+  <data name="Rewards" xml:space="preserve"><value>Program Lojalnościowy</value></data>
+  <data name="FreeShip" xml:space="preserve"><value>Darmowa Wysyłka</value></data>
+  <data name="LoginToOrder" xml:space="preserve"><value>Zaloguj się, aby zamówić</value></data>
+  
+  <!-- Orders -->
+  <data name="Title" xml:space="preserve"><value>Moje zamówienia</value></data>
+  <data name="No_Orders" xml:space="preserve"><value>Nie złożyłeś jeszcze żadnych zamówień</value></data>
+  <data name="Start_Shopping" xml:space="preserve"><value>Zacznij zakupy</value></data>
+  <data name="Order_Items" xml:space="preserve"><value>przedmiotów</value></data>
+  <data name="CancelOrder" xml:space="preserve"><value>Anuluj zamówienie</value></data>
+  <data name="RequestReturn" xml:space="preserve"><value>Zwrot</value></data>
+  
+  <!-- VIP System -->
+  <data name="VIP_Discount" xml:space="preserve"><value>Twoja zniżka</value></data>
+  <data name="VIP_NextTier" xml:space="preserve"><value>Następny poziom</value></data>
+  <data name="VIP_ViewBenefits" xml:space="preserve"><value>Zobacz korzyści</value></data>
+  <data name="VIP_YourBenefits" xml:space="preserve"><value>Twoje korzyści VIP</value></data>
+  <data name="VIP_Locked" xml:space="preserve"><value>Zablokowane</value></data>
+  <data name="VIP_TierComparison" xml:space="preserve"><value>Porównanie poziomów VIP</value></data>
+  <data name="VIP_Tier" xml:space="preserve"><value>Poziom</value></data>
+  <data name="VIP_Requirement" xml:space="preserve"><value>Wymaganie</value></data>
+  <data name="VIP_Benefits" xml:space="preserve"><value>Korzyści</value></data>
+  <data name="VIP_BasicDiscount" xml:space="preserve"><value>Podstawowa zniżka na wszystkie zakupy</value></data>
+  <data name="VIP_FreeShipping" xml:space="preserve"><value>Darmowa wysyłka wszystkich zamówień</value></data>
+  <data name="VIP_EarlyAccess" xml:space="preserve"><value>Wcześniejszy dostęp do wyprzedaży</value></data>
+  <data name="VIP_BirthdayGift" xml:space="preserve"><value>Specjalny prezent urodzinowy</value></data>
+  
+  <!-- Account Settings -->
+  <data name="AccountSettings" xml:space="preserve"><value>Ustawienia konta</value></data>
+  <data name="Settings_FirstName" xml:space="preserve"><value>Imię</value></data>
+  <data name="Settings_LastName" xml:space="preserve"><value>Nazwisko</value></data>
+  <data name="Settings_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Settings_EmailNote" xml:space="preserve"><value>Wyślemy potwierdzenie zamówienia na ten email</value></data>
+  <data name="Settings_SaveChanges" xml:space="preserve"><value>Zapisz zmiany</value></data>
+  <data name="Settings_Password" xml:space="preserve"><value>Hasło</value></data>
+  <data name="Settings_ChangePassword" xml:space="preserve"><value>Zmień hasło</value></data>
+  <data name="Currency" xml:space="preserve"><value>Waluta</value></data>
+  <data name="SessionStatus" xml:space="preserve"><value>Status sesji</value></data>
+</root>

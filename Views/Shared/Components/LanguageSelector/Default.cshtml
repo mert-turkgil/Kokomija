@@ -37,12 +37,6 @@
         {
             "pl-PL" => "pl",
             "en-US" => "us",
-            "en-GB" => "gb",
-            "tr-TR" => "tr",
-            "de-DE" => "de",
-            "fr-FR" => "fr",
-            "es-ES" => "es",
-            "it-IT" => "it",
             _ => cultureCode.Split('-').LastOrDefault()?.ToLower() ?? "un"
         };
     }

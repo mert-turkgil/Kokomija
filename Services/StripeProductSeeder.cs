@@ -8,6 +8,7 @@ namespace Kokomija.Services
     public interface IStripeProductSeeder
     {
         Task SeedProductsToStripeAsync();
+        Task SeedStripeConfigurationAsync();
     }
 
     public class StripeProductSeeder : IStripeProductSeeder
@@ -15,15 +16,18 @@ namespace Kokomija.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IStripeService _stripeService;
         private readonly ILogger<StripeProductSeeder> _logger;
+        private readonly IPriceHistoryService _priceHistoryService;
 
         public StripeProductSeeder(
             IUnitOfWork unitOfWork,
             IStripeService stripeService,
-            ILogger<StripeProductSeeder> logger)
+            ILogger<StripeProductSeeder> logger,
+            IPriceHistoryService priceHistoryService)
         {
             _unitOfWork = unitOfWork;
             _stripeService = stripeService;
             _logger = logger;
+            _priceHistoryService = priceHistoryService;
         }
 
         public async Task SeedProductsToStripeAsync()
@@ -147,48 +151,23 @@ namespace Kokomija.Services
                             product.StripePriceId = stripePrice.Id;
 
                             _logger.LogInformation($"Created Stripe product: {stripeProduct.Id} with price: {stripePrice.Id}");
+                            
+                            // Save to price history
+                            await _priceHistoryService.SavePriceHistoryAsync(product.Id, 0, product.Price, "Initial Stripe product creation", "System");
                         }
                         else
                         {
                             _logger.LogInformation($"Using existing Stripe product, skipping creation");
                         }
 
-                        // Now create prices for all variants of this product
+                        // Update all variants to use the same price
                         var allVariants = await _unitOfWork.ProductVariants.GetAllAsync();
                         var variants = allVariants.Where(v => v.ProductId == product.Id).ToList();
 
                         foreach (var variant in variants)
                         {
-                            try
-                            {
-                                // Load Size and Color for metadata (handle nullable IDs)
-                                Size? size = null;
-                                Color? color = null;
-                                
-                                if (variant.SizeId.HasValue)
-                                {
-                                    size = await _unitOfWork.Sizes.GetByIdAsync(variant.SizeId.Value);
-                                }
-                                
-                                if (variant.ColorId.HasValue)
-                                {
-                                    color = await _unitOfWork.Colors.GetByIdAsync(variant.ColorId.Value);
-                                }
-
-                                // Temporarily assign for metadata
-                                variant.Size = size;
-                                variant.Color = color;
-                                variant.Product = product;
-
-                                var variantPrice = await _stripeService.CreateVariantPriceAsync(variant, "pln");
-                                variant.StripePriceId = variantPrice.Id;
-
-                                _logger.LogInformation($"  Created variant price: {variantPrice.Id} for SKU: {variant.SKU}");
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, $"Failed to create Stripe price for variant SKU: {variant.SKU}");
-                            }
+                            // All variants share the same product price
+                            variant.StripePriceId = product.StripePriceId;
                         }
 
                         await _unitOfWork.SaveChangesAsync();
@@ -204,6 +183,178 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during Stripe product seeding");
+                throw;
+            }
+        }
+
+        public async Task SeedStripeConfigurationAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Starting Stripe configuration seeding...");
+
+                // 1. Create or verify 23% VAT tax rate
+                var taxRateService = new Stripe.TaxRateService();
+                var existingTaxRates = await taxRateService.ListAsync(new Stripe.TaxRateListOptions
+                {
+                    Active = true,
+                    Limit = 100
+                });
+
+                var vat23Rate = existingTaxRates.Data.FirstOrDefault(t => 
+                    t.Percentage == 23.0m && 
+                    t.Jurisdiction == "PL" && 
+                    t.DisplayName == "VAT");
+
+                if (vat23Rate == null)
+                {
+                    _logger.LogInformation("Creating 23% VAT tax rate...");
+                    var taxRateOptions = new Stripe.TaxRateCreateOptions
+                    {
+                        DisplayName = "VAT",
+                        Description = "Poland VAT 23%",
+                        Jurisdiction = "PL",
+                        Percentage = 23.0m,
+                        Inclusive = true, // VAT is included in price
+                        Active = true
+                    };
+                    vat23Rate = await taxRateService.CreateAsync(taxRateOptions);
+                    _logger.LogInformation($"Created VAT tax rate: {vat23Rate.Id}");
+                }
+                else
+                {
+                    _logger.LogInformation($"VAT 23% tax rate already exists: {vat23Rate.Id}");
+                }
+
+                // 2. Create or verify 9.99 PLN shipping rate
+                var shippingRateService = new Stripe.ShippingRateService();
+                var existingShippingRates = await shippingRateService.ListAsync(new Stripe.ShippingRateListOptions
+                {
+                    Active = true,
+                    Limit = 100
+                });
+
+                var standardShipping = existingShippingRates.Data.FirstOrDefault(s => 
+                    s.DisplayName == "Standard Shipping" && 
+                    s.FixedAmount?.Amount == 999 && // 9.99 PLN in grosze
+                    s.FixedAmount?.Currency == "pln");
+
+                if (standardShipping == null)
+                {
+                    _logger.LogInformation("Creating standard shipping rate (9.99 PLN)...");
+                    var shippingRateOptions = new Stripe.ShippingRateCreateOptions
+                    {
+                        DisplayName = "Standard Shipping",
+                        Type = "fixed_amount",
+                        FixedAmount = new Stripe.ShippingRateFixedAmountOptions
+                        {
+                            Amount = 999, // 9.99 PLN in grosze
+                            Currency = "pln"
+                        },
+                        DeliveryEstimate = new Stripe.ShippingRateDeliveryEstimateOptions
+                        {
+                            Minimum = new Stripe.ShippingRateDeliveryEstimateMinimumOptions
+                            {
+                                Unit = "business_day",
+                                Value = 3
+                            },
+                            Maximum = new Stripe.ShippingRateDeliveryEstimateMaximumOptions
+                            {
+                                Unit = "business_day",
+                                Value = 7
+                            }
+                        },
+                        TaxBehavior = "exclusive" // Tax calculated separately
+                    };
+                    standardShipping = await shippingRateService.CreateAsync(shippingRateOptions);
+                    _logger.LogInformation($"Created shipping rate: {standardShipping.Id}");
+                }
+                else
+                {
+                    _logger.LogInformation($"Standard shipping rate already exists: {standardShipping.Id}");
+                }
+
+                // 3. Create or verify WELCOME10 coupon
+                var couponService = new Stripe.CouponService();
+                Stripe.Coupon? welcomeCoupon = null;
+
+                try
+                {
+                    welcomeCoupon = await couponService.GetAsync("WELCOME10");
+                    _logger.LogInformation($"WELCOME10 coupon already exists: {welcomeCoupon.Id}");
+                }
+                catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+                {
+                    _logger.LogInformation("Creating WELCOME10 coupon...");
+                    var couponOptions = new Stripe.CouponCreateOptions
+                    {
+                        Id = "WELCOME10",
+                        Name = "Welcome 10% Off",
+                        PercentOff = 10,
+                        Duration = "once",
+                        MaxRedemptions = 1000,
+                        Currency = "pln"
+                    };
+                    welcomeCoupon = await couponService.CreateAsync(couponOptions);
+                    _logger.LogInformation($"Created coupon: {welcomeCoupon.Id}");
+                }
+
+                // 4. Create promotion code for the coupon
+                var promoCodeService = new Stripe.PromotionCodeService();
+                var existingPromoCodes = await promoCodeService.ListAsync(new Stripe.PromotionCodeListOptions
+                {
+                    Coupon = welcomeCoupon.Id,
+                    Active = true,
+                    Limit = 10
+                });
+
+                var welcomePromoCode = existingPromoCodes.Data.FirstOrDefault(p => p.Code == "WELCOME10");
+
+                if (welcomePromoCode == null)
+                {
+                    _logger.LogInformation("Creating WELCOME10 promotion code...");
+                    var promoCodeOptions = new Stripe.PromotionCodeCreateOptions
+                    {
+                        Coupon = welcomeCoupon.Id,
+                        Code = "WELCOME10",
+                        Active = true,
+                        MaxRedemptions = 1000,
+                        Restrictions = new Stripe.PromotionCodeRestrictionsOptions
+                        {
+                            FirstTimeTransaction = true,
+                            MinimumAmount = 5000, // 50.00 PLN in grosze
+                            MinimumAmountCurrency = "pln"
+                        }
+                    };
+                    welcomePromoCode = await promoCodeService.CreateAsync(promoCodeOptions);
+                    _logger.LogInformation($"Created promotion code: {welcomePromoCode.Id}");
+                }
+                else
+                {
+                    _logger.LogInformation($"WELCOME10 promotion code already exists: {welcomePromoCode.Id}");
+                }
+
+                // Update database coupon with Stripe IDs
+                var dbCoupons = await _unitOfWork.Coupons.GetAllAsync();
+                var welcomeDbCoupon = dbCoupons.FirstOrDefault(c => c.Code == "WELCOME10");
+                
+                if (welcomeDbCoupon != null)
+                {
+                    welcomeDbCoupon.StripeCouponId = welcomeCoupon.Id;
+                    welcomeDbCoupon.StripePromotionCodeId = welcomePromoCode.Id;
+                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogInformation("Updated database coupon with Stripe IDs");
+                }
+
+                _logger.LogInformation("Stripe configuration seeding completed successfully!");
+                _logger.LogInformation($"  - VAT Tax Rate: {vat23Rate.Id} (23%)");
+                _logger.LogInformation($"  - Shipping Rate: {standardShipping.Id} (9.99 PLN)");
+                _logger.LogInformation($"  - Coupon: {welcomeCoupon.Id}");
+                _logger.LogInformation($"  - Promotion Code: {welcomePromoCode.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during Stripe configuration seeding");
                 throw;
             }
         }

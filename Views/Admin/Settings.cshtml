@@ -1,0 +1,880 @@
+@model Kokomija.Models.ViewModels.Admin.SiteSettingsViewModel
+@{
+    ViewData["Title"] = "Site Settings";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <h1>
+                        <i class="bi bi-gear"></i>
+                        Site Settings
+                    </h1>
+                    <p class="mb-0">Manage your website configuration, carousel, categories, and translations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tabs -->
+        <div class="row">
+            <div class="col-12">
+                <div class="settings-tabs-container">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs settings-nav-tabs" id="settingsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="carousel-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#carousel" type="button" role="tab">
+                                <i class="bi bi-images"></i>
+                                <span>Carousel</span>
+                                <span class="badge bg-primary ms-2">@Model.ActiveCarouselSlides/@Model.TotalCarouselSlides</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="categories-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#categories" type="button" role="tab">
+                                <i class="bi bi-folder"></i>
+                                <span>Categories</span>
+                                <span class="badge bg-success ms-2">@Model.TotalCategories</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="translations-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#translations" type="button" role="tab">
+                                <i class="bi bi-translate"></i>
+                                <span>Translations</span>
+                                <span class="badge bg-info ms-2">@Model.TotalTranslationKeys</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="general-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#general" type="button" role="tab">
+                                <i class="bi bi-sliders"></i>
+                                <span>General</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content settings-tab-content" id="settingsTabContent">
+                        <!-- Carousel Tab -->
+                        <div class="tab-pane fade show active" id="carousel" role="tabpanel">
+                            <div class="settings-section">
+                                <div class="section-header">
+                                    <h4>
+                                        <i class="bi bi-images"></i>
+                                        Carousel Management
+                                    </h4>
+                                    <a asp-action="CarouselCreate" class="btn btn-primary">
+                                        <i class="bi bi-plus-lg"></i>
+                                        Add New Slide
+                                    </a>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-primary">
+                                                <i class="bi bi-images"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.TotalCarouselSlides</h6>
+                                                <small>Total Slides</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-success">
+                                                <i class="bi bi-check-circle"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.ActiveCarouselSlides</h6>
+                                                <small>Active</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model.CarouselSlides.Any())
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table settings-table">
+                                            <thead>
+                                                <tr>
+                                                    <th width="60">Order</th>
+                                                    <th>Preview</th>
+                                                    <th>Title</th>
+                                                    <th>Location</th>
+                                                    <th>Status</th>
+                                                    <th>Schedule</th>
+                                                    <th width="150">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="carousel-sortable">
+                                                @foreach (var slide in Model.CarouselSlides)
+                                                {
+                                                    <tr data-id="@slide.Id"
+                                                        data-title="@slide.Title"
+                                                        data-subtitle="@slide.Subtitle"
+                                                        data-button-text="@slide.ButtonText"
+                                                        data-link-url="@slide.LinkUrl"
+                                                        data-location="@slide.Location"
+                                                        data-display-order="@slide.DisplayOrder"
+                                                        data-is-active="@slide.IsActive"
+                                                        data-image-path="@slide.ImagePath"
+                                                        data-start-date="@(slide.StartDate?.ToString("yyyy-MM-ddTHH:mm"))"
+                                                        data-end-date="@(slide.EndDate?.ToString("yyyy-MM-ddTHH:mm"))">
+                                                        <td>
+                                                            <div class="drag-handle">
+                                                                <i class="bi bi-grip-vertical"></i>
+                                                                <span class="badge bg-secondary">@slide.DisplayOrder</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="carousel-preview">
+                                                                <img src="@slide.ImagePath" alt="@slide.Title" class="carousel-thumb">
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <strong>@slide.Title</strong>
+                                                            @if (!string.IsNullOrEmpty(slide.Subtitle))
+                                                            {
+                                                                <br><small class="text-muted">@slide.Subtitle</small>
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-info">@slide.Location</span>
+                                                        </td>
+                                                        <td>
+                                                            @if (slide.IsActive)
+                                                            {
+                                                                <span class="badge bg-success">
+                                                                    <i class="bi bi-check-circle"></i> Active
+                                                                </span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="badge bg-secondary">
+                                                                    <i class="bi bi-x-circle"></i> Inactive
+                                                                </span>
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            @if (slide.StartDate.HasValue || slide.EndDate.HasValue)
+                                                            {
+                                                                <small>
+                                                                    @if (slide.StartDate.HasValue)
+                                                                    {
+                                                                        <div>From: @slide.StartDate.Value.ToString("MMM dd, yyyy")</div>
+                                                                    }
+                                                                    @if (slide.EndDate.HasValue)
+                                                                    {
+                                                                        <div>To: @slide.EndDate.Value.ToString("MMM dd, yyyy")</div>
+                                                                    }
+                                                                </small>
+                                                            }
+                                                            else
+                                                            {
+                                                                <small class="text-muted">Always</small>
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group" role="group">
+                                                                <a asp-action="CarouselEdit" asp-route-id="@slide.Id" 
+                                                                   class="btn btn-sm btn-outline-primary" 
+                                                                   title="Edit">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </a>
+                                                                <button class="btn btn-sm btn-outline-warning" 
+                                                                        onclick="toggleSlideStatus(@slide.Id)" 
+                                                                        title="Toggle Status">
+                                                                    <i class="bi bi-toggle-on"></i>
+                                                                </button>
+                                                                <form asp-action="CarouselDelete" method="post" class="d-inline" 
+                                                                      onsubmit="return confirm('Are you sure you want to delete this slide?');">
+                                                                    <input type="hidden" name="id" value="@slide.Id" />
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty-state">
+                                        <i class="bi bi-images"></i>
+                                        <p>No carousel slides found</p>
+                                        <a asp-action="CarouselCreate" class="btn btn-primary mt-3">
+                                            <i class="bi bi-plus-lg"></i>
+                                            Create First Slide
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Categories Tab -->
+                        <div class="tab-pane fade" id="categories" role="tabpanel">
+                            <div class="settings-section">
+                                <div class="section-header">
+                                    <h4>
+                                        <i class="bi bi-folder"></i>
+                                        Category Management
+                                    </h4>
+                                    <button class="btn btn-primary">
+                                        <i class="bi bi-plus-lg"></i>
+                                        Add New Category
+                                    </button>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-primary">
+                                                <i class="bi bi-folder"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.TotalCategories</h6>
+                                                <small>Main Categories</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-success">
+                                                <i class="bi bi-folder-symlink"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.TotalSubcategories</h6>
+                                                <small>Subcategories</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-info">
+                                                <i class="bi bi-check-circle"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.ActiveCategories</h6>
+                                                <small>Active</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model.Categories.Any())
+                                {
+                                    <div class="categories-tree">
+                                        @foreach (var category in Model.Categories)
+                                        {
+                                            <div class="category-item" data-id="@category.Id">
+                                                <div class="category-header">
+                                                    <div class="category-info">
+                                                        <div class="drag-handle">
+                                                            <i class="bi bi-grip-vertical"></i>
+                                                        </div>
+                                                        @if (!string.IsNullOrEmpty(category.ImageUrl))
+                                                        {
+                                                            <img src="@category.ImageUrl" alt="@category.Name" class="category-icon-img">
+                                                        }
+                                                        else if (!string.IsNullOrEmpty(category.IconCssClass))
+                                                        {
+                                                            <div class="category-icon">
+                                                                <i class="@category.IconCssClass"></i>
+                                                            </div>
+                                                        }
+                                                        <div class="category-details">
+                                                            <strong>@category.Name</strong>
+                                                            <div class="category-meta">
+                                                                <span class="badge bg-light text-dark">@category.Slug</span>
+                                                                @if (!string.IsNullOrEmpty(category.NameKey))
+                                                                {
+                                                                    <span class="badge bg-info">@category.NameKey</span>
+                                                                }
+                                                                <span class="text-muted">@category.ProductCount products</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="category-actions">
+                                                        @if (category.IsActive)
+                                                        {
+                                                            <span class="badge bg-success me-2">Active</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary me-2">Inactive</span>
+                                                        }
+                                                        @if (category.ShowInNavbar)
+                                                        {
+                                                            <span class="badge bg-primary me-2">In Navbar</span>
+                                                        }
+                                                        <div class="btn-group" role="group">
+                                                            <button class="btn btn-sm btn-outline-primary" title="Edit">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-success" title="Add Subcategory">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                @if (category.Subcategories.Any())
+                                                {
+                                                    <div class="subcategories">
+                                                        @foreach (var sub in category.Subcategories)
+                                                        {
+                                                            <div class="subcategory-item" data-id="@sub.Id">
+                                                                <div class="subcategory-content">
+                                                                    <div class="drag-handle">
+                                                                        <i class="bi bi-grip-vertical"></i>
+                                                                    </div>
+                                                                    <i class="bi bi-arrow-return-right text-muted"></i>
+                                                                    <div class="subcategory-details">
+                                                                        <strong>@sub.Name</strong>
+                                                                        <div class="category-meta">
+                                                                            <span class="badge bg-light text-dark">@sub.Slug</span>
+                                                                            @if (!string.IsNullOrEmpty(sub.NameKey))
+                                                                            {
+                                                                                <span class="badge bg-info">@sub.NameKey</span>
+                                                                            }
+                                                                            <span class="text-muted">@sub.ProductCount products</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="subcategory-actions">
+                                                                        @if (sub.IsActive)
+                                                                        {
+                                                                            <span class="badge bg-success me-2">Active</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="badge bg-secondary me-2">Inactive</span>
+                                                                        }
+                                                                        <div class="btn-group" role="group">
+                                                                            <button class="btn btn-sm btn-outline-primary" title="Edit">
+                                                                                <i class="bi bi-pencil"></i>
+                                                                            </button>
+                                                                            <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                                                                <i class="bi bi-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty-state">
+                                        <i class="bi bi-folder"></i>
+                                        <p>No categories found</p>
+                                        <button class="btn btn-primary mt-3">
+                                            <i class="bi bi-plus-lg"></i>
+                                            Create First Category
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Translations Tab -->
+                        <div class="tab-pane fade" id="translations" role="tabpanel">
+                            <div class="settings-section">
+                                <div class="section-header">
+                                    <h4>
+                                        <i class="bi bi-translate"></i>
+                                        Translation Management
+                                    </h4>
+                                    <button class="btn btn-primary">
+                                        <i class="bi bi-plus-lg"></i>
+                                        Add Translation Key
+                                    </button>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-primary">
+                                                <i class="bi bi-key"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.TotalTranslationKeys</h6>
+                                                <small>Translation Keys</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-success">
+                                                <i class="bi bi-globe"></i>
+                                            </div>
+                                            <div>
+                                                <h6>@Model.SupportedLanguages.Count(l => l.IsEnabled)</h6>
+                                                <small>Active Languages</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Language Tabs -->
+                                <div class="language-selector mb-4">
+                                    <h5>Supported Languages</h5>
+                                    <div class="language-cards">
+                                        @foreach (var lang in Model.SupportedLanguages.OrderBy(l => l.DisplayOrder))
+                                        {
+                                            <div class="language-card @(lang.IsEnabled ? "active" : "")">
+                                                <div class="language-flag">@lang.FlagIcon</div>
+                                                <div class="language-info">
+                                                    <strong>@lang.NativeName</strong>
+                                                    <small>@lang.CultureCode</small>
+                                                </div>
+                                                <div class="language-status">
+                                                    @if (lang.IsDefault)
+                                                    {
+                                                        <span class="badge bg-primary">Default</span>
+                                                    }
+                                                    @if (lang.IsEnabled)
+                                                    {
+                                                        <span class="badge bg-success">Enabled</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Disabled</span>
+                                                    }
+                                                </div>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-gear"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Translation Keys Table -->
+                                <div class="translation-search mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control" placeholder="Search translation keys..." id="translation-search">
+                                        <select class="form-select" style="max-width: 200px;">
+                                            <option value="">All Categories</option>
+                                            <option>Navigation</option>
+                                            <option>Account</option>
+                                            <option>Products</option>
+                                            <option>Cart</option>
+                                            <option>Orders</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Note:</strong> Translation keys are currently stored in resource files (.resx). 
+                                    You have approximately <strong>170+ keys</strong> across English and Polish languages.
+                                    Full translation editor will be implemented in the next step.
+                                </div>
+
+                                <!-- Sample Translation Keys (read-only preview) -->
+                                <div class="table-responsive">
+                                    <table class="table settings-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Key</th>
+                                                <th>Category</th>
+                                                @foreach (var lang in Model.SupportedLanguages.Where(l => l.IsEnabled))
+                                                {
+                                                    <th>@lang.FlagIcon @lang.NativeName</th>
+                                                }
+                                                <th width="100">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var key in Model.TranslationKeys.Take(10))
+                                            {
+                                                <tr>
+                                                    <td><code>@key.Key</code></td>
+                                                    <td><span class="badge bg-secondary">@key.Category</span></td>
+                                                    @foreach (var lang in Model.SupportedLanguages.Where(l => l.IsEnabled))
+                                                    {
+                                                        <td>
+                                                            @if (key.Values.ContainsKey(lang.CultureCode))
+                                                            {
+                                                                @key.Values[lang.CultureCode]
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-muted">-</span>
+                                                            }
+                                                        </td>
+                                                    }
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- General Tab -->
+                        <div class="tab-pane fade" id="general" role="tabpanel">
+                            <div class="settings-section">
+                                <div class="section-header">
+                                    <h4>
+                                        <i class="bi bi-sliders"></i>
+                                        General Settings
+                                    </h4>
+                                    <button class="btn btn-primary">
+                                        <i class="bi bi-save"></i>
+                                        Save Changes
+                                    </button>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    General settings panel will be implemented in the next step.
+                                </div>
+
+                                <!-- Placeholder for general settings -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="settings-group">
+                                            <h5>Site Information</h5>
+                                            <div class="mb-3">
+                                                <label class="form-label">Site Name</label>
+                                                <input type="text" class="form-control" value="Kokomija" disabled>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Default Currency</label>
+                                                <select class="form-select" disabled>
+                                                    <option>PLN - Polish Zloty</option>
+                                                    <option>EUR - Euro</option>
+                                                    <option>USD - US Dollar</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="settings-group">
+                                            <h5>Maintenance Mode</h5>
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" type="checkbox" id="maintenanceMode" disabled>
+                                                <label class="form-check-label" for="maintenanceMode">
+                                                    Enable Maintenance Mode
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">When enabled, only admins can access the site</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Slide Modal -->
+<div class="modal fade" id="createSlideModal" tabindex="-1" aria-labelledby="createSlideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSlideModalLabel">
+                    <i class="bi bi-plus-circle"></i>
+                    Create New Carousel Slide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createSlideForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="createSlideTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="createSlideTitle" name="title" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="createSlideSubtitle" class="form-label">Subtitle</label>
+                            <input type="text" class="form-control" id="createSlideSubtitle" name="subtitle">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="createSlideButtonText" class="form-label">Button Text</label>
+                            <input type="text" class="form-control" id="createSlideButtonText" name="buttonText">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="createSlideLinkUrl" class="form-label">Button Link URL</label>
+                            <input type="url" class="form-control" id="createSlideLinkUrl" name="linkUrl" placeholder="https://...">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="createSlideLocation" class="form-label">Location <span class="text-danger">*</span></label>
+                            <select class="form-select" id="createSlideLocation" name="location" required>
+                                <option value="Home">Home Page</option>
+                                <option value="Products">Products Page</option>
+                                <option value="Category">Category Page</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="createSlideDisplayOrder" class="form-label">Display Order <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="createSlideDisplayOrder" name="displayOrder" min="0" value="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="createSlideIsActive" class="form-label">Status</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="createSlideIsActive" name="isActive" checked>
+                                <label class="form-check-label" for="createSlideIsActive">Active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="createSlideStartDate" class="form-label">Start Date</label>
+                            <input type="datetime-local" class="form-control" id="createSlideStartDate" name="startDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="createSlideEndDate" class="form-label">End Date</label>
+                            <input type="datetime-local" class="form-control" id="createSlideEndDate" name="endDate">
+                        </div>
+                    </div>
+
+                    <!-- Responsive Images Section -->
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Responsive Images:</strong> Upload 3 images for optimal display across all devices.
+                        Use naming convention: 1.jpg (Desktop), 2.jpg (Tablet), 3.jpg (Mobile)
+                    </div>
+
+                    <!-- Desktop Image (Required) -->
+                    <div class="mb-3">
+                        <label for="createSlideDesktopImage" class="form-label">
+                            <i class="bi bi-display"></i> Desktop Image (1.jpg) <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" class="form-control" id="createSlideDesktopImage" 
+                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" required>
+                        <small class="text-muted">Large screens (1920x800px recommended) • Max 5MB</small>
+                        <div id="desktopImagePreview" class="mt-2" style="display: none;">
+                            <img id="desktopImagePreviewImg" src="" alt="Desktop Preview" 
+                                 style="max-width: 100%; max-height: 150px; object-fit: contain;" class="border rounded p-1">
+                        </div>
+                    </div>
+
+                    <!-- Tablet Image (Optional) -->
+                    <div class="mb-3">
+                        <label for="createSlideTabletImage" class="form-label">
+                            <i class="bi bi-tablet"></i> Tablet Image (2.jpg)
+                        </label>
+                        <input type="file" class="form-control" id="createSlideTabletImage" 
+                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                        <small class="text-muted">Medium screens (1024x600px recommended) • Max 5MB</small>
+                        <div id="tabletImagePreview" class="mt-2" style="display: none;">
+                            <img id="tabletImagePreviewImg" src="" alt="Tablet Preview" 
+                                 style="max-width: 100%; max-height: 150px; object-fit: contain;" class="border rounded p-1">
+                        </div>
+                    </div>
+
+                    <!-- Mobile Image (Optional) -->
+                    <div class="mb-3">
+                        <label for="createSlideMobileImage" class="form-label">
+                            <i class="bi bi-phone"></i> Mobile Image (3.jpg)
+                        </label>
+                        <input type="file" class="form-control" id="createSlideMobileImage" 
+                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                        <small class="text-muted">Small screens (768x600px recommended) • Max 5MB</small>
+                        <div id="mobileImagePreview" class="mt-2" style="display: none;">
+                            <img id="mobileImagePreviewImg" src="" alt="Mobile Preview" 
+                                 style="max-width: 100%; max-height: 150px; object-fit: contain;" class="border rounded p-1">
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="createSlideDesktopTempFileName" name="desktopTempFileName">
+                    <input type="hidden" id="createSlideTabletTempFileName" name="tabletTempFileName">
+                    <input type="hidden" id="createSlideMobileTempFileName" name="mobileTempFileName">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i>
+                        Create Slide
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Slide Modal -->
+<div class="modal fade" id="editSlideModal" tabindex="-1" aria-labelledby="editSlideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSlideModalLabel">
+                    <i class="bi bi-pencil"></i>
+                    Edit Carousel Slide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editSlideForm">
+                <div class="modal-body">
+                    <input type="hidden" id="slideId" name="slideId">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="slideTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="slideTitle" name="title" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="slideSubtitle" class="form-label">Subtitle</label>
+                            <input type="text" class="form-control" id="slideSubtitle" name="subtitle">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="slideButtonText" class="form-label">Button Text</label>
+                            <input type="text" class="form-control" id="slideButtonText" name="buttonText">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="slideLinkUrl" class="form-label">Button Link URL</label>
+                            <input type="url" class="form-control" id="slideLinkUrl" name="linkUrl" placeholder="https://...">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="slideLocation" class="form-label">Location <span class="text-danger">*</span></label>
+                            <select class="form-select" id="slideLocation" name="location" required>
+                                <option value="Home">Home Page</option>
+                                <option value="Products">Products Page</option>
+                                <option value="Category">Category Page</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="slideDisplayOrder" class="form-label">Display Order <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="slideDisplayOrder" name="displayOrder" min="0" value="0" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="slideIsActive" class="form-label">Status</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="slideIsActive" name="isActive">
+                                <label class="form-check-label" for="slideIsActive">Active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="slideStartDate" class="form-label">Start Date (Optional)</label>
+                            <input type="datetime-local" class="form-control" id="slideStartDate" name="startDate">
+                            <small class="text-muted">Leave empty for immediate activation</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="slideEndDate" class="form-label">End Date (Optional)</label>
+                            <input type="datetime-local" class="form-control" id="slideEndDate" name="endDate">
+                            <small class="text-muted">Leave empty for no expiration</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="slideImagePath" class="form-label">Image Path <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="slideImagePath" name="imagePath" required>
+                        <small class="text-muted">Path to image file (e.g., /img/carousel/slide1.jpg)</small>
+                    </div>
+
+                    <div class="mb-3" id="currentImagePreview">
+                        <!-- Image preview will be shown here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" />
+    
+    <script>
+        console.log('Site Settings page loaded');
+        
+        // Configure toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+        
+        // Enable Bootstrap tabs
+        const triggerTabList = document.querySelectorAll('#settingsTabs button');
+        triggerTabList.forEach(triggerEl => {
+            const tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', event => {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+
+        // Toggle slide active status using AdminController AJAX action
+        window.toggleSlideStatus = async function(slideId) {
+            if (!confirm('Toggle this slide\'s active status?')) return;
+            
+            try {
+                const response = await fetch(`@Url.Action("CarouselToggleActive", "Admin")?id=${slideId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    toastr.success(result.message || 'Slide status updated');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    toastr.error(result.message || 'Failed to update slide status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred while toggling slide status');
+            }
+        };
+    </script>
+}

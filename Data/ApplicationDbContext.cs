@@ -43,6 +43,7 @@ namespace Kokomija.Data
         public DbSet<EmailCommand> EmailCommands { get; set; }
         public DbSet<AdminEarnings> AdminEarnings { get; set; }
         public DbSet<CarouselSlide> CarouselSlides { get; set; }
+        public DbSet<CarouselSlideTranslation> CarouselSlideTranslations { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<WishlistNotification> WishlistNotifications { get; set; }
         public DbSet<NewsletterSubscription> NewsletterSubscriptions { get; set; }
@@ -79,12 +80,13 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new EmailCommandConfiguration());
             modelBuilder.ApplyConfiguration(new AdminEarningsConfiguration());
             modelBuilder.ApplyConfiguration(new CarouselSlideConfiguration());
+            modelBuilder.ApplyConfiguration(new CarouselSlideTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new ProductReviewConfiguration());
             modelBuilder.ApplyConfiguration(new NewsletterSubscriptionConfiguration());
             modelBuilder.ApplyConfiguration(new WishlistNotificationConfiguration());
             modelBuilder.ApplyConfiguration(new ProductPriceHistoryConfiguration());
 
-            // Seed initial data
+            // Seed initial data (only runs on InitialCreate migration)
             modelBuilder.SeedSizes();
             modelBuilder.SeedColors();
             modelBuilder.SeedCategories();
@@ -93,12 +95,16 @@ namespace Kokomija.Data
             // Note: Blog seeding requires user accounts to be created first
             // modelBuilder.SeedBlogs(); // Uncomment after running IdentitySeeder
             modelBuilder.SeedAdminSettings();
+            
+            // Coupons and Products seeding
             modelBuilder.SeedCoupons();
             modelBuilder.SeedProductGroups(); // Seed product groups before products
             modelBuilder.SeedProducts();
             modelBuilder.SeedProductImages();
             modelBuilder.SeedProductVariants();
+            
             modelBuilder.SeedCarouselSlides();
+            modelBuilder.SeedCarouselSlideTranslations();
         }
     }
 }

@@ -25,14 +25,20 @@ namespace Kokomija.Entity
         public string? Subtitle { get; set; }
 
         /// <summary>
-        /// Image path (relative to wwwroot/Img/Carousel/)
+        /// Desktop image path (1920x800px recommended, relative to wwwroot/img/Carousel/)
         /// </summary>
         [Required]
         [MaxLength(500)]
         public string ImagePath { get; set; } = string.Empty;
 
         /// <summary>
-        /// Mobile image path (optional, for responsive design)
+        /// Tablet image path (1024x600px recommended, optional for responsive design)
+        /// </summary>
+        [MaxLength(500)]
+        public string? TabletImagePath { get; set; }
+
+        /// <summary>
+        /// Mobile image path (768x600px recommended, optional for responsive design)
         /// </summary>
         [MaxLength(500)]
         public string? MobileImagePath { get; set; }
@@ -45,10 +51,27 @@ namespace Kokomija.Entity
         public string ImageAlt { get; set; } = string.Empty;
 
         /// <summary>
-        /// Link URL when slide is clicked
+        /// Translations for this slide in multiple languages
+        /// </summary>
+        public ICollection<CarouselSlideTranslation> Translations { get; set; } = new List<CarouselSlideTranslation>();
+
+        /// <summary>
+        /// Link URL when slide is clicked (can be external URL or ASP route)
         /// </summary>
         [MaxLength(500)]
         public string? LinkUrl { get; set; }
+
+        /// <summary>
+        /// ASP.NET route name for internal links (e.g., "ProductDetail", "CategoryView")
+        /// </summary>
+        [MaxLength(100)]
+        public string? RouteName { get; set; }
+
+        /// <summary>
+        /// Route parameters as JSON (e.g., {"id": 5, "slug": "summer-collection"})
+        /// </summary>
+        [MaxLength(1000)]
+        public string? RouteParameters { get; set; }
 
         /// <summary>
         /// Link text for button (can be multilingual key)

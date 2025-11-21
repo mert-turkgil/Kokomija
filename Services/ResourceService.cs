@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Resources;
 using Microsoft.Extensions.Localization;
-using Kokomija.Resources;
+using Kokomija.Resources.SharedResources;
 
 namespace Kokomija.Services
 {
@@ -158,11 +158,21 @@ namespace Kokomija.Services
                 var resources = new Dictionary<string, string>();
 
                 // Get all localized strings from the localizer
-                var localizedStrings = _localizer.GetAllStrings(includeParentCultures: false);
-                
-                foreach (var localizedString in localizedStrings)
+                // Use try-catch to handle missing resource files gracefully
+                try
                 {
-                    resources[localizedString.Name] = localizedString.Value;
+                    var localizedStrings = _localizer.GetAllStrings(includeParentCultures: false);
+                    
+                    foreach (var localizedString in localizedStrings)
+                    {
+                        resources[localizedString.Name] = localizedString.Value;
+                    }
+                }
+                catch (System.Resources.MissingManifestResourceException)
+                {
+                    // Resource file doesn't exist for this culture, use default culture
+                    _logger.LogWarning("Resource file not found for culture: {Culture}, using default culture", culture.Name);
+                    return;
                 }
 
                 _resourceCache.AddOrUpdate(cultureKey, resources, (_, __) => resources);
@@ -171,7 +181,7 @@ namespace Kokomija.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading resources for culture: {Culture}", culture.Name);
+                _logger.LogWarning(ex, "Error loading resources for culture: {Culture}, continuing with available resources", culture.Name);
             }
         }
 
@@ -303,9 +313,7 @@ namespace Kokomija.Services
             return new List<CultureInfo>
             {
                 new CultureInfo("pl-PL"), // Polish (default)
-                new CultureInfo("en-US"), // English
-                new CultureInfo("de-DE"), // German
-                new CultureInfo("fr-FR")  // French
+                new CultureInfo("en-US")
             };
         }
 

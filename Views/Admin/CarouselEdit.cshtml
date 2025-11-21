@@ -1,0 +1,515 @@
+@model Kokomija.Models.ViewModels.Admin.CarouselSlideUpdateDto
+@inject Kokomija.Services.ILocalizationService L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Kokomija.Resources.CarouselResources.CarouselResources> Carousel
+
+@{
+    ViewData["Title"] = Carousel["Admin_Carousel_EditSlide"];
+    var categories = ViewBag.Categories as List<Kokomija.Entity.Category> ?? new List<Kokomija.Entity.Category>();
+    var currentDesktopImage = ViewBag.CurrentDesktopImage as string;
+    var currentTabletImage = ViewBag.CurrentTabletImage as string;
+    var currentMobileImage = ViewBag.CurrentMobileImage as string;
+}
+
+<div class="carousel-admin-container">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="bi bi-pencil-square"></i>
+                            @Carousel["Admin_Carousel_EditSlide"] #@Model.Id
+                        </h4>
+                        <a asp-action="Settings" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            @Carousel["Admin_Carousel_Cancel"]
+                        </a>
+                    </div>
+                <div class="card-body">
+                    <form asp-action="CarouselEdit" method="post" id="carouselForm" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="NewDesktopImageTempFileName" id="desktopTempFileName" />
+                        <input type="hidden" asp-for="NewTabletImageTempFileName" id="tabletTempFileName" />
+                        <input type="hidden" asp-for="NewMobileImageTempFileName" id="mobileTempFileName" />
+                        
+                        @* Current Images Display *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="slide-settings">
+                                    <div class="section-title">
+                                        <i class="bi bi-image"></i>
+                                        <h5>Current Images</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Desktop</label>
+                                @if (!string.IsNullOrEmpty(currentDesktopImage))
+                                {
+                                    <img src="@currentDesktopImage" alt="Current desktop" class="img-fluid rounded border" style="max-height: 150px;" />
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No image</p>
+                                }
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Tablet</label>
+                                @if (!string.IsNullOrEmpty(currentTabletImage))
+                                {
+                                    <img src="@currentTabletImage" alt="Current tablet" class="img-fluid rounded border" style="max-height: 150px;" />
+                                }
+                                else
+                                {
+                                    <p class="text-muted">Using desktop image</p>
+                                }
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Mobile</label>
+                                @if (!string.IsNullOrEmpty(currentMobileImage))
+                                {
+                                    <img src="@currentMobileImage" alt="Current mobile" class="img-fluid rounded border" style="max-height: 150px;" />
+                                }
+                                else
+                                {
+                                    <p class="text-muted">Using tablet/desktop image</p>
+                                }
+                            </div>
+                        </div>
+
+                        @* New Image Upload Section *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="slide-settings">
+                                    <div class="section-title">
+                                        <i class="bi bi-cloud-upload"></i>
+                                        <h5>Upload New Images (Optional)</h5>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Leave blank to keep current images. Upload new images to replace them.
+                                </div>
+                            </div>
+
+                            @* Desktop Image *@
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">@Carousel["Admin_Carousel_DesktopImage"]</label>
+                                <div class="image-upload-container" data-image-type="desktop">
+                                    <div class="upload-dropzone" id="desktopDropzone">
+                                        <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                                        <p class="mt-2 text-muted">Drag & drop or click to browse</p>
+                                        <small class="text-muted">1920x800px recommended</small>
+                                    </div>
+                                    <div class="image-preview d-none" id="desktopPreview">
+                                        <img src="" alt="Desktop preview" class="img-fluid rounded" />
+                                        <button type="button" class="btn btn-danger btn-sm mt-2 remove-image" data-image-type="desktop">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="file" id="desktopInput" class="d-none" accept="image/*" data-image-type="desktop" />
+                            </div>
+
+                            @* Tablet Image *@
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">@Carousel["Admin_Carousel_TabletImage"]</label>
+                                <div class="image-upload-container" data-image-type="tablet">
+                                    <div class="upload-dropzone" id="tabletDropzone">
+                                        <i class="bi bi-tablet fs-1 text-muted"></i>
+                                        <p class="mt-2 text-muted">Drag & drop or click to browse</p>
+                                        <small class="text-muted">1024x600px recommended</small>
+                                    </div>
+                                    <div class="image-preview d-none" id="tabletPreview">
+                                        <img src="" alt="Tablet preview" class="img-fluid rounded" />
+                                        <button type="button" class="btn btn-danger btn-sm mt-2 remove-image" data-image-type="tablet">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="file" id="tabletInput" class="d-none" accept="image/*" data-image-type="tablet" />
+                            </div>
+
+                            @* Mobile Image *@
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">@Carousel["Admin_Carousel_MobileImage"]</label>
+                                <div class="image-upload-container" data-image-type="mobile">
+                                    <div class="upload-dropzone" id="mobileDropzone">
+                                        <i class="bi bi-phone fs-1 text-muted"></i>
+                                        <p class="mt-2 text-muted">Drag & drop or click to browse</p>
+                                        <small class="text-muted">768x600px recommended</small>
+                                    </div>
+                                    <div class="image-preview d-none" id="mobilePreview">
+                                        <img src="" alt="Mobile preview" class="img-fluid rounded" />
+                                        <button type="button" class="btn btn-danger btn-sm mt-2 remove-image" data-image-type="mobile">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="file" id="mobileInput" class="d-none" accept="image/*" data-image-type="mobile" />
+                            </div>
+                        </div>
+
+                        @* Translations Section *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="slide-settings">
+                                    <div class="section-title">
+                                        <i class="bi bi-translate"></i>
+                                        <h5>Translations (@Model.Translations.Count languages)</h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @for (int i = 0; i < Model.Translations.Count; i++)
+                            {
+                                var cultureCode = Model.Translations[i].CultureCode;
+                                var languageName = cultureCode == "en-US" ? "English" : "Polski";
+                                var flagIcon = cultureCode == "en-US" ? "🇺🇸" : "🇵🇱";
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="card translation-card">
+                                        <div class="card-header">
+                                            <h6>
+                                                <span class="fs-5">@flagIcon</span>
+                                                @languageName
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <input type="hidden" asp-for="Translations[i].Id" />
+                                            <input type="hidden" asp-for="Translations[i].CultureCode" />
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].Title" class="form-label">
+                                                    @Carousel["Admin_Carousel_TranslationTitle"]
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input asp-for="Translations[i].Title" class="form-control" required />
+                                                <span asp-validation-for="Translations[i].Title" class="text-danger"></span>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].Subtitle" class="form-label">
+                                                    @Carousel["Admin_Carousel_TranslationSubtitle"]
+                                                </label>
+                                                <textarea asp-for="Translations[i].Subtitle" class="form-control" rows="2"></textarea>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].ButtonText" class="form-label">
+                                                    @Carousel["Admin_Carousel_TranslationButtonText"]
+                                                </label>
+                                                <input asp-for="Translations[i].ButtonText" class="form-control" />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].ImageAlt" class="form-label">
+                                                    @Carousel["Admin_Carousel_TranslationImageAlt"]
+                                                    <span class="text-danger">*</span>
+                                                </label>
+                                                <input asp-for="Translations[i].ImageAlt" class="form-control" required />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].LinkUrl" class="form-label">
+                                                    @Carousel["Admin_Carousel_LinkUrl"]
+                                                </label>
+                                                <input asp-for="Translations[i].LinkUrl" class="form-control" placeholder="/Product/Index" />
+                                                <small class="text-muted">Or use routing options below</small>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <label asp-for="Translations[i].ControllerName" class="form-label">Controller</label>
+                                                    <input asp-for="Translations[i].ControllerName" class="form-control" placeholder="Product" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label asp-for="Translations[i].ActionName" class="form-label">Action</label>
+                                                    <input asp-for="Translations[i].ActionName" class="form-control" placeholder="Index" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label asp-for="Translations[i].AreaName" class="form-label">Area</label>
+                                                    <input asp-for="Translations[i].AreaName" class="form-control" placeholder="(Optional)" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @* Settings Section *@
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="slide-settings">
+                                    <div class="section-title">
+                                        <i class="bi bi-gear"></i>
+                                        <h5>Slide Settings</h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="DisplayOrder" class="form-label">@Carousel["Admin_Carousel_DisplayOrder"]</label>
+                                <input asp-for="DisplayOrder" class="form-control" type="number" min="0" />
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="Location" class="form-label">@Carousel["Admin_Carousel_Location"]</label>
+                                <select asp-for="Location" class="form-select">
+                                    <option value="Home">Home</option>
+                                    <option value="Category">Category</option>
+                                    <option value="Product">Product</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="CategoryId" class="form-label">Category (Optional)</label>
+                                <select asp-for="CategoryId" class="form-select">
+                                    <option value="">None</option>
+                                    @foreach (var category in categories)
+                                    {
+                                        <option value="@category.Id">@category.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="Duration" class="form-label">@Carousel["Admin_Carousel_Duration"]</label>
+                                <input asp-for="Duration" class="form-control" type="number" min="1000" max="10000" step="100" />
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="StartDate" class="form-label">@Carousel["Admin_Carousel_StartDate"]</label>
+                                <input asp-for="StartDate" class="form-control" type="datetime-local" />
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="EndDate" class="form-label">@Carousel["Admin_Carousel_EndDate"]</label>
+                                <input asp-for="EndDate" class="form-control" type="datetime-local" />
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="TextAlign" class="form-label">@Carousel["Admin_Carousel_TextAlign"]</label>
+                                <select asp-for="TextAlign" class="form-select">
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="AnimationType" class="form-label">@Carousel["Admin_Carousel_AnimationType"]</label>
+                                <select asp-for="AnimationType" class="form-select">
+                                    <option value="fade">Fade</option>
+                                    <option value="slide">Slide</option>
+                                    <option value="zoom">Zoom</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="BackgroundColor" class="form-label">@Carousel["Admin_Carousel_BackgroundColor"]</label>
+                                <input asp-for="BackgroundColor" class="form-control" type="color" />
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="TextColor" class="form-label">@Carousel["Admin_Carousel_TextColor"]</label>
+                                <input asp-for="TextColor" class="form-control" type="color" />
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="ButtonClass" class="form-label">Button Class</label>
+                                <select asp-for="ButtonClass" class="form-select">
+                                    <option value="btn-primary">Primary</option>
+                                    <option value="btn-secondary">Secondary</option>
+                                    <option value="btn-success">Success</option>
+                                    <option value="btn-warning">Warning</option>
+                                    <option value="btn-danger">Danger</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                    <label asp-for="IsActive" class="form-check-label">@Carousel["Admin_Carousel_IsActive"]</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Form Actions *@
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a asp-action="Settings" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        @Carousel["Admin_Carousel_Cancel"]
+                                    </a>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="bi bi-save me-1"></i>
+                                        @Carousel["Admin_Carousel_SaveSlide"]
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" />
+    
+    <script>
+        $(document).ready(function () {
+            // Configure toastr
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "3000"
+            };
+            
+            // Track uploaded temp files for cleanup
+            const tempFiles = {
+                desktop: null,
+                tablet: null,
+                mobile: null
+            };
+
+            // Initialize dropzones
+            initializeDropzone('desktop');
+            initializeDropzone('tablet');
+            initializeDropzone('mobile');
+
+            function initializeDropzone(imageType) {
+                const dropzone = $(`#${imageType}Dropzone`);
+                const input = $(`#${imageType}Input`);
+                const preview = $(`#${imageType}Preview`);
+
+                // Click to browse
+                dropzone.on('click', function () {
+                    input.click();
+                });
+
+                // Drag and drop events
+                dropzone.on('dragover', function (e) {
+                    e.preventDefault();
+                    $(this).addClass('drag-over');
+                });
+
+                dropzone.on('dragleave', function (e) {
+                    e.preventDefault();
+                    $(this).removeClass('drag-over');
+                });
+
+                dropzone.on('drop', function (e) {
+                    e.preventDefault();
+                    $(this).removeClass('drag-over');
+
+                    const files = e.originalEvent.dataTransfer.files;
+                    if (files.length > 0) {
+                        uploadImage(files[0], imageType);
+                    }
+                });
+
+                // File input change
+                input.on('change', function () {
+                    if (this.files.length > 0) {
+                        uploadImage(this.files[0], imageType);
+                    }
+                });
+
+                // Remove image button
+                $(`.remove-image[data-image-type="${imageType}"]`).on('click', function () {
+                    removeImage(imageType);
+                });
+            }
+
+            function uploadImage(file, imageType) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('imageType', imageType);
+
+                // Show loading indicator
+                const dropzone = $(`#${imageType}Dropzone`);
+                dropzone.html('<div class="spinner-border text-primary" role="status"></div><p class="mt-2">Uploading...</p>');
+
+                $.ajax({
+                    url: '@Url.Action("CarouselUploadImage", "Admin")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            tempFiles[imageType] = response.tempFileName;
+                            $(`#${imageType}TempFileName`).val(response.tempFileName);
+
+                            // Show preview
+                            $(`#${imageType}Preview img`).attr('src', response.tempPath);
+                            dropzone.addClass('d-none');
+                            $(`#${imageType}Preview`).removeClass('d-none');
+
+                            toastr.success('Image uploaded successfully!');
+                        } else {
+                            toastr.error(response.message || '@Carousel["Admin_Carousel_ErrorUpload"]');
+                            resetDropzone(imageType);
+                        }
+                    },
+                    error: function () {
+                        toastr.error('@Carousel["Admin_Carousel_ErrorUpload"]');
+                        resetDropzone(imageType);
+                    }
+                });
+            }
+
+            function removeImage(imageType) {
+                if (tempFiles[imageType]) {
+                    $.ajax({
+                        url: '@Url.Action("CarouselCancelUpload", "Admin")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ tempFileNames: [tempFiles[imageType]] }),
+                        success: function () {
+                            tempFiles[imageType] = null;
+                            $(`#${imageType}TempFileName`).val('');
+                            resetDropzone(imageType);
+                        }
+                    });
+                }
+            }
+
+            function resetDropzone(imageType) {
+                const dropzone = $(`#${imageType}Dropzone`);
+                const preview = $(`#${imageType}Preview`);
+                const iconMap = { desktop: 'cloud-arrow-up', tablet: 'tablet', mobile: 'phone' };
+                const dimensionMap = { desktop: '1920x800px', tablet: '1024x600px', mobile: '768x600px' };
+
+                dropzone.html(`
+                    <i class="bi bi-${iconMap[imageType]} fs-1 text-muted"></i>
+                    <p class="mt-2 text-muted">Drag & drop or click to browse</p>
+                    <small class="text-muted">${dimensionMap[imageType]} recommended</small>
+                `);
+                dropzone.removeClass('d-none');
+                preview.addClass('d-none');
+            }
+
+            // Form submission
+            $('#carouselForm').on('submit', function (e) {
+                $('#submitBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+            });
+
+            // Cleanup temp files if user navigates away
+            window.addEventListener('beforeunload', function () {
+                const filesToCleanup = Object.values(tempFiles).filter(f => f !== null);
+                if (filesToCleanup.length > 0) {
+                    navigator.sendBeacon('@Url.Action("CarouselCancelUpload", "Admin")', 
+                        JSON.stringify({ tempFileNames: filesToCleanup }));
+                }
+            });
+        });
+    </script>
+}
