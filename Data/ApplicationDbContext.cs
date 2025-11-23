@@ -44,6 +44,7 @@ namespace Kokomija.Data
         public DbSet<AdminEarnings> AdminEarnings { get; set; }
         public DbSet<CarouselSlide> CarouselSlides { get; set; }
         public DbSet<CarouselSlideTranslation> CarouselSlideTranslations { get; set; }
+        public DbSet<CategoryTranslation> CategoryTranslations { get; set; }
         public DbSet<Wishlist> Wishlists { get; set; }
         public DbSet<WishlistNotification> WishlistNotifications { get; set; }
         public DbSet<NewsletterSubscription> NewsletterSubscriptions { get; set; }
@@ -60,6 +61,7 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
             modelBuilder.ApplyConfiguration(new ProductGroupConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new CategoryTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new ColorConfiguration());
             modelBuilder.ApplyConfiguration(new SizeConfiguration());
             modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());

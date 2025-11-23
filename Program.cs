@@ -188,6 +188,7 @@ builder.Services.AddScoped<IWishlistNotificationService, WishlistNotificationSer
 
 // Add background services
 builder.Services.AddHostedService<Kokomija.BackgroundServices.WishlistNotificationWorker>();
+builder.Services.AddHostedService<Kokomija.BackgroundServices.TempFileCleanupWorker>();
 
 // Register Cloudflare Turnstile Service
 builder.Services.AddHttpClient(); // Required for TurnstileService
@@ -209,8 +210,14 @@ builder.Services.AddScoped<IEmailCommandService, EmailCommandService>();
 builder.Services.AddScoped<ICarouselService, CarouselService>();
 builder.Services.AddScoped<ICarouselImageService, CarouselImageService>();
 
+// Register Category Image Service (Category image upload and management)
+builder.Services.AddScoped<ICategoryImageService, CategoryImageService>();
+
 // Register Localization Service (Translation wrapper with logging)
 builder.Services.AddScoped<ILocalizationService, LocalizationService>();
+
+// Register Translation Management Service (Live resx editor)
+builder.Services.AddScoped<ITranslationManagementService, TranslationManagementService>();
 
 // Add session support (required for cart, emergency access, etc.)
 builder.Services.AddSession(options =>

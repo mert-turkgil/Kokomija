@@ -69,25 +69,23 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string? AreaName { get; set; }
 
-        /// <summary>
-        /// Route parameters as JSON (e.g., {"category": "damskie", "slug": "new-collection"})
-        /// </summary>
-        [MaxLength(1000)]
-        public string? RouteParameters { get; set; }
+    /// <summary>
+    /// Route parameters as JSON (e.g., {"category": "damskie", "slug": "new-collection"})
+    /// </summary>
+    [MaxLength(1000)]
+    public string? RouteParameters { get; set; }
 
-        /// <summary>
-        /// Alt text for image (SEO and accessibility)
-        /// </summary>
-        [Required]
-        [MaxLength(300)]
-        public string ImageAlt { get; set; } = string.Empty;
+    /// <summary>
+    /// Alt text for image (SEO and accessibility)
+    /// </summary>
+    [Required]
+    [MaxLength(300)]
+    public string ImageAlt { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Creation timestamp
-        /// </summary>
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
+    /// <summary>
+    /// Creation timestamp
+    /// </summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;        /// <summary>
         /// Last update timestamp
         /// </summary>
         public DateTime? UpdatedAt { get; set; }

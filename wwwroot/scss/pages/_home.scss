@@ -156,6 +156,9 @@
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     
     [data-theme="dark"] & {
       background-color: $dark-surface;
@@ -169,6 +172,18 @@
       [data-theme="dark"] & {
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
       }
+
+      .category-group-header-link .category-group-header {
+        &::before {
+          opacity: 0.3;
+        }
+      }
+    }
+
+    .category-group-header-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
     }
     
     .category-group-header {
@@ -180,6 +195,16 @@
       align-items: center;
       gap: 1.5rem;
       min-height: 140px;
+      transition: all 0.3s ease;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
       
       .category-group-image {
         width: 80px;
@@ -187,6 +212,9 @@
         border-radius: 12px;
         object-fit: cover;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
       }
       
       .category-group-image-placeholder {
@@ -200,6 +228,9 @@
         font-size: 2.5rem;
         color: white;
         backdrop-filter: blur(10px);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
       }
       
       .category-group-title {
@@ -207,6 +238,9 @@
         font-weight: 700;
         margin: 0;
         text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        position: relative;
+        z-index: 1;
+        flex: 1;
       }
     }
     
@@ -215,6 +249,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      flex: 1;
       
       .subcategory-link {
         display: flex;
@@ -266,6 +301,11 @@
           }
         }
       }
+    }
+
+    // Ensure proper layout when no subcategories
+    > div:last-child {
+      margin-top: auto;
     }
   }
   

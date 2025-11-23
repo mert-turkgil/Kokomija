@@ -1,140 +1,429 @@
 @model Kokomija.Models.ViewModels.CarouselSlideCollectionViewModel
 
-@if (Model.Slides.Any())
+@{
+    var hasSlides = Model.Slides != null && Model.Slides.Any();
+    var firstSlide = Model.Slides?.FirstOrDefault();
+}
+
+@if (hasSlides)
 {
-    <div class="kokomija-carousel swiper-container">
-        <div class="swiper-wrapper">
-            @foreach (var slide in Model.Slides)
-            {
-                <div class="swiper-slide" 
-                     style="@(!string.IsNullOrEmpty(slide.BackgroundColor) ? $"background-color: {slide.BackgroundColor};" : "")">
-                    
-                    @if (!slide.UseFallbackImage && !string.IsNullOrEmpty(slide.FullImagePath))
-                    {
-                        <!-- Responsive image with picture element -->
-                        <picture class="carousel-image-wrapper">
-                            @if (!string.IsNullOrEmpty(slide.FullMobileImagePath))
-                            {
-                                <source media="(max-width: 767px)" srcset="@slide.FullMobileImagePath" />
-                            }
-                            @if (!string.IsNullOrEmpty(slide.FullTabletImagePath))
-                            {
-                                <source media="(min-width: 768px) and (max-width: 1023px)" srcset="@slide.FullTabletImagePath" />
-                            }
-                            <img 
-                                src="@slide.FullImagePath"
-                                class="carousel-image"
-                                alt="@slide.ImageAlt"
-                                loading="lazy"
-                                decoding="async"
-                                style="width: 100%; height: 100%; object-fit: cover;"
-                                onerror="this.onerror=null; this.closest('.carousel-image-wrapper').style.display='none'; this.closest('.swiper-slide').querySelector('.carousel-fallback-wrapper').style.display='flex';" />
-                        </picture>
+    <!-- Skip Carousel Link for Accessibility -->
+    <a href="#main-content" class="skip-carousel">Skip carousel</a>
+    
+    <div class="carousel-container" data-carousel-location="@ViewData["Location"]">
+        <!-- Premium Border Effect -->
+        <div class="carousel-premium-border"></div>
+        
+        <!-- Swiper Hero Carousel -->
+        <div class="swiper heroSwiper" id="heroCarousel">
+            <div class="swiper-wrapper">
+                @foreach (var slide in Model.Slides!)
+                {
+                    <div class="swiper-slide @slide.CustomCssClass" 
+                         data-swiper-autoplay="@slide.Duration"
+                         data-animation-type="@slide.AnimationType">
                         
-                        <!-- Hidden fallback, shown on error -->
-                        <div class="carousel-fallback-wrapper" style="display: none;">
-                            <img 
-                                src="~/img/logo_black.png"
-                                class="carousel-fallback-logo"
-                                alt="Kokomija Logo"
-                                loading="lazy" />
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- Fallback logo -->
-                        <div class="carousel-fallback-wrapper">
-                            <img 
-                                src="~/img/logo_black.png"
-                                class="carousel-fallback-logo"
-                                alt="Kokomija Logo"
-                                loading="lazy" />
-                        </div>
-                    }
-                    
-                    <!-- Slide overlay content -->
-                    <div class="carousel-overlay text-@slide.TextAlignment"
-                         style="@(!string.IsNullOrEmpty(slide.TextColor) ? $"color: {slide.TextColor};" : "")">
-                        <div class="carousel-content">
-                            <h2 class="carousel-title" data-swiper-parallax="-300">
-                                @slide.Title
-                            </h2>
+                        <div class="carousel-slide-content" 
+                             style="@(!string.IsNullOrEmpty(slide.BackgroundColor) ? $"background-color: {slide.BackgroundColor};" : "")">
                             
-                            @if (!string.IsNullOrEmpty(slide.Subtitle))
+                            <!-- Responsive Images with Picture Element -->
+                            <picture class="carousel-image-wrapper">
+                                @if (!string.IsNullOrEmpty(slide.FullMobileImagePath))
+                                {
+                                    <source media="(max-width: 576px)" 
+                                            srcset="@slide.FullMobileImagePath" />
+                                }
+                                @if (!string.IsNullOrEmpty(slide.FullTabletImagePath))
+                                {
+                                    <source media="(max-width: 992px)" 
+                                            srcset="@slide.FullTabletImagePath" />
+                                }
+                                <img src="@slide.FullImagePath" 
+                                     alt="@slide.ImageAlt" 
+                                     class="carousel-slide-image @(slide.AnimationType == "zoom" ? "zoom-effect" : "") @(slide.AnimationType == "ken-burns" ? "ken-burns-effect" : "")"
+                                     loading="@(Model.Slides.IndexOf(slide) == 0 ? "eager" : "lazy")"
+                                     decoding="async" />
+                            </picture>
+                            
+                            <!-- Particle Effect (optional) -->
+                            @if (!string.IsNullOrEmpty(slide.CustomCssClass) && slide.CustomCssClass.Contains("particles"))
                             {
-                                <p class="carousel-subtitle" data-swiper-parallax="-200">
-                                    @slide.Subtitle
-                                </p>
+                                <div class="carousel-particles"></div>
                             }
                             
-                            @if (!string.IsNullOrEmpty(slide.LinkUrl) && !string.IsNullOrEmpty(slide.ButtonText))
+                            <!-- Content Overlay -->
+                            @if (!string.IsNullOrEmpty(slide.Title) || !string.IsNullOrEmpty(slide.Subtitle) || !string.IsNullOrEmpty(slide.ButtonText))
                             {
-                                <div class="carousel-button-wrapper" data-swiper-parallax="-100">
-                                    <a href="@slide.LinkUrl" 
-                                       class="btn @slide.ButtonClass carousel-button text-white"
-                                       aria-label="@slide.ButtonText - @slide.Title">
-                                        @slide.ButtonText
-                                    </a>
+                                <div class="carousel-overlay text-@slide.TextAlignment @(slide.CustomCssClass?.Contains("glass") == true ? "glass-overlay" : "")"
+                                     style="@(!string.IsNullOrEmpty(slide.TextColor) ? $"color: {slide.TextColor};" : "")">
+                                    <div class="container h-100">
+                                        <div class="row h-100 align-items-center">
+                                            <div class="col-lg-7 col-xl-6 @(slide.TextAlignment == "right" ? "ms-auto" : slide.TextAlignment == "center" ? "mx-auto" : "")">
+                                                <div class="carousel-content-wrapper">
+                                                    
+                                                    @* Title *@
+                                                    @if (!string.IsNullOrEmpty(slide.Title))
+                                                    {
+                                                        <h1 class="carousel-title @GetTitleClass(slide) @GetAnimationClass("title", slide.AnimationType)"
+                                                            data-swiper-parallax="-300"
+                                                            data-swiper-parallax-opacity="0">
+                                                            @slide.Title
+                                                        </h1>
+                                                    }
+                                                    
+                                                    @* Subtitle *@
+                                                    @if (!string.IsNullOrEmpty(slide.Subtitle))
+                                                    {
+                                                        <p class="carousel-subtitle @GetSubtitleClass(slide) @GetAnimationClass("subtitle", slide.AnimationType)"
+                                                           data-swiper-parallax="-200"
+                                                           data-swiper-parallax-opacity="0">
+                                                            @slide.Subtitle
+                                                        </p>
+                                                    }
+                                                    
+                                                    @* Call-to-Action Buttons *@
+                                                    @if (!string.IsNullOrEmpty(slide.ButtonText))
+                                                    {
+                                                        <div class="carousel-button-wrapper @GetAnimationClass("button", slide.AnimationType)"
+                                                             data-swiper-parallax="-100"
+                                                             data-swiper-parallax-opacity="0">
+                                                            
+                                                            @* Primary Button *@
+                                                            @if (!string.IsNullOrEmpty(slide.LinkUrl))
+                                                            {
+                                                                <a href="@slide.LinkUrl" 
+                                                                   class="btn @GetButtonClass(slide) btn-lg carousel-btn"
+                                                                   aria-label="@slide.ButtonText">
+                                                                    @slide.ButtonText
+                                                                    <i class="fas fa-arrow-right ms-2"></i>
+                                                                </a>
+                                                            }
+                                                            else if (!string.IsNullOrEmpty(slide.ControllerName) && !string.IsNullOrEmpty(slide.ActionName))
+                                                            {
+                                                                <a asp-controller="@slide.ControllerName" 
+                                                                   asp-action="@slide.ActionName" 
+                                                                   asp-area="@slide.AreaName"
+                                                                   class="btn @GetButtonClass(slide) btn-lg carousel-btn"
+                                                                   aria-label="@slide.ButtonText">
+                                                                    @slide.ButtonText
+                                                                    <i class="fas fa-arrow-right ms-2"></i>
+                                                                </a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <button class="btn @GetButtonClass(slide) btn-lg carousel-btn"
+                                                                        aria-label="@slide.ButtonText">
+                                                                    @slide.ButtonText
+                                                                    <i class="fas fa-arrow-right ms-2"></i>
+                                                                </button>
+                                                            }
+                                                            
+                                                            @* Secondary Button (optional) *@
+                                                            @if (slide.CustomCssClass?.Contains("dual-button") == true)
+                                                            {
+                                                                <a asp-controller="Product" 
+                                                                   asp-action="Index" 
+                                                                   class="btn btn-outline-light btn-lg carousel-btn"
+                                                                   aria-label="Learn More">
+                                                                    Learn More
+                                                                    <i class="fas fa-info-circle ms-2"></i>
+                                                                </a>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             }
                         </div>
                     </div>
-                </div>
-            }
+                }
+            </div>
+            
+            <!-- Navigation Arrows -->
+            <div class="swiper-button-next" aria-label="Next slide"></div>
+            <div class="swiper-button-prev" aria-label="Previous slide"></div>
+            
+            <!-- Pagination -->
+            <div class="swiper-pagination" role="tablist"></div>
         </div>
-
-        <!-- Navigation -->
-        <div class="swiper-pagination" role="group" aria-label="Slide pagination"></div>
-        <button class="swiper-button-prev" aria-label="Previous slide" type="button"></button>
-        <button class="swiper-button-next" aria-label="Next slide" type="button"></button>
     </div>
 
-    @section Scripts {
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                if (typeof Swiper !== 'undefined') {
-                    const carousel = new Swiper('.kokomija-carousel', {
-                        loop: @(Model.Slides.Count > 1 ? "true" : "false"),
-                        autoplay: {
-                            delay: 5000,
-                            disableOnInteraction: false,
-                            pauseOnMouseEnter: true
-                        },
-                        speed: 800,
-                        effect: 'fade',
-                        fadeEffect: {
-                            crossFade: true
-                        },
-                        parallax: true,
-                        pagination: {
-                            el: '.swiper-pagination',
-                            clickable: true,
-                            dynamicBullets: true
-                        },
-                        navigation: {
-                            nextEl: '.swiper-button-next',
-                            prevEl: '.swiper-button-prev'
-                        },
-                        keyboard: {
-                            enabled: true,
-                            onlyInViewport: true
-                        },
-                        a11y: {
-                            enabled: true,
-                            prevSlideMessage: 'Previous slide',
-                            nextSlideMessage: 'Next slide',
-                            paginationBulletMessage: 'Go to slide {{index}}'
-                        },
-                        on: {
-                            init: function() {
-                                console.log('Kokomija carousel initialized with @Model.Slides.Count slides');
-                            }
+    <!-- Advanced Swiper Initialization Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get carousel configuration from slides
+            const slides = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Slides.Select(s => new {
+                duration = s.Duration,
+                animationType = s.AnimationType ?? "fade"
+            })));
+            
+            const firstSlideConfig = slides[0] || {};
+            const defaultDuration = firstSlideConfig.duration || 5000;
+            const defaultAnimation = firstSlideConfig.animationType || 'fade';
+            
+            // Initialize Swiper with advanced configuration
+            const heroSwiper = new Swiper('#heroCarousel', {
+                // Core parameters
+                loop: true,
+                speed: 800,
+                watchSlidesProgress: true,
+                watchSlidesVisibility: true,
+                
+                // Autoplay configuration
+                autoplay: {
+                    delay: defaultDuration,
+                    disableOnInteraction: false,
+                    pauseOnMouseEnter: true,
+                    waitForTransition: true
+                },
+                
+                // Parallax effect
+                parallax: true,
+                
+                // Effect configuration
+                effect: defaultAnimation,
+                fadeEffect: {
+                    crossFade: true
+                },
+                slideEffect: {
+                    rotate: 30,
+                    slideShadows: false
+                },
+                coverflowEffect: {
+                    rotate: 0,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 2,
+                    slideShadows: false
+                },
+                
+                // Navigation
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                
+                // Pagination
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                    dynamicBullets: true,
+                    dynamicMainBullets: 3,
+                    renderBullet: function (index, className) {
+                        return '<span class="' + className + '" role="tab" aria-label="Go to slide ' + (index + 1) + '"></span>';
+                    }
+                },
+                
+                // Keyboard control
+                keyboard: {
+                    enabled: true,
+                    onlyInViewport: true,
+                    pageUpDown: true
+                },
+                
+                // Mouse wheel control
+                mousewheel: {
+                    forceToAxis: true,
+                    sensitivity: 1,
+                    releaseOnEdges: true
+                },
+                
+                // Touch settings
+                touchRatio: 1,
+                touchAngle: 45,
+                grabCursor: true,
+                
+                // Lazy loading
+                lazy: {
+                    loadPrevNext: true,
+                    loadPrevNextAmount: 2
+                },
+                
+                // Accessibility
+                a11y: {
+                    enabled: true,
+                    prevSlideMessage: 'Previous slide',
+                    nextSlideMessage: 'Next slide',
+                    firstSlideMessage: 'This is the first slide',
+                    lastSlideMessage: 'This is the last slide',
+                    paginationBulletMessage: 'Go to slide {{index}}',
+                    notificationClass: 'swiper-notification'
+                },
+                
+                // Performance
+                preventInteractionOnTransition: true,
+                resistanceRatio: 0.85,
+                
+                // Events
+                on: {
+                    init: function() {
+                        console.log('🎨 Premium Carousel initialized');
+                        initializeSlideAnimations(this);
+                    },
+                    
+                    slideChange: function() {
+                        // Update autoplay delay based on current slide
+                        const currentSlide = this.slides[this.activeIndex];
+                        const slideData = currentSlide?.dataset;
+                        
+                        if (slideData && slideData.swiperAutoplay) {
+                            this.params.autoplay.delay = parseInt(slideData.swiperAutoplay);
                         }
-                    });
-                } else {
-                    console.error('Swiper library not loaded. Please include Swiper CSS and JS.');
+                    },
+                    
+                    slideChangeTransitionStart: function() {
+                        resetSlideAnimations(this);
+                    },
+                    
+                    slideChangeTransitionEnd: function() {
+                        animateCurrentSlide(this);
+                    },
+                    
+                    reachEnd: function() {
+                        console.log('🎯 Reached last slide');
+                    },
+                    
+                    touchStart: function() {
+                        this.autoplay.stop();
+                    },
+                    
+                    touchEnd: function() {
+                        this.autoplay.start();
+                    }
                 }
             });
-        </script>
+            
+            // Animation helper functions
+            function initializeSlideAnimations(swiper) {
+                // Reset all slides first
+                swiper.slides.forEach(slide => {
+                    const animatedElements = slide.querySelectorAll('.carousel-title, .carousel-subtitle, .carousel-button-wrapper');
+                    animatedElements.forEach(el => {
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateY(40px)';
+                    });
+                });
+                
+                // Animate first slide
+                animateCurrentSlide(swiper);
+            }
+            
+            function resetSlideAnimations(swiper) {
+                swiper.slides.forEach(slide => {
+                    const animatedElements = slide.querySelectorAll('.carousel-title, .carousel-subtitle, .carousel-button-wrapper');
+                    animatedElements.forEach(el => {
+                        el.style.opacity = '0';
+                        el.style.transform = 'translateY(40px)';
+                    });
+                });
+            }
+            
+            function animateCurrentSlide(swiper) {
+                const currentSlide = swiper.slides[swiper.activeIndex];
+                if (!currentSlide) return;
+                
+                const title = currentSlide.querySelector('.carousel-title');
+                const subtitle = currentSlide.querySelector('.carousel-subtitle');
+                const buttonWrapper = currentSlide.querySelector('.carousel-button-wrapper');
+                
+                // Staggered animation
+                if (title) {
+                    setTimeout(() => {
+                        title.style.transition = 'opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1)';
+                        title.style.opacity = '1';
+                        title.style.transform = 'translateY(0)';
+                    }, 100);
+                }
+                
+                if (subtitle) {
+                    setTimeout(() => {
+                        subtitle.style.transition = 'opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1)';
+                        subtitle.style.opacity = '1';
+                        subtitle.style.transform = 'translateY(0)';
+                    }, 250);
+                }
+                
+                if (buttonWrapper) {
+                    setTimeout(() => {
+                        buttonWrapper.style.transition = 'opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1)';
+                        buttonWrapper.style.opacity = '1';
+                        buttonWrapper.style.transform = 'translateY(0)';
+                    }, 400);
+                }
+            }
+            
+            // Pause/resume on visibility change
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    heroSwiper.autoplay.stop();
+                } else {
+                    heroSwiper.autoplay.start();
+                }
+            });
+            
+            // Expose swiper instance globally for debugging
+            window.heroCarousel = heroSwiper;
+        });
+    </script>
+}
+else
+{
+    <!-- Fallback if no slides available -->
+    <div class="carousel-container">
+        <div class="carousel-fallback" style="min-height: 400px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="text-center text-white p-5">
+                <img src="@Model.FallbackImagePath" alt="Kokomija" class="img-fluid mb-4" style="max-height: 200px; filter: brightness(0) invert(1);" />
+                <h2 class="display-4 fw-bold mb-3">Welcome to Kokomija</h2>
+                <p class="lead mb-4">Discover Premium Textiles & Fashion</p>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-light btn-lg px-5">
+                    Explore Collection
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    private string GetAnimationClass(string element, string? animationType)
+    {
+        var type = animationType?.ToLower() ?? "fade";
+        var prefix = type == "slide" ? "animate-slide-in" : "animate-fade-in";
+        
+        return element switch
+        {
+            "title" => prefix,
+            "subtitle" => prefix + "-delay",
+            "button" => prefix + "-delay-2",
+            _ => prefix
+        };
+    }
+    
+    private string GetTitleClass(Kokomija.Models.ViewModels.CarouselSlideViewModel slide)
+    {
+        if (slide.CustomCssClass?.Contains("gradient-text") == true) return "gradient-text";
+        if (slide.CustomCssClass?.Contains("outlined-text") == true) return "outlined-text";
+        return "";
+    }
+    
+    private string GetSubtitleClass(Kokomija.Models.ViewModels.CarouselSlideViewModel slide)
+    {
+        if (slide.CustomCssClass?.Contains("premium-subtitle") == true) return "premium-subtitle";
+        return "";
+    }
+    
+    private string GetButtonClass(Kokomija.Models.ViewModels.CarouselSlideViewModel slide)
+    {
+        if (!string.IsNullOrEmpty(slide.ButtonClass))
+        {
+            // Check if it's a premium variant
+            if (slide.ButtonClass.Contains("premium")) return "btn-premium";
+            return slide.ButtonClass;
+        }
+        return "btn-primary";
     }
 }

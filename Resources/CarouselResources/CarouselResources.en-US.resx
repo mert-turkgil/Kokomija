@@ -112,6 +112,12 @@
   <data name="Carousel_ViewOffer" xml:space="preserve">
     <value>View Offer</value>
   </data>
+  <data name="Carousel_Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Carousel_Check" xml:space="preserve">
+    <value>Check</value>
+  </data>
   <data name="Carousel_ShopWomen" xml:space="preserve">
     <value>Shop Women's</value>
   </data>

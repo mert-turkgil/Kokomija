@@ -315,7 +315,6 @@ namespace Kokomija.Services
                     _logger.LogInformation("Creating WELCOME10 promotion code...");
                     var promoCodeOptions = new Stripe.PromotionCodeCreateOptions
                     {
-                        Coupon = welcomeCoupon.Id,
                         Code = "WELCOME10",
                         Active = true,
                         MaxRedemptions = 1000,
@@ -326,6 +325,7 @@ namespace Kokomija.Services
                             MinimumAmountCurrency = "pln"
                         }
                     };
+                    promoCodeOptions.AddExtraParam("coupon", welcomeCoupon.Id);
                     welcomePromoCode = await promoCodeService.CreateAsync(promoCodeOptions);
                     _logger.LogInformation($"Created promotion code: {welcomePromoCode.Id}");
                 }

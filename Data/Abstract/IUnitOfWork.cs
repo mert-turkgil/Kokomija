@@ -6,6 +6,7 @@ namespace Kokomija.Data.Abstract
     {
         IProductRepository Products { get; }
         ICategoryRepository Categories { get; }
+        ICategoryTranslationRepository CategoryTranslations { get; }
         IColorRepository Colors { get; }
         ISizeRepository Sizes { get; }
         IProductVariantRepository ProductVariants { get; }

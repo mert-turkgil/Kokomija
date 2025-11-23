@@ -17,7 +17,7 @@
                             <i class="bi bi-images"></i>
                             @Carousel["Admin_Carousel_CreateNew"]
                         </h4>
-                        <a asp-action="Settings" class="btn btn-light btn-sm">
+                        <a href="#" id="cancelBtn" class="btn btn-light btn-sm">
                             <i class="bi bi-arrow-left me-1"></i>
                             @Carousel["Admin_Carousel_Cancel"]
                         </a>
@@ -180,11 +180,28 @@
                                             <div class="row">
                                                 <div class="col-md-4">
                                                     <label asp-for="Translations[i].ControllerName" class="form-label">Controller</label>
-                                                    <input asp-for="Translations[i].ControllerName" class="form-control" placeholder="Product" />
+                                                    <select asp-for="Translations[i].ControllerName" class="form-select controller-select">
+                                                        <option value="">Select Controller</option>
+                                                        <option value="Home">Home</option>
+                                                        <option value="Product">Product</option>
+                                                        <option value="Blog">Blog</option>
+                                                        <option value="Account">Account</option>
+                                                        <option value="Cart">Cart</option>
+                                                        <option value="Checkout">Checkout</option>
+                                                        <option value="Wishlist">Wishlist</option>
+                                                        <option value="Review">Review</option>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label asp-for="Translations[i].ActionName" class="form-label">Action</label>
-                                                    <input asp-for="Translations[i].ActionName" class="form-control" placeholder="Index" />
+                                                    <select asp-for="Translations[i].ActionName" class="form-select action-select">
+                                                        <option value="">Select Action</option>
+                                                        <option value="Index">Index</option>
+                                                        <option value="Details">Details</option>
+                                                        <option value="Privacy">Privacy</option>
+                                                        <option value="FAQ">FAQ</option>
+                                                        <option value="Contact">Contact</option>
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label asp-for="Translations[i].AreaName" class="form-label">Area</label>
@@ -268,12 +285,12 @@
 
                             <div class="col-md-4 mb-3">
                                 <label asp-for="BackgroundColor" class="form-label">@Carousel["Admin_Carousel_BackgroundColor"]</label>
-                                <input asp-for="BackgroundColor" class="form-control" type="color" />
+                                <input asp-for="BackgroundColor" class="form-control form-control-color w-100" type="color" />
                             </div>
 
                             <div class="col-md-4 mb-3">
                                 <label asp-for="TextColor" class="form-label">@Carousel["Admin_Carousel_TextColor"]</label>
-                                <input asp-for="TextColor" class="form-control" type="color" />
+                                <input asp-for="TextColor" class="form-control form-control-color w-100" type="color" />
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -299,7 +316,7 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="form-actions">
-                                    <a asp-action="Settings" class="btn btn-secondary">
+                                    <a href="#" class="btn btn-secondary cancel-action">
                                         <i class="bi bi-x-circle me-1"></i>
                                         @Carousel["Admin_Carousel_Cancel"]
                                     </a>
@@ -467,12 +484,80 @@
                 $('#submitBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
             });
 
-            // Cleanup temp files if user navigates away
-            window.addEventListener('beforeunload', function () {
+            // Handle cancel button clicks
+            $('#cancelBtn, .cancel-action').on('click', function (e) {
+                e.preventDefault();
                 const filesToCleanup = Object.values(tempFiles).filter(f => f !== null);
+                
                 if (filesToCleanup.length > 0) {
-                    navigator.sendBeacon('@Url.Action("CarouselCancelUpload", "Admin")', 
-                        JSON.stringify({ tempFileNames: filesToCleanup }));
+                    // Show loading state
+                    const btn = $(this);
+                    const originalHtml = btn.html();
+                    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Cleaning up...');
+                    
+                    // Cleanup temp files
+                    $.ajax({
+                        url: '@Url.Action("CarouselCancelUpload", "Admin")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ tempFileNames: filesToCleanup }),
+                        success: function () {
+                            window.location.href = '@Url.Action("Settings", "Admin")';
+                        },
+                        error: function () {
+                            toastr.warning('Failed to cleanup temp files, but navigating anyway...');
+                            window.location.href = '@Url.Action("Settings", "Admin")';
+                        }
+                    });
+                } else {
+                    // No temp files, navigate directly
+                    window.location.href = '@Url.Action("Settings", "Admin")';
+                }
+            });
+
+            // Controller-specific actions mapping
+            const controllerActions = {
+                'Home': ['Index', 'Privacy', 'FAQ', 'Contact'],
+                'Product': ['Index', 'Details', 'Category', 'Search'],
+                'Blog': ['Index', 'Details', 'Category', 'Tag', 'Search'],
+                'Account': ['Login', 'Register', 'Profile', 'Orders'],
+                'Cart': ['Index', 'AddToCart', 'UpdateQuantity', 'Remove'],
+                'Checkout': ['Index', 'Success', 'Cancel'],
+                'Wishlist': ['Index', 'Add', 'Remove'],
+                'Review': ['Create', 'Edit', 'Delete']
+            };
+
+            // Update action dropdown when controller changes
+            $('.controller-select').on('change', function () {
+                const selectedController = $(this).val();
+                const actionSelect = $(this).closest('.row').find('.action-select');
+                
+                // Clear current options
+                actionSelect.empty();
+                actionSelect.append('<option value="">Select Action</option>');
+                
+                // Add controller-specific actions
+                if (selectedController && controllerActions[selectedController]) {
+                    controllerActions[selectedController].forEach(action => {
+                        actionSelect.append(`<option value="${action}">${action}</option>`);
+                    });
+                }
+            });
+
+            // Initialize action dropdowns on page load (for edit mode)
+            $('.controller-select').each(function () {
+                const selectedController = $(this).val();
+                const actionSelect = $(this).closest('.row').find('.action-select');
+                const currentAction = actionSelect.val();
+                
+                if (selectedController && controllerActions[selectedController]) {
+                    actionSelect.empty();
+                    actionSelect.append('<option value="">Select Action</option>');
+                    
+                    controllerActions[selectedController].forEach(action => {
+                        const selected = action === currentAction ? 'selected' : '';
+                        actionSelect.append(`<option value="${action}" ${selected}>${action}</option>`);
+                    });
                 }
             });
         });

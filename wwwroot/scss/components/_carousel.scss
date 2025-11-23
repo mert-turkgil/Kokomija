@@ -1,643 +1,633 @@
 // ============================================
-// CAROUSEL/SWIPER STYLES
+// PREMIUM CAROUSEL COMPONENT
+// Advanced Swiper-based Hero Carousel
 // ============================================
 
-.swiper-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
+@import '../variables';
+@import '../utilities/mixins';
 
-.hero-swiper {
-  height: 600px;
+// ============================================
+// CAROUSEL VARIABLES
+// ============================================
+
+// Heights
+$carousel-height-xl: 85vh;
+$carousel-height-lg: 85vh;
+$carousel-height-md: 70vh;
+$carousel-height-sm: 60vh;
+$carousel-height-xs: 50vh;
+
+// Navigation
+$nav-button-size: 60px;
+$nav-button-size-mobile: 45px;
+$nav-button-opacity: 0.85;
+$nav-button-opacity-hover: 1;
+
+// Pagination
+$pagination-bullet-size: 14px;
+$pagination-bullet-spacing: 8px;
+$pagination-active-scale: 1.5;
+
+// Overlay
+$overlay-gradient-strength: 0.6;
+$overlay-blur: 2px;
+
+// Transitions
+$carousel-transition-speed: 800ms;
+$carousel-hover-scale: 1.05;
+$carousel-zoom-scale: 1.15;
+$carousel-zoom-duration: 12s;
+
+// Typography
+$title-font-size-xl: 4.5rem;
+$title-font-size-lg: 3.5rem;
+$title-font-size-md: 2.8rem;
+$title-font-size-sm: 2rem;
+$title-font-size-xs: 1.6rem;
+
+$subtitle-font-size-xl: 1.5rem;
+$subtitle-font-size-lg: 1.3rem;
+$subtitle-font-size-md: 1.2rem;
+$subtitle-font-size-sm: 1.1rem;
+$subtitle-font-size-xs: 1rem;
+
+// Effects
+$parallax-distance: 400px;
+$text-shadow-blur: 20px;
+$text-shadow-color: rgba(0, 0, 0, 0.5);
+
+// ============================================
+// CAROUSEL CONTAINER
+// ============================================
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: $dark;
   
-  @include media-breakpoint-down(md) {
-    height: 400px;
-  }
-  
-  .swiper-slide {
-    position: relative;
-    overflow: hidden;
-    
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    // Gradient overlay
-    &::after {
+  // Loading state
+  &.is-loading {
+    &::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(to right, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+      background: linear-gradient(90deg, 
+        rgba($gray, 0.1) 25%, 
+        rgba($gray, 0.2) 50%, 
+        rgba($gray, 0.1) 75%
+      );
+      background-size: 200% 100%;
+      animation: loading-shimmer 2s infinite;
+      z-index: 10;
     }
   }
   
-  .slide-content {
-    position: absolute;
-    top: 50%;
-    left: 10%;
-    transform: translateY(-50%);
-    z-index: 2;
-    max-width: 600px;
-    color: $white;
-    
-    @include media-breakpoint-down(md) {
-      left: 5%;
-      max-width: 90%;
-    }
-    
-    h1 {
-      font-size: 3.5rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      line-height: 1.2;
-      animation: fadeInUp 0.8s ease-out;
-      
-      @include media-breakpoint-down(md) {
-        font-size: 2rem;
-      }
-    }
-    
-    p {
-      font-size: 1.25rem;
-      margin-bottom: 2rem;
-      animation: fadeInUp 0.8s ease-out 0.2s both;
-      
-      @include media-breakpoint-down(md) {
-        font-size: 1rem;
-      }
-    }
-    
-    .btn {
-      animation: fadeInUp 0.8s ease-out 0.4s both;
-    }
-  }
-  
-  // Swiper navigation
-  .swiper-button-next,
-  .swiper-button-prev {
-    width: 50px;
-    height: 50px;
-    background-color: rgba($white, 0.9);
-    border-radius: 50%;
-    color: $primary;
-    
-    &:hover {
-      background-color: $primary;
-      color: $white;
-    }
-    
-    &::after {
-      font-size: 1.25rem;
-    }
-  }
-  
-  // Swiper pagination
-  .swiper-pagination-bullet {
-    width: 12px;
-    height: 12px;
-    background-color: $white;
-    opacity: 0.5;
-    
-    &-active {
-      opacity: 1;
-      background-color: $primary;
-    }
+  // Dark mode support
+  [data-theme="dark"] & {
+    background: $dark-bg;
   }
 }
 
-// Product carousel
-.product-swiper {
+@keyframes loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ============================================
+// SWIPER WRAPPER
+// ============================================
+
+.heroSwiper {
+  width: 100%;
+  height: $carousel-height-xl;
+  position: relative;
+  
+  @include media-breakpoint-down(xxl) {
+    height: $carousel-height-lg;
+  }
+  
+  @include media-breakpoint-down(lg) {
+    height: $carousel-height-md;
+  }
+  
+  @include media-breakpoint-down(md) {
+    height: $carousel-height-sm;
+  }
+  
+  @include media-breakpoint-down(sm) {
+    height: $carousel-height-xs;
+  }
+  
+  // Premium shadow
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+// ============================================
+// SLIDE CONTENT
+// ============================================
+
+.carousel-slide-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: $dark;
+  
+  // Subtle vignette effect
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 0%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+// ============================================
+// RESPONSIVE IMAGES
+// ============================================
+
+.carousel-image-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  
+  // Image optimization
+  img {
+    display: block;
+  }
+}
+
+.carousel-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform $carousel-zoom-duration cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+  
+  // Image quality
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  
+  // Zoom effect
+  &.zoom-effect {
+    transform: scale(1);
+  }
+  
+  .swiper-slide-active &.zoom-effect {
+    transform: scale($carousel-zoom-scale);
+  }
+  
+  // Ken Burns effect variant
+  &.ken-burns-effect {
+    animation: kenBurns $carousel-zoom-duration ease-out forwards;
+  }
+  
+  // Parallax effect
+  &.parallax-effect {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes kenBurns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale($carousel-zoom-scale) translate(-3%, -3%);
+  }
+}
+
+// ============================================
+// OVERLAY CONTENT
+// ============================================
+
+.carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
   padding: 2rem 0;
   
-  .swiper-slide {
-    height: auto;
+  // Default gradient (left alignment)
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, $overlay-gradient-strength) 0%,
+    rgba(0, 0, 0, $overlay-gradient-strength * 0.5) 50%,
+    rgba(0, 0, 0, $overlay-gradient-strength * 0.2) 100%
+  );
+  
+  // Center alignment gradient
+  &.text-center {
+    justify-content: center;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, $overlay-gradient-strength * 0.3) 0%,
+      rgba(0, 0, 0, $overlay-gradient-strength) 50%,
+      rgba(0, 0, 0, $overlay-gradient-strength * 0.3) 100%
+    );
   }
   
-  .swiper-button-next,
-  .swiper-button-prev {
-    width: 40px;
-    height: 40px;
-    background-color: $white;
-    border-radius: 50%;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    color: $primary;
-    
-    &:hover {
-      background-color: $primary;
-      color: $white;
-    }
-    
-    &::after {
-      font-size: 1rem;
-    }
-    
-    [data-theme="dark"] & {
-      background-color: $dark-surface;
-      color: $primary-dark;
-      
-      &:hover {
-        background-color: $primary-dark;
-        color: $white;
-      }
-    }
+  // Right alignment gradient
+  &.text-right {
+    justify-content: flex-end;
+    background: linear-gradient(
+      to left,
+      rgba(0, 0, 0, $overlay-gradient-strength) 0%,
+      rgba(0, 0, 0, $overlay-gradient-strength * 0.5) 50%,
+      rgba(0, 0, 0, $overlay-gradient-strength * 0.2) 100%
+    );
+  }
+  
+  // Glass morphism variant
+  &.glass-overlay {
+    @include glass-morphism(10px, 0.05);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  // Dark mode adjustments
+  [data-theme="dark"] & {
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, $overlay-gradient-strength * 1.2) 0%,
+      rgba(0, 0, 0, $overlay-gradient-strength * 0.7) 50%,
+      rgba(0, 0, 0, $overlay-gradient-strength * 0.3) 100%
+    );
+  }
+}
+
+// Content wrapper
+.carousel-content-wrapper {
+  width: 100%;
+  max-width: 700px;
+  padding: 2rem;
+  
+  @include media-breakpoint-down(lg) {
+    max-width: 600px;
+    padding: 1.5rem;
+  }
+  
+  @include media-breakpoint-down(md) {
+    max-width: 500px;
+    padding: 1rem;
   }
 }
 
 // ============================================
-// KOKOMIJA CAROUSEL (Homepage Slides)
+// TYPOGRAPHY
 // ============================================
 
-.kokomija-carousel {
-  width: 100%;
-  height: 75vh; // Bigger, professional height
-  min-height: 500px;
-  max-height: 800px;
+.carousel-title {
+  @include responsive-font($title-font-size-xs, $title-font-size-xl);
+  font-family: $headings-font-family;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: $white;
+  text-shadow: 0 $text-shadow-blur $text-shadow-blur * 2 $text-shadow-color;
+  letter-spacing: -0.02em;
+  
+  // Animation properties
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  // Gradient text effect (optional)
+  &.gradient-text {
+    background: linear-gradient(135deg, $white 0%, rgba($white, 0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  // Outlined text effect (optional)
+  &.outlined-text {
+    color: transparent;
+    -webkit-text-stroke: 2px $white;
+  }
+  
+  @include media-breakpoint-down(md) {
+    margin-bottom: 1rem;
+    text-shadow: 0 $text-shadow-blur * 0.7 $text-shadow-blur * 1.5 $text-shadow-color;
+  }
+}
+
+.carousel-subtitle {
+  @include responsive-font($subtitle-font-size-xs, $subtitle-font-size-xl);
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  color: rgba($white, 0.95);
+  text-shadow: 0 $text-shadow-blur * 0.5 $text-shadow-blur $text-shadow-color;
+  max-width: 600px;
+  
+  // Animation properties
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s,
+              transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+  
+  @include media-breakpoint-down(md) {
+    margin-bottom: 1.5rem;
+  }
+  
+  // Premium font for subtitle
+  &.premium-subtitle {
+    font-family: $headings-font-family;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+}
+
+// ============================================
+// BUTTONS
+// ============================================
+
+.carousel-button-wrapper {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  
+  // Animation properties
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s,
+              transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+  
+  @include media-breakpoint-down(sm) {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+.carousel-btn {
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-family: $headings-font-family;
+  border-radius: 50px;
+  border: 2px solid transparent;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
-  margin-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   
-  @media (max-width: 1400px) {
-    height: 70vh;
-    min-height: 450px;
-  }
-  
-  @media (max-width: 991px) {
-    height: 60vh;
-    min-height: 400px;
-  }
-  
-  @media (max-width: 767px) {
-    height: 50vh;
-    min-height: 350px;
-    max-height: 500px;
-  }
-  
-  @media (max-width: 575px) {
-    height: 45vh;
-    min-height: 300px;
-    max-height: 400px;
-  }
-  
-  [data-theme="dark"] & {
-    background-color: #0f1419;
-  }
-  
-  .swiper-slide {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background-color: #f8f9fa;
-    
-    [data-theme="dark"] & {
-      background-color: #0f1419;
-    }
-  }
-  
-  .carousel-image-wrapper {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
-      z-index: 1;
-      
-      [data-theme="dark"] & {
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%);
-      }
-    }
-  }
-  
-  .carousel-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-  
-  .carousel-fallback-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    
-    [data-theme="dark"] & {
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-    }
-  }
-  
-  .carousel-fallback-logo {
-    max-width: 400px;
-    max-height: 250px;
-    width: auto;
-    height: auto;
-    opacity: 0.9;
-    filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3));
-    
-    @media (max-width: 991px) {
-      max-width: 300px;
-      max-height: 200px;
-    }
-    
-    @media (max-width: 767px) {
-      max-width: 250px;
-      max-height: 150px;
-    }
-    
-    @media (max-width: 575px) {
-      max-width: 180px;
-      max-height: 120px;
-    }
-  }
-  
-  .carousel-overlay {
+  // Shimmer effect
+  &::before {
+    content: '';
     position: absolute;
     top: 0;
-    left: 0;
+    left: -100%;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    z-index: 2;
-    background: linear-gradient(to right, 
-      rgba(0, 0, 0, 0.7) 0%, 
-      rgba(0, 0, 0, 0.4) 50%,
-      rgba(0, 0, 0, 0.1) 100%
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
     );
-    padding: 0 8%;
-    
-    [data-theme="dark"] & {
-      background: linear-gradient(to right, 
-        rgba(0, 0, 0, 0.8) 0%, 
-        rgba(0, 0, 0, 0.5) 50%,
-        rgba(0, 0, 0, 0.2) 100%
-      );
-    }
-    
-    &.text-center {
-      justify-content: center;
-      text-align: center;
-      background: linear-gradient(to bottom, 
-        rgba(0, 0, 0, 0.3) 0%, 
-        rgba(0, 0, 0, 0.6) 50%,
-        rgba(0, 0, 0, 0.4) 100%
-      );
-      
-      [data-theme="dark"] & {
-        background: linear-gradient(to bottom, 
-          rgba(0, 0, 0, 0.4) 0%, 
-          rgba(0, 0, 0, 0.7) 50%,
-          rgba(0, 0, 0, 0.5) 100%
-        );
-      }
-    }
-    
-    &.text-right {
-      justify-content: flex-end;
-      text-align: right;
-      background: linear-gradient(to left, 
-        rgba(0, 0, 0, 0.7) 0%, 
-        rgba(0, 0, 0, 0.4) 50%,
-        rgba(0, 0, 0, 0.1) 100%
-      );
-      
-      [data-theme="dark"] & {
-        background: linear-gradient(to left, 
-          rgba(0, 0, 0, 0.8) 0%, 
-          rgba(0, 0, 0, 0.5) 50%,
-          rgba(0, 0, 0, 0.2) 100%
-        );
-      }
-    }
-    
-    @media (max-width: 991px) {
-      padding: 0 6%;
-    }
-    
-    @media (max-width: 767px) {
-      padding: 0 5%;
-      background: linear-gradient(to bottom,
-        rgba(0, 0, 0, 0.4) 0%,
-        rgba(0, 0, 0, 0.6) 100%
-      );
-      
-      [data-theme="dark"] & {
-        background: linear-gradient(to bottom,
-          rgba(0, 0, 0, 0.6) 0%,
-          rgba(0, 0, 0, 0.8) 100%
-        );
-      }
-    }
+    transition: left 0.6s;
   }
   
-  .carousel-content {
-    max-width: 700px;
-    animation: fadeInUp 1s ease-out;
-    
-    @media (max-width: 1200px) {
-      max-width: 600px;
-    }
-    
-    @media (max-width: 991px) {
-      max-width: 550px;
-    }
-    
-    @media (max-width: 767px) {
-      max-width: 100%;
-    }
-  }
-  
-  .carousel-title {
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 800;
-    color: $white;
-    margin-bottom: 1.5rem;
-    line-height: 1.15;
-    text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.6);
-    letter-spacing: -0.02em;
-    
-    @media (max-width: 767px) {
-      margin-bottom: 1rem;
-      text-shadow: 2px 3px 6px rgba(0, 0, 0, 0.7);
-    }
-    
-    @media (max-width: 575px) {
-      margin-bottom: 0.75rem;
-    }
-  }
-  
-  .carousel-subtitle {
-    font-size: clamp(1rem, 2.5vw, 1.5rem);
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 2.5rem;
-    line-height: 1.6;
-    text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.6);
-    font-weight: 400;
-    max-width: 90%;
-    
-    @media (max-width: 991px) {
-      margin-bottom: 2rem;
-      max-width: 100%;
-    }
-    
-    @media (max-width: 767px) {
-      margin-bottom: 1.5rem;
-      text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.7);
-    }
-    
-    @media (max-width: 575px) {
-      margin-bottom: 1rem;
-    }
-  }
-  
-  .carousel-button-wrapper {
-    margin-top: 2.5rem;
-    
-    @media (max-width: 767px) {
-      margin-top: 1.5rem;
-    }
-    
-    @media (max-width: 575px) {
-      margin-top: 1rem;
-    }
-  }
-  
-  .carousel-button {
-    padding: 1.2rem 2.8rem;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    border: none;
-    position: relative;
-    overflow: hidden;
+  &:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
     
     &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width 0.6s ease, height 0.6s ease;
+      left: 100%;
     }
     
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
-      
-      &::before {
-        width: 300px;
-        height: 300px;
-      }
-    }
-    
-    &:active {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
-    }
-    
-    @media (max-width: 991px) {
-      padding: 1rem 2.4rem;
-      font-size: 1rem;
-    }
-    
-    @media (max-width: 767px) {
-      padding: 0.9rem 2rem;
-      font-size: 0.95rem;
-      letter-spacing: 1.2px;
-    }
-    
-    @media (max-width: 575px) {
-      padding: 0.75rem 1.6rem;
-      font-size: 0.85rem;
-      letter-spacing: 1px;
+    i {
+      transform: translateX(8px);
     }
   }
   
-  .swiper-button-prev,
-  .swiper-button-next {
+  &:active {
+    transform: translateY(-1px) scale(0.98);
+  }
+  
+  i {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-block;
+  }
+  
+  // Premium button variant
+  &.btn-premium {
+    background: linear-gradient(135deg, $primary 0%, darken($primary, 15%) 100%);
     color: $white;
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.15);
+    border-color: $primary;
+    
+    &:hover {
+      background: linear-gradient(135deg, lighten($primary, 5%) 0%, $primary 100%);
+      border-color: lighten($primary, 5%);
+    }
+  }
+  
+  // Outline variant
+  &.btn-outline-light {
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    border-radius: 50%;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: $white;
+    border-color: rgba(255, 255, 255, 0.3);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  @include media-breakpoint-down(md) {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+// ============================================
+// NAVIGATION BUTTONS
+// ============================================
+
+.swiper-button-next,
+.swiper-button-prev {
+  width: $nav-button-size;
+  height: $nav-button-size;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: $white;
+  opacity: $nav-button-opacity;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  &::after {
+    font-size: 24px;
+    font-weight: 900;
+  }
+  
+  &:hover {
+    opacity: $nav-button-opacity-hover;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:active {
+    transform: scale(1.05);
+  }
+  
+  // Hide on mobile
+  @include media-breakpoint-down(md) {
+    width: $nav-button-size-mobile;
+    height: $nav-button-size-mobile;
     
     &::after {
-      font-size: 24px;
-      font-weight: bold;
-    }
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.4);
-      transform: scale(1.1);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    }
-    
-    [data-theme="dark"] & {
-      background: rgba(0, 0, 0, 0.4);
-      border-color: rgba(255, 255, 255, 0.15);
-      
-      &:hover {
-        background: rgba(0, 0, 0, 0.6);
-        border-color: rgba(255, 255, 255, 0.25);
-      }
-    }
-    
-    @media (max-width: 991px) {
-      width: 50px;
-      height: 50px;
-      
-      &::after {
-        font-size: 20px;
-      }
-    }
-    
-    @media (max-width: 767px) {
-      width: 45px;
-      height: 45px;
-      background: rgba(0, 0, 0, 0.5);
-      
-      &::after {
-        font-size: 18px;
-      }
-      
-      [data-theme="dark"] & {
-        background: rgba(0, 0, 0, 0.6);
-      }
-    }
-    
-    @media (max-width: 575px) {
-      width: 40px;
-      height: 40px;
-      
-      &::after {
-        font-size: 16px;
-      }
+      font-size: 18px;
     }
   }
   
-  .swiper-button-prev {
-    left: 30px;
-    
-    @media (max-width: 767px) {
-      left: 15px;
-    }
-    
-    @media (max-width: 575px) {
-      left: 10px;
-    }
+  @include media-breakpoint-down(sm) {
+    display: none;
+  }
+}
+
+.swiper-button-next {
+  right: 2rem;
+  
+  @include media-breakpoint-down(lg) {
+    right: 1rem;
+  }
+}
+
+.swiper-button-prev {
+  left: 2rem;
+  
+  @include media-breakpoint-down(lg) {
+    left: 1rem;
+  }
+}
+
+// ============================================
+// PAGINATION
+// ============================================
+
+.swiper-pagination {
+  bottom: 30px !important;
+  display: flex;
+  justify-content: center;
+  gap: $pagination-bullet-spacing;
+  z-index: 10;
+  
+  @include media-breakpoint-down(md) {
+    bottom: 20px !important;
+  }
+}
+
+.swiper-pagination-bullet {
+  width: $pagination-bullet-size;
+  height: $pagination-bullet-size;
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid transparent;
+  opacity: 1;
+  margin: 0 !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(1.2);
   }
   
-  .swiper-button-next {
-    right: 30px;
-    
-    @media (max-width: 767px) {
-      right: 15px;
-    }
-    
-    @media (max-width: 575px) {
-      right: 10px;
-    }
+  &-active {
+    background: $white;
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale($pagination-active-scale);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
   }
   
-  .swiper-pagination {
-    bottom: 30px;
-    
-    @media (max-width: 767px) {
-      bottom: 20px;
-    }
-    
-    @media (max-width: 575px) {
-      bottom: 15px;
-    }
-  }
-  
-  .swiper-pagination-bullet {
-    width: 14px;
-    height: 14px;
-    background: rgba(255, 255, 255, 0.6);
-    opacity: 1;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.8);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: scale(1.15);
-    }
+  // Progress bar variant
+  &.progress-bar-bullet {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
     
     &-active {
-      background: $white;
-      width: 40px;
-      border-radius: 7px;
-      border-color: $white;
-      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.4);
-    }
-    
-    [data-theme="dark"] & {
-      background: rgba(255, 255, 255, 0.4);
-      border-color: rgba(255, 255, 255, 0.2);
-      
-      &-active {
-        background: rgba(255, 255, 255, 0.9);
-        border-color: rgba(255, 255, 255, 0.9);
-      }
-    }
-    
-    @media (max-width: 767px) {
-      width: 12px;
-      height: 12px;
-      
-      &-active {
-        width: 32px;
-      }
-    }
-    
-    @media (max-width: 575px) {
-      width: 10px;
-      height: 10px;
-      
-      &-active {
-        width: 28px;
-      }
+      background: linear-gradient(90deg, $primary 0%, $white 100%);
+      transform: scaleX(1.2);
     }
   }
+  
+  @include media-breakpoint-down(sm) {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+// Slide animations become visible
+.swiper-slide-active {
+  .carousel-title,
+  .carousel-subtitle,
+  .carousel-button-wrapper {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Fade in animation
+.animate-fade-in,
+.animate-fade-in-delay,
+.animate-fade-in-delay-2 {
+  animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-delay {
+  animation-delay: 0.15s;
+}
+
+.animate-fade-in-delay-2 {
+  animation-delay: 0.3s;
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(40px);
   }
   to {
     opacity: 1;
@@ -645,3 +635,142 @@
   }
 }
 
+// Slide in animation
+.animate-slide-in,
+.animate-slide-in-delay,
+.animate-slide-in-delay-2 {
+  animation: slideInLeft 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-delay {
+  animation-delay: 0.15s;
+}
+
+.animate-slide-in-delay-2 {
+  animation-delay: 0.3s;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// ============================================
+// ACCESSIBILITY
+// ============================================
+
+.carousel-btn:focus-visible,
+.swiper-button-next:focus-visible,
+.swiper-button-prev:focus-visible,
+.swiper-pagination-bullet:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2);
+}
+
+// Skip carousel button for screen readers
+.skip-carousel {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: $primary;
+  color: $white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+  
+  &:focus {
+    top: 0;
+  }
+}
+
+// ============================================
+// SPECIAL EFFECTS
+// ============================================
+
+// Particle effect overlay
+.carousel-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.3;
+  background-image: 
+    radial-gradient(2px 2px at 20% 30%, white, transparent),
+    radial-gradient(2px 2px at 60% 70%, white, transparent),
+    radial-gradient(1px 1px at 50% 50%, white, transparent),
+    radial-gradient(1px 1px at 80% 10%, white, transparent);
+  background-size: 200% 200%;
+  animation: particleFloat 20s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    background-position: 0% 0%, 100% 100%, 50% 50%, 80% 20%;
+  }
+  50% {
+    background-position: 100% 100%, 0% 0%, 25% 75%, 20% 80%;
+  }
+}
+
+// Premium border effect
+.carousel-premium-border {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    $primary 0%, 
+    $secondary 25%, 
+    $third 50%, 
+    $fourth 75%, 
+    $primary 100%
+  );
+  background-size: 200% 100%;
+  animation: borderSlide 8s linear infinite;
+  z-index: 10;
+}
+
+@keyframes borderSlide {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+// ============================================
+// PERFORMANCE OPTIMIZATIONS
+// ============================================
+
+.carousel-slide-content,
+.carousel-slide-image,
+.carousel-overlay {
+  will-change: transform;
+}
+
+// Reduce motion for accessibility
+@media (prefers-reduced-motion: reduce) {
+  .carousel-slide-image,
+  .carousel-title,
+  .carousel-subtitle,
+  .carousel-button-wrapper,
+  .swiper-button-next,
+  .swiper-button-prev,
+  .swiper-pagination-bullet {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .carousel-slide-image.zoom-effect,
+  .swiper-slide-active .carousel-slide-image.zoom-effect {
+    transform: none !important;
+  }
+}

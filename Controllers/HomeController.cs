@@ -42,9 +42,8 @@ public class HomeController : Controller
         // Get featured categories with subcategories
         var allCategories = await _unitOfWork.Categories.GetAllAsync(c => c.SubCategories);
         model.FeaturedCategories = allCategories
-            .Where(c => c.IsActive && c.ParentCategoryId == null && c.ShowInNavbar)
+            .Where(c => c.IsActive && c.ParentCategoryId == null)
             .OrderBy(c => c.DisplayOrder)
-            .Take(6)
             .ToList();
 
         // Get featured products (newest, active only)
@@ -78,9 +77,9 @@ public class HomeController : Controller
         // Hero Ad (sample - you can make this dynamic from database)
         model.HeroAd = new HeroAdViewModel
         {
-            Title = "Nowa Kolekcja Jesień 2025",
-            Subtitle = "Odkryj najnowsze trendy w modzie",
-            ButtonText = "Zobacz Kolekcję",
+            Title = _localizationService.GetString("Hero_Title", "Home"),
+            Subtitle = _localizationService.GetString("Hero_Subtitle", "Home"),
+            ButtonText = _localizationService.GetString("Hero_Button", "Home"),
             ButtonUrl = "/products",
             ImageUrl = "/img/hero-banner.jpg",
             BackgroundColor = "#2C5F7E"

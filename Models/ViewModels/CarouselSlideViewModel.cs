@@ -20,6 +20,16 @@ namespace Kokomija.Models.ViewModels
         public string TextAlignment { get; set; } = "left";
         public int DisplayOrder { get; set; }
         
+        // Routing properties for ASP.NET MVC routing
+        public string? ControllerName { get; set; }
+        public string? ActionName { get; set; }
+        public string? AreaName { get; set; }
+        
+        // Advanced carousel properties
+        public string AnimationType { get; set; } = "fade"; // fade, slide, zoom
+        public int Duration { get; set; } = 5000; // Autoplay duration in milliseconds
+        public string? CustomCssClass { get; set; } // Custom CSS classes for the slide
+        
         /// <summary>
         /// Full URL path for the desktop image
         /// </summary>

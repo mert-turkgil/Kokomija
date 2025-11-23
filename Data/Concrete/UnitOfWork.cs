@@ -22,6 +22,7 @@ namespace Kokomija.Data.Concrete
             // Initialize specific repositories
             Products = new ProductRepository(_context);
             Categories = new CategoryRepository(_context);
+            CategoryTranslations = new CategoryTranslationRepository(_context);
             Colors = new ColorRepository(_context);
             Sizes = new SizeRepository(_context);
             ProductVariants = new ProductVariantRepository(_context);
@@ -56,6 +57,7 @@ namespace Kokomija.Data.Concrete
 
         public IProductRepository Products { get; private set; }
         public ICategoryRepository Categories { get; private set; }
+        public ICategoryTranslationRepository CategoryTranslations { get; private set; }
         public IColorRepository Colors { get; private set; }
         public ISizeRepository Sizes { get; private set; }
         public IProductVariantRepository ProductVariants { get; private set; }

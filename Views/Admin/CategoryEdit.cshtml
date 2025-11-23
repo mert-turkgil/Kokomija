@@ -1,0 +1,393 @@
+@model Kokomija.Models.ViewModels.Admin.CategoryUpdateDto
+@inject Kokomija.Services.ILocalizationService L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Kokomija.Resources.CategoryResources.CategoryResources> Category
+
+@{
+    ViewData["Title"] = Category["Admin_Category_Edit"];
+    var categories = ViewBag.Categories as List<Kokomija.Entity.Category> ?? new List<Kokomija.Entity.Category>();
+    var currentImage = ViewBag.CurrentImage as string;
+}
+
+<div class="category-admin-container">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="bi bi-pencil-square"></i>
+                            @Category["Admin_Category_Edit"] #@Model.Id
+                        </h4>
+                        <a asp-action="Settings" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            @Category["Admin_Category_Cancel"]
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="CategoryEdit" method="post" id="categoryForm">
+                            <input type="hidden" asp-for="Id" />
+                            <input type="hidden" asp-for="NewImageTempFileName" id="imageTempFileName" />
+
+                            @* Current Image Display *@
+                            @if (!string.IsNullOrEmpty(currentImage) && Model.ParentCategoryId == null)
+                            {
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="border-bottom pb-2 mb-3">
+                                            <i class="bi bi-image"></i>
+                                            @Category["Admin_Category_CurrentImage"]
+                                        </h5>
+                                        <img src="@currentImage" class="img-fluid rounded" style="max-height: 200px;" alt="Current" />
+                                    </div>
+                                </div>
+                            }
+
+                            @* Translations Section *@
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-translate"></i>
+                                        @Category["Admin_Category_Translations"]
+                                    </h5>
+                                </div>
+
+                                @for (int i = 0; i < Model.Translations.Count; i++)
+                                {
+                                    var cultureCode = Model.Translations[i].CultureCode;
+                                    var languageName = cultureCode == "en-US" ? "English" : "Polski";
+                                    var flagIcon = cultureCode == "en-US" ? "🇺🇸" : "🇵🇱";
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="translation-card p-3 border rounded">
+                                            <h6 class="mb-3">@flagIcon @languageName</h6>
+                                            <input type="hidden" asp-for="Translations[i].Id" />
+                                            <input type="hidden" asp-for="Translations[i].CultureCode" />
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].Name" class="form-label">
+                                                    @Category["Admin_Category_Name"] <span class="text-danger">*</span>
+                                                </label>
+                                                <input asp-for="Translations[i].Name" class="form-control" required />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].Slug" class="form-label">
+                                                    @Category["Admin_Category_Slug"] <span class="text-danger">*</span>
+                                                </label>
+                                                <input asp-for="Translations[i].Slug" class="form-control" required />
+                                                <small class="text-muted">URL-friendly: lowercase, hyphens only</small>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].Description" class="form-label">@Category["Admin_Category_Description"]</label>
+                                                <textarea asp-for="Translations[i].Description" class="form-control" rows="3"></textarea>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label asp-for="Translations[i].MetaDescription" class="form-label">@Category["Admin_Category_MetaDescription"]</label>
+                                                <textarea asp-for="Translations[i].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
+                                            </div>
+
+                                            <div class="mb-0">
+                                                <label asp-for="Translations[i].MetaKeywords" class="form-label">@Category["Admin_Category_MetaKeywords"]</label>
+                                                <input asp-for="Translations[i].MetaKeywords" class="form-control" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @* Settings Section *@
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-gear"></i>
+                                        Settings
+                                    </h5>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="ParentCategoryId" class="form-label">@Category["Admin_Category_ParentCategory"]</label>
+                                    <select asp-for="ParentCategoryId" class="form-select" id="parentCategorySelect">
+                                        <option value="">@Category["Admin_Category_NoParent"]</option>
+                                        @foreach (var cat in categories)
+                                        {
+                                            <option value="@cat.Id">@cat.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="DisplayOrder" class="form-label">@Category["Admin_Category_DisplayOrder"]</label>
+                                    <input asp-for="DisplayOrder" class="form-control" type="number" min="0" />
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label d-block">Status</label>
+                                    <div class="form-check form-switch d-inline-block me-3">
+                                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                        <label asp-for="IsActive" class="form-check-label">@Category["Admin_Category_IsActive"]</label>
+                                    </div>
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input asp-for="ShowInNavbar" class="form-check-input" type="checkbox" />
+                                        <label asp-for="ShowInNavbar" class="form-check-label">@Category["Admin_Category_ShowInNavbar"]</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Image/Icon Section *@
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-image"></i>
+                                        Visual Elements
+                                    </h5>
+                                </div>
+
+                                <div class="col-md-6 mb-3" id="imageUploadSection">
+                                    <label class="form-label fw-bold">@Category["Admin_Category_Image"] (Optional - Upload New)</label>
+                                    <p class="text-muted small">@Category["Admin_Category_ImageInfo"]</p>
+                                    
+                                    <div class="image-upload-container" id="imageDropzone">
+                                        <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                                        <p class="mt-2 text-muted">@Category["Admin_Category_DragDrop"]</p>
+                                        <small class="text-muted">Upload new image to replace current</small>
+                                    </div>
+                                    <div id="imagePreview" class="mt-3 d-none">
+                                        <img src="" class="img-fluid rounded" alt="Preview" style="max-height: 300px;" />
+                                        <button type="button" class="btn btn-sm btn-danger mt-2 remove-image">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                    <input type="file" id="imageInput" class="d-none" accept="image/*" />
+                                </div>
+
+                                <div class="col-md-6 mb-3" id="iconPickerSection" style="display: none;">
+                                    <label class="form-label fw-bold">@Category["Admin_Category_Icon"]</label>
+                                    <p class="text-muted small">@Category["Admin_Category_IconInfo"]</p>
+                                    
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text"><i id="selectedIconPreview" class="@(Model.IconCssClass ?? "fa-solid fa-question")"></i></span>
+                                        <input asp-for="IconCssClass" class="form-control" id="iconCssClassInput" placeholder="fa-solid fa-shirt" />
+                                        <button type="button" class="btn btn-outline-secondary" id="openIconPicker">
+                                            <i class="bi bi-grid-3x3"></i> Browse
+                                        </button>
+                                    </div>
+
+                                    <div id="iconPickerModal" class="icon-picker-modal" style="display: none;">
+                                        <div class="icon-picker-content">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="mb-0">Select Font Awesome Icon</h6>
+                                                <button type="button" class="btn-close" id="closeIconPicker"></button>
+                                            </div>
+                                            <input type="text" class="form-control mb-3" id="iconSearch" placeholder="@Category["Admin_Category_SearchIcon"]" />
+                                            <div class="icon-grid" id="iconGrid"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Form Actions *@
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <a asp-action="Settings" class="btn btn-secondary">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                                            <i class="bi bi-check-circle"></i> @Category["Admin_Category_Save"]
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.image-upload-container {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.5rem;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.image-upload-container:hover { border-color: #0d6efd; background: #f8f9fa; }
+.image-upload-container.drag-over { border-color: #0d6efd; background: #e7f1ff; }
+
+.translation-card { background: #f8f9fa; }
+
+.icon-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.icon-picker-content {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.icon-item {
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.icon-item:hover { background: #e7f1ff; border-color: #0d6efd; }
+.icon-item i { font-size: 1.5rem; }
+</style>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" />
+
+<script>
+$(document).ready(function () {
+    toastr.options = { "closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000" };
+
+    let tempFileName = null;
+    const popularIcons = ['shirt', 'shoe-prints', 'ring', 'watch', 'bag-shopping', 'hat-cowboy', 'glasses', 'umbrella', 'socks', 'crown', 'gem', 'heart', 'star', 'fire', 'bolt', 'snowflake', 'sun', 'moon', 'cloud', 'leaf'];
+
+    // Parent category change
+    function updateVisuals() {
+        const isSubcategory = $('#parentCategorySelect').val() !== '';
+        $('#imageUploadSection').toggle(!isSubcategory);
+        $('#iconPickerSection').toggle(isSubcategory);
+    }
+    updateVisuals();
+    $('#parentCategorySelect').on('change', updateVisuals);
+
+    // Image upload (same as create)
+    const dropzone = $('#imageDropzone');
+    const input = $('#imageInput');
+    const preview = $('#imagePreview');
+
+    dropzone.on('click', () => input.click());
+    dropzone.on('dragover', (e) => { e.preventDefault(); dropzone.addClass('drag-over'); });
+    dropzone.on('dragleave', () => dropzone.removeClass('drag-over'));
+    dropzone.on('drop', (e) => {
+        e.preventDefault();
+        dropzone.removeClass('drag-over');
+        if (e.originalEvent.dataTransfer.files.length > 0) uploadImage(e.originalEvent.dataTransfer.files[0]);
+    });
+    input.on('change', function() { if (this.files.length > 0) uploadImage(this.files[0]); });
+
+    function uploadImage(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        dropzone.html('<div class="spinner-border text-primary"></div><p class="mt-2">Uploading...</p>');
+
+        $.ajax({
+            url: '@Url.Action("CategoryUploadImage", "Admin")',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    tempFileName = response.tempFileName;
+                    $('#imageTempFileName').val(response.tempFileName);
+                    preview.find('img').attr('src', response.tempPath);
+                    dropzone.addClass('d-none');
+                    preview.removeClass('d-none');
+                    toastr.success('Image uploaded successfully!');
+                } else {
+                    toastr.error(response.message || 'Upload failed');
+                    resetDropzone();
+                }
+            },
+            error: () => { toastr.error('Upload failed'); resetDropzone(); }
+        });
+    }
+
+    $('.remove-image').on('click', function() {
+        if (tempFileName) {
+            $.ajax({
+                url: '@Url.Action("CategoryCancelUpload", "Admin")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ tempFileNames: [tempFileName] }),
+                success: () => { tempFileName = null; $('#imageTempFileName').val(''); resetDropzone(); }
+            });
+        }
+    });
+
+    function resetDropzone() {
+        dropzone.html('<i class="bi bi-cloud-arrow-up fs-1 text-muted"></i><p class="mt-2 text-muted">@Category["Admin_Category_DragDrop"]</p><small class="text-muted">Upload new image to replace current</small>');
+        dropzone.removeClass('d-none');
+        preview.addClass('d-none');
+    }
+
+    // Icon picker (same as create)
+    $('#openIconPicker').on('click', () => {
+        $('#iconPickerModal').fadeIn();
+        loadIcons();
+    });
+    $('#closeIconPicker').on('click', () => $('#iconPickerModal').fadeOut());
+
+    function loadIcons() {
+        const grid = $('#iconGrid');
+        grid.empty();
+        popularIcons.forEach(icon => {
+            const cssClass = `fa-solid fa-${icon}`;
+            grid.append(`<div class="icon-item" data-icon="${cssClass}"><i class="${cssClass}"></i></div>`);
+        });
+    }
+
+    $(document).on('click', '.icon-item', function() {
+        const iconClass = $(this).data('icon');
+        $('#iconCssClassInput').val(iconClass);
+        $('#selectedIconPreview').attr('class', iconClass);
+        $('#iconPickerModal').fadeOut();
+    });
+
+    $('#iconSearch').on('input', function() {
+        const search = $(this).val().toLowerCase();
+        $('.icon-item').each(function() {
+            const iconClass = $(this).data('icon');
+            $(this).toggle(iconClass.includes(search));
+        });
+    });
+
+    // Form submit
+    $('#categoryForm').on('submit', function(e) {
+        $('#submitBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+    });
+
+    // Cleanup on page leave
+    window.addEventListener('beforeunload', function() {
+        if (tempFileName) {
+            navigator.sendBeacon('@Url.Action("CategoryCancelUpload", "Admin")', JSON.stringify({ tempFileNames: [tempFileName] }));
+        }
+    });
+});
+</script>
+}

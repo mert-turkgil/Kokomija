@@ -152,6 +152,8 @@
     padding: 0.5rem 1rem;
     position: relative;
     transition: $transition-fast;
+    display: inline-flex;
+    align-items: center;
     
     &:hover,
     &.active {
@@ -192,6 +194,44 @@
         background: $primary-dark;
       }
     }
+    
+    // Ensure consistent spacing for category text
+    span {
+      display: inline-block;
+      vertical-align: middle;
+    }
+  }
+  
+  // Category icon in navbar
+  .nav-category-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 4px;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    flex-shrink: 0; // Prevent image from shrinking
+    
+    [data-theme="dark"] & {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+  
+  // Ensure dropdown items in navbar center are aligned
+  .navbar-center {
+    .dropdown-hover {
+      display: flex;
+      align-items: center;
+      
+      .nav-link {
+        min-height: 40px; // Consistent height whether image exists or not
+      }
+    }
   }
   
   // Dropdown menu
@@ -202,6 +242,9 @@
     padding: 0.5rem;
     margin-top: 0.5rem;
     animation: fadeInUp 0.3s ease;
+    position: absolute;
+    top: 100%;
+    z-index: 1050;
     
     [data-theme="dark"] & {
       background-color: $dark-surface;
@@ -281,12 +324,14 @@
     
     .cart-preview-dropdown {
       width: 350px;
-      max-height: 80vh; // Don't exceed viewport height
+      max-height: 80vh;
       padding: 0;
-      margin-top: 0 !important; // Remove gap between icon and dropdown
-      right: 0; // Align to right edge
-      left: auto !important; // Override Bootstrap default
-      transform: none !important; // Override Bootstrap positioning
+      margin-top: 0.75rem !important;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: auto !important;
+      transform: none !important;
       
       @media (max-width: 576px) {
         width: 90vw;

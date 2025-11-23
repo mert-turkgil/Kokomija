@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.Resources;
+using System.Xml.Linq;
 using Microsoft.Extensions.Localization;
 using Kokomija.Resources.SharedResources;
 
@@ -48,17 +48,20 @@ namespace Kokomija.Services
     }
 
     /// <summary>
-    /// Dynamic resource management service with live reload capability
+    /// Dynamic resource management service with live XML-based reload (no compilation needed)
     /// </summary>
     public class ResourceService : IResourceService, IDisposable
     {
         private readonly IStringLocalizer<SharedResources> _localizer;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<ResourceService> _logger;
-        private readonly ConcurrentDictionary<string, ResourceManager> _resourceManagers;
-        private readonly ConcurrentDictionary<string, Dictionary<string, string>> _resourceCache;
+        private readonly ConcurrentDictionary<string, string> _resourceCache;
+        private readonly ConcurrentDictionary<string, DateTime> _fileCache;
         private FileSystemWatcher? _fileWatcher;
-        private readonly object _reloadLock = new object();
+        private readonly Timer _debounceTimer;
+        private readonly object _lock = new();
+        private volatile bool _needsReload = false;
+        private readonly string _resourcePath;
 
         public ResourceService(
             IStringLocalizer<SharedResources> localizer,
@@ -68,11 +71,14 @@ namespace Kokomija.Services
             _localizer = localizer;
             _environment = environment;
             _logger = logger;
-            _resourceManagers = new ConcurrentDictionary<string, ResourceManager>();
-            _resourceCache = new ConcurrentDictionary<string, Dictionary<string, string>>();
+            _resourceCache = new ConcurrentDictionary<string, string>();
+            _fileCache = new ConcurrentDictionary<string, DateTime>();
+            _resourcePath = Path.Combine(environment.ContentRootPath, "Resources");
+
+            _debounceTimer = new Timer(OnDebounceTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
 
             InitializeFileWatcher();
-            LoadAllResources();
+            _logger.LogInformation("[ResourceService] Initialized with live XML reading from: {Path}", _resourcePath);
         }
 
         /// <summary>
@@ -82,29 +88,27 @@ namespace Kokomija.Services
         {
             try
             {
-                var resourcePath = Path.Combine(_environment.ContentRootPath, "Resources");
-                
-                if (!Directory.Exists(resourcePath))
+                if (!Directory.Exists(_resourcePath))
                 {
-                    Directory.CreateDirectory(resourcePath);
+                    Directory.CreateDirectory(_resourcePath);
                 }
 
-                _fileWatcher = new FileSystemWatcher(resourcePath)
+                _fileWatcher = new FileSystemWatcher(_resourcePath, "*.resx")
                 {
-                    Filter = "*.resx",
                     NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
-                    EnableRaisingEvents = true
+                    EnableRaisingEvents = true,
+                    IncludeSubdirectories = true
                 };
 
                 _fileWatcher.Changed += OnResourceFileChanged;
                 _fileWatcher.Created += OnResourceFileChanged;
                 _fileWatcher.Deleted += OnResourceFileChanged;
 
-                _logger.LogInformation("Resource file watcher initialized for live reload at: {Path}", resourcePath);
+                _logger.LogInformation("[ResourceService] File watcher initialized at: {Path}", _resourcePath);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to initialize resource file watcher");
+                _logger.LogError(ex, "[ResourceService] Failed to initialize file watcher");
             }
         }
 
@@ -113,106 +117,142 @@ namespace Kokomija.Services
         /// </summary>
         private void OnResourceFileChanged(object sender, FileSystemEventArgs e)
         {
-            _logger.LogInformation("Resource file changed: {FileName}, reloading resources...", e.Name);
-            
-            // Add a small delay to ensure file is fully written
-            Task.Delay(500).ContinueWith(_ => ReloadResources());
+            lock (_lock)
+            {
+                _needsReload = true;
+                _debounceTimer.Change(500, Timeout.Infinite);
+            }
+            _logger.LogInformation("[ResourceService] File change detected: {FileName}", e.Name);
         }
 
-        /// <summary>
-        /// Load all resource files
-        /// </summary>
-        private void LoadAllResources()
+        private void OnDebounceTimerElapsed(object? state)
         {
-            lock (_reloadLock)
+            if (_needsReload)
             {
-                try
-                {
-                    _resourceCache.Clear();
-                    _resourceManagers.Clear();
-
-                    var supportedCultures = GetSupportedCultures();
-                    
-                    foreach (var culture in supportedCultures)
-                    {
-                        LoadCultureResources(culture);
-                    }
-
-                    _logger.LogInformation("All resources loaded successfully");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error loading resources");
-                }
+                ReloadResources();
+                _needsReload = false;
             }
         }
 
         /// <summary>
-        /// Load resources for a specific culture
-        /// </summary>
-        private void LoadCultureResources(CultureInfo culture)
-        {
-            try
-            {
-                var cultureKey = culture.Name;
-                var resources = new Dictionary<string, string>();
-
-                // Get all localized strings from the localizer
-                // Use try-catch to handle missing resource files gracefully
-                try
-                {
-                    var localizedStrings = _localizer.GetAllStrings(includeParentCultures: false);
-                    
-                    foreach (var localizedString in localizedStrings)
-                    {
-                        resources[localizedString.Name] = localizedString.Value;
-                    }
-                }
-                catch (System.Resources.MissingManifestResourceException)
-                {
-                    // Resource file doesn't exist for this culture, use default culture
-                    _logger.LogWarning("Resource file not found for culture: {Culture}, using default culture", culture.Name);
-                    return;
-                }
-
-                _resourceCache.AddOrUpdate(cultureKey, resources, (_, __) => resources);
-                
-                _logger.LogDebug("Loaded {Count} resources for culture: {Culture}", resources.Count, cultureKey);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error loading resources for culture: {Culture}, continuing with available resources", culture.Name);
-            }
-        }
-
-        /// <summary>
-        /// Get localized string by key and culture
+        /// Get localized string by key and culture - reads directly from .resx XML
         /// </summary>
         public string GetString(string key, CultureInfo? culture = null)
         {
             try
             {
                 culture ??= CultureInfo.CurrentCulture;
-                var cultureKey = culture.Name;
+                string cacheKey = $"{key}_{culture.Name}";
 
-                // Try to get from cache first
-                if (_resourceCache.TryGetValue(cultureKey, out var resources))
+                _logger.LogDebug("[ResourceService] GetString(key={Key}, culture={Culture})", key, culture.Name);
+
+                // Find all possible .resx files for this culture
+                var resxFiles = FindResxFilesForCulture(culture.Name);
+                
+                _logger.LogDebug("[ResourceService] Found {Count} .resx files for culture {Culture}", resxFiles.Count, culture.Name);
+
+                foreach (var resxPath in resxFiles)
                 {
-                    if (resources.TryGetValue(key, out var value))
+                    if (!File.Exists(resxPath))
+                        continue;
+
+                    // Check if file has been modified since we last cached it
+                    var lastWriteTime = File.GetLastWriteTimeUtc(resxPath);
+                    var fileCacheKey = $"{resxPath}_{culture.Name}";
+
+                    if (_fileCache.TryGetValue(fileCacheKey, out var cachedTime))
                     {
-                        return value;
+                        if (lastWriteTime > cachedTime)
+                        {
+                            // File was modified, clear cache for this file
+                            InvalidateFileCache(resxPath, culture.Name);
+                            _fileCache[fileCacheKey] = lastWriteTime;
+                            _logger.LogInformation("[ResourceService] File modified, cache invalidated: {File}", resxPath);
+                        }
+                    }
+                    else
+                    {
+                        _fileCache[fileCacheKey] = lastWriteTime;
+                    }
+
+                    // Try to get from cache
+                    if (_resourceCache.TryGetValue(cacheKey, out var cachedValue))
+                    {
+                        _logger.LogDebug("[ResourceService] Cache hit for {Key}: {Value}", cacheKey, cachedValue);
+                        return cachedValue;
+                    }
+
+                    // Load from XML file with fresh read
+                    try
+                    {
+                        using (var stream = new FileStream(resxPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        {
+                            var xDocument = XDocument.Load(stream);
+                            var dataElement = xDocument.Root?.Elements("data")
+                                .FirstOrDefault(x => x.Attribute("name")?.Value == key);
+
+                            if (dataElement != null)
+                            {
+                                var value = dataElement.Element("value")?.Value ?? key;
+                                _resourceCache[cacheKey] = value;
+                                _logger.LogInformation("[ResourceService] Loaded from XML {File}: {Key} = {Value}", Path.GetFileName(resxPath), key, value);
+                                return value;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[ResourceService] Error reading from {File}", resxPath);
                     }
                 }
 
-                // Fallback to localizer
+                _logger.LogDebug("[ResourceService] Key {Key} not found in XML files, falling back to compiled localizer", key);
+
+                // Fallback to compiled localizer
                 var localizedString = _localizer[key];
                 return localizedString.ResourceNotFound ? key : localizedString.Value;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting string for key: {Key}, culture: {Culture}", key, culture?.Name);
+                _logger.LogError(ex, "[ResourceService] Error getting string for key: {Key}, culture: {Culture}", key, culture?.Name);
                 return key;
             }
+        }
+
+        private List<string> FindResxFilesForCulture(string cultureName)
+        {
+            var files = new List<string>();
+            
+            // Get all subdirectories in Resources folder
+            var resourceFolders = Directory.GetDirectories(_resourcePath, "*Resources", SearchOption.TopDirectoryOnly);
+            
+            foreach (var folder in resourceFolders)
+            {
+                var folderName = Path.GetFileName(folder);
+                var resxFile = Path.Combine(folder, $"{folderName}.{cultureName}.resx");
+                if (File.Exists(resxFile))
+                {
+                    files.Add(resxFile);
+                }
+            }
+
+            return files;
+        }
+
+        private void InvalidateFileCache(string filePath, string cultureName)
+        {
+            // Remove all cache entries that came from this file
+            var fileName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(filePath)); // Remove .culture.resx
+            var keysToRemove = _resourceCache.Keys
+                .Where(k => k.EndsWith($"_{cultureName}"))
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _resourceCache.TryRemove(key, out _);
+            }
+
+            _logger.LogDebug("[ResourceService] Cache invalidated for file: {File}", filePath);
         }
 
         /// <summary>
@@ -220,17 +260,43 @@ namespace Kokomija.Services
         /// </summary>
         public Dictionary<string, string> GetAllStrings(CultureInfo culture)
         {
-            var cultureKey = culture.Name;
-            
-            if (_resourceCache.TryGetValue(cultureKey, out var resources))
+            var result = new Dictionary<string, string>();
+            var resxFiles = FindResxFilesForCulture(culture.Name);
+
+            foreach (var resxPath in resxFiles)
             {
-                return new Dictionary<string, string>(resources);
+                try
+                {
+                    if (!File.Exists(resxPath))
+                        continue;
+
+                    using (var stream = new FileStream(resxPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        var xDocument = XDocument.Load(stream);
+                        var dataElements = xDocument.Root?.Elements("data");
+
+                        if (dataElements != null)
+                        {
+                            foreach (var element in dataElements)
+                            {
+                                var key = element.Attribute("name")?.Value;
+                                var value = element.Element("value")?.Value;
+
+                                if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value))
+                                {
+                                    result[key] = value;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[ResourceService] Error reading all strings from {File}", resxPath);
+                }
             }
 
-            LoadCultureResources(culture);
-            return _resourceCache.TryGetValue(cultureKey, out var newResources) 
-                ? new Dictionary<string, string>(newResources) 
-                : new Dictionary<string, string>();
+            return result;
         }
 
         /// <summary>
@@ -240,26 +306,10 @@ namespace Kokomija.Services
         {
             try
             {
-                var cultureKey = culture.Name;
-                var resourcePath = Path.Combine(_environment.ContentRootPath, "Resources", $"SharedResources.{cultureKey}.resx");
-
-                // Note: In production, you would use a proper .resx file writer
-                // For now, this is a placeholder for the implementation
-                // You would need to use System.Resources.ResXResourceWriter for actual implementation
-
-                _logger.LogInformation("Add/Update resource: {Key} = {Value} for culture: {Culture}", key, value, cultureKey);
-
-                // Update cache
-                if (_resourceCache.TryGetValue(cultureKey, out var resources))
-                {
-                    resources[key] = value;
-                }
-                else
-                {
-                    _resourceCache[cultureKey] = new Dictionary<string, string> { { key, value } };
-                }
-
-                return await Task.FromResult(true);
+                _logger.LogInformation("Add/Update resource not implemented in live XML mode: {Key} for culture: {Culture}", key, culture.Name);
+                // This method would need to write to .resx XML files
+                // For now, use TranslationManagementService for updates
+                return await Task.FromResult(false);
             }
             catch (Exception ex)
             {
@@ -275,18 +325,9 @@ namespace Kokomija.Services
         {
             try
             {
-                var cultureKey = culture.Name;
-
-                // Note: In production, you would use a proper .resx file writer
-                _logger.LogInformation("Delete resource: {Key} for culture: {Culture}", key, cultureKey);
-
-                // Update cache
-                if (_resourceCache.TryGetValue(cultureKey, out var resources))
-                {
-                    resources.Remove(key);
-                }
-
-                return await Task.FromResult(true);
+                _logger.LogInformation("Delete resource not implemented in live XML mode: {Key} for culture: {Culture}", key, culture.Name);
+                // This method would need to modify .resx XML files
+                return await Task.FromResult(false);
             }
             catch (Exception ex)
             {
@@ -300,8 +341,9 @@ namespace Kokomija.Services
         /// </summary>
         public void ReloadResources()
         {
-            _logger.LogInformation("Reloading all resources...");
-            LoadAllResources();
+            _logger.LogInformation("[ResourceService] Clearing all caches at {Time}", DateTime.Now);
+            _resourceCache.Clear();
+            _fileCache.Clear();
         }
 
         /// <summary>
@@ -331,14 +373,8 @@ namespace Kokomija.Services
         /// </summary>
         public void Dispose()
         {
-            if (_fileWatcher != null)
-            {
-                _fileWatcher.Changed -= OnResourceFileChanged;
-                _fileWatcher.Created -= OnResourceFileChanged;
-                _fileWatcher.Deleted -= OnResourceFileChanged;
-                _fileWatcher.Dispose();
-            }
-
+            _fileWatcher?.Dispose();
+            _debounceTimer?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

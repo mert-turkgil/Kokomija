@@ -59,9 +59,19 @@ namespace Kokomija.Models.ViewModels.Admin
     public class TranslationKeyViewModel
     {
         public string Key { get; set; } = string.Empty;
-        public Dictionary<string, string> Values { get; set; } = new();
-        public string Category { get; set; } = string.Empty;
+        public string EnglishValue { get; set; } = string.Empty;
+        public string PolishValue { get; set; } = string.Empty;
+        public string? Comment { get; set; }
+        public string ResourceFile { get; set; } = string.Empty;
         public DateTime? LastModified { get; set; }
+    }
+
+    public class TranslationFileViewModel
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public int KeyCount { get; set; }
+        public List<TranslationKeyViewModel> Keys { get; set; } = new();
     }
 
     public class LanguageViewModel

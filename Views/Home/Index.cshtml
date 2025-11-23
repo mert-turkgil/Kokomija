@@ -139,32 +139,37 @@
     </section>
 }
 
-<!-- Categories -->
+<!-- Shop by Collection -->
 @if (Model.FeaturedCategories.Any())
 {
     <section class="py-5 categories-section">
         <div class="container">
-            <h2 class="text-center mb-5">@L.GetString("ShopByCategory", "Home")</h2>
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold">@L.GetString(key: "ShopByCategory", resourceName: "Home")</h2>
+                <p class="text-muted">@L.GetString(key: "Discover_Our_Collections", resourceName: "Home")</p>
+            </div>
             <div class="row g-4">
                 @foreach (var category in Model.FeaturedCategories)
                 {
-                    <div class="col-lg-6">
+                    <div class="col-lg-6 col-md-6">
                         <div class="category-group-card">
-                            <div class="category-group-header">
-                                @if (!string.IsNullOrEmpty(category.ImageUrl))
-                                {
-                                    <img src="~/img/@category.ImageUrl" class="category-group-image" alt="@(!string.IsNullOrEmpty(category.NameKey) ? L[category.NameKey] : category.Name)">
-                                }
-                                else
-                                {
-                                    <div class="category-group-image-placeholder">
-                                        <i class="@(category.IconCssClass ?? "bi bi-tag-fill")"></i>
-                                    </div>
-                                }
-                                <h3 class="category-group-title">@(!string.IsNullOrEmpty(category.NameKey) ? L[category.NameKey] : category.Name)</h3>
-                            </div>
+                            <a asp-controller="Product" asp-action="Category" asp-route-slug="@category.Slug" class="category-group-header-link">
+                                <div class="category-group-header">
+                                    @if (!string.IsNullOrEmpty(category.ImageUrl))
+                                    {
+                                        <img src="@category.ImageUrl" class="category-group-image" alt="@category.Name" onerror="this.src='/img/logo_black.png';">
+                                    }
+                                    else
+                                    {
+                                        <img src="~/img/logo_black.png" class="category-group-image" alt="@category.Name">
+                                    }
+                                    <h3 class="category-group-title">
+                                        @category.Name
+                                    </h3>
+                                </div>
+                            </a>
                             
-                            @if (category.SubCategories.Any())
+                            @if (category.SubCategories != null && category.SubCategories.Any(s => s.IsActive))
                             {
                                 <div class="category-subcategories">
                                     @foreach (var subcat in category.SubCategories.Where(s => s.IsActive).OrderBy(s => s.DisplayOrder))
@@ -174,18 +179,10 @@
                                             {
                                                 <i class="@subcat.IconCssClass me-2"></i>
                                             }
-                                            @(!string.IsNullOrEmpty(subcat.NameKey) ? L[subcat.NameKey] : subcat.Name)
+                                            @subcat.Name
                                             <i class="bi bi-arrow-right ms-auto"></i>
                                         </a>
                                     }
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="text-center py-3">
-                                    <a asp-controller="Product" asp-action="Category" asp-route-slug="@category.Slug" class="btn btn-outline-primary">
-                                        @L.GetString("ViewAllProducts", "Home")
-                                    </a>
                                 </div>
                             }
                         </div>

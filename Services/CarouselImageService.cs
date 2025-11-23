@@ -241,10 +241,17 @@ namespace Kokomija.Services
                 try
                 {
                     var fullPath = Path.Combine(_environment.WebRootPath, imagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                    _logger.LogInformation("Attempting to delete image. Path: {ImagePath}, FullPath: {FullPath}, Exists: {Exists}", 
+                        imagePath, fullPath, File.Exists(fullPath));
+                    
                     if (File.Exists(fullPath))
                     {
                         await Task.Run(() => File.Delete(fullPath));
-                        _logger.LogInformation("Deleted permanent image: {Path}", imagePath);
+                        _logger.LogInformation("Successfully deleted permanent image: {Path}", imagePath);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Image file not found for deletion: {FullPath}", fullPath);
                     }
                 }
                 catch (Exception ex)

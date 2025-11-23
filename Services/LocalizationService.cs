@@ -20,12 +20,13 @@ namespace Kokomija.Services
 {
     public class LocalizationService : ILocalizationService
     {
-        private readonly IStringLocalizer _sharedLocalizer;
-        private readonly Dictionary<string, IStringLocalizer> _localizers;
+        private readonly IStringLocalizerFactory _factory;
+        private Dictionary<string, IStringLocalizer> _localizers = null!;
         private readonly IResourceService _resourceService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<LocalizationService> _logger;
         private static DateTime _lastCacheInvalidation = DateTime.MinValue;
+        private IStringLocalizer _sharedLocalizer = null!;
 
         public LocalizationService(
             IStringLocalizerFactory factory,
@@ -33,28 +34,34 @@ namespace Kokomija.Services
             IHttpContextAccessor httpContextAccessor,
             ILogger<LocalizationService> logger)
         {
+            _factory = factory;
             _resourceService = resourceService;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
 
+            InitializeLocalizers();
+        }
+
+        private void InitializeLocalizers()
+        {
             // Create localizer for SharedResources (backward compatibility)
-            _sharedLocalizer = factory.Create(typeof(SharedResources));
+            _sharedLocalizer = _factory.Create(typeof(SharedResources));
             
             // Create localizers for each resource file
             _localizers = new Dictionary<string, IStringLocalizer>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Carousel"] = factory.Create(typeof(CarouselResources)),
-                ["Home"] = factory.Create(typeof(HomeResources)),
-                ["Product"] = factory.Create(typeof(ProductResources)),
-                ["Account"] = factory.Create(typeof(AccountResources)),
-                ["Navigation"] = factory.Create(typeof(NavigationResources)),
-                ["Common"] = factory.Create(typeof(CommonResources)),
-                ["Footer"] = factory.Create(typeof(FooterResources)),
-                ["FAQ"] = factory.Create(typeof(FAQResources)),
-                ["Wishlist"] = factory.Create(typeof(WishlistResources)),
-                ["Review"] = factory.Create(typeof(ReviewResources)),
-                ["Cookie"] = factory.Create(typeof(CookieResources)),
-                ["Cart"] = factory.Create(typeof(CartResources)),
+                ["Carousel"] = _factory.Create(typeof(CarouselResources)),
+                ["Home"] = _factory.Create(typeof(HomeResources)),
+                ["Product"] = _factory.Create(typeof(ProductResources)),
+                ["Account"] = _factory.Create(typeof(AccountResources)),
+                ["Navigation"] = _factory.Create(typeof(NavigationResources)),
+                ["Common"] = _factory.Create(typeof(CommonResources)),
+                ["Footer"] = _factory.Create(typeof(FooterResources)),
+                ["FAQ"] = _factory.Create(typeof(FAQResources)),
+                ["Wishlist"] = _factory.Create(typeof(WishlistResources)),
+                ["Review"] = _factory.Create(typeof(ReviewResources)),
+                ["Cookie"] = _factory.Create(typeof(CookieResources)),
+                ["Cart"] = _factory.Create(typeof(CartResources)),
                 ["Shared"] = _sharedLocalizer
             };
         }
@@ -126,7 +133,78 @@ namespace Kokomija.Services
         {
             _lastCacheInvalidation = DateTime.UtcNow;
             _resourceService.ReloadResources();
-            _logger.LogInformation("Localization cache invalidated at {Time}", _lastCacheInvalidation);
+            
+            // Force recreation of all localizers to pick up new resource values
+            InitializeLocalizers();
+            
+            // Clear ResourceManager internal caches using reflection
+            ClearResourceManagerCaches();
+            
+            _logger.LogInformation("Localization cache invalidated and localizers recreated at {Time}", _lastCacheInvalidation);
+        }
+
+        private void ClearResourceManagerCaches()
+        {
+            try
+            {
+                // Get all resource types
+                var resourceTypes = new[]
+                {
+                    typeof(SharedResources),
+                    typeof(CarouselResources),
+                    typeof(HomeResources),
+                    typeof(ProductResources),
+                    typeof(AccountResources),
+                    typeof(NavigationResources),
+                    typeof(CommonResources),
+                    typeof(FooterResources),
+                    typeof(FAQResources),
+                    typeof(WishlistResources),
+                    typeof(ReviewResources),
+                    typeof(CookieResources),
+                    typeof(CartResources)
+                };
+
+                foreach (var resourceType in resourceTypes)
+                {
+                    try
+                    {
+                        // Access the internal ResourceManager field and clear its cache
+                        var resourceManagerField = resourceType.GetField("resourceMan", 
+                            BindingFlags.NonPublic | BindingFlags.Static);
+                        
+                        if (resourceManagerField != null)
+                        {
+                            var resourceManager = resourceManagerField.GetValue(null) as System.Resources.ResourceManager;
+                            if (resourceManager != null)
+                            {
+                                // Use reflection to access and clear the internal cache
+                                var resourceSetsField = typeof(System.Resources.ResourceManager)
+                                    .GetField("_resourceSets", BindingFlags.NonPublic | BindingFlags.Instance);
+                                
+                                if (resourceSetsField != null)
+                                {
+                                    var resourceSets = resourceSetsField.GetValue(resourceManager);
+                                    if (resourceSets != null)
+                                    {
+                                        var clearMethod = resourceSets.GetType().GetMethod("Clear");
+                                        clearMethod?.Invoke(resourceSets, null);
+                                        _logger.LogDebug("Cleared ResourceManager cache for {ResourceType}", resourceType.Name);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to clear ResourceManager cache for {ResourceType}", resourceType.Name);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing ResourceManager caches");
+            }
         }
 
         public string this[string key] => GetString(key);

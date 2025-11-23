@@ -112,6 +112,12 @@
   <data name="Carousel_ViewOffer" xml:space="preserve">
     <value>Zobacz Ofertę</value>
   </data>
+  <data name="Carousel_Browse" xml:space="preserve">
+    <value>Przeglądaj</value>
+  </data>
+  <data name="Carousel_Check" xml:space="preserve">
+    <value>Sprawdź</value>
+  </data>
   <data name="Carousel_ShopWomen" xml:space="preserve">
     <value>Kup Damskie</value>
   </data>

@@ -19,9 +19,10 @@ namespace Kokomija.Data.Concrete
             
             var query = _context.CarouselSlides
                 .Include(cs => cs.Category)
+                .Include(cs => cs.Translations)
                 .Where(cs => cs.IsActive 
                     && !cs.IsDeleted 
-                    && cs.Location == location
+                    && cs.Location.ToLower() == location.ToLower()
                     && (cs.StartDate == null || cs.StartDate <= now)
                     && (cs.EndDate == null || cs.EndDate >= now));
 
@@ -57,6 +58,7 @@ namespace Kokomija.Data.Concrete
         {
             return await _context.CarouselSlides
                 .Include(cs => cs.Category)
+                .Include(cs => cs.Translations)
                 .Where(cs => !cs.IsDeleted)
                 .OrderBy(cs => cs.Location)
                 .ThenBy(cs => cs.DisplayOrder)
@@ -68,6 +70,7 @@ namespace Kokomija.Data.Concrete
         {
             return await _context.CarouselSlides
                 .Include(cs => cs.Category)
+                .Include(cs => cs.Translations)
                 .Where(cs => cs.Location == location && !cs.IsDeleted)
                 .OrderBy(cs => cs.DisplayOrder)
                 .ThenByDescending(cs => cs.CreatedAt)
@@ -78,6 +81,7 @@ namespace Kokomija.Data.Concrete
         {
             return await _context.CarouselSlides
                 .Include(cs => cs.Category)
+                .Include(cs => cs.Translations)
                 .Where(cs => cs.CategoryId == categoryId && !cs.IsDeleted)
                 .OrderBy(cs => cs.DisplayOrder)
                 .ThenByDescending(cs => cs.CreatedAt)

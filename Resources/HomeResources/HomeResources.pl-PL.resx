@@ -70,7 +70,7 @@
     <value>Odkryj wysokiej jakości odzież i tekstylia. Kup modę męską i damską z darmową wysyłką przy zamówieniach powyżej 200 PLN.</value>
   </data>
   <data name="ShopByCategory" xml:space="preserve">
-    <value>Kupuj według Kategorii</value>
+    <value>Odkryj Swój Styl</value>
   </data>
   <data name="FeaturedProducts" xml:space="preserve">
     <value>Polecane Produkty</value>
@@ -118,5 +118,23 @@
   </data>
   <data name="Days" xml:space="preserve">
     <value>Dni</value>
+  </data>
+  <data name="Discover_Our_Collections" xml:space="preserve">
+    <value>Znajdź idealne elementy na każdą okazję</value>
+  </data>
+  <data name="Explore_Collection" xml:space="preserve">
+    <value>Zobacz co w środku</value>
+  </data>
+  <data name="Browse_Collection" xml:space="preserve">
+    <value>Przeglądaj Kolekcję</value>
+  </data>
+  <data name="Hero_Title" xml:space="preserve">
+    <value>Nowa Kolekcja Jesień 2025</value>
+  </data>
+  <data name="Hero_Subtitle" xml:space="preserve">
+    <value>Odkryj najnowsze trendy w modzie</value>
+  </data>
+  <data name="Hero_Button" xml:space="preserve">
+    <value>Zobacz Kolekcję</value>
   </data>
 </root>

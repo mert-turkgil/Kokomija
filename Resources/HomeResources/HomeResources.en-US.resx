@@ -70,7 +70,7 @@
     <value>Discover high-quality clothing and textiles. Shop men's and women's fashion with free shipping on orders over 200 PLN.</value>
   </data>
   <data name="ShopByCategory" xml:space="preserve">
-    <value>Shop by Category</value>
+    <value>Discover Your Style</value>
   </data>
   <data name="FeaturedProducts" xml:space="preserve">
     <value>Featured Products</value>
@@ -118,5 +118,23 @@
   </data>
   <data name="Days" xml:space="preserve">
     <value>Days</value>
+  </data>
+  <data name="Discover_Our_Collections" xml:space="preserve">
+    <value>Find the perfect pieces for every occasion</value>
+  </data>
+  <data name="Explore_Collection" xml:space="preserve">
+    <value>Discover what's inside</value>
+  </data>
+  <data name="Browse_Collection" xml:space="preserve">
+    <value>Browse Collection</value>
+  </data>
+  <data name="Hero_Title" xml:space="preserve">
+    <value>New Fall Collection 2025</value>
+  </data>
+  <data name="Hero_Subtitle" xml:space="preserve">
+    <value>Discover the latest fashion trends</value>
+  </data>
+  <data name="Hero_Button" xml:space="preserve">
+    <value>View Collection</value>
   </data>
 </root>

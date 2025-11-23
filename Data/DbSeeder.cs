@@ -840,13 +840,13 @@ namespace Kokomija.Data
                     CarouselSlideId = 1,
                     CultureCode = "en-US",
                     Title = "New Spring 2025 Collection",
-                    Subtitle = "Discover the latest trends in women's fashion",
+                    Subtitle = "Discover the latest trends in women's and men's fashion",
                     ButtonText = "Shop Now",
                     ControllerName = "Product",
                     ActionName = "Index",
                     AreaName = null,
-                    RouteParameters = "{\"category\":\"women\"}",
-                    ImageAlt = "New Spring 2025 Collection - Premium women's fashion",
+                    RouteParameters = null,
+                    ImageAlt = "Kokomija Spring 2025 Fashion Collection - Premium Women's and Men's Underwear",
                     CreatedAt = DateTime.UtcNow
                 },
                 // Slide 1 - Polish
@@ -856,13 +856,13 @@ namespace Kokomija.Data
                     CarouselSlideId = 1,
                     CultureCode = "pl-PL",
                     Title = "Nowa Kolekcja Wiosna 2025",
-                    Subtitle = "Odkryj najnowsze trendy w modzie damskiej",
+                    Subtitle = "Odkryj najnowsze trendy w modzie damskiej i męskiej",
                     ButtonText = "Kup Teraz",
                     ControllerName = "Product",
                     ActionName = "Index",
                     AreaName = null,
-                    RouteParameters = "{\"category\":\"damskie\"}",
-                    ImageAlt = "Nowa Kolekcja Wiosna 2025 - Wysokiej jakości moda damska",
+                    RouteParameters = null,
+                    ImageAlt = "Kokomija Kolekcja Wiosna 2025 - Wysokiej Jakości Bielizna Damska i Męska",
                     CreatedAt = DateTime.UtcNow
                 }
             );

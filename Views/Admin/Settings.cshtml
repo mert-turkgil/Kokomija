@@ -25,6 +25,12 @@
                     <!-- Tab Navigation -->
                     <ul class="nav nav-tabs settings-nav-tabs" id="settingsTabs" role="tablist">
                         <li class="nav-item" role="presentation">
+                            <a href="@Url.Action("Index", "Admin")" class="nav-link">
+                                <i class="bi bi-speedometer2"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="carousel-tab" data-bs-toggle="tab" 
                                     data-bs-target="#carousel" type="button" role="tab">
                                 <i class="bi bi-images"></i>
@@ -101,7 +107,7 @@
                                 @if (Model.CarouselSlides.Any())
                                 {
                                     <div class="table-responsive">
-                                        <table class="table settings-table">
+                                        <table class="table settings-table" id="carouselSlidesTable">
                                             <thead>
                                                 <tr>
                                                     <th width="60">Order</th>
@@ -193,13 +199,12 @@
                                                                         title="Toggle Status">
                                                                     <i class="bi bi-toggle-on"></i>
                                                                 </button>
-                                                                <form asp-action="CarouselDelete" method="post" class="d-inline" 
-                                                                      onsubmit="return confirm('Are you sure you want to delete this slide?');">
-                                                                    <input type="hidden" name="id" value="@slide.Id" />
-                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
-                                                                        <i class="bi bi-trash"></i>
-                                                                    </button>
-                                                                </form>
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-outline-danger" 
+                                                                        onclick="deleteCarouselSlide(event, @slide.Id, '@(slide.Title.Replace("'", "\\'" ).Replace("\"", "&quot;"))')"
+                                                                        title="Delete">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -230,10 +235,10 @@
                                         <i class="bi bi-folder"></i>
                                         Category Management
                                     </h4>
-                                    <button class="btn btn-primary">
+                                    <a href="@Url.Action("CategoryCreate", "Admin")" class="btn btn-primary">
                                         <i class="bi bi-plus-lg"></i>
                                         Add New Category
-                                    </button>
+                                    </a>
                                 </div>
 
                                 <div class="row mb-3">
@@ -295,39 +300,42 @@
                                                         }
                                                         <div class="category-details">
                                                             <strong>@category.Name</strong>
-                                                            <div class="category-meta">
-                                                                <span class="badge bg-light text-dark">@category.Slug</span>
-                                                                @if (!string.IsNullOrEmpty(category.NameKey))
-                                                                {
-                                                                    <span class="badge bg-info">@category.NameKey</span>
-                                                                }
-                                                                <span class="text-muted">@category.ProductCount products</span>
-                                                            </div>
+                                                        <div class="category-meta">
+                                                            <span class="badge bg-secondary bg-opacity-10 text-body">@category.Slug</span>
+                                                            @if (!string.IsNullOrEmpty(category.NameKey))
+                                                            {
+                                                                <span class="badge bg-info bg-opacity-10 text-info">@category.NameKey</span>
+                                                            }
+                                                            <span class="text-muted small"><i class="bi bi-box me-1"></i>@category.ProductCount products</span>
+                                                        </div>
                                                         </div>
                                                     </div>
                                                     <div class="category-actions">
                                                         @if (category.IsActive)
                                                         {
-                                                            <span class="badge bg-success me-2">Active</span>
+                                                            <span class="badge bg-success bg-opacity-10 text-success me-2"><i class="bi bi-check-circle me-1"></i>Active</span>
                                                         }
                                                         else
                                                         {
-                                                            <span class="badge bg-secondary me-2">Inactive</span>
+                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary me-2"><i class="bi bi-x-circle me-1"></i>Inactive</span>
                                                         }
                                                         @if (category.ShowInNavbar)
                                                         {
-                                                            <span class="badge bg-primary me-2">In Navbar</span>
+                                                            <span class="badge bg-primary bg-opacity-10 text-primary me-2"><i class="bi bi-menu-button-wide me-1"></i>Navbar</span>
                                                         }
-                                                        <div class="btn-group" role="group">
-                                                            <button class="btn btn-sm btn-outline-primary" title="Edit">
-                                                                <i class="bi bi-pencil"></i>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <a href="@Url.Action("CategoryEdit", "Admin", new { id = category.Id })" class="btn btn-outline-primary" title="Edit Category">
+                                                                <i class="bi bi-pencil-square"></i>
+                                                            </a>
+                                                            <button class="btn @(category.IsActive ? "btn-outline-warning" : "btn-outline-success")" onclick="toggleCategoryStatus(@category.Id)" title="@(category.IsActive ? "Deactivate" : "Activate")">
+                                                                <i class="bi bi-@(category.IsActive ? "pause" : "play")-circle"></i>
                                                             </button>
-                                                            <button class="btn btn-sm btn-outline-success" title="Add Subcategory">
-                                                                <i class="bi bi-plus-lg"></i>
-                                                            </button>
-                                                            <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
+                                                            <form asp-action="CategoryDelete" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('⚠️ Delete category: @category.Name?\n\nThis will also delete all subcategories and cannot be undone.');">
+                                                                <input type="hidden" name="id" value="@category.Id" />
+                                                                <button type="submit" class="btn btn-outline-danger" title="Delete Category">
+                                                                    <i class="bi bi-trash3"></i>
+                                                                </button>
+                                                            </form>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -342,34 +350,44 @@
                                                                     <div class="drag-handle">
                                                                         <i class="bi bi-grip-vertical"></i>
                                                                     </div>
-                                                                    <i class="bi bi-arrow-return-right text-muted"></i>
+                                                                    <i class="bi bi-arrow-return-right text-muted me-2"></i>
+                                                                    @if (!string.IsNullOrEmpty(sub.IconCssClass))
+                                                                    {
+                                                                        <i class="@sub.IconCssClass me-2"></i>
+                                                                    }
                                                                     <div class="subcategory-details">
                                                                         <strong>@sub.Name</strong>
                                                                         <div class="category-meta">
-                                                                            <span class="badge bg-light text-dark">@sub.Slug</span>
+                                                                            <span class="badge bg-secondary bg-opacity-10 text-body">@sub.Slug</span>
                                                                             @if (!string.IsNullOrEmpty(sub.NameKey))
                                                                             {
-                                                                                <span class="badge bg-info">@sub.NameKey</span>
+                                                                                <span class="badge bg-info bg-opacity-10 text-info">@sub.NameKey</span>
                                                                             }
-                                                                            <span class="text-muted">@sub.ProductCount products</span>
+                                                                            <span class="text-muted small"><i class="bi bi-box me-1"></i>@sub.ProductCount products</span>
                                                                         </div>
                                                                     </div>
                                                                     <div class="subcategory-actions">
                                                                         @if (sub.IsActive)
                                                                         {
-                                                                            <span class="badge bg-success me-2">Active</span>
+                                                                            <span class="badge bg-success bg-opacity-10 text-success me-2"><i class="bi bi-check-circle me-1"></i>Active</span>
                                                                         }
                                                                         else
                                                                         {
-                                                                            <span class="badge bg-secondary me-2">Inactive</span>
+                                                                            <span class="badge bg-secondary bg-opacity-10 text-secondary me-2"><i class="bi bi-x-circle me-1"></i>Inactive</span>
                                                                         }
-                                                                        <div class="btn-group" role="group">
-                                                                            <button class="btn btn-sm btn-outline-primary" title="Edit">
-                                                                                <i class="bi bi-pencil"></i>
+                                                                        <div class="btn-group btn-group-sm" role="group">
+                                                                            <a href="@Url.Action("CategoryEdit", "Admin", new { id = sub.Id })" class="btn btn-outline-primary" title="Edit Subcategory">
+                                                                                <i class="bi bi-pencil-square"></i>
+                                                                            </a>
+                                                                            <button class="btn @(sub.IsActive ? "btn-outline-warning" : "btn-outline-success")" onclick="toggleCategoryStatus(@sub.Id)" title="@(sub.IsActive ? "Deactivate" : "Activate")">
+                                                                                <i class="bi bi-@(sub.IsActive ? "pause" : "play")-circle"></i>
                                                                             </button>
-                                                                            <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                                                                <i class="bi bi-trash"></i>
-                                                                            </button>
+                                                                            <form asp-action="CategoryDelete" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('⚠️ Delete subcategory: @sub.Name?\n\nThis cannot be undone.');">
+                                                                                <input type="hidden" name="id" value="@sub.Id" />
+                                                                                <button type="submit" class="btn btn-outline-danger" title="Delete Subcategory">
+                                                                                    <i class="bi bi-trash3"></i>
+                                                                                </button>
+                                                                            </form>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -386,10 +404,10 @@
                                     <div class="empty-state">
                                         <i class="bi bi-folder"></i>
                                         <p>No categories found</p>
-                                        <button class="btn btn-primary mt-3">
+                                        <a href="@Url.Action("CategoryCreate", "Admin")" class="btn btn-primary mt-3">
                                             <i class="bi bi-plus-lg"></i>
                                             Create First Category
-                                        </button>
+                                        </a>
                                     </div>
                                 }
                             </div>
@@ -403,9 +421,9 @@
                                         <i class="bi bi-translate"></i>
                                         Translation Management
                                     </h4>
-                                    <button class="btn btn-primary">
-                                        <i class="bi bi-plus-lg"></i>
-                                        Add Translation Key
+                                    <button class="btn btn-primary" onclick="loadTranslationFiles()" title="Refresh translation files">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                        Refresh
                                     </button>
                                 </div>
 
@@ -424,117 +442,135 @@
                                     <div class="col-md-3">
                                         <div class="stat-card-small">
                                             <div class="stat-icon-small bg-success">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </div>
+                                            <div>
+                                                <h6 id="totalFilesCount">--</h6>
+                                                <small>Resource Files</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="stat-card-small">
+                                            <div class="stat-icon-small bg-info">
                                                 <i class="bi bi-globe"></i>
                                             </div>
                                             <div>
-                                                <h6>@Model.SupportedLanguages.Count(l => l.IsEnabled)</h6>
-                                                <small>Active Languages</small>
+                                                <h6>2</h6>
+                                                <small>Languages</small>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Language Tabs -->
-                                <div class="language-selector mb-4">
-                                    <h5>Supported Languages</h5>
-                                    <div class="language-cards">
-                                        @foreach (var lang in Model.SupportedLanguages.OrderBy(l => l.DisplayOrder))
-                                        {
-                                            <div class="language-card @(lang.IsEnabled ? "active" : "")">
-                                                <div class="language-flag">@lang.FlagIcon</div>
-                                                <div class="language-info">
-                                                    <strong>@lang.NativeName</strong>
-                                                    <small>@lang.CultureCode</small>
-                                                </div>
-                                                <div class="language-status">
-                                                    @if (lang.IsDefault)
-                                                    {
-                                                        <span class="badge bg-primary">Default</span>
-                                                    }
-                                                    @if (lang.IsEnabled)
-                                                    {
-                                                        <span class="badge bg-success">Enabled</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge bg-secondary">Disabled</span>
-                                                    }
-                                                </div>
-                                                <button class="btn btn-sm btn-outline-primary">
-                                                    <i class="bi bi-gear"></i>
-                                                </button>
-                                            </div>
-                                        }
-                                    </div>
+                                <!-- Language Info -->
+                                <div class="alert alert-info mb-4">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Supported Languages:</strong> 🇺🇸 English (en-US) and 🇵🇱 Polish (pl-PL) are currently enabled. 
+                                    <br>
+                                    <strong>⚡ Live Reload:</strong> Changes are saved to .resx files and read directly from XML. 
+                                    Simply refresh your browser (F5) to see changes immediately - no rebuild required!
+                                </div> 
+                                    <strong>Live Editing:</strong> Changes are saved instantly and will appear on page refresh.
                                 </div>
 
-                                <!-- Translation Keys Table -->
-                                <div class="translation-search mb-3">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-search"></i>
-                                        </span>
-                                        <input type="text" class="form-control" placeholder="Search translation keys..." id="translation-search">
-                                        <select class="form-select" style="max-width: 200px;">
-                                            <option value="">All Categories</option>
-                                            <option>Navigation</option>
-                                            <option>Account</option>
-                                            <option>Products</option>
-                                            <option>Cart</option>
-                                            <option>Orders</option>
+                                <!-- File Filter & Search Bar -->
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label">
+                                            <i class="bi bi-folder"></i>
+                                            Filter by Resource File
+                                        </label>
+                                        <select class="form-select" id="file-filter" onchange="handleFileFilterChange()">
+                                            <option value="">All Files</option>
                                         </select>
                                     </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label">
+                                            <i class="bi bi-search"></i>
+                                            Search Translations
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-search"></i>
+                                            </span>
+                                            <input type="text" class="form-control" 
+                                                   placeholder="Search by English text (e.g., 'Welcome', 'Account', 'Shopping Cart')..." 
+                                                   id="translation-search-input">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                                                <i class="bi bi-x-lg"></i> Clear
+                                            </button>
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="bi bi-lightbulb"></i> 
+                                            Searches in keys, English values, Polish values, and comments
+                                        </small>
+                                    </div>
                                 </div>
 
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i>
-                                    <strong>Note:</strong> Translation keys are currently stored in resource files (.resx). 
-                                    You have approximately <strong>170+ keys</strong> across English and Polish languages.
-                                    Full translation editor will be implemented in the next step.
+                                <!-- Loading State -->
+                                <div id="translations-loading" class="text-center py-5" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading translations...</p>
                                 </div>
 
-                                <!-- Sample Translation Keys (read-only preview) -->
+                                <!-- Results Count -->
+                                <div id="translations-results-info" class="mb-3" style="display: none;">
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-info-circle"></i>
+                                        Showing <span id="resultsCount">0</span> translation(s)
+                                    </span>
+                                </div>
+
+                                <!-- Translation Table -->
                                 <div class="table-responsive">
-                                    <table class="table settings-table">
+                                    <table class="table settings-table translation-table table-sm">
                                         <thead>
                                             <tr>
-                                                <th>Key</th>
-                                                <th>Category</th>
-                                                @foreach (var lang in Model.SupportedLanguages.Where(l => l.IsEnabled))
-                                                {
-                                                    <th>@lang.FlagIcon @lang.NativeName</th>
-                                                }
-                                                <th width="100">Actions</th>
+                                                <th width="12%" class="d-none d-lg-table-cell">
+                                                    <i class="bi bi-file-earmark-text"></i>
+                                                    File
+                                                </th>
+                                                <th width="18%">
+                                                    <i class="bi bi-key"></i>
+                                                    Key
+                                                </th>
+                                                <th width="28%">
+                                                    <span class="d-flex align-items-center gap-1">
+                                                        🇺🇸 English
+                                                    </span>
+                                                </th>
+                                                <th width="28%">
+                                                    <span class="d-flex align-items-center gap-1">
+                                                        🇵🇱 Polish
+                                                    </span>
+                                                </th>
+                                                <th width="14%" class="d-none d-md-table-cell">
+                                                    <i class="bi bi-chat-left-text"></i>
+                                                    Comment
+                                                </th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            @foreach (var key in Model.TranslationKeys.Take(10))
-                                            {
-                                                <tr>
-                                                    <td><code>@key.Key</code></td>
-                                                    <td><span class="badge bg-secondary">@key.Category</span></td>
-                                                    @foreach (var lang in Model.SupportedLanguages.Where(l => l.IsEnabled))
-                                                    {
-                                                        <td>
-                                                            @if (key.Values.ContainsKey(lang.CultureCode))
-                                                            {
-                                                                @key.Values[lang.CultureCode]
-                                                            }
-                                                            else
-                                                            {
-                                                                <span class="text-muted">-</span>
-                                                            }
-                                                        </td>
-                                                    }
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary" title="Edit">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            }
+                                        <tbody id="translations-tbody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted py-4">
+                                                    <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                                                    Select a file from the dropdown or use search to view translations
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div id="translations-pagination" class="mt-4" style="display: none;">
+                                    <nav>
+                                        <ul class="pagination justify-content-center" id="pagination-controls">
+                                            <!-- Pagination buttons will be inserted here -->
+                                        </ul>
+                                    </nav>
                                 </div>
                             </div>
                         </div>
@@ -830,6 +866,61 @@
     <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" />
     
+    <style>
+        .editable-cell {
+            cursor: text;
+            transition: all 0.2s ease;
+        }
+        
+        .editable-cell:hover {
+            border-color: #dee2e6 !important;
+            background-color: rgba(var(--bs-primary-rgb), 0.05);
+        }
+        
+        .editable-cell:focus {
+            outline: none;
+            border-color: var(--bs-primary) !important;
+            background-color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
+        }
+        
+        .editable-cell.save-success {
+            border-color: var(--bs-success) !important;
+            background-color: rgba(var(--bs-success-rgb), 0.1);
+        }
+        
+        .translation-table {
+            font-size: 0.9rem;
+        }
+        
+        .translation-table code {
+            background-color: rgba(var(--bs-secondary-rgb), 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+        }
+        
+        .comment-editable {
+            font-style: italic;
+            color: #6c757d;
+        }
+        
+        .comment-editable:empty::before {
+            content: 'Click to add comment...';
+            color: #adb5bd;
+        }
+        
+        @@media (max-width: 768px) {
+            .translation-table {
+                font-size: 0.85rem;
+            }
+            
+            .editable-cell {
+                min-height: 40px !important;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+    
     <script>
         console.log('Site Settings page loaded');
         
@@ -876,5 +967,648 @@
                 toastr.error('An error occurred while toggling slide status');
             }
         };
+
+        // Toggle category active status
+        window.toggleCategoryStatus = async function(categoryId) {
+            if (!confirm('Toggle this category\'s active status?')) return;
+            
+            try {
+                const response = await fetch(`@Url.Action("CategoryToggleActive", "Admin")?id=${categoryId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    toastr.success(result.message || 'Category status updated');
+                    setTimeout(() => window.location.href = '@Url.Action("Settings", "Admin", new { tab = "categories" })', 1000);
+                } else {
+                    toastr.error(result.message || 'Failed to update category status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred while toggling category status');
+            }
+        };
+
+        // Activate the correct tab based on URL parameter or hash
+        document.addEventListener('DOMContentLoaded', function() {
+            var activeTab = '@(ViewBag.ActiveTab ?? "")';
+            
+            if (activeTab) {
+                const tabButton = document.getElementById(activeTab + '-tab');
+                if (tabButton) {
+                    const tab = new bootstrap.Tab(tabButton);
+                    tab.show();
+                }
+            } else if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                const tabButton = document.getElementById(hash + '-tab');
+                if (tabButton) {
+                    const tab = new bootstrap.Tab(tabButton);
+                    tab.show();
+                }
+            }
+        });
+
+        // ================================
+        // Translation Editor Functions
+        // ================================
+        let translationFiles = [];
+        let currentTranslations = [];
+        let currentPage = 1;
+        const itemsPerPage = 50;
+        let searchDebounceTimer = null;
+
+        // Load translation files list
+        async function loadTranslationFiles() {
+            try {
+                const response = await fetch('@Url.Action("GetAllTranslationFiles", "Admin")');
+                const result = await response.json();
+                
+                if (result.success) {
+                    translationFiles = result.data;
+                    document.getElementById('totalFilesCount').textContent = translationFiles.length;
+                    
+                    // Populate file filter dropdown
+                    const fileFilterEl = document.getElementById('file-filter');
+                    let options = '<option value="">All Files</option>';
+                    translationFiles.forEach(file => {
+                        options += `<option value="${file.fileName}">${file.displayName} (${file.keyCount} keys)</option>`;
+                    });
+                    fileFilterEl.innerHTML = options;
+                    
+                    toastr.success(`Loaded ${translationFiles.length} resource files`);
+                } else {
+                    toastr.error(result.message || 'Failed to load translation files');
+                }
+            } catch (error) {
+                console.error('Error loading translation files:', error);
+                toastr.error('An error occurred while loading translation files');
+            }
+        }
+
+        // Load translations when file filter changes
+        async function handleFileFilterChange() {
+            const fileFilterEl = document.getElementById('file-filter');
+            const selectedFile = fileFilterEl.value;
+            
+            if (!selectedFile) {
+                // Clear table when "All Files" is selected
+                document.getElementById('translations-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                            Select a file from the dropdown or use search to view translations
+                        </td>
+                    </tr>`;
+                document.getElementById('translations-results-info').style.display = 'none';
+                return;
+            }
+            
+            const loadingEl = document.getElementById('translations-loading');
+            const tbodyEl = document.getElementById('translations-tbody');
+            const resultsInfoEl = document.getElementById('translations-results-info');
+            
+            loadingEl.style.display = 'block';
+            tbodyEl.innerHTML = '';
+            
+            try {
+                const response = await fetch(`@Url.Action("GetTranslationsByFile", "Admin")?fileName=${encodeURIComponent(selectedFile)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentTranslations = result.data;
+                    currentPage = 1;
+                    displayTranslations(currentTranslations);
+                    resultsInfoEl.style.display = 'block';
+                    toastr.success(`Loaded ${currentTranslations.length} translations from ${selectedFile}`);
+                } else {
+                    toastr.error(result.message || 'Failed to load translations');
+                    tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Failed to load translations</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading translations:', error);
+                toastr.error('An error occurred while loading translations');
+                tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading translations</td></tr>';
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore active tab from localStorage
+            const activeTab = localStorage.getItem('admin-settings-active-tab');
+            if (activeTab) {
+                const tabElement = document.querySelector(`button[data-bs-target="${activeTab}"]`);
+                if (tabElement) {
+                    const tab = new bootstrap.Tab(tabElement);
+                    tab.show();
+                }
+            }
+            
+            // Save active tab to localStorage when changed
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(button => {
+                button.addEventListener('shown.bs.tab', function(e) {
+                    const target = e.target.getAttribute('data-bs-target');
+                    localStorage.setItem('admin-settings-active-tab', target);
+                });
+            });
+            
+            // Load translation files when translations tab is shown
+            const translationsTab = document.getElementById('translations-tab');
+            if (translationsTab) {
+                translationsTab.addEventListener('shown.bs.tab', function() {
+                    if (translationFiles.length === 0) {
+                        loadTranslationFiles();
+                    }
+                });
+            }
+        });
+
+        // Display translations in table with pagination
+        function displayTranslations(translations) {
+            const tbodyEl = document.getElementById('translations-tbody');
+            const resultsCountEl = document.getElementById('resultsCount');
+            const paginationEl = document.getElementById('translations-pagination');
+            
+            if (!translations || translations.length === 0) {
+                tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No translations found</td></tr>';
+                resultsCountEl.textContent = '0';
+                paginationEl.style.display = 'none';
+                return;
+            }
+            
+            resultsCountEl.textContent = translations.length;
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(translations.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, translations.length);
+            const pageTranslations = translations.slice(startIndex, endIndex);
+            
+            // Build table rows
+            let html = '';
+            pageTranslations.forEach(trans => {
+                const comment = trans.comment || '';
+                const commentDisplay = comment ? `<small class="text-muted d-block" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(comment)}</small>` : '<small class="text-muted fst-italic">No comment</small>';
+                
+                html += `
+                    <tr data-file="${escapeHtml(trans.resourceFile)}" data-key="${escapeHtml(trans.key)}">
+                        <td class="d-none d-lg-table-cell">
+                            <span class="badge bg-secondary" style="font-size: 0.75rem;">${escapeHtml(trans.resourceFile)}</span>
+                        </td>
+                        <td>
+                            <code style="font-size: 0.85rem; word-break: break-word;">${escapeHtml(trans.key)}</code>
+                            <div class="d-lg-none">
+                                <small class="badge bg-secondary mt-1" style="font-size: 0.7rem;">${escapeHtml(trans.resourceFile)}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="editable-cell" 
+                                 contenteditable="true" 
+                                 data-culture="en-US" 
+                                 data-original="${escapeHtml(trans.englishValue || '')}"
+                                 onblur="saveTranslation(this, '${escapeHtml(trans.resourceFile)}', '${escapeHtml(trans.key)}', 'en-US')"
+                                 onkeydown="handleCellKeydown(event, this, '${escapeHtml(trans.resourceFile)}', '${escapeHtml(trans.key)}', 'en-US')"
+                                 style="min-height: 30px; padding: 0.5rem; border: 1px solid transparent; border-radius: 4px;">${escapeHtml(trans.englishValue || '')}</div>
+                        </td>
+                        <td>
+                            <div class="editable-cell" 
+                                 contenteditable="true" 
+                                 data-culture="pl-PL" 
+                                 data-original="${escapeHtml(trans.polishValue || '')}"
+                                 onblur="saveTranslation(this, '${escapeHtml(trans.resourceFile)}', '${escapeHtml(trans.key)}', 'pl-PL')"
+                                 onkeydown="handleCellKeydown(event, this, '${escapeHtml(trans.resourceFile)}', '${escapeHtml(trans.key)}', 'pl-PL')"
+                                 style="min-height: 30px; padding: 0.5rem; border: 1px solid transparent; border-radius: 4px;">${escapeHtml(trans.polishValue || '')}</div>
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            <div class="comment-cell-wrapper" style="position: relative;">
+                                <div class="editable-cell comment-editable" 
+                                     contenteditable="true" 
+                                     data-original="${escapeHtml(comment)}"
+                                     onblur="saveComment(this, '${escapeHtml(trans.resourceFile)}', '${escapeHtml(trans.key)}')"
+                                     onkeydown="handleCommentKeydown(event, this, '${escapeHtml(trans.resourceFile)}', '${escapeHtml(trans.key)}')"
+                                     style="min-height: 30px; padding: 0.5rem; border: 1px solid transparent; border-radius: 4px; font-size: 0.85rem;">${escapeHtml(comment)}</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbodyEl.innerHTML = html;
+            
+            // Show/hide pagination
+            if (totalPages > 1) {
+                paginationEl.style.display = 'block';
+                renderPagination(totalPages);
+            } else {
+                paginationEl.style.display = 'none';
+            }
+        }
+
+        // Render pagination controls
+        function renderPagination(totalPages) {
+            const paginationControls = document.getElementById('pagination-controls');
+            let html = '';
+            
+            // Previous button
+            html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a>
+                     </li>`;
+            
+            // Page numbers (show max 7 pages)
+            const startPage = Math.max(1, currentPage - 3);
+            const endPage = Math.min(totalPages, currentPage + 3);
+            
+            if (startPage > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
+                if (startPage > 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                         </li>`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
+            }
+            
+            // Next button
+            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a>
+                     </li>`;
+            
+            paginationControls.innerHTML = html;
+        }
+
+        // Change page
+        window.changePage = function(page) {
+            currentPage = page;
+            const searchTerm = document.getElementById('translation-search-input').value.trim();
+            if (searchTerm) {
+                performSearch(searchTerm);
+            } else {
+                displayTranslations(currentTranslations);
+            }
+        };
+
+        // Search translations with debounce
+        document.getElementById('translation-search-input')?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.trim();
+            
+            clearTimeout(searchDebounceTimer);
+            
+            if (!searchTerm) {
+                currentPage = 1;
+                const selectedFile = document.getElementById('file-filter').value;
+                if (selectedFile) {
+                    displayTranslations(currentTranslations);
+                } else {
+                    document.getElementById('translations-tbody').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                                Select a file from the dropdown or use search to view translations
+                            </td>
+                        </tr>`;
+                    document.getElementById('translations-results-info').style.display = 'none';
+                }
+                return;
+            }
+            
+            searchDebounceTimer = setTimeout(() => {
+                currentPage = 1;
+                performSearch(searchTerm);
+            }, 300);
+        });
+
+        // Perform search
+        async function performSearch(searchTerm) {
+            const loadingEl = document.getElementById('translations-loading');
+            const tbodyEl = document.getElementById('translations-tbody');
+            const resultsInfoEl = document.getElementById('translations-results-info');
+            const selectedFile = document.getElementById('file-filter').value;
+            
+            loadingEl.style.display = 'block';
+            
+            try {
+                const response = await fetch('@Url.Action("SearchTranslations", "Admin")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ 
+                        searchTerm: searchTerm,
+                        fileName: selectedFile || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentTranslations = result.data;
+                    displayTranslations(result.data);
+                    resultsInfoEl.style.display = 'block';
+                    
+                    if (result.count === 0) {
+                        toastr.info('No translations found matching your search');
+                    }
+                } else {
+                    toastr.error(result.message || 'Search failed');
+                    tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Search failed</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error searching translations:', error);
+                toastr.error('An error occurred while searching');
+                tbodyEl.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error during search</td></tr>';
+            } finally {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        // Clear search
+        window.clearSearch = function() {
+            document.getElementById('translation-search-input').value = '';
+            currentPage = 1;
+            const selectedFile = document.getElementById('file-filter').value;
+            if (selectedFile) {
+                displayTranslations(currentTranslations);
+            } else {
+                document.getElementById('translations-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                            Select a file from the dropdown or use search to view translations
+                        </td>
+                    </tr>`;
+                document.getElementById('translations-results-info').style.display = 'none';
+            }
+        };
+
+        // Handle keydown in editable cell (save on Enter)
+        function handleCellKeydown(event, element, fileName, key, culture) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                element.blur(); // Trigger onblur to save
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                // Restore original value
+                element.textContent = element.getAttribute('data-original');
+                element.blur();
+            }
+        }
+
+        // Handle keydown in comment cell
+        function handleCommentKeydown(event, element, fileName, key) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                element.blur(); // Trigger onblur to save
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                element.textContent = element.getAttribute('data-original');
+                element.blur();
+            }
+        }
+
+        // Save comment
+        async function saveComment(element, fileName, key) {
+            const newValue = element.textContent.trim();
+            const originalValue = element.getAttribute('data-original');
+            
+            // No change, skip save
+            if (newValue === originalValue) {
+                return;
+            }
+            
+            // Show saving indicator
+            element.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            element.contentEditable = 'false';
+            
+            try {
+                const response = await fetch('@Url.Action("UpdateTranslationComment", "Admin")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({
+                        fileName: fileName,
+                        key: key,
+                        comment: newValue
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    element.setAttribute('data-original', newValue);
+                    element.innerHTML = escapeHtml(newValue);
+                    element.classList.add('save-success');
+                    setTimeout(() => element.classList.remove('save-success'), 2000);
+                    
+                    // Update in-memory data
+                    const translation = currentTranslations.find(t => t.resourceFile === fileName && t.key === key);
+                    if (translation) {
+                        translation.comment = newValue;
+                    }
+                    
+                    toastr.success('Comment updated. Refresh page to see changes throughout the site.');
+                } else {
+                    element.innerHTML = escapeHtml(originalValue);
+                    toastr.error(result.message || 'Failed to save comment');
+                }
+            } catch (error) {
+                console.error('Error saving comment:', error);
+                element.innerHTML = escapeHtml(originalValue);
+                toastr.error('An error occurred while saving');
+            } finally {
+                element.contentEditable = 'true';
+            }
+        }
+
+        // Save translation
+        async function saveTranslation(element, fileName, key, culture) {
+            const newValue = element.textContent.trim();
+            const originalValue = element.getAttribute('data-original');
+            
+            // No change, skip save
+            if (newValue === originalValue) {
+                return;
+            }
+            
+            // Show saving indicator
+            const originalContent = element.innerHTML;
+            element.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Saving...';
+            element.contentEditable = 'false';
+            
+            try {
+                const response = await fetch('@Url.Action("UpdateTranslation", "Admin")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({
+                        fileName: fileName,
+                        key: key,
+                        cultureCode: culture,
+                        value: newValue
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update original value
+                    element.setAttribute('data-original', newValue);
+                    element.innerHTML = escapeHtml(newValue);
+                    element.classList.add('save-success');
+                    setTimeout(() => element.classList.remove('save-success'), 2000);
+                    
+                    // Update in-memory data
+                    const translation = currentTranslations.find(t => t.resourceFile === fileName && t.key === key);
+                    if (translation) {
+                        if (culture === 'en-US') translation.englishValue = newValue;
+                        if (culture === 'pl-PL') translation.polishValue = newValue;
+                    }
+                    
+                    // Show notification with immediate effect
+                    toastr.success(`✅ Translation updated: ${fileName}.${key} (${culture === 'en-US' ? '🇺🇸' : '🇵🇱'})<br><br>` +
+                        `<strong>Changes will appear on next page refresh (F5)</strong>`, 
+                        'Saved Successfully', {
+                        timeOut: 4000,
+                        extendedTimeOut: 2000,
+                        closeButton: true,
+                        progressBar: true,
+                        allowHtml: true,
+                        positionClass: 'toast-top-right'
+                    });
+                } else {
+                    // Restore original value on failure
+                    element.innerHTML = escapeHtml(originalValue);
+                    toastr.error(result.message || 'Failed to save translation');
+                }
+            } catch (error) {
+                console.error('Error saving translation:', error);
+                element.innerHTML = escapeHtml(originalValue);
+                toastr.error('An error occurred while saving');
+            } finally {
+                element.contentEditable = 'true';
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Delete Carousel Slide with confirmation
+        async function deleteCarouselSlide(evt, slideId, slideTitle) {
+            console.log('deleteCarouselSlide called with:', { slideId, slideTitle });
+            
+            // Show confirmation dialog with SweetAlert2 or native confirm
+            const confirmDelete = confirm(`Are you sure you want to delete this carousel slide?\n\n"${slideTitle}"\n\nThis action cannot be undone.`);
+            
+            if (!confirmDelete) {
+                console.log('Delete cancelled by user');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const deleteBtn = evt.target.closest('button');
+                const originalHtml = deleteBtn.innerHTML;
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+                const url = '@Url.Action("CarouselDeleteAjax", "Admin")';
+                const requestBody = JSON.stringify({ id: slideId });
+                
+                console.log('Making DELETE request to:', url);
+                console.log('Request body:', requestBody);
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: requestBody
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                const result = await response.json();
+                console.log('Response result:', result);
+
+                if (result.success) {
+                    // Remove the table row with animation
+                    const row = deleteBtn.closest('tr');
+                    row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-20px)';
+                    
+                    setTimeout(() => {
+                        row.remove();
+                        
+                        // Check if table is now empty
+                        const tbody = document.querySelector('#carouselSlidesTable tbody');
+                        if (tbody && tbody.children.length === 0) {
+                            location.reload(); // Reload to show empty state
+                        }
+                    }, 300);
+
+                    // Show success notification
+                    toastr.success(result.message || 'Carousel slide deleted successfully', 'Deleted', {
+                        timeOut: 3000,
+                        closeButton: true,
+                        progressBar: true,
+                        positionClass: 'toast-top-right'
+                    });
+
+                    // Update counters if they exist
+                    const totalCounter = document.querySelector('[data-carousel-total]');
+                    const activeCounter = document.querySelector('[data-carousel-active]');
+                    if (totalCounter) {
+                        const currentTotal = parseInt(totalCounter.textContent) || 0;
+                        totalCounter.textContent = Math.max(0, currentTotal - 1);
+                    }
+                } else {
+                    // Restore button state on failure
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = originalHtml;
+                    
+                    toastr.error(result.message || 'Failed to delete carousel slide', 'Error', {
+                        timeOut: 4000,
+                        closeButton: true,
+                        positionClass: 'toast-top-right'
+                    });
+                }
+            } catch (error) {
+                console.error('Error deleting carousel slide:', error);
+                
+                // Restore button state
+                const deleteBtn = evt.target.closest('button');
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                
+                toastr.error('An error occurred while deleting the slide', 'Error', {
+                    timeOut: 4000,
+                    closeButton: true,
+                    positionClass: 'toast-top-right'
+                });
+            }
+        }
     </script>
 }

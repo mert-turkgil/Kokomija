@@ -51,27 +51,27 @@ namespace Kokomija.Controllers
                 // Handle the event
                 switch (stripeEvent.Type)
                 {
-                    case Events.CheckoutSessionCompleted:
+                    case "checkout.session.completed":
                         await HandleCheckoutSessionCompleted(stripeEvent);
                         break;
 
-                    case Events.CheckoutSessionAsyncPaymentSucceeded:
+                    case "checkout.session.async_payment_succeeded":
                         await HandleCheckoutSessionAsyncPaymentSucceeded(stripeEvent);
                         break;
 
-                    case Events.CheckoutSessionAsyncPaymentFailed:
+                    case "checkout.session.async_payment_failed":
                         await HandleCheckoutSessionAsyncPaymentFailed(stripeEvent);
                         break;
 
-                    case Events.PaymentIntentSucceeded:
+                    case "payment_intent.succeeded":
                         await HandlePaymentIntentSucceeded(stripeEvent);
                         break;
 
-                    case Events.PaymentIntentPaymentFailed:
+                    case "payment_intent.payment_failed":
                         await HandlePaymentIntentFailed(stripeEvent);
                         break;
 
-                    case Events.ChargeRefunded:
+                    case "charge.refunded":
                         await HandleChargeRefunded(stripeEvent);
                         break;
 
@@ -131,13 +131,13 @@ namespace Kokomija.Controllers
                 }
 
                 // Update shipping address if available
-                if (session.ShippingDetails?.Address != null)
+                if (session.CustomerDetails?.Address != null)
                 {
-                    order.ShippingAddress = session.ShippingDetails.Address.Line1;
-                    order.ShippingCity = session.ShippingDetails.Address.City;
-                    order.ShippingState = session.ShippingDetails.Address.State;
-                    order.ShippingPostalCode = session.ShippingDetails.Address.PostalCode;
-                    order.ShippingCountry = session.ShippingDetails.Address.Country;
+                    order.ShippingAddress = session.CustomerDetails.Address.Line1;
+                    order.ShippingCity = session.CustomerDetails.Address.City;
+                    order.ShippingState = session.CustomerDetails.Address.State;
+                    order.ShippingPostalCode = session.CustomerDetails.Address.PostalCode;
+                    order.ShippingCountry = session.CustomerDetails.Address.Country;
                 }
 
                 // Update user's total spent and VIP tier

@@ -16,20 +16,29 @@ public class AdminController : Controller
     private readonly ILogger<AdminController> _logger;
     private readonly ICarouselImageService _carouselImageService;
     private readonly ICarouselService _carouselService;
+    private readonly ICategoryImageService _categoryImageService;
     private readonly ILocalizationService _localizationService;
+    private readonly ITranslationManagementService _translationManagementService;
+    private readonly IWebHostEnvironment _environment;
 
     public AdminController(
         IUnitOfWork unitOfWork, 
         ILogger<AdminController> logger,
         ICarouselImageService carouselImageService,
         ICarouselService carouselService,
-        ILocalizationService localizationService)
+        ICategoryImageService categoryImageService,
+        ILocalizationService localizationService,
+        ITranslationManagementService translationManagementService,
+        IWebHostEnvironment environment)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _carouselImageService = carouselImageService;
         _carouselService = carouselService;
+        _categoryImageService = categoryImageService;
         _localizationService = localizationService;
+        _translationManagementService = translationManagementService;
+        _environment = environment;
     }
 
     public async Task<IActionResult> Index()
@@ -183,17 +192,24 @@ public class AdminController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Settings()
+    public async Task<IActionResult> Settings(string? tab = null)
     {
         _logger.LogInformation("Admin accessed site settings");
+        
+        // Pass tab parameter to view for active tab selection
+        if (!string.IsNullOrEmpty(tab))
+        {
+            ViewBag.ActiveTab = tab;
+        }
 
         var viewModel = new SiteSettingsViewModel();
 
         try
         {
-            // Get carousel slides
+            // Get carousel slides (exclude soft-deleted)
             var carouselSlides = await _unitOfWork.CarouselSlides.GetAllAsync();
-            viewModel.CarouselSlides = carouselSlides.Select(c => new CarouselSlideItemViewModel
+            var activeCarouselSlides = carouselSlides.Where(c => !c.IsDeleted).ToList();
+            viewModel.CarouselSlides = activeCarouselSlides.Select(c => new CarouselSlideItemViewModel
             {
                 Id = c.Id,
                 Title = c.Title,
@@ -210,8 +226,8 @@ public class AdminController : Controller
                 CreatedBy = c.CreatedBy
             }).OrderBy(c => c.DisplayOrder).ToList();
 
-            viewModel.TotalCarouselSlides = carouselSlides.Count();
-            viewModel.ActiveCarouselSlides = carouselSlides.Count(c => c.IsActive);
+            viewModel.TotalCarouselSlides = activeCarouselSlides.Count();
+            viewModel.ActiveCarouselSlides = activeCarouselSlides.Count(c => c.IsActive);
 
             // Get categories
             var categories = await _unitOfWork.Categories.GetAllAsync();
@@ -291,31 +307,13 @@ public class AdminController : Controller
                 }
             };
 
-            // Translation keys (placeholder - showing structure only)
-            viewModel.TranslationKeys = new List<TranslationKeyViewModel>
-            {
-                new TranslationKeyViewModel
-                {
-                    Key = "Nav_Home",
-                    Category = "Navigation",
-                    Values = new Dictionary<string, string>
-                    {
-                        { "en-US", "Home" },
-                        { "pl-PL", "Strona główna" }
-                    }
-                },
-                new TranslationKeyViewModel
-                {
-                    Key = "Nav_Products",
-                    Category = "Navigation",
-                    Values = new Dictionary<string, string>
-                    {
-                        { "en-US", "Products" },
-                        { "pl-PL", "Produkty" }
-                    }
-                }
-            };
-            viewModel.TotalTranslationKeys = 170; // Approximate count from your resx files
+            // Translation keys - no longer showing placeholder data, 
+            // will be loaded via AJAX in the UI
+            viewModel.TranslationKeys = new List<TranslationKeyViewModel>();
+            
+            // Count resource file pairs (each category has en-US and pl-PL)
+            var resourceFolders = await _translationManagementService.GetAllTranslationFilesAsync();
+            viewModel.TotalTranslationKeys = resourceFolders.Sum(f => f.KeyCount);
         }
         catch (Exception ex)
         {
@@ -721,23 +719,117 @@ public class AdminController : Controller
             var slide = await _unitOfWork.CarouselSlides.GetByIdAsync(id);
             if (slide == null)
             {
-                TempData["Error"] = "Carousel slide not found";
-                return RedirectToAction(nameof(Settings));
+                TempData["Error"] = _localizationService["Admin_Carousel_NotFound"];
+                return RedirectToAction(nameof(Settings), new { tab = "carousel" });
             }
 
+            _logger.LogInformation("Deleting carousel slide {SlideId}: Desktop={Desktop}, Tablet={Tablet}, Mobile={Mobile}", 
+                id, slide.ImagePath, slide.TabletImagePath, slide.MobileImagePath);
+
+            // Delete physical image files FIRST before soft delete
+            var imagesToDelete = new List<string>();
+            if (!string.IsNullOrEmpty(slide.ImagePath)) imagesToDelete.Add(slide.ImagePath);
+            if (!string.IsNullOrEmpty(slide.TabletImagePath)) imagesToDelete.Add(slide.TabletImagePath);
+            if (!string.IsNullOrEmpty(slide.MobileImagePath)) imagesToDelete.Add(slide.MobileImagePath);
+
+            foreach (var imagePath in imagesToDelete)
+            {
+                try
+                {
+                    await _carouselImageService.DeletePermanentImagesAsync(imagePath);
+                    _logger.LogInformation("Successfully deleted image: {ImagePath}", imagePath);
+                }
+                catch (Exception imgEx)
+                {
+                    _logger.LogError(imgEx, "Failed to delete image: {ImagePath}", imagePath);
+                    // Continue with other deletions even if one fails
+                }
+            }
+
+            // Delete from database (soft delete)
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
             await _carouselService.DeleteSlideAsync(id, userId);
 
-            _logger.LogInformation("Carousel slide deleted successfully: {SlideId}", id);
+            _logger.LogInformation("Carousel slide deleted successfully: {SlideId} by user {UserId}", id, userId);
             TempData["Success"] = _localizationService["Admin_Carousel_SuccessDeleted"];
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting carousel slide");
-            TempData["Error"] = "Error deleting carousel slide";
+            _logger.LogError(ex, "Error deleting carousel slide {SlideId}", id);
+            TempData["Error"] = _localizationService["Admin_Carousel_ErrorDeleted"];
         }
 
-        return RedirectToAction(nameof(Settings));
+        return RedirectToAction(nameof(Settings), new { tab = "carousel" });
+    }
+
+    /// <summary>
+    /// POST: Delete carousel slide (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CarouselDeleteAjax(int id)
+    {
+        try
+        {
+            // Get slide including soft-deleted ones to allow re-deletion
+            var allSlides = await _unitOfWork.CarouselSlides.GetAllAsync();
+            var slide = allSlides.FirstOrDefault(s => s.Id == id);
+
+            if (slide == null)
+            {
+                _logger.LogWarning("CarouselDeleteAjax: Slide {SlideId} not found in database", id);
+                return Json(new { success = false, message = _localizationService["Admin_Carousel_NotFound"], slideId = id });
+            }
+
+            // Check if already deleted
+            if (slide.IsDeleted)
+            {
+                _logger.LogWarning("CarouselDeleteAjax: Slide {SlideId} is already deleted", id);
+                return Json(new { success = false, message = "This slide has already been deleted", slideId = id });
+            }
+
+            _logger.LogInformation("CarouselDeleteAjax: Deleting slide {SlideId}: Desktop={Desktop}, Tablet={Tablet}, Mobile={Mobile}",
+                id, slide.ImagePath, slide.TabletImagePath, slide.MobileImagePath);
+
+            // Delete physical image files FIRST before soft delete
+            var imagesToDelete = new List<string>();
+            if (!string.IsNullOrEmpty(slide.ImagePath)) imagesToDelete.Add(slide.ImagePath);
+            if (!string.IsNullOrEmpty(slide.TabletImagePath)) imagesToDelete.Add(slide.TabletImagePath);
+            if (!string.IsNullOrEmpty(slide.MobileImagePath)) imagesToDelete.Add(slide.MobileImagePath);
+
+            foreach (var imagePath in imagesToDelete)
+            {
+                try
+                {
+                    await _carouselImageService.DeletePermanentImagesAsync(imagePath);
+                    _logger.LogInformation("CarouselDeleteAjax: Successfully deleted image: {ImagePath}", imagePath);
+                }
+                catch (Exception imgEx)
+                {
+                    _logger.LogError(imgEx, "CarouselDeleteAjax: Failed to delete image: {ImagePath}", imagePath);
+                    // Continue with other deletions even if one fails
+                }
+            }
+
+            // Delete from database (soft delete)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
+            await _carouselService.DeleteSlideAsync(id, userId);
+
+            _logger.LogInformation("CarouselDeleteAjax: Slide deleted via AJAX: {SlideId} by user {UserId}", id, userId);
+
+            return Json(new {
+                success = true,
+                message = _localizationService["Admin_Carousel_SuccessDeleted"],
+                slideId = id
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CarouselDeleteAjax: Error deleting carousel slide {SlideId}", id);
+            return Json(new { success = false, message = _localizationService["Admin_Carousel_ErrorDeleted"], slideId = id });
+        }
+        // Fallback: should never hit this, but just in case
+        _logger.LogError("CarouselDeleteAjax: Unexpected exit for slide {SlideId}", id);
+        return Json(new { success = false, message = "Unexpected error occurred.", slideId = id });
     }
 
     /// <summary>
@@ -811,6 +903,636 @@ public class AdminController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error toggling carousel slide status");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    #endregion
+
+    #region Category Management
+
+    /// <summary>
+    /// GET: Create new category form
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CategoryCreate()
+    {
+        ViewData["Title"] = _localizationService["Admin_Category_CreateNew"];
+        
+        var viewModel = new CategoryCreateDto
+        {
+            DisplayOrder = 0,
+            IsActive = true,
+            ShowInNavbar = true,
+            Translations = new List<CategoryTranslationDto>
+            {
+                new CategoryTranslationDto 
+                { 
+                    CultureCode = "en-US",
+                    Name = "",
+                    Slug = "",
+                    Description = ""
+                },
+                new CategoryTranslationDto 
+                { 
+                    CultureCode = "pl-PL",
+                    Name = "",
+                    Slug = "",
+                    Description = ""
+                }
+            }
+        };
+
+        // Load parent categories for dropdown
+        var categories = await _unitOfWork.Categories.GetTopLevelCategoriesAsync();
+        ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// POST: Create new category
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CategoryCreate(CategoryCreateDto model)
+    {
+        // Prevent subcategories from having parent categories (no sub-subcategories)
+        if (model.ParentCategoryId.HasValue)
+        {
+            var parentCategory = await _unitOfWork.Categories.GetByIdAsync(model.ParentCategoryId.Value);
+            if (parentCategory != null && parentCategory.ParentCategoryId.HasValue)
+            {
+                ModelState.AddModelError("ParentCategoryId", "Cannot create a subcategory under another subcategory. Only 2 levels are supported.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var categories = await _unitOfWork.Categories.GetTopLevelCategoriesAsync();
+            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+            TempData["Error"] = _localizationService["Admin_Category_ErrorSave"];
+            return View(model);
+        }
+
+        var tempFilesToCleanup = new string[] { };
+
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Create the category entity
+            var category = new Category
+            {
+                Name = model.Translations.FirstOrDefault(t => t.CultureCode == "en-US")?.Name ?? "Unnamed",
+                Slug = model.Translations.FirstOrDefault(t => t.CultureCode == "en-US")?.Slug ?? "unnamed",
+                Description = model.Translations.FirstOrDefault(t => t.CultureCode == "en-US")?.Description,
+                ParentCategoryId = model.ParentCategoryId,
+                DisplayOrder = model.DisplayOrder,
+                IsActive = model.IsActive,
+                ShowInNavbar = model.ShowInNavbar,
+                IconCssClass = model.IconCssClass,
+                CreatedBy = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Handle image upload for main categories
+            if (!string.IsNullOrEmpty(model.ImageTempFileName))
+            {
+                tempFilesToCleanup = new[] { model.ImageTempFileName };
+                var imageUrl = await _categoryImageService.MoveTempImageToPermanentAsync(
+                    model.ImageTempFileName, 
+                    category.Slug);
+                category.ImageUrl = imageUrl;
+            }
+
+            // Add category to database
+            await _unitOfWork.Categories.AddAsync(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Add translations
+            foreach (var translationDto in model.Translations)
+            {
+                var translation = new CategoryTranslation
+                {
+                    CategoryId = category.Id,
+                    CultureCode = translationDto.CultureCode,
+                    Name = translationDto.Name,
+                    Slug = translationDto.Slug,
+                    Description = translationDto.Description,
+                    MetaDescription = translationDto.MetaDescription,
+                    MetaKeywords = translationDto.MetaKeywords,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _unitOfWork.CategoryTranslations.AddAsync(translation);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["Success"] = _localizationService["Admin_Category_SuccessCreate"];
+            _logger.LogInformation("Category created: {CategoryId} by {UserId}", category.Id, userId);
+
+            return RedirectToAction(nameof(Settings), new { tab = "categories" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating category");
+            TempData["Error"] = _localizationService["Admin_Category_ErrorSave"];
+            
+            if (tempFilesToCleanup.Length > 0)
+            {
+                await _categoryImageService.CleanupTempFilesAsync(tempFilesToCleanup.ToList());
+            }
+
+            var categories = await _unitOfWork.Categories.GetTopLevelCategoriesAsync();
+            ViewBag.ParentCategories = categories.OrderBy(c => c.DisplayOrder).ToList();
+            return View(model);
+        }
+    }
+
+    /// <summary>
+    /// GET: Edit category form
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CategoryEdit(int id)
+    {
+        var category = await _unitOfWork.Categories.GetByIdWithTranslationsAsync(id);
+        if (category == null)
+        {
+            TempData["Error"] = "Category not found";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        var viewModel = new CategoryUpdateDto
+        {
+            Id = category.Id,
+            ParentCategoryId = category.ParentCategoryId,
+            DisplayOrder = category.DisplayOrder,
+            IsActive = category.IsActive,
+            ShowInNavbar = category.ShowInNavbar,
+            IconCssClass = category.IconCssClass,
+            Translations = category.Translations.Select(t => new CategoryTranslationDto
+            {
+                Id = t.Id,
+                CultureCode = t.CultureCode,
+                Name = t.Name,
+                Slug = t.Slug,
+                Description = t.Description,
+                MetaDescription = t.MetaDescription,
+                MetaKeywords = t.MetaKeywords
+            }).ToList()
+        };
+
+        // Ensure we have translations for both languages
+        if (!viewModel.Translations.Any(t => t.CultureCode == "en-US"))
+        {
+            viewModel.Translations.Add(new CategoryTranslationDto { CultureCode = "en-US" });
+        }
+        if (!viewModel.Translations.Any(t => t.CultureCode == "pl-PL"))
+        {
+            viewModel.Translations.Add(new CategoryTranslationDto { CultureCode = "pl-PL" });
+        }
+
+        // Load current image for preview
+        ViewBag.CurrentImage = category.ImageUrl;
+
+        // Only show top-level categories as parent options (no subcategories)
+        // Exclude current category to prevent self-parenting
+        var allCategories = await _unitOfWork.Categories.GetTopLevelCategoriesAsync();
+        ViewBag.Categories = allCategories
+            .Where(c => c.Id != id)
+            .OrderBy(c => c.DisplayOrder)
+            .ToList();
+
+        ViewData["Title"] = _localizationService["Admin_Category_Edit"];
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// POST: Update category
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CategoryEdit(CategoryUpdateDto model)
+    {
+        // Prevent subcategories from having parent categories (no sub-subcategories)
+        if (model.ParentCategoryId.HasValue)
+        {
+            var parentCategory = await _unitOfWork.Categories.GetByIdAsync(model.ParentCategoryId.Value);
+            if (parentCategory != null && parentCategory.ParentCategoryId.HasValue)
+            {
+                ModelState.AddModelError("ParentCategoryId", "Cannot set parent to a subcategory. Only 2 levels are supported.");
+            }
+
+            // Prevent category from being its own parent
+            if (model.ParentCategoryId.Value == model.Id)
+            {
+                ModelState.AddModelError("ParentCategoryId", "A category cannot be its own parent.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            // Only show top-level categories as parent options (no subcategories)
+            var allCategories = await _unitOfWork.Categories.GetTopLevelCategoriesAsync();
+            ViewBag.Categories = allCategories
+                .Where(c => c.Id != model.Id)
+                .OrderBy(c => c.DisplayOrder)
+                .ToList();
+            TempData["Error"] = _localizationService["Admin_Category_ErrorSave"];
+            return View(model);
+        }
+
+        var tempFilesToCleanup = new string[] { };
+
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var category = await _unitOfWork.Categories.GetByIdWithTranslationsAsync(model.Id);
+            
+            if (category == null)
+            {
+                TempData["Error"] = "Category not found";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            // Handle new image upload
+            if (!string.IsNullOrEmpty(model.NewImageTempFileName))
+            {
+                tempFilesToCleanup = new[] { model.NewImageTempFileName };
+                
+                // Delete old image
+                if (!string.IsNullOrEmpty(category.ImageUrl))
+                {
+                    await _categoryImageService.DeleteCategoryImageAsync(category.ImageUrl);
+                }
+
+                // Move new image to permanent location
+                var newSlug = model.Translations.FirstOrDefault(t => t.CultureCode == "en-US")?.Slug ?? category.Slug;
+                var imageUrl = await _categoryImageService.MoveTempImageToPermanentAsync(
+                    model.NewImageTempFileName,
+                    newSlug);
+                category.ImageUrl = imageUrl;
+            }
+
+            // Update category properties
+            category.ParentCategoryId = model.ParentCategoryId;
+            category.DisplayOrder = model.DisplayOrder;
+            category.IsActive = model.IsActive;
+            category.ShowInNavbar = model.ShowInNavbar;
+            category.IconCssClass = model.IconCssClass;
+            category.UpdatedBy = userId;
+            category.UpdatedAt = DateTime.UtcNow;
+
+            // Update default name and slug from English translation
+            var enTranslation = model.Translations.FirstOrDefault(t => t.CultureCode == "en-US");
+            if (enTranslation != null)
+            {
+                category.Name = enTranslation.Name;
+                category.Slug = enTranslation.Slug;
+                category.Description = enTranslation.Description;
+            }
+
+            // Update translations
+            foreach (var translationDto in model.Translations)
+            {
+                var existingTranslation = category.Translations
+                    .FirstOrDefault(t => t.CultureCode == translationDto.CultureCode);
+
+                if (existingTranslation != null)
+                {
+                    // Update existing translation
+                    existingTranslation.Name = translationDto.Name;
+                    existingTranslation.Slug = translationDto.Slug;
+                    existingTranslation.Description = translationDto.Description;
+                    existingTranslation.MetaDescription = translationDto.MetaDescription;
+                    existingTranslation.MetaKeywords = translationDto.MetaKeywords;
+                    existingTranslation.UpdatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Add new translation
+                    var newTranslation = new CategoryTranslation
+                    {
+                        CategoryId = category.Id,
+                        CultureCode = translationDto.CultureCode,
+                        Name = translationDto.Name,
+                        Slug = translationDto.Slug,
+                        Description = translationDto.Description,
+                        MetaDescription = translationDto.MetaDescription,
+                        MetaKeywords = translationDto.MetaKeywords,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _unitOfWork.CategoryTranslations.AddAsync(newTranslation);
+                }
+            }
+
+            _unitOfWork.Categories.Update(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["Success"] = _localizationService["Admin_Category_SuccessUpdate"];
+            _logger.LogInformation("Category updated: {CategoryId} by {UserId}", category.Id, userId);
+
+            return RedirectToAction(nameof(Settings), new { tab = "categories" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating category");
+            TempData["Error"] = _localizationService["Admin_Category_ErrorSave"];
+            
+            if (tempFilesToCleanup.Length > 0)
+            {
+                await _categoryImageService.CleanupTempFilesAsync(tempFilesToCleanup.ToList());
+            }
+
+            // Only show top-level categories as parent options (no subcategories)
+            var allCategories = await _unitOfWork.Categories.GetTopLevelCategoriesAsync();
+            ViewBag.Categories = allCategories
+                .Where(c => c.Id != model.Id)
+                .OrderBy(c => c.DisplayOrder)
+                .ToList();
+            return View(model);
+        }
+    }
+
+    /// <summary>
+    /// POST: Delete category
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CategoryDelete(int id)
+    {
+        try
+        {
+            var category = await _unitOfWork.Categories.GetByIdWithTranslationsAsync(id);
+            if (category == null)
+            {
+                TempData["Error"] = "Category not found";
+                return RedirectToAction(nameof(Settings));
+            }
+
+            // Delete category image if exists
+            if (!string.IsNullOrEmpty(category.ImageUrl))
+            {
+                await _categoryImageService.DeleteCategoryImageAsync(category.ImageUrl);
+            }
+
+            // Delete category (translations will cascade)
+            _unitOfWork.Categories.Remove(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["Success"] = _localizationService["Admin_Category_SuccessDelete"];
+            _logger.LogInformation("Category deleted: {CategoryId}", id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting category: {CategoryId}", id);
+            TempData["Error"] = _localizationService["Admin_Category_ErrorDelete"];
+        }
+
+        return RedirectToAction(nameof(Settings), new { tab = "categories" });
+    }
+
+    /// <summary>
+    /// POST: Upload category image to temp folder (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CategoryUploadImage(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return Json(new { success = false, message = "No file uploaded" });
+            }
+
+            var tempFileName = await _categoryImageService.UploadCategoryImageAsync(file, "img/temp");
+            var tempPath = $"/img/temp/{tempFileName}";
+
+            return Json(new { 
+                success = true, 
+                tempFileName = tempFileName,
+                tempPath = tempPath
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading category image");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// POST: Delete temp files (AJAX) - called when user cancels
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CategoryCancelUpload([FromBody] CategoryCancelUploadDto model)
+    {
+        try
+        {
+            await _categoryImageService.CleanupTempFilesAsync(model.TempFileNames);
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cleaning up temp files");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// POST: Toggle category active status (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CategoryToggleActive(int id)
+    {
+        try
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
+            
+            if (category != null)
+            {
+                category.IsActive = !category.IsActive;
+                category.UpdatedAt = DateTime.UtcNow;
+                category.UpdatedBy = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                
+                _unitOfWork.Categories.Update(category);
+                await _unitOfWork.SaveChangesAsync();
+                
+                var status = category.IsActive ? "activated" : "deactivated";
+                return Json(new { success = true, message = $"Category {status} successfully", isActive = category.IsActive });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Category not found" });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling category status");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    #endregion
+
+    #region Translation Management
+
+    /// <summary>
+    /// GET: Get all translation files (AJAX)
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAllTranslationFiles()
+    {
+        try
+        {
+            var files = await _translationManagementService.GetAllTranslationFilesAsync();
+            return Json(new { success = true, data = files });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting translation files");
+            return Json(new { success = false, message = "Error loading translation files" });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get translations by file (AJAX)
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetTranslationsByFile(string fileName)
+    {
+        try
+        {
+            var translations = await _translationManagementService.GetTranslationsByFileAsync(fileName);
+            return Json(new { success = true, data = translations });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting translations for file: {FileName}", fileName);
+            return Json(new { success = false, message = "Error loading translations" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Search translations (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> SearchTranslations([FromBody] TranslationSearchDto model)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(model.SearchTerm))
+            {
+                return Json(new { success = true, data = new List<object>() });
+            }
+
+            var results = await _translationManagementService.SearchTranslationsAsync(
+                model.SearchTerm, 
+                model.FileName
+            );
+
+            return Json(new { success = true, data = results, count = results.Count });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching translations");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// POST: Update translation (AJAX - Live update)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateTranslation([FromBody] TranslationUpdateDto model)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(model.FileName) || 
+                string.IsNullOrWhiteSpace(model.Key) || 
+                string.IsNullOrWhiteSpace(model.CultureCode))
+            {
+                return Json(new { success = false, message = "Invalid translation data" });
+            }
+
+            // Only allow en-US and pl-PL
+            if (model.CultureCode != "en-US" && model.CultureCode != "pl-PL")
+            {
+                return Json(new { success = false, message = "Only English (en-US) and Polish (pl-PL) translations are supported" });
+            }
+
+            var success = await _translationManagementService.UpdateTranslationAsync(
+                model.FileName, 
+                model.Key, 
+                model.CultureCode, 
+                model.Value);
+
+            if (success)
+            {
+                _logger.LogInformation("Translation updated: {File}.{Key} ({Culture}) = {Value}", 
+                    model.FileName, model.Key, model.CultureCode, model.Value);
+                
+                // Force browser to not cache responses
+                Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+                Response.Headers["Pragma"] = "no-cache";
+                Response.Headers["Expires"] = "0";
+                
+                return Json(new { 
+                    success = true, 
+                    message = "Translation updated successfully. Changes will appear immediately on page refresh." 
+                });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Failed to update translation" });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating translation");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// POST: Update translation comment (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateTranslationComment([FromBody] TranslationCommentUpdateDto model)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(model.FileName) || string.IsNullOrWhiteSpace(model.Key))
+            {
+                return Json(new { success = false, message = "Invalid data" });
+            }
+
+            var success = await _translationManagementService.UpdateCommentAsync(
+                model.FileName, 
+                model.Key, 
+                model.Comment ?? string.Empty);
+
+            if (success)
+            {
+                _logger.LogInformation("Translation comment updated: {File}.{Key}", model.FileName, model.Key);
+                
+                // Force browser to not cache responses
+                Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+                Response.Headers["Pragma"] = "no-cache";
+                Response.Headers["Expires"] = "0";
+                
+                return Json(new { success = true, message = "Comment updated successfully" });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Failed to update comment" });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating translation comment");
             return Json(new { success = false, message = ex.Message });
         }
     }

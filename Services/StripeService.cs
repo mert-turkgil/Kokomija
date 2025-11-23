@@ -225,10 +225,10 @@ namespace Kokomija.Services
         {
             var options = new PromotionCodeCreateOptions
             {
-                Coupon = stripeCouponId,
                 Code = code,
                 Active = true
             };
+            options.AddExtraParam("coupon", stripeCouponId);
 
             return await _promotionCodeService.CreateAsync(options);
         }

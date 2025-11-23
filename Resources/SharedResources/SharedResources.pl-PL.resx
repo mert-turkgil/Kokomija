@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -58,7 +58,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  
   <!-- Cookie Consent Polish Translations -->
   <data name="CookieConsent.Title" xml:space="preserve">
     <value>Używamy plików cookie</value>
@@ -84,7 +83,6 @@
     <value>Dowiedz się więcej</value>
     <comment>Learn more link</comment>
   </data>
-  
   <!-- Cookie Categories -->
   <data name="CookieCategory.Essential" xml:space="preserve">
     <value>Niezbędne pliki cookie</value>
@@ -127,7 +125,6 @@
   <data name="Cancel" xml:space="preserve">
     <value>Anuluj</value>
   </data>
-  
   <!-- Common UI Elements (Examples - not filled yet) -->
   <data name="Common.Home" xml:space="preserve">
     <value>Strona główna</value>
@@ -165,9 +162,7 @@
   <data name="Common.Color" xml:space="preserve">
     <value>Kolor</value>
   </data>
-  
   <!-- Note: More translations will be added as backend features are completed -->
-  
   <!-- Navigation -->
   <data name="Nav_Men" xml:space="preserve">
     <value>Męskie</value>
@@ -196,7 +191,6 @@
   <data name="Nav_AboutUs" xml:space="preserve">
     <value>O nas</value>
   </data>
-  
   <!-- Breadcrumb Navigation -->
   <data name="Home" xml:space="preserve">
     <value>Strona główna</value>
@@ -204,12 +198,10 @@
   <data name="Products" xml:space="preserve">
     <value>Produkty</value>
   </data>
-  
   <!-- Generic Error -->
   <data name="Error_Generic" xml:space="preserve">
     <value>Wystąpił błąd. Spróbuj ponownie.</value>
   </data>
-  
   <!-- Homepage -->
   <data name="Home_Welcome" xml:space="preserve">
     <value>Witamy</value>
@@ -250,7 +242,6 @@
   <data name="Home_SearchPlaceholder" xml:space="preserve">
     <value>Szukaj odzieży, akcesoriów...</value>
   </data>
-  
   <!-- Products -->
   <data name="Product_AddToCart" xml:space="preserve">
     <value>Dodaj do koszyka</value>
@@ -354,7 +345,6 @@
   <data name="Next_Image" xml:space="preserve">
     <value>Następny obraz</value>
   </data>
-  
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
     <value>Męskie</value>
@@ -392,7 +382,6 @@
   <data name="Category_Sweatshirts" xml:space="preserve">
     <value>Bluzy</value>
   </data>
-  
   <!-- Common -->
   <data name="Common_New" xml:space="preserve">
     <value>Nowość</value>
@@ -409,7 +398,6 @@
   <data name="Common_Error" xml:space="preserve">
     <value>Wystąpił błąd</value>
   </data>
-  
   <!-- Product Card -->
   <data name="Product_New" xml:space="preserve">
     <value>Nowość</value>
@@ -450,21 +438,6 @@
   <data name="Home_FeaturedProducts_Subtitle" xml:space="preserve">
     <value>Odkryj nasze najlepsze produkty</value>
   </data>
-  
-  <!-- Top Bar -->
-  <data name="TopBar_Home" xml:space="preserve">
-    <value>Strona główna</value>
-  </data>
-  <data name="TopBar_Shop" xml:space="preserve">
-    <value>Sklep</value>
-  </data>
-  <data name="TopBar_Info" xml:space="preserve">
-    <value>Informacje</value>
-  </data>
-  <data name="TopBar_FreeShipping" xml:space="preserve">
-    <value>Darmowa wysyłka od 200 PLN</value>
-  </data>
-  
   <!-- Footer -->
   <data name="Footer_Brand_Description" xml:space="preserve">
     <value>Odkryj produkty tekstylne premium łączące komfort, jakość i styl. Twoje zaufane źródło doskonałości w modzie.</value>
@@ -508,7 +481,6 @@
   <data name="Footer_Terms" xml:space="preserve">
     <value>Regulamin</value>
   </data>
-  
   <!-- Account -->
   <data name="Account_MyAccount" xml:space="preserve">
     <value>Moje konto</value>
@@ -528,7 +500,6 @@
   <data name="Account_Register" xml:space="preserve">
     <value>Zarejestruj się</value>
   </data>
-  
   <!-- Cart -->
   <data name="Cart_ShoppingCart" xml:space="preserve">
     <value>Koszyk</value>
@@ -548,7 +519,6 @@
   <data name="Cart_Checkout" xml:space="preserve">
     <value>Do kasy</value>
   </data>
-  
   <!-- Accessibility -->
   <data name="Accessibility_SkipToContent" xml:space="preserve">
     <value>Przejdź do treści</value>
@@ -562,7 +532,6 @@
   <data name="Accessibility_ToggleNavigation" xml:space="preserve">
     <value>Przełącz nawigację</value>
   </data>
-  
   <!-- FAQ Page -->
   <data name="FAQ_Title" xml:space="preserve">
     <value>Najczęściej Zadawane Pytania</value>
@@ -609,7 +578,6 @@
   <data name="FAQ_ContactSupport" xml:space="preserve">
     <value>Skontaktuj się z obsługą</value>
   </data>
-  
   <!-- FAQ Questions -->
   <data name="FAQ_Q1_Title" xml:space="preserve">
     <value>Czym jest Kokomija?</value>
@@ -743,7 +711,6 @@
   <data name="FAQ_Q22_Answer" xml:space="preserve">
     <value>Każda strona produktu zawiera szczegółowy przewodnik po rozmiarach z wymiarami. Zalecamy zmierzenie się i porównanie z naszymi tabelami rozmiarów. Jeśli jesteś pomiędzy rozmiarami, sugerujemy zamówienie większego rozmiaru dla komfortu.</value>
   </data>
-  
   <!-- Strona Kontaktowa -->
   <data name="Contact_Title" xml:space="preserve">
     <value>Skontaktuj się z nami</value>
@@ -937,7 +904,6 @@
   <data name="Blog_BackToBlog" xml:space="preserve">
     <value>Powrót do bloga</value>
   </data>
-  
   <!-- Products Page -->
   <data name="Products_AllProducts" xml:space="preserve">
     <value>Wszystkie Produkty</value>
@@ -1168,7 +1134,6 @@
   <data name="Account_ChangePassword" xml:space="preserve">
     <value>Zmień Hasło</value>
   </data>
-  
   <!-- Recenzje Produktów -->
   <data name="Review_Title" xml:space="preserve">
     <value>Opinie Klientów</value>
@@ -1233,7 +1198,6 @@
   <data name="Review_Error" xml:space="preserve">
     <value>Wyst ąpił błąd. Spróbuj ponownie.</value>
   </data>
-  
   <!-- Strony uwierzytelniania -->
   <data name="Auth_WelcomeBack" xml:space="preserve">
     <value>Witaj ponownie</value>
@@ -1283,7 +1247,6 @@
   <data name="Auth_SecuredByStripe" xml:space="preserve">
     <value>Zabezpieczone przez Stripe · Szyfrowanie SSL</value>
   </data>
-  
   <!-- Strona Rejestracji -->
   <data name="Auth_CreateYourAccount" xml:space="preserve">
     <value>Utwórz swoje konto</value>
@@ -1357,7 +1320,6 @@
   <data name="Auth_FreeShip" xml:space="preserve">
     <value>Darmowa wysyłka</value>
   </data>
-  
   <!-- Strona Zamówień -->
   <data name="Orders_Title" xml:space="preserve">
     <value>Moje Zamówienia</value>
@@ -1485,7 +1447,6 @@
   <data name="Quantity" xml:space="preserve">
     <value>Ilość</value>
   </data>
-  
   <!-- Product Names and Descriptions -->
   <data name="Product_WomenBriefs5Pack_Name" xml:space="preserve">
     <value>Majtki damskie bawełniane wysokie - 5 pak</value>
@@ -1553,7 +1514,6 @@
   <data name="Product_ClickToEnlarge" xml:space="preserve">
     <value>Kliknij aby powiększyć</value>
   </data>
-  
   <!-- Coupon Banner Translations -->
   <data name="Copy" xml:space="preserve">
     <value>Kopiuj</value>
@@ -1582,31 +1542,51 @@
   <data name="Days" xml:space="preserve">
     <value>Dni</value>
   </data>
-  
-  <!-- Carousel Slide Translations (Generic) -->
-  <data name="Carousel_NewCollection" xml:space="preserve">
-    <value>Nowa Kolekcja Wiosna 2025</value>
+  <!-- Admin Carousel Management -->
+  <data name="Admin_Carousel_CreateNew" xml:space="preserve">
+    <value>Utwórz nowy slajd karuzeli</value>
   </data>
-  <data name="Carousel_NewCollection_Subtitle" xml:space="preserve">
-    <value>Odkryj najnowsze trendy w modzie damskiej i męskiej</value>
+  <data name="Admin_Carousel_EditSlide" xml:space="preserve">
+    <value>Edytuj slajd karuzeli</value>
   </data>
-  <data name="Carousel_ShopNow" xml:space="preserve">
-    <value>Kup Teraz</value>
+  <data name="Admin_Carousel_NotFound" xml:space="preserve">
+    <value>Nie znaleziono slajdu karuzeli</value>
   </data>
-  <data name="Carousel_ViewOffer" xml:space="preserve">
-    <value>Zobacz Ofertę</value>
+  <data name="Admin_Carousel_ErrorSave" xml:space="preserve">
+    <value>Błąd podczas zapisywania slajdu karuzeli. Spróbuj ponownie.</value>
   </data>
-  <data name="Carousel_Browse" xml:space="preserve">
-    <value>Przeglądaj</value>
+  <data name="Admin_Carousel_SuccessCreated" xml:space="preserve">
+    <value>Slajd karuzeli został utworzony pomyślnie!</value>
   </data>
-  <data name="Carousel_Check" xml:space="preserve">
-    <value>Sprawdź</value>
+  <data name="Admin_Carousel_SuccessUpdated" xml:space="preserve">
+    <value>Slajd karuzeli został zaktualizowany pomyślnie!</value>
   </data>
-  <data name="Carousel_DiscoverMore" xml:space="preserve">
-    <value>Odkryj Więcej</value>
+  <data name="Admin_Carousel_SuccessDeleted" xml:space="preserve">
+    <value>Slajd karuzeli został usunięty pomyślnie!</value>
+  </data>
+  <data name="Admin_Carousel_ErrorDeleted" xml:space="preserve">
+    <value>Błąd podczas usuwania slajdu karuzeli. Spróbuj ponownie.</value>
+  </data>
+  <!-- Admin Category Management -->
+  <data name="Admin_Category_CreateNew" xml:space="preserve">
+    <value>Utwórz nową kategorię</value>
+  </data>
+  <data name="Admin_Category_Edit" xml:space="preserve">
+    <value>Edytuj kategorię</value>
+  </data>
+  <data name="Admin_Category_ErrorSave" xml:space="preserve">
+    <value>Błąd podczas zapisywania kategorii. Spróbuj ponownie.</value>
+  </data>
+  <data name="Admin_Category_SuccessCreate" xml:space="preserve">
+    <value>Kategoria została utworzona pomyślnie!</value>
+  </data>
+  <data name="Admin_Category_SuccessUpdate" xml:space="preserve">
+    <value>Kategoria została zaktualizowana pomyślnie!</value>
+  </data>
+  <data name="Admin_Category_SuccessDelete" xml:space="preserve">
+    <value>Kategoria została usunięta pomyślnie!</value>
+  </data>
+  <data name="Admin_Category_ErrorDelete" xml:space="preserve">
+    <value>Błąd podczas usuwania kategorii. Spróbuj ponownie.</value>
   </data>
 </root>
-
-
-
-

@@ -33,11 +33,14 @@ namespace Kokomija.ViewComponents
         {
             try
             {
+                _logger.LogInformation("Loading carousel slides for location: {Location}, categoryId: {CategoryId}", location, categoryId);
                 var slides = await _carouselService.GetSlidesByLocationAsync(location, categoryId);
 
+                _logger.LogInformation("Found {Count} total slides for location: {Location}", slides.Count(), location);
+                
                 if (!slides.Any())
                 {
-                    _logger.LogInformation("No carousel slides found for location: {Location}", location);
+                    _logger.LogWarning("No carousel slides found for location: {Location}", location);
                     return Content(string.Empty);
                 }
 
@@ -77,6 +80,13 @@ namespace Kokomija.ViewComponents
             var desktopImagePath = slide.ImagePath;
             var tabletImagePath = slide.TabletImagePath;
             var mobileImagePath = slide.MobileImagePath;
+            
+            // Get current culture code
+            var currentCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            
+            // Get translation for current culture, fallback to first available translation or null
+            var translation = slide.Translations?.FirstOrDefault(t => t.CultureCode == currentCulture)
+                ?? slide.Translations?.FirstOrDefault();
             
             // Check if desktop image exists, if not use fallback
             var useFallback = false;
@@ -124,17 +134,54 @@ namespace Kokomija.ViewComponents
                 mobileImagePath = tabletImagePath; // Use tablet image if no mobile version specified
             }
 
-            // Generate URL from route if RouteName is specified
-            string? linkUrl = slide.LinkUrl;
-            if (!string.IsNullOrEmpty(slide.RouteName))
+            // Generate URL from controller/action if specified
+            string? linkUrl = translation?.LinkUrl ?? slide.LinkUrl;
+            
+            // Priority: translation controller/action > slide RouteName > LinkUrl
+            if (!string.IsNullOrEmpty(translation?.ControllerName) && !string.IsNullOrEmpty(translation.ActionName))
+            {
+                try
+                {
+                    var routeValues = new Dictionary<string, object?>();
+                    
+                    // Add area if specified
+                    if (!string.IsNullOrEmpty(translation.AreaName))
+                    {
+                        routeValues["area"] = translation.AreaName;
+                    }
+                    
+                    // Parse additional route parameters if provided
+                    if (!string.IsNullOrEmpty(translation.RouteParameters))
+                    {
+                        var additionalParams = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(translation.RouteParameters);
+                        if (additionalParams != null)
+                        {
+                            foreach (var param in additionalParams)
+                            {
+                                routeValues[param.Key] = param.Value;
+                            }
+                        }
+                    }
+                    
+                    linkUrl = Url.Action(translation.ActionName, translation.ControllerName, routeValues.Any() ? routeValues : null);
+                    _logger.LogInformation("Generated link URL from translation: {Url} (Controller: {Controller}, Action: {Action})", 
+                        linkUrl, translation.ControllerName, translation.ActionName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error generating URL from translation controller/action for slide {SlideId}", slide.Id);
+                }
+            }
+            else if (!string.IsNullOrEmpty(slide.RouteName))
             {
                 try
                 {
                     // Parse route parameters if provided
                     object? routeValues = null;
-                    if (!string.IsNullOrEmpty(slide.RouteParameters))
+                    var routeParams = slide.RouteParameters;
+                    if (!string.IsNullOrEmpty(routeParams))
                     {
-                        routeValues = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(slide.RouteParameters);
+                        routeValues = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(routeParams);
                     }
 
                     linkUrl = Url.RouteUrl(slide.RouteName, routeValues);
@@ -142,23 +189,14 @@ namespace Kokomija.ViewComponents
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Error generating route URL for slide {SlideId}, route: {RouteName}", slide.Id, slide.RouteName);
-                    // Fall back to LinkUrl if route generation fails
                 }
             }
 
-            // Try to get localized text from SharedResources, fall back to stored text
-            var titleLocalized = _localizer[slide.Title];
-            var title = titleLocalized.ResourceNotFound ? slide.Title : titleLocalized.Value;
-            
-            _logger.LogDebug("Carousel Title - Key: {Key}, Value: {Value}, ResourceNotFound: {NotFound}", 
-                slide.Title, title, titleLocalized.ResourceNotFound);
-            
-            var subtitle = !string.IsNullOrEmpty(slide.Subtitle) 
-                ? (_localizer[slide.Subtitle].ResourceNotFound ? slide.Subtitle : _localizer[slide.Subtitle].Value)
-                : slide.Subtitle;
-            var buttonText = !string.IsNullOrEmpty(slide.ButtonText)
-                ? (_localizer[slide.ButtonText].ResourceNotFound ? slide.ButtonText : _localizer[slide.ButtonText].Value)
-                : slide.ButtonText;
+            // Get localized text from translation, fallback to main slide entity
+            var title = translation?.Title ?? slide.Title;
+            var subtitle = translation?.Subtitle ?? slide.Subtitle;
+            var buttonText = translation?.ButtonText ?? slide.ButtonText;
+            var imageAlt = translation?.ImageAlt ?? slide.ImageAlt;
 
             return new CarouselSlideViewModel
             {
@@ -175,7 +213,7 @@ namespace Kokomija.ViewComponents
                 FullMobileImagePath = !string.IsNullOrEmpty(mobileImagePath) 
                     ? Url.Content($"~{mobileImagePath}") 
                     : null,
-                ImageAlt = slide.ImageAlt,
+                ImageAlt = imageAlt,
                 LinkUrl = linkUrl,
                 ButtonText = buttonText,
                 ButtonClass = slide.ButtonClass ?? "btn-primary",
@@ -183,7 +221,13 @@ namespace Kokomija.ViewComponents
                 TextColor = slide.TextColor,
                 TextAlignment = slide.TextAlign ?? "center",
                 DisplayOrder = slide.DisplayOrder,
-                UseFallbackImage = useFallback
+                UseFallbackImage = useFallback,
+                AnimationType = slide.AnimationType ?? "fade",
+                Duration = slide.Duration,
+                CustomCssClass = slide.CustomCssClass,
+                ControllerName = translation?.ControllerName,
+                ActionName = translation?.ActionName,
+                AreaName = translation?.AreaName
             };
         }
     }

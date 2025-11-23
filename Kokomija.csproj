@@ -6,6 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- Configure dotnet watch to monitor .resx file changes -->
+  <ItemGroup>
+    <Watch Include="Resources/**/*.resx" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
@@ -19,13 +24,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.0" />
-    <PackageReference Include="Stripe.net" Version="45.14.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     
     <!-- External Authentication Providers -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="9.0.0" />
     <PackageReference Include="AspNet.Security.OAuth.Apple" Version="9.0.0" />
+    <PackageReference Include="Stripe.net" Version="50.0.0" />
   </ItemGroup>
 
 </Project>
