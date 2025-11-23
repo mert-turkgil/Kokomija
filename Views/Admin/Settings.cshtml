@@ -199,12 +199,19 @@
                                                                         title="Toggle Status">
                                                                     <i class="bi bi-toggle-on"></i>
                                                                 </button>
-                                                                <button type="button" 
-                                                                        class="btn btn-sm btn-outline-danger" 
-                                                                        onclick="deleteCarouselSlide(event, @slide.Id, '@(slide.Title.Replace("'", "\\'" ).Replace("\"", "&quot;"))')"
+                                                                <form asp-action="CarouselDelete" 
+                                                                      asp-controller="Admin"
+                                                                      method="post"
+                                                                      class="d-inline m-0 p-0 btn btn-outline-danger"        
+                                                                      onsubmit="return confirm('⚠️ Delete slide: @slide.Title?\n\nThis action cannot be undone.');">
+                                                                    <input type="hidden" name="id" value="@slide.Id" />
+                                                                    <button 
+                                                                        class="btn btn-outline-danger border-0 m-0" 
+                                                                        type="submit" 
                                                                         title="Delete">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </button>
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </form>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -635,292 +642,23 @@
     </div>
 </div>
 
-<!-- Create Slide Modal -->
-<div class="modal fade" id="createSlideModal" tabindex="-1" aria-labelledby="createSlideModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createSlideModalLabel">
-                    <i class="bi bi-plus-circle"></i>
-                    Create New Carousel Slide
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="createSlideForm">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="createSlideTitle" class="form-label">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="createSlideTitle" name="title" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="createSlideSubtitle" class="form-label">Subtitle</label>
-                            <input type="text" class="form-control" id="createSlideSubtitle" name="subtitle">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="createSlideButtonText" class="form-label">Button Text</label>
-                            <input type="text" class="form-control" id="createSlideButtonText" name="buttonText">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="createSlideLinkUrl" class="form-label">Button Link URL</label>
-                            <input type="url" class="form-control" id="createSlideLinkUrl" name="linkUrl" placeholder="https://...">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="createSlideLocation" class="form-label">Location <span class="text-danger">*</span></label>
-                            <select class="form-select" id="createSlideLocation" name="location" required>
-                                <option value="Home">Home Page</option>
-                                <option value="Products">Products Page</option>
-                                <option value="Category">Category Page</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="createSlideDisplayOrder" class="form-label">Display Order <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="createSlideDisplayOrder" name="displayOrder" min="0" value="0" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="createSlideIsActive" class="form-label">Status</label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="createSlideIsActive" name="isActive" checked>
-                                <label class="form-check-label" for="createSlideIsActive">Active</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="createSlideStartDate" class="form-label">Start Date</label>
-                            <input type="datetime-local" class="form-control" id="createSlideStartDate" name="startDate">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="createSlideEndDate" class="form-label">End Date</label>
-                            <input type="datetime-local" class="form-control" id="createSlideEndDate" name="endDate">
-                        </div>
-                    </div>
-
-                    <!-- Responsive Images Section -->
-                    <div class="alert alert-info mb-3">
-                        <i class="bi bi-info-circle"></i>
-                        <strong>Responsive Images:</strong> Upload 3 images for optimal display across all devices.
-                        Use naming convention: 1.jpg (Desktop), 2.jpg (Tablet), 3.jpg (Mobile)
-                    </div>
-
-                    <!-- Desktop Image (Required) -->
-                    <div class="mb-3">
-                        <label for="createSlideDesktopImage" class="form-label">
-                            <i class="bi bi-display"></i> Desktop Image (1.jpg) <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" class="form-control" id="createSlideDesktopImage" 
-                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" required>
-                        <small class="text-muted">Large screens (1920x800px recommended) • Max 5MB</small>
-                        <div id="desktopImagePreview" class="mt-2" style="display: none;">
-                            <img id="desktopImagePreviewImg" src="" alt="Desktop Preview" 
-                                 style="max-width: 100%; max-height: 150px; object-fit: contain;" class="border rounded p-1">
-                        </div>
-                    </div>
-
-                    <!-- Tablet Image (Optional) -->
-                    <div class="mb-3">
-                        <label for="createSlideTabletImage" class="form-label">
-                            <i class="bi bi-tablet"></i> Tablet Image (2.jpg)
-                        </label>
-                        <input type="file" class="form-control" id="createSlideTabletImage" 
-                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
-                        <small class="text-muted">Medium screens (1024x600px recommended) • Max 5MB</small>
-                        <div id="tabletImagePreview" class="mt-2" style="display: none;">
-                            <img id="tabletImagePreviewImg" src="" alt="Tablet Preview" 
-                                 style="max-width: 100%; max-height: 150px; object-fit: contain;" class="border rounded p-1">
-                        </div>
-                    </div>
-
-                    <!-- Mobile Image (Optional) -->
-                    <div class="mb-3">
-                        <label for="createSlideMobileImage" class="form-label">
-                            <i class="bi bi-phone"></i> Mobile Image (3.jpg)
-                        </label>
-                        <input type="file" class="form-control" id="createSlideMobileImage" 
-                               accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
-                        <small class="text-muted">Small screens (768x600px recommended) • Max 5MB</small>
-                        <div id="mobileImagePreview" class="mt-2" style="display: none;">
-                            <img id="mobileImagePreviewImg" src="" alt="Mobile Preview" 
-                                 style="max-width: 100%; max-height: 150px; object-fit: contain;" class="border rounded p-1">
-                        </div>
-                    </div>
-
-                    <input type="hidden" id="createSlideDesktopTempFileName" name="desktopTempFileName">
-                    <input type="hidden" id="createSlideTabletTempFileName" name="tabletTempFileName">
-                    <input type="hidden" id="createSlideMobileTempFileName" name="mobileTempFileName">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-lg"></i>
-                        Create Slide
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Slide Modal -->
-<div class="modal fade" id="editSlideModal" tabindex="-1" aria-labelledby="editSlideModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editSlideModalLabel">
-                    <i class="bi bi-pencil"></i>
-                    Edit Carousel Slide
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editSlideForm">
-                <div class="modal-body">
-                    <input type="hidden" id="slideId" name="slideId">
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="slideTitle" class="form-label">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="slideTitle" name="title" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="slideSubtitle" class="form-label">Subtitle</label>
-                            <input type="text" class="form-control" id="slideSubtitle" name="subtitle">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="slideButtonText" class="form-label">Button Text</label>
-                            <input type="text" class="form-control" id="slideButtonText" name="buttonText">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="slideLinkUrl" class="form-label">Button Link URL</label>
-                            <input type="url" class="form-control" id="slideLinkUrl" name="linkUrl" placeholder="https://...">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="slideLocation" class="form-label">Location <span class="text-danger">*</span></label>
-                            <select class="form-select" id="slideLocation" name="location" required>
-                                <option value="Home">Home Page</option>
-                                <option value="Products">Products Page</option>
-                                <option value="Category">Category Page</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="slideDisplayOrder" class="form-label">Display Order <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="slideDisplayOrder" name="displayOrder" min="0" value="0" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="slideIsActive" class="form-label">Status</label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="slideIsActive" name="isActive">
-                                <label class="form-check-label" for="slideIsActive">Active</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="slideStartDate" class="form-label">Start Date (Optional)</label>
-                            <input type="datetime-local" class="form-control" id="slideStartDate" name="startDate">
-                            <small class="text-muted">Leave empty for immediate activation</small>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="slideEndDate" class="form-label">End Date (Optional)</label>
-                            <input type="datetime-local" class="form-control" id="slideEndDate" name="endDate">
-                            <small class="text-muted">Leave empty for no expiration</small>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="slideImagePath" class="form-label">Image Path <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="slideImagePath" name="imagePath" required>
-                        <small class="text-muted">Path to image file (e.g., /img/carousel/slide1.jpg)</small>
-                    </div>
-
-                    <div class="mb-3" id="currentImagePreview">
-                        <!-- Image preview will be shown here -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i>
-                        Save Changes
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+@section Styles {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" />
-    
     <style>
-        .editable-cell {
-            cursor: text;
-            transition: all 0.2s ease;
-        }
-        
-        .editable-cell:hover {
-            border-color: #dee2e6 !important;
-            background-color: rgba(var(--bs-primary-rgb), 0.05);
-        }
-        
         .editable-cell:focus {
             outline: none;
-            border-color: var(--bs-primary) !important;
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
             background-color: #fff;
-            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
         }
-        
-        .editable-cell.save-success {
-            border-color: var(--bs-success) !important;
-            background-color: rgba(var(--bs-success-rgb), 0.1);
-        }
-        
-        .translation-table {
-            font-size: 0.9rem;
-        }
-        
-        .translation-table code {
-            background-color: rgba(var(--bs-secondary-rgb), 0.1);
-            padding: 0.2rem 0.4rem;
-            border-radius: 3px;
-        }
-        
-        .comment-editable {
-            font-style: italic;
-            color: #6c757d;
-        }
-        
-        .comment-editable:empty::before {
-            content: 'Click to add comment...';
-            color: #adb5bd;
-        }
-        
-        @@media (max-width: 768px) {
-            .translation-table {
-                font-size: 0.85rem;
-            }
-            
-            .editable-cell {
-                min-height: 40px !important;
-                font-size: 0.85rem;
-            }
+        .comment-cell-wrapper:hover .comment-editable {
+            border-color: #ced4da;
         }
     </style>
-    
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>    
     <script>
         console.log('Site Settings page loaded');
         
