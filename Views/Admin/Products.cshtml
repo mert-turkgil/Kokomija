@@ -1,0 +1,385 @@
+@model Kokomija.Models.ViewModels.Admin.ProductManagementViewModel
+@{
+    ViewData["Title"] = "Product Management";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-box-seam"></i>
+                                Product Management
+                            </h1>
+                            <p class="mb-0">Manage your product catalog, inventory, and customer reviews</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Dashboard
+                            </a>
+                            <a asp-action="ProductCreate" class="btn btn-primary">
+                                <i class="bi bi-plus-lg"></i>
+                                Add New Product
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-2-4">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-primary">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalProducts</h6>
+                        <small>Total Products</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2-4">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.ActiveProducts</h6>
+                        <small>Active</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2-4">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-warning">
+                        <i class="bi bi-pause-circle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.InactiveProducts</h6>
+                        <small>Inactive</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2-4">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.OutOfStockProducts</h6>
+                        <small>Out of Stock</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2-4">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-info">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalInventoryValue.ToString("C")</h6>
+                        <small>Inventory Value</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list"></i>
+                                All Products
+                            </h5>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="categoryFilter" style="width: auto;">
+                                    <option value="">All Categories</option>
+                                </select>
+                                <select class="form-select form-select-sm" id="statusFilter" style="width: auto;">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                <select class="form-select form-select-sm" id="stockFilter" style="width: auto;">
+                                    <option value="">All Stock</option>
+                                    <option value="instock">In Stock</option>
+                                    <option value="outofstock">Out of Stock</option>
+                                    <option value="lowstock">Low Stock (&lt; 20)</option>
+                                </select>
+                                <input type="text" class="form-control form-control-sm" id="searchProducts" placeholder="Search products..." style="width: 250px;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="productsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="80">Image</th>
+                                        <th>Product</th>
+                                        <th width="120">Parent Category</th>
+                                        <th width="120">Category</th>
+                                        <th width="100">Price</th>
+                                        <th width="80">Pack</th>
+                                        <th width="80">Stock</th>
+                                        <th width="80">Variants</th>
+                                        <th width="120">Reviews</th>
+                                        <th width="100">Status</th>
+                                        <th width="150">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var product in Model.Products)
+                                    {
+                                        <tr data-category="@product.CategoryName" data-status="@(product.IsActive ? "active" : "inactive")" data-stock="@product.TotalStock">
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(product.FeaturedImage))
+                                                {
+                                                    <img src="@product.FeaturedImage" alt="@product.Name" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-muted d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border: 1px dashed #ddd; border-radius: 4px;">
+                                                        <i class="bi bi-image"></i>
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <strong>@product.Name</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-stripe"></i> @product.StripeProductId
+                                                </small>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(product.ParentCategoryName))
+                                                {
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                        @product.ParentCategoryName
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(product.CategoryName))
+                                                {
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                        @product.CategoryName
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <strong>@product.Price.ToString("C")</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@product.PackSize x</span>
+                                            </td>
+                                            <td>
+                                                @if (product.TotalStock == 0)
+                                                {
+                                                    <span class="badge bg-danger">0</span>
+                                                }
+                                                else if (product.TotalStock < 20)
+                                                {
+                                                    <span class="badge bg-warning">@product.TotalStock</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">@product.TotalStock</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">@product.TotalVariants</span>
+                                            </td>
+                                            <td>
+                                                @if (product.ReviewCount > 0)
+                                                {
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <i class="bi bi-star-fill text-warning"></i>
+                                                        <small>@product.AverageRating.ToString("0.0")</small>
+                                                        <small class="text-muted">(@product.ReviewCount)</small>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">No reviews</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (product.IsActive)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Active
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-pause-circle"></i> Inactive
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a asp-action="ProductEdit" asp-route-id="@product.Id" class="btn btn-outline-primary" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-outline-info" onclick="toggleProductStatus(@product.Id)" title="@(product.IsActive ? "Deactivate" : "Activate")">
+                                                        <i class="bi bi-@(product.IsActive ? "pause" : "play")"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger" onclick="deleteProduct(@product.Id, '@product.Name')" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Filter functionality
+        function filterProducts() {
+            const categoryFilter = $('#categoryFilter').val().toLowerCase();
+            const statusFilter = $('#statusFilter').val();
+            const stockFilter = $('#stockFilter').val();
+            const searchTerm = $('#searchProducts').val().toLowerCase();
+
+            $('#productsTable tbody tr').each(function() {
+                const $row = $(this);
+                const category = $row.data('category')?.toString().toLowerCase() || '';
+                const status = $row.data('status');
+                const stock = parseInt($row.data('stock')) || 0;
+                const text = $row.text().toLowerCase();
+
+                let show = true;
+
+                if (categoryFilter && category !== categoryFilter) show = false;
+                if (statusFilter && status !== statusFilter) show = false;
+                if (stockFilter) {
+                    if (stockFilter === 'instock' && stock <= 0) show = false;
+                    if (stockFilter === 'outofstock' && stock > 0) show = false;
+                    if (stockFilter === 'lowstock' && (stock >= 20 || stock <= 0)) show = false;
+                }
+                if (searchTerm && text.indexOf(searchTerm) === -1) show = false;
+
+                $row.toggle(show);
+            });
+        }
+
+        $('#categoryFilter, #statusFilter, #stockFilter').on('change', filterProducts);
+        $('#searchProducts').on('keyup', filterProducts);
+
+        // Toggle product status
+        async function toggleProductStatus(productId) {
+            if (!confirm('Are you sure you want to change the product status?\n\nDeactivating will:\n- Archive the product in Stripe\n- Deactivate all prices\n- Remove from all carts')) {
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('id', productId);
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                const response = await fetch('@Url.Action("ProductToggleActive")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update product status'));
+                }
+            } catch (error) {
+                console.error('Error toggling product status:', error);
+                alert('An error occurred while updating product status');
+            }
+        }
+
+        // Delete product
+        function deleteProduct(productId, productName) {
+            if (!confirm(`Are you sure you want to delete "${productName}"?\n\nThis will:\n- Remove the product from Stripe\n- Delete all variants and images\n- Remove from all carts and wishlists\n\nThis action cannot be undone!`)) {
+                return;
+            }
+
+            // Implementation pending - will add in ProductDelete action
+            alert('Delete functionality will be implemented in the next update');
+        }
+    </script>
+
+    <style>
+        .col-md-2-4 {
+            flex: 0 0 20%;
+            max-width: 20%;
+        }
+
+        .stat-card-small {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .stat-icon-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .stat-card-small h6 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stat-card-small small {
+            color: #666;
+            font-size: 13px;
+            display: block;
+            margin-top: 2px;
+        }
+    </style>
+
+    <form id="antiforgerForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+}

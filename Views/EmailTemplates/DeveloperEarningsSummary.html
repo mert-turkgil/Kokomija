@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Earnings Summary - Kokomija</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
+        <tr>
+            <td style="padding: 20px 0;">
+                
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="650" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;">KOKOMIJA</h1>
+                            <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">Developer Dashboard</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Period Header -->
+                    <tr>
+                        <td style="padding: 30px 30px 20px 30px; text-align: center;">
+                            <h2 style="margin: 0 0 10px 0; color: #1f2937; font-size: 28px; font-weight: 700;">
+                                💰 Earnings Summary
+                            </h2>
+                            <p style="margin: 0; color: #6b7280; font-size: 16px;">
+                                {{PERIOD}}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Total Earnings Box -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
+                                <tr>
+                                    <td style="padding: 40px; text-align: center;">
+                                        <p style="margin: 0 0 10px 0; color: #d1fae5; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Total Developer Commission</p>
+                                        <h1 style="margin: 0; color: #ffffff; font-size: 48px; font-weight: 700;">{{TOTAL_AMOUNT}}</h1>
+                                        {{#if AMOUNT_CHANGE}}
+                                        <p style="margin: 10px 0 0 0; color: #d1fae5; font-size: 14px;">
+                                            {{AMOUNT_CHANGE}} from previous period
+                                        </p>
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Earnings Breakdown -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Earnings Breakdown</h3>
+                        </td>
+                    </tr>
+                    
+                    <!-- Stats Grid -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 10px 20px 0; width: 50%;">
+                                        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                            <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Orders</p>
+                                            <p style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 700;">{{TOTAL_ORDERS}}</p>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 0 0 20px 10px; width: 50%;">
+                                        <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981;">
+                                            <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Gross Revenue</p>
+                                            <p style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 700;">{{GROSS_REVENUE}}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 10px 20px 0; width: 50%;">
+                                        <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                                            <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Stripe Fees</p>
+                                            <p style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 700;">{{STRIPE_FEES}}</p>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 0 0 20px 10px; width: 50%;">
+                                        <div style="background-color: #f3e8ff; padding: 20px; border-radius: 8px; border-left: 4px solid #9333ea;">
+                                            <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Net Revenue</p>
+                                            <p style="margin: 0; color: #1f2937; font-size: 24px; font-weight: 700;">{{NET_REVENUE}}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Payout Status -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 16px; font-weight: 600;">Payout Information</h3>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Pending Payout:</td>
+                                                <td style="padding: 6px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{PENDING_PAYOUT}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Last Payout:</td>
+                                                <td style="padding: 6px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{LAST_PAYOUT_AMOUNT}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Last Payout Date:</td>
+                                                <td style="padding: 6px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{LAST_PAYOUT_DATE}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Next Payout Date:</td>
+                                                <td style="padding: 6px 0; color: #1f2937; font-size: 14px; font-weight: 600; text-align: right;">{{NEXT_PAYOUT_DATE}}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- View Dashboard Button -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <a href="{{DASHBOARD_URL}}" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">
+                                View Full Dashboard
+                            </a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer Note -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                                <p style="margin: 0; color: #1e40af; font-size: 13px; line-height: 1.6;">
+                                    <strong>Note:</strong> This is an automated summary email. All amounts represent your developer commission based on the configured commission rate. For detailed transaction breakdowns, please visit your dashboard.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #9ca3af; font-size: 12px;">
+                                © 2024 Kokomija. All rights reserved.
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                                This email was sent to the platform owner/administrator.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+                
+            </td>
+        </tr>
+    </table>
+    
+</body>
+</html>

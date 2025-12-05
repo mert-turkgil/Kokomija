@@ -66,6 +66,11 @@ namespace Kokomija.Data.Configurations
                 .HasForeignKey(r => r.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasMany(p => p.Translations)
+                .WithOne(pt => pt.Product)
+                .HasForeignKey(pt => pt.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Indexes
             builder.HasIndex(p => p.StripeProductId);
             builder.HasIndex(p => p.StripePriceId);

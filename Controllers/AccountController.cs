@@ -18,19 +18,22 @@ namespace Kokomija.Controllers
         private readonly IStripeCustomerService _stripeCustomerService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AccountController> _logger;
+        private readonly IReturnRequestService _returnRequestService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IStripeCustomerService stripeCustomerService,
             IUnitOfWork unitOfWork,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            IReturnRequestService returnRequestService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _stripeCustomerService = stripeCustomerService;
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _returnRequestService = returnRequestService;
         }
 
         #region Login
@@ -859,17 +862,56 @@ namespace Kokomija.Controllers
                 return RedirectToAction("Index");
             }
 
-            // TODO: Create a ReturnRequest entity and save to database
-            // For now, just log the request
-            _logger.LogInformation("Return request submitted by user {UserId} for order {OrderNumber}. Reason: {Reason}", 
-                user.Id, orderToReturn.OrderNumber, model.Reason);
+            // Check if order is eligible for return
+            if (orderToReturn.OrderStatus != "Delivered" || !orderToReturn.DeliveredAt.HasValue)
+            {
+                TempData["ErrorMessage"] = "This order is not eligible for return";
+                return RedirectToAction("Index");
+            }
 
-            // Update order status to indicate return requested
-            orderToReturn.OrderStatus = "ReturnRequested";
-            _unitOfWork.Orders.Update(orderToReturn);
-            await _unitOfWork.SaveChangesAsync();
+            if (!model.SelectedItemIds.Any())
+            {
+                TempData["ErrorMessage"] = "Please select at least one item to return";
+                return RedirectToAction("ReturnRequest", new { orderId = model.OrderId });
+            }
 
-            TempData["SuccessMessage"] = "Return request submitted successfully. We will contact you shortly.";
+            // Create return requests for each selected item
+            int successCount = 0;
+            foreach (var orderItemId in model.SelectedItemIds)
+            {
+                var orderItem = orderToReturn.OrderItems?.FirstOrDefault(oi => oi.Id == orderItemId);
+                if (orderItem == null) continue;
+
+                try
+                {
+                    var createDto = new Models.ViewModels.ReturnRequest.CreateReturnRequestDto
+                    {
+                        OrderId = model.OrderId,
+                        OrderItemId = orderItemId,
+                        Reason = model.Reason,
+                        Description = model.Details,
+                        RequestedAmount = orderItem.TotalPrice,
+                        Images = null // File upload not implemented in current view
+                    };
+
+                    var (success, message, requestId) = await _returnRequestService.CreateReturnRequestAsync(createDto, user.Id);
+                    if (success) successCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to create return request for order item {OrderItemId}", orderItemId);
+                }
+            }
+
+            if (successCount > 0)
+            {
+                TempData["SuccessMessage"] = $"Return request(s) submitted successfully for {successCount} item(s). We will review and contact you shortly.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to submit return request(s). Please try again or contact support.";
+            }
+
             return RedirectToAction("Index");
         }
 

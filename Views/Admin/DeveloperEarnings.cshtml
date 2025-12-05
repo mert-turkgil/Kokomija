@@ -1,0 +1,321 @@
+@model Kokomija.Models.ViewModels.DeveloperEarningsViewModel
+@{
+    ViewData["Title"] = "Developer Earnings";
+    var totalPages = (int)Math.Ceiling((double)Model.TotalRecords / Model.PageSize);
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-cash-stack"></i>
+                                Developer Commission Earnings
+                            </h1>
+                            <p class="mb-0 text-danger"><i class="bi bi-shield-lock"></i> ROOT ONLY</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="CommissionSettings" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Settings
+                            </a>
+                            <button type="button" class="btn btn-success" onclick="exportEarnings()">
+                                <i class="bi bi-download"></i>
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings Summary -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h5 class="mb-3"><i class="bi bi-graph-up"></i> Earnings Overview</h5>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-light">
+                    <div class="stat-icon-small bg-primary">
+                        <i class="bi bi-calendar-day"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Summary.TodayEarnings.ToString("C")</h6>
+                        <small>Today</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-light">
+                    <div class="stat-icon-small bg-success">
+                        <i class="bi bi-calendar-week"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Summary.WeekEarnings.ToString("C")</h6>
+                        <small>This Week</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-light">
+                    <div class="stat-icon-small bg-info">
+                        <i class="bi bi-calendar-month"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Summary.MonthEarnings.ToString("C")</h6>
+                        <small>This Month</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-light">
+                    <div class="stat-icon-small bg-warning">
+                        <i class="bi bi-calendar-range"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Summary.YearEarnings.ToString("C")</h6>
+                        <small>This Year</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-gradient-primary text-white">
+                    <div class="stat-icon-small bg-white text-primary">
+                        <i class="bi bi-infinity"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Summary.AllTimeEarnings.ToString("C")</h6>
+                        <small>All Time</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-gradient-success text-white">
+                    <div class="stat-icon-small bg-white text-success">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Summary.PendingPayout.ToString("C")</h6>
+                        <small>Pending Payout</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Stats -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-cart-check"></i> Total Orders with Commission</h6>
+                        <h3 class="mb-0">@Model.Summary.TotalOrders</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-calculator"></i> Average Commission per Order</h6>
+                        <h3 class="mb-0">@Model.Summary.AverageCommissionPerOrder.ToString("C")</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list"></i>
+                                All Developer Earnings
+                            </h5>
+                            <div>
+                                <span class="badge bg-secondary">Total Records: @Model.TotalRecords</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="earningsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="80">ID</th>
+                                        <th width="120">Order</th>
+                                        <th width="120">Gross Amount</th>
+                                        <th width="120">Stripe Fee</th>
+                                        <th width="140">Dev Commission</th>
+                                        <th width="120">Net Amount</th>
+                                        <th width="150">Date Earned</th>
+                                        <th width="120">Payout Status</th>
+                                        <th width="180">Payout ID</th>
+                                        <th width="150">Payout Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.Earnings.Any())
+                                    {
+                                        @foreach (var earning in Model.Earnings)
+                                        {
+                                            <tr>
+                                                <td>@earning.Id</td>
+                                                <td><code>@earning.OrderNumber</code></td>
+                                                <td><strong>@earning.GrossAmount.ToString("C")</strong></td>
+                                                <td class="text-danger">-@earning.StripeProcessingFee.ToString("C")</td>
+                                                <td class="text-success"><strong>+@earning.DeveloperCommission.ToString("C")</strong></td>
+                                                <td>@earning.NetAmount.ToString("C")</td>
+                                                <td><small>@earning.EarnedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                                <td>
+                                                    @if (earning.PayoutStatus == "Pending")
+                                                    {
+                                                        <span class="badge bg-warning">Pending</span>
+                                                    }
+                                                    else if (earning.PayoutStatus == "Processed")
+                                                    {
+                                                        <span class="badge bg-success">Processed</span>
+                                                    }
+                                                    else if (earning.PayoutStatus == "Failed")
+                                                    {
+                                                        <span class="badge bg-danger">Failed</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(earning.PayoutId))
+                                                    {
+                                                        <small><code>@earning.PayoutId</code></small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (earning.PayoutDate.HasValue)
+                                                    {
+                                                        <small>@earning.PayoutDate.Value.ToString("yyyy-MM-dd HH:mm")</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="10" class="text-center py-4">
+                                                <i class="bi bi-inbox" style="font-size: 48px; color: #ccc;"></i>
+                                                <p class="mt-2 mb-0 text-muted">No earnings recorded yet</p>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (totalPages > 1)
+                    {
+                        <div class="card-footer bg-white">
+                            <nav>
+                                <ul class="pagination justify-content-center mb-0">
+                                    <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                                        <a class="page-link" href="?page=@(Model.PageNumber - 1)&pageSize=@Model.PageSize">Previous</a>
+                                    </li>
+
+                                    @for (var i = 1; i <= totalPages; i++)
+                                    {
+                                        @if (i == 1 || i == totalPages || (i >= Model.PageNumber - 2 && i <= Model.PageNumber + 2))
+                                        {
+                                            <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                                                <a class="page-link" href="?page=@i&pageSize=@Model.PageSize">@i</a>
+                                            </li>
+                                        }
+                                        else if (i == Model.PageNumber - 3 || i == Model.PageNumber + 3)
+                                        {
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        }
+                                    }
+
+                                    <li class="page-item @(Model.PageNumber == totalPages ? "disabled" : "")">
+                                        <a class="page-link" href="?page=@(Model.PageNumber + 1)&pageSize=@Model.PageSize">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function exportEarnings() {
+            // Generate CSV from table data
+            const table = document.getElementById('earningsTable');
+            let csv = [];
+            
+            // Headers
+            const headers = [];
+            table.querySelectorAll('thead th').forEach(th => {
+                headers.push(th.textContent.trim());
+            });
+            csv.push(headers.join(','));
+            
+            // Rows
+            table.querySelectorAll('tbody tr').forEach(tr => {
+                const row = [];
+                tr.querySelectorAll('td').forEach(td => {
+                    let text = td.textContent.trim();
+                    // Escape commas in text
+                    if (text.includes(',')) {
+                        text = '"' + text + '"';
+                    }
+                    row.push(text);
+                });
+                if (row.length > 0 && row[0] !== '') {
+                    csv.push(row.join(','));
+                }
+            });
+            
+            // Download
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'developer_earnings_' + new Date().toISOString().split('T')[0] + '.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize DataTable if available
+        $(document).ready(function() {
+            if ($.fn.DataTable) {
+                $('#earningsTable').DataTable({
+                    order: [[0, 'desc']],
+                    pageLength: @Model.PageSize,
+                    responsive: true,
+                    paging: false, // We use server-side pagination
+                    searching: false,
+                    info: false
+                });
+            }
+        });
+    </script>
+}

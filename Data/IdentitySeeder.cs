@@ -7,7 +7,7 @@ namespace Kokomija.Data
     {
         public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
-            var roles = new[] { "Admin", "Customer", "Manager", "VIPBronze", "VIPSilver", "VIPGold", "VIPPlatinum" };
+            var roles = new[] { "Root", "Admin", "Customer", "Manager", "VIPBronze", "VIPSilver", "VIPGold", "VIPPlatinum" };
 
             foreach (var role in roles)
             {
@@ -15,6 +15,67 @@ namespace Kokomija.Data
                 {
                     await roleManager.CreateAsync(new IdentityRole(role));
                 }
+            }
+        }
+
+        public static async Task SeedRootUserAsync(
+            UserManager<ApplicationUser> userManager,
+            IConfiguration configuration,
+            Services.IStripeCustomerService stripeCustomerService)
+        {
+            var rootEmail = configuration["RootUser:Email"];
+            var rootPassword = configuration["RootUser:Password"];
+            var rootFirstName = configuration["RootUser:FirstName"];
+            var rootLastName = configuration["RootUser:LastName"];
+
+            if (string.IsNullOrEmpty(rootEmail) || string.IsNullOrEmpty(rootPassword))
+            {
+                throw new InvalidOperationException("Root user credentials are not configured in appsettings.");
+            }
+
+            // Check if root already exists
+            var existingRoot = await userManager.FindByEmailAsync(rootEmail);
+            if (existingRoot != null)
+            {
+                return; // Root already exists
+            }
+
+            // Create root user
+            var rootUser = new ApplicationUser
+            {
+                UserName = rootEmail,
+                Email = rootEmail,
+                EmailConfirmed = true,
+                FirstName = rootFirstName ?? "Root",
+                LastName = rootLastName ?? "Administrator",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await userManager.CreateAsync(rootUser, rootPassword);
+
+            if (result.Succeeded)
+            {
+                // Add to Root role
+                await userManager.AddToRoleAsync(rootUser, "Root");
+
+                // Create Stripe customer for root
+                try
+                {
+                    var stripeCustomerId = await stripeCustomerService.CreateCustomerAsync(rootUser);
+                    rootUser.StripeCustomerId = stripeCustomerId;
+                    await userManager.UpdateAsync(rootUser);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail - root can still be created without Stripe
+                    Console.WriteLine($"Warning: Failed to create Stripe customer for root: {ex.Message}");
+                }
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create root user: {errors}");
             }
         }
 
@@ -94,6 +155,9 @@ namespace Kokomija.Data
 
                 // Seed roles
                 await SeedRolesAsync(roleManager);
+
+                // Seed root user (highest privilege)
+                await SeedRootUserAsync(userManager, configuration, stripeCustomerService);
 
                 // Seed admin user
                 await SeedAdminUserAsync(userManager, configuration, stripeCustomerService);

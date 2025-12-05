@@ -57,13 +57,19 @@ namespace Kokomija.Entity
         public decimal TotalStripeFees { get; set; } = 0;
 
         /// <summary>
-        /// Total deductions (Platform + Stripe)
+        /// Total developer commission deducted (root developer's cut)
+        /// </summary>
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalDeveloperCommission { get; set; } = 0;
+
+        /// <summary>
+        /// Total deductions (Platform + Stripe + Developer)
         /// </summary>
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalDeductions { get; set; } = 0;
 
         /// <summary>
-        /// Net revenue after deductions
+        /// Net revenue after all deductions
         /// </summary>
         [Column(TypeName = "decimal(18,2)")]
         public decimal NetRevenue { get; set; } = 0;

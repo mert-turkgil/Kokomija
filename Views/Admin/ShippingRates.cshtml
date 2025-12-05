@@ -1,0 +1,364 @@
+@model Kokomija.Models.ViewModels.ShippingRatesViewModel
+@{
+    ViewData["Title"] = "Shipping Rates";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-tags"></i>
+                                Shipping Rates
+                            </h1>
+                            <p class="mb-0">Configure shipping costs and delivery estimates</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="ShippingProviders" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Providers
+                            </a>
+                            <button type="button" class="btn btn-primary" onclick="showCreateRateModal()">
+                                <i class="bi bi-plus-lg"></i>
+                                Add Rate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-primary">
+                        <i class="bi bi-tags"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalRates</h6>
+                        <small>Total Rates</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.ActiveRates</h6>
+                        <small>Active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rates Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list"></i>
+                                All Shipping Rates
+                            </h5>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="providerFilter" style="width: auto;">
+                                    <option value="">All Providers</option>
+                                    @foreach (var provider in Model.Providers)
+                                    {
+                                        <option value="@provider.Id">@provider.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="ratesTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60">ID</th>
+                                        <th>Provider</th>
+                                        <th width="120">Zone/Name</th>
+                                        <th width="100">Country</th>
+                                        <th width="100">Rate</th>
+                                        <th width="150">Free Shipping</th>
+                                        <th width="120">Delivery Time</th>
+                                        <th width="100">Status</th>
+                                        <th width="200">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var rate in Model.Rates)
+                                    {
+                                        <tr data-provider="@rate.ProviderId">
+                                            <td>@rate.Id</td>
+                                            <td><strong>@rate.ProviderName</strong></td>
+                                            <td>@(rate.Zone ?? "Standard")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(rate.Country))
+                                                {
+                                                    <code>@rate.Country</code>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">All</small>
+                                                }
+                                            </td>
+                                            <td><strong>@rate.Rate.ToString("N2") PLN</strong></td>
+                                            <td>
+                                                @if (rate.FreeShippingThreshold.HasValue)
+                                                {
+                                                    <span class="badge bg-success">Over @rate.FreeShippingThreshold.Value.ToString("N2") PLN</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <small>@rate.EstimatedDaysMin-@rate.EstimatedDaysMax days</small>
+                                            </td>
+                                            <td>
+                                                @if (rate.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-primary" onclick="editRate(@rate.Id)" title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-@(rate.IsActive ? "warning" : "success")" onclick="toggleRate(@rate.Id)" title="@(rate.IsActive ? "Deactivate" : "Activate")">
+                                                        <i class="bi bi-@(rate.IsActive ? "pause" : "play")-circle"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger" onclick="deleteRate(@rate.Id)" title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Rate Modal -->
+<div class="modal fade" id="rateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rateModalTitle">Add Shipping Rate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rateForm">
+                    <input type="hidden" id="rateId" />
+                    
+                    <div class="mb-3">
+                        <label for="providerId" class="form-label">Provider <span class="text-danger">*</span></label>
+                        <select class="form-select" id="providerId" required>
+                            <option value="">Select Provider</option>
+                            @foreach (var provider in Model.Providers)
+                            {
+                                <option value="@provider.Id">@provider.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="zone" class="form-label">Zone/Name</label>
+                            <input type="text" class="form-control" id="zone" placeholder="e.g., Standard, Express">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="country" class="form-label">Country Code</label>
+                            <input type="text" class="form-control" id="country" placeholder="e.g., PL, US (leave empty for all)">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="rate" class="form-label">Rate (PLN) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="rate" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="freeShippingThreshold" class="form-label">Free Shipping Over (PLN)</label>
+                            <input type="number" class="form-control" id="freeShippingThreshold" step="0.01" min="0" placeholder="Leave empty to disable">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="estimatedDaysMin" class="form-label">Min Delivery Days <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="estimatedDaysMin" min="1" value="3" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="estimatedDaysMax" class="form-label">Max Delivery Days <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="estimatedDaysMax" min="1" value="7" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check" id="isActiveContainer" style="display: none;">
+                        <input type="checkbox" class="form-check-input" id="isActive">
+                        <label class="form-check-label" for="isActive">Active</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveRate()">Save Rate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let isEditMode = false;
+
+        function showCreateRateModal() {
+            isEditMode = false;
+            document.getElementById('rateModalTitle').textContent = 'Add Shipping Rate';
+            document.getElementById('rateForm').reset();
+            document.getElementById('rateId').value = '';
+            document.getElementById('isActiveContainer').style.display = 'none';
+            new bootstrap.Modal(document.getElementById('rateModal')).show();
+        }
+
+        function editRate(id) {
+            isEditMode = true;
+            const rates = @Html.Raw(Json.Serialize(Model.Rates));
+            const rateData = rates.find(r => r.id === id);
+            
+            if (!rateData) return;
+
+            document.getElementById('rateModalTitle').textContent = 'Edit Shipping Rate';
+            document.getElementById('rateId').value = rateData.id;
+            document.getElementById('providerId').value = rateData.providerId;
+            document.getElementById('zone').value = rateData.zone || '';
+            document.getElementById('country').value = rateData.country || '';
+            document.getElementById('rate').value = rateData.rate;
+            document.getElementById('freeShippingThreshold').value = rateData.freeShippingThreshold || '';
+            document.getElementById('estimatedDaysMin').value = rateData.estimatedDaysMin;
+            document.getElementById('estimatedDaysMax').value = rateData.estimatedDaysMax;
+            document.getElementById('isActiveContainer').style.display = 'block';
+            document.getElementById('isActive').checked = rateData.isActive;
+
+            new bootstrap.Modal(document.getElementById('rateModal')).show();
+        }
+
+        async function saveRate() {
+            const id = document.getElementById('rateId').value;
+            const data = {
+                providerId: parseInt(document.getElementById('providerId').value),
+                zone: document.getElementById('zone').value,
+                country: document.getElementById('country').value,
+                rate: parseFloat(document.getElementById('rate').value),
+                freeShippingThreshold: document.getElementById('freeShippingThreshold').value ? parseFloat(document.getElementById('freeShippingThreshold').value) : null,
+                estimatedDaysMin: parseInt(document.getElementById('estimatedDaysMin').value),
+                estimatedDaysMax: parseInt(document.getElementById('estimatedDaysMax').value),
+                isActive: isEditMode ? document.getElementById('isActive').checked : true
+            };
+
+            try {
+                const url = isEditMode ? `/Admin/UpdateShippingRate?id=${id}` : '/Admin/CreateShippingRate';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('rateModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while saving the rate.');
+            }
+        }
+
+        async function toggleRate(id) {
+            if (!confirm('Are you sure you want to toggle this rate status?')) return;
+
+            try {
+                const response = await fetch(`/Admin/ToggleShippingRate?id=${id}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while toggling the rate status.');
+            }
+        }
+
+        async function deleteRate(id) {
+            if (!confirm('Are you sure you want to delete this rate? This action cannot be undone.')) return;
+
+            try {
+                const response = await fetch(`/Admin/DeleteShippingRate?id=${id}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the rate.');
+            }
+        }
+
+        // Initialize DataTable with provider filter
+        $(document).ready(function() {
+            const table = $('#ratesTable').DataTable({
+                order: [[0, 'desc']],
+                pageLength: 25,
+                responsive: true
+            });
+
+            $('#providerFilter').on('change', function() {
+                const val = $(this).val();
+                if (val) {
+                    table.column(1).search(val ? '^' + table.column(1).data().eq(table.rows({search: 'applied'}).indexes().filter(idx => table.row(idx).node().dataset.provider == val)).join('|') + '$' : '', true, false).draw();
+                } else {
+                    table.column(1).search('').draw();
+                }
+            });
+        });
+    </script>
+}

@@ -75,6 +75,22 @@ namespace Kokomija.Controllers
                         await HandleChargeRefunded(stripeEvent);
                         break;
 
+                    case "charge.succeeded":
+                        await HandleChargeSucceeded(stripeEvent);
+                        break;
+
+                    case "payout.created":
+                        await HandlePayoutCreated(stripeEvent);
+                        break;
+
+                    case "payout.failed":
+                        await HandlePayoutFailed(stripeEvent);
+                        break;
+
+                    case "payout.paid":
+                        await HandlePayoutPaid(stripeEvent);
+                        break;
+
                     default:
                         _logger.LogInformation($"Unhandled event type: {stripeEvent.Type}");
                         break;
@@ -275,12 +291,177 @@ namespace Kokomija.Controllers
 
                 if (order != null)
                 {
+                    // Update order status
                     order.PaymentStatus = "refunded";
                     order.OrderStatus = "cancelled";
+
+                    // Check if there's a return request associated
+                    var returnRequests = await _unitOfWork.ReturnRequests.GetAllAsync(r => r.OrderId == order.Id);
+                    var returnRequest = returnRequests.FirstOrDefault(r => r.Status == Entity.ReturnRequestStatus.Approved);
+
+                    if (returnRequest != null && string.IsNullOrEmpty(returnRequest.StripeRefundId))
+                    {
+                        // Update return request with refund info
+                        returnRequest.StripeRefundId = charge.Id;
+                        returnRequest.RefundedAmount = (decimal)(charge.AmountRefunded / 100.0);
+                        returnRequest.RefundedAt = DateTime.UtcNow;
+                        returnRequest.Status = Entity.ReturnRequestStatus.Completed;
+                    }
+
                     await _unitOfWork.SaveChangesAsync();
                     _logger.LogInformation($"Order {order.OrderNumber} marked as refunded");
                 }
             }
+        }
+
+        private async Task HandleChargeSucceeded(Event stripeEvent)
+        {
+            var charge = stripeEvent.Data.Object as Charge;
+            if (charge == null) return;
+
+            _logger.LogInformation($"Charge succeeded: {charge.Id}, Amount: {charge.Amount}");
+
+            // Find order by payment intent
+            if (!string.IsNullOrEmpty(charge.PaymentIntentId))
+            {
+                var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripePaymentIntentId == charge.PaymentIntentId);
+                var order = orders.FirstOrDefault();
+
+                if (order != null)
+                {
+                    // Calculate commissions and fees
+                    await CalculateAndRecordCommissions(order, charge);
+                }
+            }
+        }
+
+        private async Task CalculateAndRecordCommissions(Entity.Order order, Charge charge)
+        {
+            try
+            {
+                // Get commission settings
+                var commissionSettings = (await _unitOfWork.CommissionSettings.GetAllAsync()).FirstOrDefault();
+                if (commissionSettings == null)
+                {
+                    _logger.LogWarning("Commission settings not found. Skipping commission calculation.");
+                    return;
+                }
+
+                var grossAmount = order.TotalAmount;
+                
+                // Calculate Stripe processing fee (actual from charge)
+                var stripeProcessingFee = (decimal)(charge.BalanceTransaction != null ? 
+                    (await GetBalanceTransaction(charge.BalanceTransactionId))?.Fee / 100.0 ?? 0 : 0);
+
+                // If we can't get actual fee, estimate it
+                if (stripeProcessingFee == 0)
+                {
+                    stripeProcessingFee = (grossAmount * commissionSettings.StripeCommissionRate / 100) + commissionSettings.StripeFixedFee;
+                }
+
+                // Calculate developer commission (root's cut)
+                var developerCommission = grossAmount * commissionSettings.DeveloperCommissionRate / 100;
+
+                // Net amount after Stripe fees and developer commission
+                var netAmount = grossAmount - stripeProcessingFee - developerCommission;
+
+                // Record developer earnings
+                var developerEarning = new Entity.DeveloperEarnings
+                {
+                    OrderId = order.Id,
+                    GrossAmount = grossAmount,
+                    StripeProcessingFee = stripeProcessingFee,
+                    DeveloperCommission = developerCommission,
+                    NetAmount = netAmount,
+                    EarnedAt = DateTime.UtcNow,
+                    PayoutStatus = Entity.PayoutStatus.Pending
+                };
+
+                await _unitOfWork.DeveloperEarnings.AddAsync(developerEarning);
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation($"Recorded commissions for order {order.OrderNumber}: Gross={grossAmount:C}, StripeFee={stripeProcessingFee:C}, DevCommission={developerCommission:C}, Net={netAmount:C}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error calculating commissions for order {order.Id}");
+            }
+        }
+
+        private async Task<Stripe.BalanceTransaction?> GetBalanceTransaction(string balanceTransactionId)
+        {
+            try
+            {
+                var service = new Stripe.BalanceTransactionService();
+                return await service.GetAsync(balanceTransactionId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private Task HandlePayoutCreated(Event stripeEvent)
+        {
+            var payout = stripeEvent.Data.Object as Payout;
+            if (payout == null) return Task.CompletedTask;
+
+            _logger.LogInformation($"Payout created: {payout.Id}, Amount: {payout.Amount}, Status: {payout.Status}");
+            return Task.CompletedTask;
+
+            // Log payout creation - you can extend this to track in database
+            // This is useful for audit trail
+        }
+
+        private async Task HandlePayoutFailed(Event stripeEvent)
+        {
+            var payout = stripeEvent.Data.Object as Payout;
+            if (payout == null) return;
+
+            _logger.LogError($"Payout failed: {payout.Id}, Amount: {payout.Amount}, Failure: {payout.FailureMessage}");
+
+            // Update DeveloperEarnings payout status to failed
+            var developerEarnings = await _unitOfWork.DeveloperEarnings.GetAllAsync(
+                de => de.PayoutId == payout.Id && de.PayoutStatus == Entity.PayoutStatus.Processed
+            );
+
+            foreach (var earning in developerEarnings)
+            {
+                earning.PayoutStatus = Entity.PayoutStatus.Failed;
+                earning.PayoutDate = null;
+            }
+
+            if (developerEarnings.Any())
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            // TODO: Send email notification to root admin about payout failure
+        }
+
+        private async Task HandlePayoutPaid(Event stripeEvent)
+        {
+            var payout = stripeEvent.Data.Object as Payout;
+            if (payout == null) return;
+
+            _logger.LogInformation($"Payout paid: {payout.Id}, Amount: {payout.Amount}");
+
+            // Update DeveloperEarnings payout status to processed
+            var developerEarnings = await _unitOfWork.DeveloperEarnings.GetAllAsync(
+                de => de.PayoutId == payout.Id
+            );
+
+            foreach (var earning in developerEarnings)
+            {
+                earning.PayoutStatus = Entity.PayoutStatus.Processed;
+                earning.PayoutDate = DateTime.UtcNow;
+            }
+
+            if (developerEarnings.Any())
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            // TODO: Send email notification to root admin about successful payout
         }
 
         private string CalculateVIPTier(decimal totalSpent)

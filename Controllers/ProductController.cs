@@ -98,12 +98,8 @@ namespace Kokomija.Controllers
                 ViewBag.RelatedProducts = relatedProducts;
 
                 // Set page metadata
-                ViewData["Title"] = !string.IsNullOrEmpty(product.NameKey) 
-                    ? _localizationService[product.NameKey] 
-                    : product.Name;
-                ViewData["Description"] = !string.IsNullOrEmpty(product.DescriptionKey) 
-                    ? _localizationService[product.DescriptionKey] 
-                    : product.Description;
+                ViewData["Title"] = product.Name;
+                ViewData["Description"] = product.Description;
 
                 return View(product);
             }

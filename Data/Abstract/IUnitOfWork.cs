@@ -18,6 +18,9 @@ namespace Kokomija.Data.Abstract
         IRepository<SiteClosure> SiteClosures { get; }
         IRepository<EmailCommand> EmailCommands { get; }
         IRepository<AdminEarnings> AdminEarnings { get; }
+        IRepository<DeveloperEarnings> DeveloperEarnings { get; }
+        IRepository<CommissionSettings> CommissionSettings { get; }
+        IRepository<ReturnRequest> ReturnRequests { get; }
         ICarouselSlideRepository CarouselSlides { get; }
         ICarouselSlideTranslationRepository CarouselSlideTranslations { get; }
         IWishlistRepository Wishlists { get; }

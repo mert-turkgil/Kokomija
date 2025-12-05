@@ -436,45 +436,55 @@ namespace Kokomija.Data
         public static void SeedBlogs(this ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Blog>().HasData(
-                // English version
                 new Blog
                 {
                     Id = 1,
-                    Title = "Fashion Trends for 2025",
-                    Content = "<p>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish.</p><p>This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</p><p><strong>Key trends:</strong></p><ul><li>Sustainable and eco-friendly materials</li><li>Bold color combinations</li><li>Oversized silhouettes</li><li>Minimalist accessories</li><li>Vintage revival</li></ul>",
-                    Excerpt = "Discover the hottest fashion trends that will dominate 2025.",
-                    Slug = "fashion-trends-2025-en",
                     CategoryId = 3, // Trendy
-                    FeaturedImage = "/images/blog/fashion-trends-2025.jpg",
-                    Tags = "fashion,trends,2025,style",
+                    FeaturedImage = "/img/Blog/fashion-trends-2025.jpg",
                     IsPublished = true,
                     PublishedDate = DateTime.UtcNow,
                     Views = 0,
-                    Language = "en",
-                    MetaDescription = "Discover the hottest fashion trends for 2025",
-                    MetaKeywords = "fashion,trends,2025,style,clothing",
-                    AuthorId = "", // Will be set to admin user after seeding
+                    AllowComments = true,
+                    AuthorId = null, // Nullable to allow seeding before users exist
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsDeleted = false
+                }
+            );
+        }
+
+        public static void SeedBlogTranslations(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<BlogTranslation>().HasData(
+                // Blog 1 - English
+                new BlogTranslation
+                {
+                    Id = 1,
+                    BlogId = 1,
+                    CultureCode = "en-US",
+                    Title = "Fashion Trends for 2025",
+                    Slug = "fashion-trends-2025",
+                    Content = "<p>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish.</p><p>This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</p><p><strong>Key trends:</strong></p><ul><li>Sustainable and eco-friendly materials</li><li>Bold color combinations</li><li>Oversized silhouettes</li><li>Minimalist accessories</li><li>Vintage revival</li></ul><p>Stay tuned for more fashion tips and style inspiration on our blog!</p>",
+                    Excerpt = "Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors.",
+                    Tags = "fashion,trends,2025,style",
+                    MetaDescription = "Discover the hottest fashion trends for 2025 - sustainable materials, bold colors, and timeless style.",
+                    MetaKeywords = "fashion,trends,2025,style,clothing,sustainable fashion",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
-                // Polish version
-                new Blog
+                // Blog 1 - Polish
+                new BlogTranslation
                 {
                     Id = 2,
+                    BlogId = 1,
+                    CultureCode = "pl-PL",
                     Title = "Trendy Modowe na 2025",
-                    Content = "<p>Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory, prezentujemy wszystko, co musisz wiedzieć, aby być na czasie.</p><p>Ten sezon przynosi powrót do klasyki z nowoczesnym akcentem - oversize'owe marynarki, midi spódnice i minimalistyczna biżuteria to must-have w każdej garderobie.</p><p><strong>Kluczowe trendy:</strong></p><ul><li>Zrównoważone i ekologiczne materiały</li><li>Odważne kombinacje kolorów</li><li>Oversize'owe sylwetki</li><li>Minimalistyczne akcesoria</li><li>Powrót vintage</li></ul>",
-                    Excerpt = "Odkryj najgorętsze trendy modowe, które zdominują rok 2025.",
                     Slug = "trendy-modowe-2025",
-                    CategoryId = 3, // Trendy
-                    FeaturedImage = "/images/blog/fashion-trends-2025.jpg",
+                    Content = "<p>Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory, prezentujemy wszystko, co musisz wiedzieć, aby być na czasie.</p><p>Ten sezon przynosi powrót do klasyki z nowoczesnym akcentem - oversize'owe marynarki, midi spódnice i minimalistyczna biżuteria to must-have w każdej garderobie.</p><p><strong>Kluczowe trendy:</strong></p><ul><li>Zrównoważone i ekologiczne materiały</li><li>Odważne kombinacje kolorów</li><li>Oversize'owe sylwetki</li><li>Minimalistyczne akcesoria</li><li>Powrót vintage</li></ul><p>Bądź na bieżąco z naszymi poradami modowymi i inspiracjami stylistycznymi na blogu!</p>",
+                    Excerpt = "Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory.",
                     Tags = "moda,trendy,2025,styl",
-                    IsPublished = true,
-                    PublishedDate = DateTime.UtcNow,
-                    Views = 0,
-                    Language = "pl",
-                    MetaDescription = "Odkryj najgorętsze trendy modowe na rok 2025",
-                    MetaKeywords = "moda,trendy,2025,styl,odzież",
-                    AuthorId = "", // Will be set to admin user after seeding
+                    MetaDescription = "Odkryj najgorętsze trendy modowe na rok 2025 - zrównoważone materiały, odważne kolory i ponadczasowy styl.",
+                    MetaKeywords = "moda,trendy,2025,styl,odzież,zrównoważona moda",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 }
@@ -634,9 +644,7 @@ namespace Kokomija.Data
                 { 
                     Id = 1, 
                     Name = "Majtki damskie bawełniane wysokie - 5 pak", 
-                    NameKey = "Product_WomenBriefs5Pack_Name",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    DescriptionKey = "Product_WomenBriefs5Pack_Description",
                     Price = 49.75m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
                     StripePriceId = string.Empty,
@@ -653,9 +661,7 @@ namespace Kokomija.Data
                 { 
                     Id = 2, 
                     Name = "Majtki damskie bawełniane wysokie - 6 pak", 
-                    NameKey = "Product_WomenBriefs6Pack_Name",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    DescriptionKey = "Product_WomenBriefs6Pack_Description",
                     Price = 59.70m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
                     StripePriceId = string.Empty,
@@ -672,9 +678,7 @@ namespace Kokomija.Data
                 { 
                     Id = 3, 
                     Name = "Majtki damskie bawełniane wysokie - 8 pak", 
-                    NameKey = "Product_WomenBriefs8Pack_Name",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
-                    DescriptionKey = "Product_WomenBriefs8Pack_Description",
                     Price = 79.60m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
                     StripePriceId = string.Empty,

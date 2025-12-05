@@ -18,41 +18,12 @@ namespace Kokomija.Data.Configurations
             builder.HasKey(b => b.Id);
 
             // Properties
-            builder.Property(b => b.Title)
-                .IsRequired()
-                .HasMaxLength(200);
-
-            builder.Property(b => b.Slug)
-                .IsRequired()
-                .HasMaxLength(250);
-
-            builder.Property(b => b.Content)
-                .IsRequired()
-                .HasColumnType("nvarchar(max)");
-
-            builder.Property(b => b.Excerpt)
-                .HasMaxLength(500);
-
             builder.Property(b => b.FeaturedImage)
                 .HasMaxLength(500);
 
             builder.Property(b => b.AuthorId)
-                .IsRequired()
+                .IsRequired(false) // Nullable to support seed data
                 .HasMaxLength(450);
-
-            builder.Property(b => b.MetaDescription)
-                .HasMaxLength(300);
-
-            builder.Property(b => b.MetaKeywords)
-                .HasMaxLength(200);
-
-            builder.Property(b => b.Tags)
-                .HasMaxLength(500);
-
-            builder.Property(b => b.Language)
-                .IsRequired()
-                .HasMaxLength(10)
-                .HasDefaultValue("pl");
 
             builder.Property(b => b.IsPublished)
                 .HasDefaultValue(false);
@@ -91,10 +62,6 @@ namespace Kokomija.Data.Configurations
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Indexes
-            builder.HasIndex(b => b.Slug)
-                .IsUnique()
-                .HasDatabaseName("IX_Blogs_Slug");
-
             builder.HasIndex(b => b.AuthorId)
                 .HasDatabaseName("IX_Blogs_AuthorId");
 
@@ -109,9 +76,6 @@ namespace Kokomija.Data.Configurations
 
             builder.HasIndex(b => b.PublishedDate)
                 .HasDatabaseName("IX_Blogs_PublishedDate");
-
-            builder.HasIndex(b => b.Language)
-                .HasDatabaseName("IX_Blogs_Language");
 
             builder.HasIndex(b => b.IsDeleted)
                 .HasDatabaseName("IX_Blogs_IsDeleted");

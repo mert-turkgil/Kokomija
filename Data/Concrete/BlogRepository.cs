@@ -16,6 +16,7 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Blog>> GetPublishedBlogsAsync()
         {
             return await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
                 .Where(b => b.IsPublished && !b.IsDeleted && b.PublishedDate <= DateTime.UtcNow)
@@ -26,6 +27,7 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Blog>> GetBlogsByCategoryAsync(int categoryId)
         {
             return await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
                 .Where(b => b.IsPublished && !b.IsDeleted && b.CategoryId == categoryId)
@@ -36,9 +38,11 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Blog>> GetBlogsByTagAsync(string tag)
         {
             return await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
-                .Where(b => b.IsPublished && !b.IsDeleted && b.Tags != null && b.Tags.Contains(tag))
+                .Where(b => b.IsPublished && !b.IsDeleted && 
+                    b.Translations != null && b.Translations.Any(t => t.Tags != null && t.Tags.Contains(tag)))
                 .OrderByDescending(b => b.PublishedDate)
                 .ToListAsync();
         }
@@ -47,13 +51,15 @@ namespace Kokomija.Data.Concrete
         {
             var lowerQuery = query.ToLower();
             return await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
                 .Where(b => b.IsPublished && !b.IsDeleted &&
-                    (b.Title.ToLower().Contains(lowerQuery) ||
-                     b.Content.ToLower().Contains(lowerQuery) ||
-                     (b.Excerpt != null && b.Excerpt.ToLower().Contains(lowerQuery)) ||
-                     (b.Tags != null && b.Tags.ToLower().Contains(lowerQuery))))
+                    b.Translations != null && b.Translations.Any(t => 
+                        t.Title.ToLower().Contains(lowerQuery) ||
+                        t.Content.ToLower().Contains(lowerQuery) ||
+                        (t.Excerpt != null && t.Excerpt.ToLower().Contains(lowerQuery)) ||
+                        (t.Tags != null && t.Tags.ToLower().Contains(lowerQuery))))
                 .OrderByDescending(b => b.PublishedDate)
                 .ToListAsync();
         }
@@ -61,10 +67,11 @@ namespace Kokomija.Data.Concrete
         public async Task<Blog?> GetBySlugAsync(string slug)
         {
             return await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
                 .Include(b => b.Product)
-                .FirstOrDefaultAsync(b => b.Slug == slug && b.IsPublished && !b.IsDeleted);
+                .FirstOrDefaultAsync(b => b.Translations != null && b.Translations.Any(t => t.Slug == slug) && b.IsPublished && !b.IsDeleted);
         }
 
         public async Task IncrementViewsAsync(int blogId)
@@ -79,11 +86,14 @@ namespace Kokomija.Data.Concrete
 
         public async Task<IEnumerable<Blog>> GetRelatedBlogsAsync(int blogId, int count = 3)
         {
-            var blog = await _context.Blogs.FindAsync(blogId);
+            var blog = await _context.Blogs
+                .Include(b => b.Translations)
+                .FirstOrDefaultAsync(b => b.Id == blogId);
             if (blog == null) return Enumerable.Empty<Blog>();
 
-            // Get blogs from the same category or with overlapping tags
+            // Get blogs from the same category
             var relatedBlogs = await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
                 .Where(b => b.IsPublished && !b.IsDeleted && b.Id != blogId &&
@@ -93,24 +103,34 @@ namespace Kokomija.Data.Concrete
                 .ToListAsync();
 
             // If we don't have enough from the same category, add some by tags
-            if (relatedBlogs.Count < count && !string.IsNullOrEmpty(blog.Tags))
+            if (relatedBlogs.Count < count)
             {
-                var blogTags = blog.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
-                var additionalBlogs = await _context.Blogs
-                    .Include(b => b.Author)
-                    .Include(b => b.Category)
-                    .Where(b => b.IsPublished && !b.IsDeleted && b.Id != blogId &&
-                        b.CategoryId != blog.CategoryId &&
-                        b.Tags != null)
-                    .ToListAsync();
+                var blogTags = blog.Translations != null ? blog.Translations
+                    .SelectMany(t => (t.Tags ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    .Select(tag => tag.Trim())
+                    .Distinct()
+                    .ToList() : new List<string>();
 
-                var tagMatches = additionalBlogs
-                    .Where(b => b.Tags!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Any(t => blogTags.Contains(t.Trim())))
-                    .OrderByDescending(b => b.PublishedDate)
-                    .Take(count - relatedBlogs.Count);
+                if (blogTags.Any())
+                {
+                    var additionalBlogs = await _context.Blogs
+                        .Include(b => b.Translations)
+                        .Include(b => b.Author)
+                        .Include(b => b.Category)
+                        .Where(b => b.IsPublished && !b.IsDeleted && b.Id != blogId &&
+                            b.CategoryId != blog.CategoryId &&
+                            b.Translations != null && b.Translations.Any(t => t.Tags != null))
+                        .ToListAsync();
 
-                relatedBlogs.AddRange(tagMatches);
+                    var tagMatches = additionalBlogs
+                        .Where(b => b.Translations != null && b.Translations
+                            .SelectMany(t => (t.Tags ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+                            .Any(t => blogTags.Contains(t.Trim())))
+                        .OrderByDescending(b => b.PublishedDate)
+                        .Take(count - relatedBlogs.Count);
+
+                    relatedBlogs.AddRange(tagMatches);
+                }
             }
 
             return relatedBlogs.Take(count);
@@ -119,6 +139,7 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Blog>> GetRecentBlogsAsync(int count = 5)
         {
             return await _context.Blogs
+                .Include(b => b.Translations)
                 .Include(b => b.Author)
                 .Include(b => b.Category)
                 .Where(b => b.IsPublished && !b.IsDeleted)
@@ -130,22 +151,25 @@ namespace Kokomija.Data.Concrete
         public async Task<Dictionary<string, int>> GetPopularTagsAsync(int count = 10)
         {
             var blogs = await _context.Blogs
-                .Where(b => b.IsPublished && !b.IsDeleted && b.Tags != null)
-                .Select(b => b.Tags)
+                .Include(b => b.Translations)
+                .Where(b => b.IsPublished && !b.IsDeleted)
                 .ToListAsync();
 
             var tagCounts = new Dictionary<string, int>();
-            foreach (var tags in blogs)
+            foreach (var blog in blogs)
             {
-                if (string.IsNullOrEmpty(tags)) continue;
-                
-                foreach (var tag in tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                var allTags = blog.Translations != null ? blog.Translations
+                    .Where(t => !string.IsNullOrEmpty(t.Tags))
+                    .SelectMany(t => t.Tags!.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    .Select(tag => tag.Trim())
+                    .Distinct() : Enumerable.Empty<string>();
+
+                foreach (var tag in allTags)
                 {
-                    var trimmedTag = tag.Trim();
-                    if (tagCounts.ContainsKey(trimmedTag))
-                        tagCounts[trimmedTag]++;
+                    if (tagCounts.ContainsKey(tag))
+                        tagCounts[tag]++;
                     else
-                        tagCounts[trimmedTag] = 1;
+                        tagCounts[tag] = 1;
                 }
             }
 

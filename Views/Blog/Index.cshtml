@@ -102,7 +102,7 @@
                                     @if (!string.IsNullOrEmpty(post.FeaturedImage))
                                     {
                                         <a asp-action="Details" asp-route-slug="@post.Slug" class="post-image-link">
-                                            <img src="@post.FeaturedImage" alt="@post.Title" class="post-featured-image">
+                                            <img src="@post.FeaturedImage" alt="@post.Title" class="post-featured-image" onerror="this.src='/img/logo_black.png'">
                                         </a>
                                     }
                                     
@@ -247,7 +247,7 @@
                                         @if (!string.IsNullOrEmpty(post.FeaturedImage))
                                         {
                                             <a asp-action="Details" asp-route-slug="@post.Slug" class="recent-post-thumb">
-                                                <img src="@post.FeaturedImage" alt="@post.Title">
+                                                <img src="@post.FeaturedImage" alt="@post.Title" onerror="this.src='/img/logo_black.png'">
                                             </a>
                                         }
                                         <div class="recent-post-content">

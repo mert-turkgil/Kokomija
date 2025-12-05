@@ -2,6 +2,7 @@ using Kokomija.Data.Abstract;
 using Kokomija.Models.ViewModels.Blog;
 using Kokomija.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Kokomija.Controllers
@@ -97,6 +98,16 @@ namespace Kokomija.Controllers
                     return NotFound();
                 }
 
+                // Get translation for current culture
+                var currentCulture = CultureInfo.CurrentCulture.Name;
+                var translation = blog.Translations?.FirstOrDefault(t => t.CultureCode == currentCulture)
+                                ?? blog.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+
+                if (translation == null)
+                {
+                    return NotFound();
+                }
+
                 // Increment views
                 await _unitOfWork.Blogs.IncrementViewsAsync(blog.Id);
 
@@ -106,9 +117,9 @@ namespace Kokomija.Controllers
                 var viewModel = new BlogDetailsViewModel
                 {
                     Id = blog.Id,
-                    Title = blog.Title,
-                    Slug = blog.Slug,
-                    Content = blog.Content,
+                    Title = translation.Title,
+                    Slug = translation.Slug,
+                    Content = translation.Content,
                     FeaturedImage = blog.FeaturedImage,
                     AuthorName = blog.Author?.UserName ?? "Unknown",
                     CategoryName = blog.Category?.Name ?? "",
@@ -116,13 +127,13 @@ namespace Kokomija.Controllers
                     PublishedDate = blog.PublishedDate,
                     UpdatedAt = blog.UpdatedAt,
                     Views = blog.Views,
-                    Tags = blog.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList() ?? new List<string>(),
-                    ReadingTimeMinutes = CalculateReadingTime(blog.Content),
+                    Tags = translation.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList() ?? new List<string>(),
+                    ReadingTimeMinutes = CalculateReadingTime(translation.Content),
                     RelatedPosts = relatedPosts.Select(b => MapToBlogPostViewModel(b)),
                     RelatedProduct = blog.Product,
-                    MetaDescription = blog.MetaDescription ?? blog.Excerpt ?? "",
-                    MetaKeywords = blog.MetaKeywords ?? "",
-                    CanonicalUrl = Url.Action("Details", "Blog", new { slug = blog.Slug }, Request.Scheme) ?? ""
+                    MetaDescription = translation.MetaDescription ?? translation.Excerpt ?? "",
+                    MetaKeywords = translation.MetaKeywords ?? "",
+                    CanonicalUrl = Url.Action("Details", "Blog", new { slug = translation.Slug }, Request.Scheme) ?? ""
                 };
 
                 return View(viewModel);
@@ -173,20 +184,38 @@ namespace Kokomija.Controllers
         // Helper methods
         private BlogPostViewModel MapToBlogPostViewModel(Entity.Blog blog)
         {
+            var currentCulture = CultureInfo.CurrentCulture.Name;
+            var translation = blog.Translations?.FirstOrDefault(t => t.CultureCode == currentCulture)
+                            ?? blog.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+
+            if (translation == null)
+            {
+                return new BlogPostViewModel { Id = blog.Id };
+            }
+
+            var excerpt = translation.Excerpt;
+            if (string.IsNullOrEmpty(excerpt) && !string.IsNullOrEmpty(translation.Content))
+            {
+                var strippedContent = StripHtml(translation.Content);
+                excerpt = strippedContent.Length > 200 
+                    ? strippedContent.Substring(0, 200) + "..." 
+                    : strippedContent;
+            }
+
             return new BlogPostViewModel
             {
                 Id = blog.Id,
-                Title = blog.Title,
-                Slug = blog.Slug,
-                Excerpt = blog.Excerpt ?? StripHtml(blog.Content).Substring(0, Math.Min(200, blog.Content.Length)) + "...",
+                Title = translation.Title,
+                Slug = translation.Slug,
+                Excerpt = excerpt ?? "",
                 FeaturedImage = blog.FeaturedImage,
                 AuthorName = blog.Author?.UserName ?? "Unknown",
                 CategoryName = blog.Category?.Name ?? "",
                 CategoryId = blog.CategoryId,
                 PublishedDate = blog.PublishedDate,
                 Views = blog.Views,
-                Tags = blog.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList() ?? new List<string>(),
-                ReadingTimeMinutes = CalculateReadingTime(blog.Content)
+                Tags = translation.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList() ?? new List<string>(),
+                ReadingTimeMinutes = CalculateReadingTime(translation.Content)
             };
         }
 

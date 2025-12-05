@@ -1,0 +1,212 @@
+@{
+    ViewData["Title"] = "Order Management";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-bag-check"></i>
+                                Order Management
+                            </h1>
+                            <p class="mb-0">View and manage customer orders</p>
+                        </div>
+                        <div>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coming Soon Notice -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card text-center py-5">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <i class="bi bi-tools" style="font-size: 72px; color: #6c757d;"></i>
+                        </div>
+                        <h2 class="mb-3">Order Management System</h2>
+                        <p class="lead text-muted mb-4">
+                            This feature is currently under development and will be available soon.
+                        </p>
+                        
+                        <!-- Planned Features -->
+                        <div class="row justify-content-center mt-5">
+                            <div class="col-md-8">
+                                <h4 class="mb-4">Planned Features</h4>
+                                <div class="row text-start">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="bi bi-list-ul text-primary"></i>
+                                                    Order Listing
+                                                </h5>
+                                                <ul class="small text-muted mb-0">
+                                                    <li>View all orders with filters</li>
+                                                    <li>Search by order number or customer</li>
+                                                    <li>Sort by date, amount, status</li>
+                                                    <li>Pagination support</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="bi bi-eye text-info"></i>
+                                                    Order Details
+                                                </h5>
+                                                <ul class="small text-muted mb-0">
+                                                    <li>Complete order information</li>
+                                                    <li>Customer details</li>
+                                                    <li>Product line items</li>
+                                                    <li>Payment and shipping info</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="bi bi-arrow-repeat text-warning"></i>
+                                                    Status Management
+                                                </h5>
+                                                <ul class="small text-muted mb-0">
+                                                    <li>Update order status</li>
+                                                    <li>Mark as shipped/delivered</li>
+                                                    <li>Cancel orders</li>
+                                                    <li>Order timeline tracking</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="bi bi-truck text-success"></i>
+                                                    Shipping Integration
+                                                </h5>
+                                                <ul class="small text-muted mb-0">
+                                                    <li>Generate shipping labels</li>
+                                                    <li>Track shipments</li>
+                                                    <li>Update tracking numbers</li>
+                                                    <li>Shipping notifications</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="bi bi-cash-coin text-danger"></i>
+                                                    Refund Management
+                                                </h5>
+                                                <ul class="small text-muted mb-0">
+                                                    <li>Process full/partial refunds</li>
+                                                    <li>Stripe refund integration</li>
+                                                    <li>Refund history</li>
+                                                    <li>Commission adjustments</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <i class="bi bi-file-earmark-text text-secondary"></i>
+                                                    Reports & Analytics
+                                                </h5>
+                                                <ul class="small text-muted mb-0">
+                                                    <li>Sales reports</li>
+                                                    <li>Revenue analytics</li>
+                                                    <li>Export order data</li>
+                                                    <li>Commission tracking</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Workaround -->
+                        <div class="row justify-content-center mt-5">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h5 class="alert-heading">
+                                        <i class="bi bi-lightbulb"></i>
+                                        Current Workaround
+                                    </h5>
+                                    <p class="mb-2">
+                                        While this feature is being developed, you can manage orders through:
+                                    </p>
+                                    <ul class="mb-0 text-start">
+                                        <li>Stripe Dashboard: <a href="https://dashboard.stripe.com/payments" target="_blank" class="alert-link">View Payments</a></li>
+                                        <li>Database access for advanced queries</li>
+                                        <li>Return requests: <a asp-action="ReturnRequests" class="alert-link">Manage Returns</a></li>
+                                        <li>Developer earnings: <a asp-action="DeveloperEarnings" class="alert-link">View Earnings</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-5">
+                            <a asp-action="Index" class="btn btn-primary btn-lg me-2">
+                                <i class="bi bi-house"></i>
+                                Back to Dashboard
+                            </a>
+                            <a asp-action="ReturnRequests" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-arrow-return-left"></i>
+                                Manage Returns
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .card h5.card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .card ul {
+            padding-left: 1.25rem;
+        }
+        
+        .card ul li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .alert-link {
+            font-weight: 600;
+            text-decoration: underline;
+        }
+        
+        .bi-tools {
+            opacity: 0.3;
+        }
+    </style>
+}

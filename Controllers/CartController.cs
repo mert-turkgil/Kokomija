@@ -245,7 +245,7 @@ namespace Kokomija.Controllers
             var cartItems = items.Select(c => new
             {
                 productId = c.ProductId,
-                productName = c.Product.NameKey != null ? _localizationService[c.Product.NameKey] : c.Product.Name,
+                productName = c.Product.Name,
                 colorId = c.ColorId,
                 colorName = c.Color?.DisplayName,
                 sizeId = c.SizeId,
@@ -455,7 +455,7 @@ namespace Kokomija.Controllers
                 {
                     Id = cartItem.Id,
                     ProductId = cartItem.ProductId,
-                    ProductName = cartItem.Product.NameKey != null ? _localizationService[cartItem.Product.NameKey] : cartItem.Product.Name,
+                    ProductName = cartItem.Product.Name,
                     ProductImage = cartItem.Product.Images.FirstOrDefault()?.ImageUrl,
                     ProductSlug = cartItem.Product.Category?.Slug ?? "product",
                     ColorId = cartItem.ColorId,

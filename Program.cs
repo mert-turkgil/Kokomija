@@ -183,12 +183,23 @@ builder.Services.AddScoped<ICookieConsentService, CookieConsentService>();
 // Register Email Service (SMTP)
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Register Return Request Service
+builder.Services.AddScoped<IReturnRequestService, ReturnRequestService>();
+
+// Register Shipping Service
+builder.Services.AddScoped<IShippingService, ShippingService>();
+
+// Register Tax Service
+builder.Services.AddScoped<ITaxService, Kokomija.Services.TaxService>();
+
 // Register Wishlist Notification Service
 builder.Services.AddScoped<IWishlistNotificationService, WishlistNotificationService>();
 
 // Add background services
 builder.Services.AddHostedService<Kokomija.BackgroundServices.WishlistNotificationWorker>();
 builder.Services.AddHostedService<Kokomija.BackgroundServices.TempFileCleanupWorker>();
+builder.Services.AddHostedService<Kokomija.BackgroundServices.EarningsReportWorker>();
+builder.Services.AddHostedService<Kokomija.BackgroundServices.AutomaticPayoutWorker>();
 
 // Register Cloudflare Turnstile Service
 builder.Services.AddHttpClient(); // Required for TurnstileService
@@ -210,8 +221,14 @@ builder.Services.AddScoped<IEmailCommandService, EmailCommandService>();
 builder.Services.AddScoped<ICarouselService, CarouselService>();
 builder.Services.AddScoped<ICarouselImageService, CarouselImageService>();
 
+// Register Blog Image Service (Blog image upload and management)
+builder.Services.AddScoped<IBlogImageService, BlogImageService>();
+
 // Register Category Image Service (Category image upload and management)
 builder.Services.AddScoped<ICategoryImageService, CategoryImageService>();
+
+// Register Product Image Service (Product image upload and management)
+builder.Services.AddScoped<IProductImageService, ProductImageService>();
 
 // Register Localization Service (Translation wrapper with logging)
 builder.Services.AddScoped<ILocalizationService, LocalizationService>();
@@ -288,7 +305,10 @@ app.UseHttpsRedirection();
 // Add security headers
 app.UseSecurityHeaders();
 
-// Add Site Closure Middleware (Emergency maintenance mode)
+// Add Site Closure Check Middleware (Emergency maintenance mode - blocks non-ROOT users)
+app.UseMiddleware<SiteClosureCheckMiddleware>();
+
+// Add Site Closure Middleware (Email-based reopening)
 app.UseMiddleware<SiteClosureMiddleware>();
 
 // Add localization support

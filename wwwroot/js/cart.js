@@ -71,8 +71,6 @@ class CartManager {
         
         const items = await this.getCartItems();
         
-        console.log('Cart items received:', items); // Debug log
-        
         if (items.length === 0) {
             this.cartPreviewItems.innerHTML = `
                 <div class="text-center py-4 text-muted">
@@ -120,7 +118,6 @@ class CartManager {
                 };
             }
             
-            console.log('Processed product data:', productData); // Debug log
             return this.renderCartItem(productData);
         }));
         

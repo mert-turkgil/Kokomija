@@ -11,34 +11,14 @@ namespace Kokomija.Entity
         public int Id { get; set; }
 
         /// <summary>
-        /// Blog post title
-        /// </summary>
-        public string Title { get; set; } = string.Empty;
-
-        /// <summary>
-        /// URL-friendly slug
-        /// </summary>
-        public string Slug { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Blog post content (HTML)
-        /// </summary>
-        public string Content { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Short excerpt for preview
-        /// </summary>
-        public string? Excerpt { get; set; }
-
-        /// <summary>
         /// Featured image URL
         /// </summary>
         public string? FeaturedImage { get; set; }
 
         /// <summary>
-        /// Author user ID
+        /// Author user ID (nullable to support seed data)
         /// </summary>
-        public string AuthorId { get; set; } = string.Empty;
+        public string? AuthorId { get; set; }
 
         /// <summary>
         /// Author user
@@ -81,26 +61,6 @@ namespace Kokomija.Entity
         public int Views { get; set; }
 
         /// <summary>
-        /// Meta description for SEO
-        /// </summary>
-        public string? MetaDescription { get; set; }
-
-        /// <summary>
-        /// Meta keywords for SEO
-        /// </summary>
-        public string? MetaKeywords { get; set; }
-
-        /// <summary>
-        /// Comma-separated tags
-        /// </summary>
-        public string? Tags { get; set; }
-
-        /// <summary>
-        /// Language code (pl, en, etc.)
-        /// </summary>
-        public string Language { get; set; } = "pl";
-
-        /// <summary>
         /// Allow comments
         /// </summary>
         public bool AllowComments { get; set; } = true;
@@ -119,5 +79,10 @@ namespace Kokomija.Entity
         /// Soft delete flag
         /// </summary>
         public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Blog post translations (Title, Content, Slug, etc.)
+        /// </summary>
+        public ICollection<BlogTranslation>? Translations { get; set; }
     }
 }

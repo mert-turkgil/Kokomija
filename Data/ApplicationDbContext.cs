@@ -37,6 +37,7 @@ namespace Kokomija.Data
         public DbSet<SiteSetting> SiteSettings { get; set; }
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<BlogCategory> BlogCategories { get; set; }
+        public DbSet<BlogTranslation> BlogTranslations { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<AdminCommission> AdminCommissions { get; set; }
         public DbSet<SiteClosure> SiteClosures { get; set; }
@@ -51,6 +52,21 @@ namespace Kokomija.Data
         public DbSet<ProductPriceHistory> ProductPriceHistories { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<ProductReview> ProductReviews { get; set; }
+        public DbSet<ProductTranslation> ProductTranslations { get; set; }
+
+        // Order Management
+        public DbSet<ReturnRequest> ReturnRequests { get; set; }
+        public DbSet<ReturnRequestImage> ReturnRequestImages { get; set; }
+        public DbSet<ReturnStatusHistory> ReturnStatusHistories { get; set; }
+        public DbSet<ShippingProvider> ShippingProviders { get; set; }
+        public DbSet<ShippingRate> ShippingRates { get; set; }
+        public DbSet<OrderShipment> OrderShipments { get; set; }
+        public DbSet<ShipmentTrackingEvent> ShipmentTrackingEvents { get; set; }
+        public DbSet<TaxRate> TaxRates { get; set; }
+        public DbSet<CommissionSettings> CommissionSettings { get; set; }
+        public DbSet<DeveloperEarnings> DeveloperEarnings { get; set; }
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public DbSet<SiteBlockLog> SiteBlockLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -76,6 +92,7 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new SiteSettingConfiguration());
             modelBuilder.ApplyConfiguration(new BlogConfiguration());
             modelBuilder.ApplyConfiguration(new BlogCategoryConfiguration());
+            modelBuilder.ApplyConfiguration(new BlogTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new PaymentMethodConfiguration());
             modelBuilder.ApplyConfiguration(new AdminCommissionConfiguration());
             modelBuilder.ApplyConfiguration(new SiteClosureConfiguration());
@@ -87,6 +104,18 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new NewsletterSubscriptionConfiguration());
             modelBuilder.ApplyConfiguration(new WishlistNotificationConfiguration());
             modelBuilder.ApplyConfiguration(new ProductPriceHistoryConfiguration());
+            modelBuilder.ApplyConfiguration(new ProductTranslationConfiguration());
+
+            // Order Management Configurations
+            modelBuilder.ApplyConfiguration(new ReturnRequestConfiguration());
+            modelBuilder.ApplyConfiguration(new ShippingProviderConfiguration());
+            modelBuilder.ApplyConfiguration(new ShippingRateConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderShipmentConfiguration());
+            modelBuilder.ApplyConfiguration(new TaxRateConfiguration());
+            modelBuilder.ApplyConfiguration(new CommissionSettingsConfiguration());
+            modelBuilder.ApplyConfiguration(new DeveloperEarningsConfiguration());
+            modelBuilder.ApplyConfiguration(new PaymentTransactionConfiguration());
+            modelBuilder.ApplyConfiguration(new SiteBlockLogConfiguration());
 
             // Seed initial data (only runs on InitialCreate migration)
             modelBuilder.SeedSizes();
@@ -94,9 +123,14 @@ namespace Kokomija.Data
             modelBuilder.SeedCategories();
             modelBuilder.SeedLanguages();
             modelBuilder.SeedBlogCategories();
-            // Note: Blog seeding requires user accounts to be created first
-            // modelBuilder.SeedBlogs(); // Uncomment after running IdentitySeeder
+            modelBuilder.SeedBlogs(); 
+            modelBuilder.SeedBlogTranslations(); 
             modelBuilder.SeedAdminSettings();
+            
+            // Order Management seed data
+            modelBuilder.SeedShippingProviders();
+            modelBuilder.SeedShippingRates();
+            modelBuilder.SeedTaxRates();
             
             // Coupons and Products seeding
             modelBuilder.SeedCoupons();

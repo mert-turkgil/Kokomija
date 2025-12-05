@@ -36,6 +36,9 @@ namespace Kokomija.Data.Concrete
             SiteClosures = new Repository<SiteClosure>(_context);
             EmailCommands = new Repository<EmailCommand>(_context);
             AdminEarnings = new Repository<AdminEarnings>(_context);
+            DeveloperEarnings = new Repository<DeveloperEarnings>(_context);
+            CommissionSettings = new Repository<CommissionSettings>(_context);
+            ReturnRequests = new Repository<ReturnRequest>(_context);
             
             // Initialize carousel repository
             CarouselSlides = new CarouselSlideRepository(_context);
@@ -69,6 +72,9 @@ namespace Kokomija.Data.Concrete
         public IRepository<SiteClosure> SiteClosures { get; private set; }
         public IRepository<EmailCommand> EmailCommands { get; private set; }
         public IRepository<AdminEarnings> AdminEarnings { get; private set; }
+        public IRepository<DeveloperEarnings> DeveloperEarnings { get; private set; }
+        public IRepository<CommissionSettings> CommissionSettings { get; private set; }
+        public IRepository<ReturnRequest> ReturnRequests { get; private set; }
         public ICarouselSlideRepository CarouselSlides { get; private set; }
         public ICarouselSlideTranslationRepository CarouselSlideTranslations { get; private set; }
         public IWishlistRepository Wishlists { get; private set; }

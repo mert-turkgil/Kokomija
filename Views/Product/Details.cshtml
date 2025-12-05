@@ -3,8 +3,8 @@
 
 @{
     var relatedProducts = ViewBag.RelatedProducts as List<Kokomija.Entity.Product> ?? new List<Kokomija.Entity.Product>();
-    var productName = !string.IsNullOrEmpty(Model.NameKey) ? L[Model.NameKey] : Model.Name;
-    var productDescription = !string.IsNullOrEmpty(Model.DescriptionKey) ? L[Model.DescriptionKey] : Model.Description;
+    var productName = Model.Name;
+    var productDescription = Model.Description;
 }
 
 <div class="product-detail-page">

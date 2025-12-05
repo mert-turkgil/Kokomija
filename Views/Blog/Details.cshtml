@@ -94,7 +94,7 @@
                     @if (!string.IsNullOrEmpty(Model.FeaturedImage))
                     {
                         <div class="article-featured-image">
-                            <img src="@Model.FeaturedImage" alt="@Model.Title">
+                            <img src="@Model.FeaturedImage" alt="@Model.Title" onerror="this.src='/img/logo_black.png'">
                         </div>
                     }
 
@@ -180,7 +180,8 @@
                                         {
                                             <img src="@Model.RelatedProduct.Images.First().ImageUrl" 
                                                  alt="@Model.RelatedProduct.Name" 
-                                                 class="product-image">
+                                                 class="product-image"
+                                                 onerror="this.src='/img/logo_black.png'">
                                         }
                                     </div>
                                     <div class="col-md-8">
@@ -219,7 +220,7 @@
                                         @if (!string.IsNullOrEmpty(post.FeaturedImage))
                                         {
                                             <a asp-action="Details" asp-route-slug="@post.Slug" class="related-post-image">
-                                                <img src="@post.FeaturedImage" alt="@post.Title">
+                                                <img src="@post.FeaturedImage" alt="@post.Title" onerror="this.src='/img/logo_black.png'">
                                             </a>
                                         }
                                         <div class="related-post-body">

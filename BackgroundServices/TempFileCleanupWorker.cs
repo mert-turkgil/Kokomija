@@ -3,7 +3,7 @@ using Kokomija.Services;
 namespace Kokomija.BackgroundServices;
 
 /// <summary>
-/// Background service that periodically cleans up old temporary carousel image files
+/// Background service that periodically cleans up old temporary files (carousel, blog, category, product images)
 /// Runs every 24 hours to remove files older than 24 hours
 /// </summary>
 public class TempFileCleanupWorker : BackgroundService
@@ -35,11 +35,25 @@ public class TempFileCleanupWorker : BackgroundService
 
                 using (var scope = _serviceProvider.CreateScope())
                 {
+                    // Clean up carousel temp files
                     var carouselImageService = scope.ServiceProvider
                         .GetRequiredService<ICarouselImageService>();
-
-                    // Clean up old temp files (older than 24 hours)
                     await carouselImageService.CleanupOldTempFilesAsync();
+
+                    // Clean up blog temp files
+                    var blogImageService = scope.ServiceProvider
+                        .GetRequiredService<IBlogImageService>();
+                    await blogImageService.ClearOldTempFilesAsync();
+
+                    // Clean up category temp files  
+                    var categoryImageService = scope.ServiceProvider
+                        .GetRequiredService<ICategoryImageService>();
+                    await categoryImageService.CleanupTempFilesAsync(new List<string>());
+
+                    // Clean up product temp files
+                    var productImageService = scope.ServiceProvider
+                        .GetRequiredService<IProductImageService>();
+                    await productImageService.CleanupOldTempFilesAsync();
                 }
 
                 _logger.LogInformation("Temp file cleanup completed");

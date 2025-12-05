@@ -15,6 +15,12 @@ namespace Kokomija.Models.ViewModels.Admin
         public int ActiveCategories { get; set; }
         public int TotalSubcategories { get; set; }
 
+        // Blog Management
+        public List<BlogItemViewModel> BlogPosts { get; set; } = new();
+        public int TotalBlogs { get; set; }
+        public int PublishedBlogs { get; set; }
+        public int DraftBlogs { get; set; }
+
         // Translation Management
         public List<TranslationKeyViewModel> TranslationKeys { get; set; } = new();
         public int TotalTranslationKeys { get; set; }

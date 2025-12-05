@@ -20,7 +20,7 @@
             @foreach (var item in Model)
             {
                 var product = item.Product;
-                var productName = !string.IsNullOrEmpty(product.NameKey) ? L[product.NameKey] : product.Name;
+                var productName = product.Name;
                 var imageUrl = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl ?? "logo_black.png";
                 var hasDiscount = product.Price < (product.Price * 1.1m); // Example discount check
 

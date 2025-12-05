@@ -1,0 +1,353 @@
+@model Kokomija.Models.ViewModels.ReturnRequest.ReturnRequestsViewModel
+@using Kokomija.Entity
+@{
+    ViewData["Title"] = "Return Requests";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-arrow-return-left"></i>
+                                Return Requests Management
+                            </h1>
+                            <p class="mb-0">Review and process customer return requests</p>
+                        </div>
+                        <div>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-primary">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalCount</h6>
+                        <small>Total Requests</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-warning">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.PendingCount</h6>
+                        <small>Pending</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-info">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div>
+                        <h6>@(Model.TotalCount - Model.PendingCount - Model.ApprovedCount - Model.RejectedCount - Model.CompletedCount)</h6>
+                        <small>Under Review</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.ApprovedCount</h6>
+                        <small>Approved</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-danger">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.RejectedCount</h6>
+                        <small>Rejected</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stat-card-small bg-gradient-primary text-white">
+                    <div class="stat-icon-small bg-white text-primary">
+                        <i class="bi bi-cash"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalRefundedAmount.ToString("C")</h6>
+                        <small>Total Refunded</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Requests Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list"></i>
+                                All Return Requests
+                            </h5>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="statusFilter" style="width: 200px;">
+                                    <option value="">All Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="UnderReview">Under Review</option>
+                                    <option value="Approved">Approved</option>
+                                    <option value="Rejected">Rejected</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="returnRequestsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60">ID</th>
+                                        <th width="120">Order</th>
+                                        <th width="200">Customer</th>
+                                        <th width="200">Product</th>
+                                        <th width="150">Reason</th>
+                                        <th width="100">Amount</th>
+                                        <th width="120">Status</th>
+                                        <th width="150">Requested</th>
+                                        <th width="200">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var request in Model.ReturnRequests)
+                                    {
+                                        <tr>
+                                            <td>@request.Id</td>
+                                            <td><code>@request.OrderNumber</code></td>
+                                            <td>
+                                                <strong>@request.CustomerName</strong><br>
+                                                <small class="text-muted">@request.CustomerEmail</small>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @if (!string.IsNullOrEmpty(request.ProductImageUrl))
+                                                    {
+                                                        <img src="@request.ProductImageUrl" alt="@request.ProductName" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                    }
+                                                    <span>@request.ProductName</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <small>@request.Reason</small>
+                                            </td>
+                                            <td><strong>@request.RequestedAmount.ToString("C")</strong></td>
+                                            <td>
+                                                @if (request.Status == ReturnRequestStatus.Pending)
+                                                {
+                                                    <span class="badge bg-warning">Pending</span>
+                                                }
+                                                else if (request.Status == ReturnRequestStatus.UnderReview)
+                                                {
+                                                    <span class="badge bg-info">Under Review</span>
+                                                }
+                                                else if (request.Status == ReturnRequestStatus.Approved)
+                                                {
+                                                    <span class="badge bg-success">Approved</span>
+                                                }
+                                                else if (request.Status == ReturnRequestStatus.Rejected)
+                                                {
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                }
+                                                else if (request.Status == ReturnRequestStatus.Completed)
+                                                {
+                                                    <span class="badge bg-primary">Completed</span>
+                                                }
+                                                else if (request.Status == ReturnRequestStatus.Cancelled)
+                                                {
+                                                    <span class="badge bg-secondary">Cancelled</span>
+                                                }
+                                            </td>
+                                            <td><small>@request.RequestedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a asp-action="ReturnRequestDetails" asp-route-id="@request.Id" class="btn btn-outline-primary" title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    @if (request.Status == ReturnRequestStatus.Pending || request.Status == ReturnRequestStatus.UnderReview)
+                                                    {
+                                                        <button type="button" class="btn btn-outline-success" onclick="reviewReturn(@request.Id, true)" title="Approve">
+                                                            <i class="bi bi-check-lg"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-danger" onclick="reviewReturn(@request.Id, false)" title="Reject">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalTitle">Review Return Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" id="returnRequestId" />
+                    <input type="hidden" id="approvalDecision" />
+                    
+                    <div class="mb-3">
+                        <label for="reviewNotes" class="form-label">Review Notes <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reviewNotes" rows="4" placeholder="Enter your review notes..." required></textarea>
+                    </div>
+
+                    <div class="mb-3" id="refundAmountContainer">
+                        <label for="refundAmount" class="form-label">Refund Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="refundAmount" step="0.01" min="0" placeholder="Leave empty to use requested amount">
+                        </div>
+                        <div class="form-text">Leave empty to refund the full requested amount</div>
+                    </div>
+
+                    <div class="alert alert-info" id="approveAlert" style="display: none;">
+                        <i class="bi bi-info-circle"></i>
+                        A refund will be processed via Stripe after approval.
+                    </div>
+
+                    <div class="alert alert-warning" id="rejectAlert" style="display: none;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        The customer will be notified of the rejection.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">
+                    <i class="bi bi-send"></i> Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentReturnRequestId = 0;
+        let isApproval = false;
+
+        function reviewReturn(id, approve) {
+            currentReturnRequestId = id;
+            isApproval = approve;
+
+            document.getElementById('returnRequestId').value = id;
+            document.getElementById('approvalDecision').value = approve;
+            document.getElementById('reviewNotes').value = '';
+            document.getElementById('refundAmount').value = '';
+
+            if (approve) {
+                document.getElementById('reviewModalTitle').textContent = 'Approve Return Request';
+                document.getElementById('approveAlert').style.display = 'block';
+                document.getElementById('rejectAlert').style.display = 'none';
+                document.getElementById('refundAmountContainer').style.display = 'block';
+            } else {
+                document.getElementById('reviewModalTitle').textContent = 'Reject Return Request';
+                document.getElementById('approveAlert').style.display = 'none';
+                document.getElementById('rejectAlert').style.display = 'block';
+                document.getElementById('refundAmountContainer').style.display = 'none';
+            }
+
+            new bootstrap.Modal(document.getElementById('reviewModal')).show();
+        }
+
+        async function submitReview() {
+            const reviewNotes = document.getElementById('reviewNotes').value;
+            const refundAmount = document.getElementById('refundAmount').value;
+
+            if (!reviewNotes) {
+                alert('Please enter review notes');
+                return;
+            }
+
+            const data = {
+                returnRequestId: currentReturnRequestId,
+                approved: isApproval,
+                reviewNotes: reviewNotes,
+                refundAmount: refundAmount ? parseFloat(refundAmount) : null
+            };
+
+            try {
+                const response = await fetch('/Admin/ReviewReturnRequest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the review');
+            }
+        }
+
+        // Initialize DataTable with status filter
+        $(document).ready(function() {
+            var table = $('#returnRequestsTable').DataTable({
+                order: [[0, 'desc']],
+                pageLength: 25,
+                responsive: true
+            });
+
+            // Status filter
+            $('#statusFilter').on('change', function() {
+                var status = $(this).val();
+                if (status === '') {
+                    table.column(6).search('').draw();
+                } else {
+                    table.column(6).search(status).draw();
+                }
+            });
+        });
+    </script>
+}

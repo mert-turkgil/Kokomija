@@ -34,7 +34,7 @@
     // ============================================
     class DropdownHover {
         constructor() {
-            this.dropdowns = document.querySelectorAll('.navbar .dropdown');
+            this.dropdowns = document.querySelectorAll('.navbar .dropdown, .cart-dropdown');
             this.init();
         }
 

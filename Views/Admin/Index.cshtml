@@ -3,6 +3,39 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
+@section Styles {
+    <style>
+        .stat-card-clickable {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .stat-card-clickable:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+        .stat-card-clickable:active {
+            transform: translateY(-2px);
+        }
+        
+        /* Fixed height scrollable containers */
+        .recent-activity-card .card-body {
+            width: 636px;
+            max-width: 100%;
+            height: 286.53px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .recent-activity-card .empty-state {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+}
+
 <div class="admin-dashboard">
     <div class="container py-4">
         <!-- Welcome Card -->
@@ -95,16 +128,18 @@
                 </div>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-info">
-                        <i class="bi bi-newspaper"></i>
+                <a asp-action="BlogSettings" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-info">
+                            <i class="bi bi-newspaper"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.PublishedBlogs</h3>
+                            <p class="stat-label">Published Blogs</p>
+                            <small class="text-muted">@Model.DraftBlogs Drafts</small>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.PublishedBlogs</h3>
-                        <p class="stat-label">Published Blogs</p>
-                        <small class="text-muted">@Model.DraftBlogs Drafts</small>
-                    </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stat-card">
@@ -323,8 +358,8 @@
                         <i class="bi bi-people"></i>
                     </div>
                     <h5>User Management</h5>
-                    <p class="text-muted">Manage customer accounts, roles, and permissions</p>
-                    <a asp-action="Users" class="btn btn-outline-primary w-100">
+                    <p class="text-muted">Manage customer accounts, ban users, and moderate reviews</p>
+                    <a asp-action="UserManagement" class="btn btn-outline-primary w-100">
                         Manage Users
                         <i class="bi bi-arrow-right ms-2"></i>
                     </a>
@@ -366,10 +401,14 @@
                     </div>
                     <h5>Blog Management</h5>
                     <p class="text-muted">Create and manage blog posts and articles</p>
-                    <a asp-controller="Blog" asp-action="Index" class="btn btn-outline-primary w-100">
-                        Manage Blog
-                        <i class="bi bi-arrow-right ms-2"></i>
-                    </a>
+                    <div class="d-grid gap-2">
+                        <a asp-action="BlogCreate" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Create New Blog
+                        </a>
+                        <a asp-action="BlogSettings" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-2"></i>Manage Blogs
+                        </a>
+                    </div>
                 </div>
             </div>
 

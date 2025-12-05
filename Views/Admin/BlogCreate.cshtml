@@ -1,0 +1,445 @@
+@model Kokomija.Models.ViewModels.Admin.BlogCreateDto
+@{
+    ViewData["Title"] = "Create New Blog Post";
+    var categories = ViewBag.Categories as List<Kokomija.Entity.BlogCategory>;
+    var products = ViewBag.Products as List<Kokomija.Entity.Product>;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@ViewData["Title"]</h3>
+                    <div class="card-tools">
+                        <a asp-action="BlogSettings" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                
+                <form asp-action="BlogCreate" method="post" enctype="multipart/form-data" id="blogForm">
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <!-- General Settings -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="CategoryId" class="required">Category</label>
+                                    <select asp-for="CategoryId" class="form-control">
+                                        <option value="">-- Select Category --</option>
+                                        @foreach (var category in categories ?? new())
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ProductId">Related Product (Optional)</label>
+                                    <select asp-for="ProductId" class="form-control">
+                                        <option value="">-- No Related Product --</option>
+                                        @foreach (var product in products ?? new())
+                                        {
+                                            <option value="@product.Id">@product.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ProductId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Featured Image -->
+                        <div class="form-group">
+                            <label>Featured Image</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="featuredImage" accept="image/*">
+                                <label class="custom-file-label" for="featuredImage">Choose file...</label>
+                            </div>
+                            <input type="hidden" asp-for="ImageTempFileName" id="imageTempFileName" />
+                            <div id="imagePreview" class="mt-3" style="display:none;">
+                                <img id="previewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 300px;">
+                                <button type="button" class="btn btn-sm btn-danger ml-2" id="removeImage">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Recommended size: 1200x630 pixels</small>
+                        </div>
+
+                        <!-- Publishing Options -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" asp-for="IsPublished" id="isPublished">
+                                        <label class="custom-control-label" for="isPublished">Publish Immediately</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" asp-for="AllowComments" id="allowComments" checked>
+                                        <label class="custom-control-label" for="allowComments">Allow Comments</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="PublishedDate">Publish Date</label>
+                                    <input type="datetime-local" class="form-control" asp-for="PublishedDate" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Language Tabs -->
+                        <ul class="nav nav-tabs" id="languageTabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="en-tab" data-toggle="tab" href="#en-content" role="tab">
+                                    <i class="fas fa-flag-usa"></i> English
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="pl-tab" data-toggle="tab" href="#pl-content" role="tab">
+                                    <i class="fas fa-flag"></i> Polish
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content border border-top-0 p-3" id="languageTabContent">
+                            <!-- English Translation -->
+                            <div class="tab-pane fade show active" id="en-content" role="tabpanel">
+                                <input type="hidden" asp-for="Translations[0].CultureCode" value="en-US" />
+                                
+                                <div class="form-group">
+                                    <label class="required">Title (English)</label>
+                                    <input type="text" class="form-control" asp-for="Translations[0].Title" placeholder="Enter blog title in English" required />
+                                    <span asp-validation-for="Translations[0].Title" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">Content (English)</label>
+                                    <textarea asp-for="Translations[0].Content" class="form-control ckeditor-content" rows="10"></textarea>
+                                    <span asp-validation-for="Translations[0].Content" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Excerpt (English)</label>
+                                    <textarea asp-for="Translations[0].Excerpt" class="form-control" rows="3" placeholder="Short description for preview" maxlength="500"></textarea>
+                                    <span asp-validation-for="Translations[0].Excerpt" class="text-danger"></span>
+                                    <small class="form-text text-muted">Max 500 characters</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tags (English)</label>
+                                    <input type="text" class="form-control" asp-for="Translations[0].Tags" placeholder="fashion, trends, 2025" />
+                                    <small class="form-text text-muted">Comma-separated tags</small>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Meta Description (English)</label>
+                                            <textarea asp-for="Translations[0].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
+                                            <small class="form-text text-muted">Max 160 characters for SEO</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Meta Keywords (English)</label>
+                                            <input type="text" class="form-control" asp-for="Translations[0].MetaKeywords" />
+                                            <small class="form-text text-muted">Comma-separated keywords</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Polish Translation -->
+                            <div class="tab-pane fade" id="pl-content" role="tabpanel">
+                                <input type="hidden" asp-for="Translations[1].CultureCode" value="pl-PL" />
+                                
+                                <div class="form-group">
+                                    <label class="required">Tytuł (Polish)</label>
+                                    <input type="text" class="form-control" asp-for="Translations[1].Title" placeholder="Wprowadź tytuł bloga po polsku" required />
+                                    <span asp-validation-for="Translations[1].Title" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">Treść (Polish)</label>
+                                    <textarea asp-for="Translations[1].Content" class="form-control ckeditor-content" rows="10"></textarea>
+                                    <span asp-validation-for="Translations[1].Content" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Wyjątek (Polish)</label>
+                                    <textarea asp-for="Translations[1].Excerpt" class="form-control" rows="3" placeholder="Krótki opis podglądu" maxlength="500"></textarea>
+                                    <span asp-validation-for="Translations[1].Excerpt" class="text-danger"></span>
+                                    <small class="form-text text-muted">Maksymalnie 500 znaków</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tagi (Polish)</label>
+                                    <input type="text" class="form-control" asp-for="Translations[1].Tags" placeholder="moda, trendy, 2025" />
+                                    <small class="form-text text-muted">Tagi oddzielone przecinkami</small>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Meta Opis (Polish)</label>
+                                            <textarea asp-for="Translations[1].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
+                                            <small class="form-text text-muted">Maksymalnie 160 znaków dla SEO</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Meta Słowa Kluczowe (Polish)</label>
+                                            <input type="text" class="form-control" asp-for="Translations[1].MetaKeywords" />
+                                            <small class="form-text text-muted">Słowa kluczowe oddzielone przecinkami</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Blog Post
+                        </button>
+                        <a asp-action="BlogSettings" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <!-- CKEditor 5 -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.umd.js"></script>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.css" />
+    
+    <script>
+        const {
+            ClassicEditor,
+            Essentials,
+            Paragraph,
+            Bold,
+            Italic,
+            Link,
+            List,
+            BlockQuote,
+            Heading,
+            Image,
+            ImageToolbar,
+            ImageCaption,
+            ImageStyle,
+            ImageResize,
+            Table,
+            TableToolbar,
+            MediaEmbed,
+            Indent,
+            SourceEditing
+        } = CKEDITOR;
+
+        const LICENSE_KEY = '@(ViewBag.CKEditorLicenseKey ?? "")';
+
+        const editorConfig = {
+            licenseKey: LICENSE_KEY,
+            plugins: [
+                Essentials,
+                Paragraph,
+                Bold,
+                Italic,
+                Link,
+                List,
+                BlockQuote,
+                Heading,
+                Image,
+                ImageToolbar,
+                ImageCaption,
+                ImageStyle,
+                ImageResize,
+                Table,
+                TableToolbar,
+                MediaEmbed,
+                Indent,
+                SourceEditing
+            ],
+            toolbar: [
+                'sourceEditing', '|',
+                'heading', '|',
+                'bold', 'italic', '|',
+                'link', 'insertTable', '|',
+                'bulletedList', 'numberedList', '|',
+                'outdent', 'indent', '|',
+                'blockQuote', '|',
+                'undo', 'redo'
+            ],
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                    { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                    { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+                    { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' }
+                ]
+            },
+            image: {
+                toolbar: [
+                    'imageStyle:inline',
+                    'imageStyle:block',
+                    'imageStyle:side',
+                    '|',
+                    'toggleImageCaption'
+                ]
+            },
+            table: {
+                contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+            }
+        };
+
+        let editorInstances = {};
+
+        $(document).ready(function() {
+            // Initialize CKEditor 5 for both language tabs
+            $('.ckeditor-content').each(function() {
+                const element = this;
+                const editorId = element.id || element.name;
+                
+                ClassicEditor
+                    .create(element, editorConfig)
+                    .then(editor => {
+                        editorInstances[editorId] = editor;
+                    })
+                    .catch(error => {
+                        console.error('CKEditor initialization error:', error);
+                    });
+            });
+
+            // Image upload handling
+            $('#featuredImage').on('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                $.ajax({
+                    url: '@Url.Action("BlogUploadImage")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#imageTempFileName').val(response.tempFileName);
+                            $('#previewImg').attr('src', response.tempUrl);
+                            $('#imagePreview').show();
+                            $('.custom-file-label').text(file.name);
+                        } else {
+                            alert('Error uploading image: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Error uploading image');
+                    }
+                });
+            });
+
+            // Remove image
+            $('#removeImage').on('click', function() {
+                const tempFileName = $('#imageTempFileName').val();
+                if (tempFileName) {
+                    $.ajax({
+                        url: '@Url.Action("BlogCancelUpload")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ imageTempFileName: tempFileName }),
+                        success: function() {
+                            $('#imageTempFileName').val('');
+                            $('#previewImg').attr('src', '');
+                            $('#imagePreview').hide();
+                            $('#featuredImage').val('');
+                            $('.custom-file-label').text('Choose file...');
+                        }
+                    });
+                }
+            });
+
+            // Form submit - validate all required fields in both tabs
+            $('#blogForm').on('submit', function(e) {
+                let isValid = true;
+                let errorMessages = [];
+                
+                // Validate all tabs
+                $('.tab-pane').each(function() {
+                    const tabName = $(this).attr('id') === 'en-content' ? 'English' : 'Polish';
+                    
+                    $(this).find('input[required], textarea.ckeditor-content').each(function() {
+                        const $field = $(this);
+                        const label = $field.closest('.form-group').find('label').first().text().replace('*', '').trim();
+                        
+                        if ($field.hasClass('ckeditor-content')) {
+                            // Check CKEditor content
+                            const editorId = this.id || this.name;
+                            const editor = editorInstances[editorId];
+                            if (editor && editor.getData().trim() === '') {
+                                isValid = false;
+                                errorMessages.push(tabName + ': ' + label);
+                                $field.addClass('is-invalid');
+                            } else {
+                                $field.removeClass('is-invalid');
+                            }
+                        } else {
+                            // Check regular input
+                            if ($field.val().trim() === '') {
+                                isValid = false;
+                                errorMessages.push(tabName + ': ' + label);
+                                $field.addClass('is-invalid');
+                            } else {
+                                $field.removeClass('is-invalid');
+                            }
+                        }
+                    });
+                });
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    
+                    // Switch to first tab with errors
+                    const firstInvalidTab = $('.tab-pane').has('.is-invalid').first().attr('id');
+                    if (firstInvalidTab) {
+                        $('a[href="#' + firstInvalidTab + '"]').tab('show');
+                    }
+                    
+                    alert('Please fill in all required fields:\n- ' + errorMessages.join('\n- '));
+                    return false;
+                }
+                
+                // CKEditor 5 automatically updates the textarea, no manual sync needed
+                return true;
+            });
+        });
+    </script>
+    
+    <style>
+        .required:after {
+            content: " *";
+            color: red;
+        }
+    </style>
+}

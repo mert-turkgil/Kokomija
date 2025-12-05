@@ -8,18 +8,18 @@ namespace Kokomija.Entity
         [Key]
         public int Id { get; set; }
 
+        /// <summary>
+        /// Default product name (fallback if no translation found)
+        /// </summary>
         [Required]
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        public string? NameKey { get; set; }
-
+        /// <summary>
+        /// Default product description (fallback if no translation found)
+        /// </summary>
         [Required]
         public string Description { get; set; } = string.Empty;
-
-        [MaxLength(100)]
-        public string? DescriptionKey { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
@@ -68,6 +68,7 @@ namespace Kokomija.Entity
         public ICollection<ProductSize> AvailableSizes { get; set; } = new List<ProductSize>();
         public ICollection<ProductColor> AvailableColors { get; set; } = new List<ProductColor>();
         public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
+        public ICollection<ProductTranslation> Translations { get; set; } = new List<ProductTranslation>();
 
         // Computed properties
         [NotMapped]
