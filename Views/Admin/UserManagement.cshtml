@@ -78,27 +78,16 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-white">
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                             <h5 class="mb-0">
-                                <i class="bi bi-list"></i>
-                                All Users
+                                <i class="bi bi-list"></i> All Users
                             </h5>
-                            <div class="d-flex gap-2">
-                                <select class="form-select form-select-sm" id="statusFilter" style="width: auto;">
-                                    <option value="">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="banned">Banned</option>
-                                </select>
-                                <input type="text" class="form-control form-control-sm" id="searchUsers" placeholder="Search users..." style="width: 200px;">
-                            </div>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" id="usersTable">
-                                <thead class="table-light">
-                                    <tr>
+                                <thead>
+                                    <tr class="text-dark">
                                         <th>User</th>
                                         <th>Email</th>
                                         <th>Phone</th>
@@ -265,31 +254,64 @@
         </div>
     </div>
 </div>
-
+@section Styles {
+    <link rel="stylesheet" href="~/lib/datatables/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/lib/datatables/responsive.bootstrap5.min.css" />
+    <style>
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+    </style>
+}
 @section Scripts {
+    <script src="~/lib/datatables/dataTables.min.js"></script>
+    <script src="~/lib/datatables/dataTables.bootstrap5.min.js"></script>
     <script>
-        // Search functionality
-        $('#searchUsers').on('keyup', function() {
-            const value = $(this).val().toLowerCase();
-            $('#usersTable tbody tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        $(document).ready(function() {
+            // Initialize DataTable with responsive extension
+            $('#usersTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [[6, 'desc']], // Sort by Joined date descending
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search users...",
+                    lengthMenu: "Show _MENU_ users per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ users",
+                    infoEmpty: "No users found",
+                    infoFiltered: "(filtered from _MAX_ total users)",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                },
+                columnDefs: [
+                    { responsivePriority: 1, targets: 0 }, // User name - always visible
+                    { responsivePriority: 2, targets: -1 }, // Actions - always visible
+                    { responsivePriority: 3, targets: 3 }, // Status
+                    { orderable: false, targets: -1 } // Disable sorting on Actions column
+                ],
+                drawCallback: function() {
+                    // Re-apply any custom styling after redraw
+                    $('.avatar-circle').each(function() {
+                        if (!$(this).text().trim()) {
+                            $(this).text('?');
+                        }
+                    });
+                }
             });
-        });
-
-        // Status filter
-        $('#statusFilter').on('change', function() {
-            const value = $(this).val();
-            if (value === '') {
-                $('#usersTable tbody tr').show();
-            } else if (value === 'active') {
-                $('#usersTable tbody tr').each(function() {
-                    $(this).toggle(!$(this).hasClass('table-danger'));
-                });
-            } else if (value === 'banned') {
-                $('#usersTable tbody tr').each(function() {
-                    $(this).toggle($(this).hasClass('table-danger'));
-                });
-            }
         });
 
         // Show ban modal
@@ -373,57 +395,4 @@
             });
         }
     </script>
-
-    <style>
-        .avatar-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-            text-transform: uppercase;
-        }
-
-        .stat-card-small {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .stat-icon-small {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-        }
-
-        .stat-card-small h6 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .stat-card-small small {
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
-
-    <form id="antiforgerForm" style="display:none;">
-        @Html.AntiForgeryToken()
-    </form>
 }

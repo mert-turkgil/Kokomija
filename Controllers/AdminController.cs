@@ -12,7 +12,7 @@ using System.Security.Claims;
 
 namespace Kokomija.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Root,Admin")]
 public class AdminController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -264,10 +264,516 @@ public class AdminController : Controller
         return View(viewModel);
     }
 
-    public IActionResult Orders()
+    /// <summary>
+    /// GET: Order Management page with list and statistics
+    /// </summary>
+    public async Task<IActionResult> Orders(int page = 1, string? search = null, string? status = null, 
+        string? paymentStatus = null, DateTime? dateFrom = null, DateTime? dateTo = null)
     {
-        // Future: Order management
-        return View();
+        int pageSize = 20;
+        
+        // Get all orders with related data
+        var allOrders = await _unitOfWork.Orders.GetAllOrdersWithDetailsAsync();
+        
+        // Apply filters
+        var filteredOrders = allOrders.AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.ToLower();
+            filteredOrders = filteredOrders.Where(o => 
+                o.OrderNumber.ToLower().Contains(search) ||
+                (o.CustomerName != null && o.CustomerName.ToLower().Contains(search)) ||
+                o.CustomerEmail.ToLower().Contains(search)
+            );
+        }
+        
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            filteredOrders = filteredOrders.Where(o => o.OrderStatus.ToLower() == status.ToLower());
+        }
+        
+        if (!string.IsNullOrWhiteSpace(paymentStatus))
+        {
+            filteredOrders = filteredOrders.Where(o => o.PaymentStatus.ToLower() == paymentStatus.ToLower());
+        }
+        
+        if (dateFrom.HasValue)
+        {
+            filteredOrders = filteredOrders.Where(o => o.CreatedAt >= dateFrom.Value);
+        }
+        
+        if (dateTo.HasValue)
+        {
+            var endDate = dateTo.Value.AddDays(1); // Include entire day
+            filteredOrders = filteredOrders.Where(o => o.CreatedAt < endDate);
+        }
+        
+        // Get statistics
+        var statistics = new OrderStatisticsDto
+        {
+            TotalOrders = allOrders.Count(),
+            PendingOrders = allOrders.Count(o => o.OrderStatus == "pending"),
+            ProcessingOrders = allOrders.Count(o => o.OrderStatus == "processing"),
+            ShippedOrders = allOrders.Count(o => o.OrderStatus == "shipped"),
+            DeliveredOrders = allOrders.Count(o => o.OrderStatus == "delivered"),
+            CancelledOrders = allOrders.Count(o => o.OrderStatus == "cancelled"),
+            TotalRevenue = allOrders.Where(o => o.PaymentStatus == "paid").Sum(o => o.TotalAmount),
+            TodayRevenue = allOrders.Where(o => o.PaymentStatus == "paid" && o.CreatedAt.Date == DateTime.UtcNow.Date)
+                .Sum(o => o.TotalAmount),
+            MonthRevenue = allOrders.Where(o => o.PaymentStatus == "paid" && 
+                o.CreatedAt.Year == DateTime.UtcNow.Year && 
+                o.CreatedAt.Month == DateTime.UtcNow.Month)
+                .Sum(o => o.TotalAmount),
+            AverageOrderValue = allOrders.Any() ? allOrders.Average(o => o.TotalAmount) : 0,
+            AwaitingShipment = allOrders.Count(o => o.OrderStatus == "processing" && o.PaymentStatus == "paid"),
+        };
+        
+        // Get return requests count
+        var allReturns = await _unitOfWork.ReturnRequests.GetAllAsync();
+        statistics.PendingReturns = allReturns.Count(r => 
+            r.Status == ReturnRequestStatus.Pending || 
+            r.Status == ReturnRequestStatus.UnderReview
+        );
+        
+        // Get shipments for orders
+        var allShipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync();
+        var shipmentsByOrderId = allShipments.GroupBy(s => s.OrderId)
+            .ToDictionary(g => g.Key, g => g.First());
+        
+        // Get return requests for orders
+        var returnsByOrderId = allReturns
+            .Where(r => r.Status == ReturnRequestStatus.Pending || 
+                       r.Status == ReturnRequestStatus.UnderReview ||
+                       r.Status == ReturnRequestStatus.Approved)
+            .GroupBy(r => r.OrderId)
+            .ToDictionary(g => g.Key, g => g.Count());
+        
+        // Pagination
+        var totalOrders = filteredOrders.Count();
+        var orders = filteredOrders
+            .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        
+        // Map to DTOs
+        var orderDtos = orders.Select(o =>
+        {
+            var hasShipment = shipmentsByOrderId.TryGetValue(o.Id, out var shipment);
+            var hasReturn = returnsByOrderId.TryGetValue(o.Id, out var returnCount);
+            
+            return new OrderListItemDto
+            {
+                Id = o.Id,
+                OrderNumber = o.OrderNumber,
+                CustomerName = o.CustomerName ?? (o.User != null ? $"{o.User.FirstName} {o.User.LastName}" : null) ?? "Guest",
+                CustomerEmail = o.CustomerEmail,
+                TotalAmount = o.TotalAmount,
+                Currency = o.Currency.ToUpper(),
+                OrderStatus = o.OrderStatus,
+                PaymentStatus = o.PaymentStatus,
+                CreatedAt = o.CreatedAt,
+                ItemCount = o.OrderItems.Count,
+                HasShipment = hasShipment,
+                ShipmentStatus = hasShipment ? shipment!.Status : null,
+                TrackingNumber = hasShipment ? shipment!.TrackingNumber : null,
+                HasActiveReturn = hasReturn,
+                ActiveReturnCount = hasReturn ? returnCount : 0
+            };
+        }).ToList();
+        
+        var viewModel = new OrderManagementViewModel
+        {
+            Orders = orderDtos,
+            Statistics = statistics,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalOrders = totalOrders,
+            SearchQuery = search,
+            StatusFilter = status,
+            PaymentStatusFilter = paymentStatus,
+            DateFrom = dateFrom,
+            DateTo = dateTo
+        };
+        
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// GET: Order details page
+    /// </summary>
+    public async Task<IActionResult> OrderDetails(int id)
+    {
+        var orderEntity = await _unitOfWork.Orders.GetOrderWithFullDetailsAsync(id);
+        if (orderEntity == null)
+        {
+            TempData["Error"] = "Order not found";
+            return RedirectToAction(nameof(Orders));
+        }
+        
+        // Get shipment with related data
+        var shipments = await _unitOfWork.Repository<OrderShipment>().FindAsync(
+            s => s.OrderId == id
+        );
+        var shipment = shipments.FirstOrDefault();
+        
+        // Manually load shipment related data
+        if (shipment != null)
+        {
+            var providers = await _unitOfWork.Repository<ShippingProvider>().GetAllAsync(p => p.Id == shipment.ShippingProviderId);
+            shipment.ShippingProvider = providers.FirstOrDefault()!;
+            
+            var rates = await _unitOfWork.Repository<ShippingRate>().GetAllAsync(r => r.Id == shipment.ShippingRateId);
+            shipment.ShippingRate = rates.FirstOrDefault()!;
+            
+            var trackingEvents = await _unitOfWork.Repository<ShipmentTrackingEvent>()
+                .GetAllAsync(e => e.OrderShipmentId == shipment.Id);
+            shipment.TrackingEvents = trackingEvents.OrderByDescending(e => e.EventDate).ToList();
+        }
+        
+        // Get return requests with related data
+        var returns = await _unitOfWork.ReturnRequests.FindAsync(
+            r => r.OrderId == id
+        );
+        
+        // Manually load return request related data
+        foreach (var returnRequest in returns)
+        {
+            if (returnRequest.ReviewedBy != null)
+            {
+                returnRequest.Reviewer = await _unitOfWork.Users.GetByIdAsync(returnRequest.ReviewedBy);
+            }
+            
+            var orderItems = await _unitOfWork.Repository<OrderItem>().GetAllAsync(oi => oi.Id == returnRequest.OrderItemId);
+            returnRequest.OrderItem = orderItems.FirstOrDefault()!;
+        }
+        
+        // Get developer earnings
+        var earnings = await _unitOfWork.DeveloperEarnings.GetAllAsync(e => e.OrderId == id);
+        var earning = earnings.FirstOrDefault();
+        
+        // Map to ViewModel
+        var viewModel = new OrderDetailsViewModel
+        {
+            Id = orderEntity.Id,
+            OrderNumber = orderEntity.OrderNumber,
+            StripePaymentIntentId = orderEntity.StripePaymentIntentId,
+            StripeChargeId = orderEntity.StripeChargeId,
+            
+            // Customer
+            UserId = orderEntity.UserId,
+            CustomerName = orderEntity.CustomerName ?? (orderEntity.User != null ? $"{orderEntity.User.FirstName} {orderEntity.User.LastName}" : null) ?? "Guest",
+            CustomerEmail = orderEntity.CustomerEmail,
+            CustomerPhone = orderEntity.CustomerPhone,
+            UserVipTier = orderEntity.User?.VipTier,
+            UserTotalSpent = orderEntity.User?.TotalSpent,
+            
+            // Status
+            OrderStatus = orderEntity.OrderStatus,
+            PaymentStatus = orderEntity.PaymentStatus,
+            CreatedAt = orderEntity.CreatedAt,
+            PaidAt = orderEntity.PaidAt,
+            ShippedAt = orderEntity.ShippedAt,
+            DeliveredAt = orderEntity.DeliveredAt,
+            
+            // Financial
+            SubtotalAmount = orderEntity.SubtotalAmount,
+            TaxAmount = orderEntity.TaxAmount,
+            TaxRate = orderEntity.TaxRate,
+            ShippingCost = orderEntity.ShippingCost,
+            DiscountAmount = orderEntity.DiscountAmount,
+            TotalAmount = orderEntity.TotalAmount,
+            CommissionAmount = orderEntity.CommissionAmount,
+            CommissionRate = orderEntity.CommissionRate,
+            Currency = orderEntity.Currency.ToUpper(),
+            
+            // Coupon
+            CouponId = orderEntity.CouponId,
+            CouponCode = orderEntity.Coupon?.Code,
+            
+            // Addresses
+            ShippingAddress = new AddressDto
+            {
+                Address = orderEntity.ShippingAddress,
+                City = orderEntity.ShippingCity,
+                State = orderEntity.ShippingState,
+                PostalCode = orderEntity.ShippingPostalCode,
+                Country = orderEntity.ShippingCountry
+            },
+            BillingAddress = new AddressDto
+            {
+                Address = orderEntity.BillingAddress,
+                City = orderEntity.BillingCity,
+                State = orderEntity.BillingState,
+                PostalCode = orderEntity.BillingPostalCode,
+                Country = orderEntity.BillingCountry
+            },
+            
+            // Order Items
+            OrderItems = orderEntity.OrderItems.Select(oi =>
+            {
+                var hasReturn = returns.Any(r => r.OrderItemId == oi.Id);
+                var returnRequest = returns.FirstOrDefault(r => r.OrderItemId == oi.Id);
+                
+                return new OrderItemDetailsDto
+                {
+                    Id = oi.Id,
+                    ProductVariantId = oi.ProductVariantId,
+                    ProductId = oi.ProductVariant?.ProductId ?? 0,
+                    ProductName = oi.ProductName,
+                    ProductImageUrl = oi.ProductVariant?.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                    Size = oi.Size,
+                    Color = oi.Color,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    TotalPrice = oi.TotalPrice,
+                    HasActiveReturn = hasReturn,
+                    ReturnStatus = returnRequest?.Status
+                };
+            }).ToList(),
+            
+            // Shipment
+            Shipment = shipment == null ? null : new OrderShipmentDetailsDto
+            {
+                Id = shipment.Id,
+                OrderId = shipment.OrderId,
+                TrackingNumber = shipment.TrackingNumber,
+                Status = shipment.Status,
+                EstimatedDeliveryDate = shipment.EstimatedDeliveryDate,
+                ActualDeliveryDate = shipment.ActualDeliveryDate,
+                ShippingCost = shipment.ShippingCost,
+                Weight = shipment.Weight,
+                ShippedAt = shipment.ShippedAt,
+                DeliveredAt = shipment.DeliveredAt,
+                CreatedAt = shipment.CreatedAt,
+                UpdatedAt = shipment.UpdatedAt,
+                ProviderName = shipment.ShippingProvider?.Name ?? "Unknown",
+                ProviderCode = shipment.ShippingProvider?.Code ?? "unknown",
+                TrackingUrl = !string.IsNullOrEmpty(shipment.TrackingNumber) && !string.IsNullOrEmpty(shipment.ShippingProvider?.TrackingUrlTemplate)
+                    ? shipment.ShippingProvider.TrackingUrlTemplate.Replace("{trackingNumber}", shipment.TrackingNumber)
+                    : null,
+                RateName = shipment.ShippingRate?.Name ?? "Standard",
+                MinDeliveryDays = shipment.ShippingRate?.MinDeliveryDays ?? 3,
+                MaxDeliveryDays = shipment.ShippingRate?.MaxDeliveryDays ?? 5,
+                TrackingEvents = shipment.TrackingEvents.Select(e => new ShipmentTrackingEventDto
+                {
+                    Id = e.Id,
+                    Status = e.Status,
+                    Location = e.Location,
+                    Description = e.Description,
+                    EventDate = e.EventDate,
+                    CreatedAt = e.CreatedAt
+                }).ToList()
+            },
+            
+            // Returns
+            ReturnRequests = returns.Select(r => new ReturnRequestSummaryDto
+            {
+                Id = r.Id,
+                OrderItemId = r.OrderItemId,
+                ProductName = r.OrderItem?.ProductName ?? "Unknown Product",
+                Reason = r.Reason,
+                RequestedAmount = r.RequestedAmount,
+                Status = r.Status,
+                RequestedAt = r.RequestedAt,
+                ReviewedAt = r.ReviewedAt,
+                ReviewerName = r.Reviewer != null ? $"{r.Reviewer.FirstName} {r.Reviewer.LastName}" : null
+            }).ToList(),
+            
+            // Developer Earnings
+            DeveloperEarnings = earning == null ? null : new DeveloperEarningsDto
+            {
+                Id = earning.Id,
+                GrossAmount = earning.GrossAmount,
+                StripeProcessingFee = earning.StripeProcessingFee,
+                DeveloperCommission = earning.DeveloperCommission,
+                NetAmount = earning.NetAmount,
+                EarnedAt = earning.EarnedAt,
+                PayoutStatus = earning.PayoutStatus,
+                PayoutId = earning.PayoutId,
+                PayoutDate = earning.PayoutDate
+            }
+        };
+        
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// POST: Update order status
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateOrderStatus([FromBody] UpdateOrderStatusDto dto)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Invalid data" });
+        
+        var orders = await _unitOfWork.Orders.GetAllAsync(o => o.Id == dto.OrderId);
+        var order = orders.FirstOrDefault();
+        
+        if (order == null)
+            return Json(new { success = false, message = "Order not found" });
+        
+        order.OrderStatus = dto.OrderStatus.ToLower();
+        
+        // Update timestamps based on status
+        if (dto.OrderStatus.ToLower() == "shipped" && !order.ShippedAt.HasValue)
+            order.ShippedAt = DateTime.UtcNow;
+        else if (dto.OrderStatus.ToLower() == "delivered" && !order.DeliveredAt.HasValue)
+            order.DeliveredAt = DateTime.UtcNow;
+        
+        _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Order status updated successfully" });
+    }
+
+    /// <summary>
+    /// POST: Create shipment for order
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreateOrderShipment([FromBody] CreateOrderShipmentDto dto)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Invalid data" });
+        
+        var orders = await _unitOfWork.Orders.GetAllAsync(o => o.Id == dto.OrderId);
+        var order = orders.FirstOrDefault();
+        
+        if (order == null)
+            return Json(new { success = false, message = "Order not found" });
+        
+        // Check if shipment already exists
+        var existingShipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync(s => s.OrderId == dto.OrderId);
+        if (existingShipments.Any())
+            return Json(new { success = false, message = "Shipment already exists for this order" });
+        
+        // Get shipping rate to calculate estimated delivery
+        var rates = await _unitOfWork.Repository<ShippingRate>().GetAllAsync(r => r.Id == dto.ShippingRateId);
+        var rate = rates.FirstOrDefault();
+        
+        var shipment = new OrderShipment
+        {
+            OrderId = dto.OrderId,
+            ShippingProviderId = dto.ShippingProviderId,
+            ShippingRateId = dto.ShippingRateId,
+            TrackingNumber = dto.TrackingNumber,
+            Status = ShipmentStatus.Pending,
+            ShippingCost = order.ShippingCost,
+            Weight = dto.Weight,
+            EstimatedDeliveryDate = dto.EstimatedDeliveryDate ?? DateTime.UtcNow.AddDays(rate?.MaxDeliveryDays ?? 5),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        
+        await _unitOfWork.Repository<OrderShipment>().AddAsync(shipment);
+        
+        // Update order status
+        if (order.OrderStatus == "processing" || order.OrderStatus == "pending")
+        {
+            order.OrderStatus = "shipped";
+            order.ShippedAt = DateTime.UtcNow;
+            _unitOfWork.Orders.Update(order);
+        }
+        
+        await _unitOfWork.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Shipment created successfully", shipmentId = shipment.Id });
+    }
+
+    /// <summary>
+    /// POST: Update tracking number
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateOrderTrackingNumber([FromBody] UpdateTrackingNumberDto dto)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Invalid data" });
+        
+        var shipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync(s => s.Id == dto.ShipmentId);
+        var shipment = shipments.FirstOrDefault();
+        
+        if (shipment == null)
+            return Json(new { success = false, message = "Shipment not found" });
+        
+        shipment.TrackingNumber = dto.TrackingNumber;
+        shipment.UpdatedAt = DateTime.UtcNow;
+        
+        if (shipment.Status == ShipmentStatus.Pending)
+            shipment.Status = ShipmentStatus.Processing;
+        
+        _unitOfWork.Repository<OrderShipment>().Update(shipment);
+        await _unitOfWork.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Tracking number updated successfully" });
+    }
+
+    /// <summary>
+    /// POST: Add tracking event
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> AddOrderTrackingEvent([FromBody] AddTrackingEventDto dto)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Invalid data" });
+        
+        var shipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync(s => s.Id == dto.ShipmentId);
+        var shipment = shipments.FirstOrDefault();
+        
+        if (shipment == null)
+            return Json(new { success = false, message = "Shipment not found" });
+        
+        var trackingEvent = new ShipmentTrackingEvent
+        {
+            OrderShipmentId = dto.ShipmentId,
+            Status = dto.Status,
+            Location = dto.Location,
+            Description = dto.Description,
+            EventDate = dto.EventDate ?? DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        await _unitOfWork.Repository<ShipmentTrackingEvent>().AddAsync(trackingEvent);
+        
+        // Update shipment status based on event
+        var statusLower = dto.Status.ToLower();
+        if (statusLower.Contains("delivered"))
+        {
+            shipment.Status = ShipmentStatus.Delivered;
+            shipment.DeliveredAt = trackingEvent.EventDate;
+            shipment.ActualDeliveryDate = trackingEvent.EventDate;
+            
+            // Update order
+            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.Id == shipment.OrderId);
+            var order = orders.FirstOrDefault();
+            if (order != null)
+            {
+                order.OrderStatus = "delivered";
+                order.DeliveredAt = trackingEvent.EventDate;
+                _unitOfWork.Orders.Update(order);
+            }
+        }
+        else if (statusLower.Contains("transit") || statusLower.Contains("in-transit"))
+        {
+            shipment.Status = ShipmentStatus.InTransit;
+        }
+        else if (statusLower.Contains("out for delivery"))
+        {
+            shipment.Status = ShipmentStatus.OutForDelivery;
+        }
+        else if (statusLower.Contains("shipped"))
+        {
+            shipment.Status = ShipmentStatus.Shipped;
+            if (!shipment.ShippedAt.HasValue)
+                shipment.ShippedAt = trackingEvent.EventDate;
+        }
+        
+        shipment.UpdatedAt = DateTime.UtcNow;
+        _unitOfWork.Repository<OrderShipment>().Update(shipment);
+        
+        await _unitOfWork.SaveChangesAsync();
+        
+        return Json(new { success = true, message = "Tracking event added successfully" });
     }
 
     public async Task<IActionResult> Settings(string? tab = null)
@@ -1540,6 +2046,22 @@ public class AdminController : Controller
     {
         if (!ModelState.IsValid)
         {
+            // Cleanup CKEditor images on validation failure
+            if (!string.IsNullOrEmpty(model.SessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                if (trackingService != null)
+                {
+                    await trackingService.RollbackImagesAsync(model.SessionId);
+                }
+            }
+            
+            // Cleanup temp featured image on validation failure
+            if (!string.IsNullOrEmpty(model.ImageTempFileName))
+            {
+                await _blogImageService.CancelUploadAsync(model.ImageTempFileName);
+            }
+            
             var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
             var products = await _unitOfWork.Products.GetAllAsync();
             ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
@@ -1618,6 +2140,16 @@ public class AdminController : Controller
                 await _unitOfWork.SaveChangesAsync();
             }
 
+            // Commit CKEditor images after successful save
+            if (!string.IsNullOrEmpty(model.SessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                if (trackingService != null)
+                {
+                    trackingService.CommitImages(model.SessionId);
+                }
+            }
+
             _logger.LogInformation("Blog post created: {BlogId} by user {UserId}", blog.Id, userId);
             TempData["Success"] = _localizationService["Admin_Blog_CreateSuccess"];
             return RedirectToAction(nameof(BlogSettings));
@@ -1627,11 +2159,22 @@ public class AdminController : Controller
             _logger.LogError(ex, "Error creating blog post");
             TempData["Error"] = _localizationService["Admin_Blog_ErrorSave"];
             
+            // Cleanup temp featured image
             if (tempFilesToCleanup.Length > 0)
             {
                 foreach (var tempFile in tempFilesToCleanup)
                 {
                     await _blogImageService.CancelUploadAsync(tempFile);
+                }
+            }
+            
+            // Cleanup CKEditor images if session exists
+            if (!string.IsNullOrEmpty(model.SessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                if (trackingService != null)
+                {
+                    await trackingService.RollbackImagesAsync(model.SessionId);
                 }
             }
 
@@ -1716,6 +2259,22 @@ public class AdminController : Controller
     {
         if (!ModelState.IsValid)
         {
+            // Cleanup CKEditor images on validation failure
+            if (!string.IsNullOrEmpty(model.SessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                if (trackingService != null)
+                {
+                    await trackingService.RollbackImagesAsync(model.SessionId);
+                }
+            }
+            
+            // Cleanup temp featured image on validation failure
+            if (!string.IsNullOrEmpty(model.NewImageTempFileName))
+            {
+                await _blogImageService.CancelUploadAsync(model.NewImageTempFileName);
+            }
+            
             var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
             var products = await _unitOfWork.Products.GetAllAsync();
             ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
@@ -1742,26 +2301,27 @@ public class AdminController : Controller
             blog.IsPublished = model.IsPublished;
             blog.PublishedDate = model.IsPublished ? (model.PublishedDate ?? DateTime.UtcNow) : null;
             blog.AllowComments = model.AllowComments;
-            blog.UpdatedAt = DateTime.UtcNow;
 
             // Process new featured image if uploaded
             if (!string.IsNullOrEmpty(model.NewImageTempFileName))
             {
                 tempFilesToCleanup = new[] { model.NewImageTempFileName };
                 
-                // Delete old image
+                // Delete old image first
                 if (!string.IsNullOrEmpty(blog.FeaturedImage))
                 {
                     await _blogImageService.DeleteImageAsync(blog.FeaturedImage);
                 }
                 
-                // Move new image to permanent location
+                // Move new image from temp to permanent
                 var result = await _blogImageService.ProcessAndMoveFromTempAsync(model.NewImageTempFileName);
                 if (result.Success)
                 {
                     blog.FeaturedImage = result.PermanentUrl;
                 }
             }
+            
+            blog.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Blogs.Update(blog);
 
@@ -1814,6 +2374,16 @@ public class AdminController : Controller
 
             await _unitOfWork.SaveChangesAsync();
 
+            // Commit CKEditor images after successful update
+            if (!string.IsNullOrEmpty(model.SessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                if (trackingService != null)
+                {
+                    trackingService.CommitImages(model.SessionId);
+                }
+            }
+
             _logger.LogInformation("Blog post updated: {BlogId}", blog.Id);
             TempData["Success"] = _localizationService["Admin_Blog_UpdateSuccess"];
             return RedirectToAction(nameof(BlogSettings));
@@ -1823,11 +2393,22 @@ public class AdminController : Controller
             _logger.LogError(ex, "Error updating blog post {BlogId}", model.Id);
             TempData["Error"] = _localizationService["Admin_Blog_ErrorSave"];
             
+            // Cleanup temp featured image
             if (tempFilesToCleanup.Length > 0)
             {
                 foreach (var tempFile in tempFilesToCleanup)
                 {
                     await _blogImageService.CancelUploadAsync(tempFile);
+                }
+            }
+            
+            // Cleanup CKEditor images if session exists
+            if (!string.IsNullOrEmpty(model.SessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                if (trackingService != null)
+                {
+                    await trackingService.RollbackImagesAsync(model.SessionId);
                 }
             }
 
@@ -1882,6 +2463,37 @@ public class AdminController : Controller
     }
 
     /// <summary>
+    /// GET: Get products by category (AJAX)
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetProductsByCategory(int categoryId)
+    {
+        try
+        {
+            var category = await _unitOfWork.BlogCategories.GetByIdAsync(categoryId);
+            if (category == null)
+            {
+                return Json(new { success = false, products = new List<object>() });
+            }
+
+            // Get products from the associated product category if exists
+            var products = await _unitOfWork.Products.GetAllAsync();
+            var filteredProducts = products
+                .Where(p => p.IsActive && category.ProductCategoryId.HasValue && p.CategoryId == category.ProductCategoryId.Value)
+                .Select(p => new { id = p.Id, name = p.Name })
+                .OrderBy(p => p.name)
+                .ToList();
+
+            return Json(new { success = true, products = filteredProducts });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting products by category");
+            return Json(new { success = false, products = new List<object>() });
+        }
+    }
+
+    /// <summary>
     /// POST: Upload blog image to temp folder (AJAX)
     /// </summary>
     [HttpPost]
@@ -1901,14 +2513,43 @@ public class AdminController : Controller
     /// POST: Delete temp files (AJAX) - called when user cancels
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> BlogCancelUpload([FromBody] BlogCancelUploadDto model)
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> BlogCancelUpload([FromBody] BlogCancelUploadDto? model)
     {
         try
         {
-            if (!string.IsNullOrEmpty(model.ImageTempFileName))
+            // Handle both JSON body and sendBeacon requests
+            string? tempFileName = model?.ImageTempFileName;
+            
+            // If model is null, try reading from request body directly
+            if (string.IsNullOrEmpty(tempFileName))
             {
-                await _blogImageService.CancelUploadAsync(model.ImageTempFileName);
+                using var reader = new StreamReader(Request.Body);
+                var body = await reader.ReadToEndAsync();
+                
+                if (!string.IsNullOrEmpty(body))
+                {
+                    try
+                    {
+                        var jsonDoc = System.Text.Json.JsonDocument.Parse(body);
+                        if (jsonDoc.RootElement.TryGetProperty("imageTempFileName", out var fileNameElement))
+                        {
+                            tempFileName = fileNameElement.GetString();
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore JSON parse errors
+                    }
+                }
             }
+            
+            if (!string.IsNullOrEmpty(tempFileName))
+            {
+                var result = await _blogImageService.CancelUploadAsync(tempFileName);
+                _logger.LogInformation("Temp file cleanup: {FileName}, Success: {Success}", tempFileName, result);
+            }
+            
             return Json(new { success = true });
         }
         catch (Exception ex)
@@ -1919,14 +2560,58 @@ public class AdminController : Controller
     }
 
     /// <summary>
-    /// POST: Toggle blog publish status (AJAX)
+    /// POST: Upload image for CKEditor content (inline images/GIFs)
+    /// Uploads directly to permanent folder and tracks for cleanup if blog is not saved
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> BlogTogglePublish(int id)
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> UploadCKEditorImage(IFormFile upload, [FromForm] string? sessionId)
     {
         try
         {
-            var blog = await _unitOfWork.Blogs.GetByIdAsync(id);
+            if (upload == null || upload.Length == 0)
+            {
+                return Json(new { uploaded = false, error = new { message = "No file uploaded" } });
+            }
+
+            // Upload directly to permanent location for CKEditor images (GIFs, inline images)
+            var result = await _blogImageService.UploadCKEditorImageAsync(upload);
+            
+            if (!result.Success)
+            {
+                return Json(new { uploaded = false, error = new { message = result.Message } });
+            }
+
+            // Track the image for potential cleanup if blog creation is cancelled
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+                trackingService?.TrackImage(sessionId, result.PermanentUrl!);
+            }
+
+            // CKEditor expects this specific JSON structure
+            return Json(new 
+            { 
+                uploaded = true, 
+                url = result.PermanentUrl 
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading CKEditor image");
+            return Json(new { uploaded = false, error = new { message = "Error uploading image" } });
+        }
+    }
+
+    /// <summary>
+    /// POST: Toggle blog publish status (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> BlogTogglePublish([FromBody] BlogTogglePublishDto dto)
+    {
+        try
+        {
+            var blog = await _unitOfWork.Blogs.GetByIdAsync(dto.Id);
             
             if (blog != null)
             {
@@ -1937,7 +2622,8 @@ public class AdminController : Controller
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveChangesAsync();
 
-                return Json(new { success = true, isPublished = blog.IsPublished });
+                var statusMessage = blog.IsPublished ? "Blog post published successfully" : "Blog post unpublished (now private)";
+                return Json(new { success = true, isPublished = blog.IsPublished, message = statusMessage });
             }
             else
             {
@@ -1946,7 +2632,7 @@ public class AdminController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error toggling blog publish status {BlogId}", id);
+            _logger.LogError(ex, "Error toggling blog publish status {BlogId}", dto.Id);
             return Json(new { success = false, message = "Error updating status" });
         }
     }
@@ -1974,6 +2660,61 @@ public class AdminController : Controller
         slug = System.Text.RegularExpressions.Regex.Replace(slug, @"-+", "-");
         
         return slug.Trim('-');
+    }
+
+    /// <summary>
+    /// POST: Commit CKEditor images when blog is successfully saved
+    /// </summary>
+    [HttpPost]
+    public IActionResult BlogCommitCKEditorImages([FromBody] BlogSessionDto dto)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(dto.SessionId))
+            {
+                return Json(new { success = false, message = "Session ID required" });
+            }
+
+            var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+            trackingService?.CommitImages(dto.SessionId);
+            
+            _logger.LogInformation("CKEditor images committed for session {SessionId}", dto.SessionId);
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error committing CKEditor images");
+            return Json(new { success = false, message = "Error committing images" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Rollback CKEditor images when blog creation is cancelled
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> BlogRollbackCKEditorImages([FromBody] BlogSessionDto dto)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(dto.SessionId))
+            {
+                return Json(new { success = false, message = "Session ID required" });
+            }
+
+            var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
+            if (trackingService != null)
+            {
+                await trackingService.RollbackImagesAsync(dto.SessionId);
+            }
+            
+            _logger.LogInformation("CKEditor images rolled back for session {SessionId}", dto.SessionId);
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rolling back CKEditor images");
+            return Json(new { success = false, message = "Error rolling back images" });
+        }
     }
 
     #endregion

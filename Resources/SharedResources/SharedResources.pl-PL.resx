@@ -1589,4 +1589,22 @@
   <data name="Admin_Category_ErrorDelete" xml:space="preserve">
     <value>Błąd podczas usuwania kategorii. Spróbuj ponownie.</value>
   </data>
+  <data name="Admin_Blog_Edit" xml:space="preserve">
+    <value>Edytuj wpis bloga</value>
+  </data>
+  <data name="Admin_Blog_CreateSuccess" xml:space="preserve">
+    <value>Wpis bloga został utworzony pomyślnie!</value>
+  </data>
+  <data name="Admin_Blog_UpdateSuccess" xml:space="preserve">
+    <value>Wpis bloga został zaktualizowany pomyślnie!</value>
+  </data>
+  <data name="Admin_Blog_ErrorSave" xml:space="preserve">
+    <value>Błąd podczas zapisywania wpisu bloga. Spróbuj ponownie.</value>
+  </data>
+  <data name="Admin_Blog_DeleteSuccess" xml:space="preserve">
+    <value>Wpis bloga został usunięty pomyślnie!</value>
+  </data>
+  <data name="Admin_Blog_ErrorDelete" xml:space="preserve">
+    <value>Błąd podczas usuwania wpisu bloga. Spróbuj ponownie.</value>
+  </data>
 </root>

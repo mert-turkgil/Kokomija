@@ -1,5 +1,6 @@
 using Kokomija.Data.Abstract;
 using Kokomija.Entity;
+using Kokomija.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
@@ -14,15 +15,18 @@ namespace Kokomija.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<StripeWebhookController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
         public StripeWebhookController(
             IUnitOfWork unitOfWork,
             ILogger<StripeWebhookController> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         [HttpPost]
@@ -435,7 +439,16 @@ namespace Kokomija.Controllers
                 await _unitOfWork.SaveChangesAsync();
             }
 
-            // TODO: Send email notification to root admin about payout failure
+            // Send email notification to root admin about payout failure
+            try
+            {
+                var rootAdminEmail = _configuration["AdminSettings:RootEmail"] ?? "admin@kokomija.dev";
+                await _emailService.SendPayoutFailureNotificationAsync(rootAdminEmail, payout.Id, payout.FailureMessage ?? "Unknown error");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send payout failure notification email");
+            }
         }
 
         private async Task HandlePayoutPaid(Event stripeEvent)
@@ -461,7 +474,17 @@ namespace Kokomija.Controllers
                 await _unitOfWork.SaveChangesAsync();
             }
 
-            // TODO: Send email notification to root admin about successful payout
+            // Send email notification to root admin about successful payout
+            try
+            {
+                var rootAdminEmail = _configuration["AdminSettings:RootEmail"] ?? "admin@kokomija.dev";
+                var amountInPln = payout.Amount / 100m; // Convert from cents
+                await _emailService.SendPayoutSuccessNotificationAsync(rootAdminEmail, payout.Id, amountInPln);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send payout success notification email");
+            }
         }
 
         private string CalculateVIPTier(decimal totalSpent)

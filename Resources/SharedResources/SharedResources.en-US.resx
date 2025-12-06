@@ -1788,4 +1788,22 @@
   <data name="Admin_Category_ErrorDelete" xml:space="preserve">
     <value>Error deleting category. Please try again.</value>
   </data>
+  <data name="Admin_Blog_Edit" xml:space="preserve">
+    <value>Edit Blog Post</value>
+  </data>
+  <data name="Admin_Blog_CreateSuccess" xml:space="preserve">
+    <value>Blog post created successfully!</value>
+  </data>
+  <data name="Admin_Blog_UpdateSuccess" xml:space="preserve">
+    <value>Blog post updated successfully!</value>
+  </data>
+  <data name="Admin_Blog_ErrorSave" xml:space="preserve">
+    <value>Error saving blog post. Please try again.</value>
+  </data>
+  <data name="Admin_Blog_DeleteSuccess" xml:space="preserve">
+    <value>Blog post deleted successfully!</value>
+  </data>
+  <data name="Admin_Blog_ErrorDelete" xml:space="preserve">
+    <value>Error deleting blog post. Please try again.</value>
+  </data>
 </root>

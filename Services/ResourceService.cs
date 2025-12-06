@@ -195,7 +195,6 @@ namespace Kokomija.Services
                             {
                                 var value = dataElement.Element("value")?.Value ?? key;
                                 _resourceCache[cacheKey] = value;
-                                _logger.LogInformation("[ResourceService] Loaded from XML {File}: {Key} = {Value}", Path.GetFileName(resxPath), key, value);
                                 return value;
                             }
                         }
@@ -214,7 +213,7 @@ namespace Kokomija.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[ResourceService] Error getting string for key: {Key}, culture: {Culture}", key, culture?.Name);
+                _logger.LogWarning(ex, "❌ [ResourceService] Error getting string for key: {Key}, culture: {Culture}", key, culture?.Name);
                 return key;
             }
         }

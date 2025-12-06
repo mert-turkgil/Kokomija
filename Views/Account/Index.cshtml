@@ -3,7 +3,7 @@
 
 @{
     ViewData["Title"] = "My Account";
-    var isAdmin = User.IsInRole("Admin");
+    var isAdmin = User.IsInRole(role: "Admin") || User.IsInRole(role: "Root");
 }
 
 <div class="account-page container my-5">

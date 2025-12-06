@@ -65,10 +65,10 @@
             <!-- Customer Information -->
             <div class="col-md-4 mb-4">
                 <div class="card">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="bi bi-person"></i> Customer Information</h5>
-                    </div>
                     <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-person"></i> Customer Information
+                        </h5>
                         <p><strong>Name:</strong> @Model.CustomerName</p>
                         <p><strong>Email:</strong> @Model.CustomerEmail</p>
                         <p><strong>Requested:</strong> @Model.RequestedAt.ToString("yyyy-MM-dd HH:mm")</p>
@@ -77,10 +77,10 @@
 
                 <!-- Financial Details -->
                 <div class="card mt-3">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="bi bi-cash"></i> Financial Details</h5>
-                    </div>
                     <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-cash"></i> Financial Details
+                        </h5>
                         <p><strong>Product Price:</strong> @Model.ProductPrice.ToString("C")</p>
                         <p><strong>Quantity:</strong> @Model.Quantity</p>
                         <p><strong>Requested Amount:</strong> <span class="text-primary">@Model.RequestedAmount.ToString("C")</span></p>
@@ -101,10 +101,10 @@
                 @if (Model.ReviewedAt.HasValue)
                 {
                     <div class="card mt-3">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Review Information</h5>
-                        </div>
                         <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-clipboard-check"></i> Review Information
+                            </h5>
                             <p><strong>Reviewed By:</strong> @Model.ReviewerName</p>
                             <p><strong>Reviewed At:</strong> @Model.ReviewedAt.Value.ToString("yyyy-MM-dd HH:mm")</p>
                             @if (!string.IsNullOrEmpty(Model.ReviewNotes))
@@ -120,10 +120,10 @@
             <!-- Return Details -->
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="bi bi-box"></i> Product Information</h5>
-                    </div>
                     <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-box"></i> Product Information
+                        </h5>
                         <div class="row">
                             @if (!string.IsNullOrEmpty(Model.ProductImageUrl))
                             {
@@ -141,10 +141,10 @@
                 </div>
 
                 <div class="card mt-3">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="bi bi-chat-text"></i> Return Reason</h5>
-                    </div>
                     <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-chat-text"></i> Return Reason
+                        </h5>
                         <p><strong>Reason:</strong> @Model.Reason</p>
                         <div class="alert alert-light">
                             <strong>Description:</strong><br>
@@ -157,10 +157,10 @@
                 @if (Model.ImageUrls != null && Model.ImageUrls.Any())
                 {
                     <div class="card mt-3">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0"><i class="bi bi-images"></i> Evidence Images (@Model.ImageUrls.Count)</h5>
-                        </div>
                         <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-images"></i> Evidence Images (@Model.ImageUrls.Count)
+                            </h5>
                             <div class="row g-3">
                                 @foreach (var imageUrl in Model.ImageUrls)
                                 {
@@ -179,10 +179,10 @@
                 @if (Model.StatusHistory != null && Model.StatusHistory.Any())
                 {
                     <div class="card mt-3">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Status History</h5>
-                        </div>
                         <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-clock-history"></i> Status History
+                            </h5>
                             <div class="timeline">
                                 @foreach (var history in Model.StatusHistory.OrderByDescending(h => h.ChangedAt))
                                 {

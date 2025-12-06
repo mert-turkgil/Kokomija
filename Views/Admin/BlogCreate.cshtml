@@ -5,227 +5,264 @@
     var products = ViewBag.Products as List<Kokomija.Entity.Product>;
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">@ViewData["Title"]</h3>
-                    <div class="card-tools">
-                        <a asp-action="BlogSettings" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to List
-                        </a>
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-file-earmark-plus"></i>
+                                Create New Blog Post
+                            </h1>
+                            <p class="mb-0">Share your story with your audience</p>
+                        </div>
+                        <div>
+                            <a asp-action="BlogSettings" class="btn btn-light">
+                                <i class="bi bi-arrow-left"></i> Back to List
+                            </a>
+                        </div>
                     </div>
                 </div>
-                
-                <form asp-action="BlogCreate" method="post" enctype="multipart/form-data" id="blogForm">
-                    <div class="card-body">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-                        <!-- General Settings -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="CategoryId" class="required">Category</label>
-                                    <select asp-for="CategoryId" class="form-control">
-                                        <option value="">-- Select Category --</option>
-                                        @foreach (var category in categories ?? new())
-                                        {
-                                            <option value="@category.Id">@category.Name</option>
-                                        }
-                                    </select>
-                                    <span asp-validation-for="CategoryId" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="ProductId">Related Product (Optional)</label>
-                                    <select asp-for="ProductId" class="form-control">
-                                        <option value="">-- No Related Product --</option>
-                                        @foreach (var product in products ?? new())
-                                        {
-                                            <option value="@product.Id">@product.Name</option>
-                                        }
-                                    </select>
-                                    <span asp-validation-for="ProductId" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Featured Image -->
-                        <div class="form-group">
-                            <label>Featured Image</label>
-                            <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="featuredImage" accept="image/*">
-                                <label class="custom-file-label" for="featuredImage">Choose file...</label>
-                            </div>
-                            <input type="hidden" asp-for="ImageTempFileName" id="imageTempFileName" />
-                            <div id="imagePreview" class="mt-3" style="display:none;">
-                                <img id="previewImg" src="" alt="Preview" class="img-thumbnail" style="max-width: 300px;">
-                                <button type="button" class="btn btn-sm btn-danger ml-2" id="removeImage">
-                                    <i class="fas fa-times"></i> Remove
-                                </button>
-                            </div>
-                            <small class="form-text text-muted">Recommended size: 1200x630 pixels</small>
-                        </div>
-
-                        <!-- Publishing Options -->
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" asp-for="IsPublished" id="isPublished">
-                                        <label class="custom-control-label" for="isPublished">Publish Immediately</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox" class="custom-control-input" asp-for="AllowComments" id="allowComments" checked>
-                                        <label class="custom-control-label" for="allowComments">Allow Comments</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="PublishedDate">Publish Date</label>
-                                    <input type="datetime-local" class="form-control" asp-for="PublishedDate" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <!-- Language Tabs -->
-                        <ul class="nav nav-tabs" id="languageTabs" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="en-tab" data-toggle="tab" href="#en-content" role="tab">
-                                    <i class="fas fa-flag-usa"></i> English
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="pl-tab" data-toggle="tab" href="#pl-content" role="tab">
-                                    <i class="fas fa-flag"></i> Polish
-                                </a>
-                            </li>
-                        </ul>
-
-                        <div class="tab-content border border-top-0 p-3" id="languageTabContent">
-                            <!-- English Translation -->
-                            <div class="tab-pane fade show active" id="en-content" role="tabpanel">
-                                <input type="hidden" asp-for="Translations[0].CultureCode" value="en-US" />
-                                
-                                <div class="form-group">
-                                    <label class="required">Title (English)</label>
-                                    <input type="text" class="form-control" asp-for="Translations[0].Title" placeholder="Enter blog title in English" required />
-                                    <span asp-validation-for="Translations[0].Title" class="text-danger"></span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="required">Content (English)</label>
-                                    <textarea asp-for="Translations[0].Content" class="form-control ckeditor-content" rows="10"></textarea>
-                                    <span asp-validation-for="Translations[0].Content" class="text-danger"></span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Excerpt (English)</label>
-                                    <textarea asp-for="Translations[0].Excerpt" class="form-control" rows="3" placeholder="Short description for preview" maxlength="500"></textarea>
-                                    <span asp-validation-for="Translations[0].Excerpt" class="text-danger"></span>
-                                    <small class="form-text text-muted">Max 500 characters</small>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Tags (English)</label>
-                                    <input type="text" class="form-control" asp-for="Translations[0].Tags" placeholder="fashion, trends, 2025" />
-                                    <small class="form-text text-muted">Comma-separated tags</small>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Meta Description (English)</label>
-                                            <textarea asp-for="Translations[0].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
-                                            <small class="form-text text-muted">Max 160 characters for SEO</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Meta Keywords (English)</label>
-                                            <input type="text" class="form-control" asp-for="Translations[0].MetaKeywords" />
-                                            <small class="form-text text-muted">Comma-separated keywords</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Polish Translation -->
-                            <div class="tab-pane fade" id="pl-content" role="tabpanel">
-                                <input type="hidden" asp-for="Translations[1].CultureCode" value="pl-PL" />
-                                
-                                <div class="form-group">
-                                    <label class="required">Tytuł (Polish)</label>
-                                    <input type="text" class="form-control" asp-for="Translations[1].Title" placeholder="Wprowadź tytuł bloga po polsku" required />
-                                    <span asp-validation-for="Translations[1].Title" class="text-danger"></span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="required">Treść (Polish)</label>
-                                    <textarea asp-for="Translations[1].Content" class="form-control ckeditor-content" rows="10"></textarea>
-                                    <span asp-validation-for="Translations[1].Content" class="text-danger"></span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Wyjątek (Polish)</label>
-                                    <textarea asp-for="Translations[1].Excerpt" class="form-control" rows="3" placeholder="Krótki opis podglądu" maxlength="500"></textarea>
-                                    <span asp-validation-for="Translations[1].Excerpt" class="text-danger"></span>
-                                    <small class="form-text text-muted">Maksymalnie 500 znaków</small>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Tagi (Polish)</label>
-                                    <input type="text" class="form-control" asp-for="Translations[1].Tags" placeholder="moda, trendy, 2025" />
-                                    <small class="form-text text-muted">Tagi oddzielone przecinkami</small>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Meta Opis (Polish)</label>
-                                            <textarea asp-for="Translations[1].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
-                                            <small class="form-text text-muted">Maksymalnie 160 znaków dla SEO</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Meta Słowa Kluczowe (Polish)</label>
-                                            <input type="text" class="form-control" asp-for="Translations[1].MetaKeywords" />
-                                            <small class="form-text text-muted">Słowa kluczowe oddzielone przecinkami</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Create Blog Post
-                        </button>
-                        <a asp-action="BlogSettings" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
-</div>
 
-@section Scripts {
+        <form asp-action="BlogCreate" method="post" enctype="multipart/form-data" id="blogForm">
+            <!-- Main Content Card -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-3">
+                        <div class="card-body p-4">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                            <!-- General Settings -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-gear"></i> General Settings
+                                    </h5>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="CategoryId" class="form-label required">Category</label>
+                                        <select asp-for="CategoryId" class="form-select" id="categorySelect">
+                                            <option value="">-- Select Category --</option>
+                                            @foreach (var category in categories ?? new())
+                                            {
+                                                <option value="@category.Id">@category.Name</option>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label asp-for="ProductId" class="form-label">Related Product (Optional)</label>
+                                        <select asp-for="ProductId" class="form-select" id="productSelect">
+                                            <option value="">-- No Related Product --</option>
+                                            @foreach (var product in products ?? new())
+                                            {
+                                                <option value="@product.Id">@product.Name</option>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="ProductId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Featured Image -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-image"></i> Featured Image
+                                    </h5>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label">Upload Image</label>
+                                        <input type="file" class="form-control" id="featuredImage" accept="image/*">
+                                    </div>
+                                    <input type="hidden" asp-for="ImageTempFileName" id="imageTempFileName" />
+                                    <input type="hidden" asp-for="SessionId" id="sessionId" />
+                                    <div id="imagePreview" class="mt-3" style="display:none;">
+                                        <div class="image-preview-container">
+                                            <img id="previewImg" src="" alt="Preview" class="img-fluid rounded">
+                                            <button type="button" class="remove-image" id="removeImage">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">Recommended size: 1200x630 pixels</small>
+                                </div>
+                            </div>
+
+                            <!-- Publishing Options -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-toggles"></i> Publishing Options
+                                    </h5>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch mb-3">
+                                        <input type="checkbox" class="form-check-input" asp-for="IsPublished" id="isPublished">
+                                        <label class="form-check-label" for="isPublished">Publish Immediately</label>
+                                    </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch mb-3">
+                                        <input type="checkbox" class="form-check-input" asp-for="AllowComments" id="allowComments" checked>
+                                        <label class="form-check-label" for="allowComments">Allow Comments</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="PublishedDate" class="form-label">Publish Date</label>
+                                        <input type="datetime-local" class="form-control" asp-for="PublishedDate" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Language Tabs -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="border-bottom pb-2 mb-3">
+                                        <i class="bi bi-translate"></i> Translations
+                                    </h5>
+                                </div>
+                            </div>
+
+                            <div class="translation-tabs">
+                                <ul class="nav nav-tabs" id="languageTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="en-tab" data-bs-toggle="tab" data-bs-target="#en-content" type="button" role="tab" aria-controls="en-content" aria-selected="true">
+                                            <i class="bi bi-flag-usa"></i> English
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pl-tab" data-bs-toggle="tab" data-bs-target="#pl-content" type="button" role="tab" aria-controls="pl-content" aria-selected="false">
+                                            <i class="bi bi-flag"></i> Polish
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content border border-top-0 p-3" id="languageTabContent">
+                                    <!-- English Translation -->
+                                    <div class="tab-pane fade show active" id="en-content" role="tabpanel">
+                                        <input type="hidden" name="Translations[0].CultureCode" value="en-US" />
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label required">Title (English)</label>
+                                            <input type="text" class="form-control" name="Translations[0].Title" placeholder="Enter blog title in English" required />
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="Translations[0].Title"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label required">Content (English)</label>
+                                            <textarea name="Translations[0].Content" class="form-control ckeditor-content" rows="10" required></textarea>
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="Translations[0].Content"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Excerpt (English)</label>
+                                            <textarea name="Translations[0].Excerpt" class="form-control" rows="3" placeholder="Short description for preview" maxlength="500"></textarea>
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="Translations[0].Excerpt"></span>
+                                            <small class="form-text text-muted">Max 500 characters</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Tags (English)</label>
+                                            <input type="text" class="form-control" name="Translations[0].Tags" placeholder="fashion, trends, 2025" />
+                                            <small class="form-text text-muted">Comma-separated tags</small>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Meta Description (English)</label>
+                                                    <textarea name="Translations[0].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
+                                                    <small class="form-text text-muted">Max 160 characters for SEO</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Meta Keywords (English)</label>
+                                                    <input type="text" class="form-control" name="Translations[0].MetaKeywords" />
+                                                    <small class="form-text text-muted">Comma-separated keywords</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Polish Translation -->
+                                    <div class="tab-pane fade" id="pl-content" role="tabpanel">
+                                        <input type="hidden" name="Translations[1].CultureCode" value="pl-PL" />
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label required">Tytuł (Polish)</label>
+                                            <input type="text" class="form-control" name="Translations[1].Title" placeholder="Wprowadź tytuł bloga po polsku" required />
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="Translations[1].Title"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label required">Treść (Polish)</label>
+                                            <textarea name="Translations[1].Content" class="form-control ckeditor-content" rows="10" required></textarea>
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="Translations[1].Content"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Wyjątek (Polish)</label>
+                                            <textarea name="Translations[1].Excerpt" class="form-control" rows="3" placeholder="Krótki opis podglądu" maxlength="500"></textarea>
+                                            <span class="text-danger field-validation-valid" data-valmsg-for="Translations[1].Excerpt"></span>
+                                            <small class="form-text text-muted">Maksymalnie 500 znaków</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Tagi (Polish)</label>
+                                            <input type="text" class="form-control" name="Translations[1].Tags" placeholder="moda, trendy, 2025" />
+                                            <small class="form-text text-muted">Tagi oddzielone przecinkami</small>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Meta Opis (Polish)</label>
+                                                    <textarea name="Translations[1].MetaDescription" class="form-control" rows="2" maxlength="160"></textarea>
+                                                    <small class="form-text text-muted">Maksymalnie 160 znaków dla SEO</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Meta Słowa Kluczowe (Polish)</label>
+                                                    <input type="text" class="form-control" name="Translations[1].MetaKeywords" />
+                                                    <small class="form-text text-muted">Słowa kluczowe oddzielone przecinkami</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex gap-2 bg-body-tertiary p-3 rounded-3 mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Create Blog Post
+                                </button>
+                                <a asp-action="BlogSettings" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     
     <!-- CKEditor 5 -->
@@ -248,6 +285,8 @@
             ImageCaption,
             ImageStyle,
             ImageResize,
+            ImageUpload,
+            SimpleUploadAdapter,
             Table,
             TableToolbar,
             MediaEmbed,
@@ -256,6 +295,9 @@
         } = CKEDITOR;
 
         const LICENSE_KEY = '@(ViewBag.CKEditorLicenseKey ?? "")';
+        
+        // Generate unique session ID for tracking CKEditor images
+        const sessionId = 'blog-create-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 
         const editorConfig = {
             licenseKey: LICENSE_KEY,
@@ -273,6 +315,8 @@
                 ImageCaption,
                 ImageStyle,
                 ImageResize,
+                ImageUpload,
+                SimpleUploadAdapter,
                 Table,
                 TableToolbar,
                 MediaEmbed,
@@ -283,10 +327,10 @@
                 'sourceEditing', '|',
                 'heading', '|',
                 'bold', 'italic', '|',
-                'link', 'insertTable', '|',
+                'link', 'insertTable', 'insertImage', '|',
                 'bulletedList', 'numberedList', '|',
                 'outdent', 'indent', '|',
-                'blockQuote', '|',
+                'blockQuote', 'mediaEmbed', '|',
                 'undo', 'redo'
             ],
             heading: {
@@ -304,17 +348,35 @@
                     'imageStyle:block',
                     'imageStyle:side',
                     '|',
-                    'toggleImageCaption'
-                ]
+                    'toggleImageCaption',
+                    'imageTextAlternative'
+                ],
+                upload: {
+                    types: ['jpeg', 'png', 'gif', 'webp']
+                }
             },
             table: {
                 contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+            },
+            simpleUpload: {
+                uploadUrl: '@Url.Action("UploadCKEditorImage", "Admin")' + '?sessionId=' + sessionId,
+                withCredentials: false
             }
         };
 
         let editorInstances = {};
 
         $(document).ready(function() {
+            // Initialize Bootstrap tabs properly
+            const triggerTabList = document.querySelectorAll('#languageTabs button[data-bs-toggle="tab"]');
+            triggerTabList.forEach(triggerEl => {
+                const tabTrigger = new bootstrap.Tab(triggerEl);
+                triggerEl.addEventListener('click', event => {
+                    event.preventDefault();
+                    tabTrigger.show();
+                });
+            });
+
             // Initialize CKEditor 5 for both language tabs
             $('.ckeditor-content').each(function() {
                 const element = this;
@@ -328,6 +390,36 @@
                     .catch(error => {
                         console.error('CKEditor initialization error:', error);
                     });
+            });
+
+            // Category change - filter products
+            $('#categorySelect').on('change', function() {
+                const categoryId = $(this).val();
+                const $productSelect = $('#productSelect');
+                
+                if (!categoryId) {
+                    return;
+                }
+                
+                // Load products for selected category
+                $.ajax({
+                    url: '@Url.Action("GetProductsByCategory", "Admin")',
+                    type: 'GET',
+                    data: { categoryId: categoryId },
+                    success: function(response) {
+                        if (response.success) {
+                            $productSelect.empty();
+                            $productSelect.append('<option value="">-- No Related Product --</option>');
+                            
+                            response.products.forEach(function(product) {
+                                $productSelect.append(`<option value="${product.id}">${product.name}</option>`);
+                            });
+                        }
+                    },
+                    error: function() {
+                        console.error('Error loading products for category');
+                    }
+                });
             });
 
             // Image upload handling
@@ -368,15 +460,29 @@
                         url: '@Url.Action("BlogCancelUpload")',
                         type: 'POST',
                         contentType: 'application/json',
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
                         data: JSON.stringify({ imageTempFileName: tempFileName }),
-                        success: function() {
-                            $('#imageTempFileName').val('');
-                            $('#previewImg').attr('src', '');
-                            $('#imagePreview').hide();
-                            $('#featuredImage').val('');
-                            $('.custom-file-label').text('Choose file...');
+                        success: function(response) {
+                            if (response.success) {
+                                $('#imageTempFileName').val('');
+                                $('#previewImg').attr('src', '');
+                                $('#imagePreview').hide();
+                                $('#featuredImage').val('');
+                                $('.custom-file-label').text('Choose file...');
+                            }
+                        },
+                        error: function() {
+                            console.error('Error canceling upload');
                         }
                     });
+                } else {
+                    // No temp file, just clear preview
+                    $('#previewImg').attr('src', '');
+                    $('#imagePreview').hide();
+                    $('#featuredImage').val('');
+                    $('.custom-file-label').text('Choose file...');
                 }
             });
 
@@ -432,6 +538,51 @@
                 
                 // CKEditor 5 automatically updates the textarea, no manual sync needed
                 return true;
+            });
+
+            // Cleanup temp files AND CKEditor images when navigating away without saving
+            $(window).on('beforeunload', function() {
+                const tempFileName = $('#imageTempFileName').val();
+                
+                // Cleanup featured image temp file
+                if (tempFileName) {
+                    const data = JSON.stringify({ imageTempFileName: tempFileName });
+                    navigator.sendBeacon('@Url.Action("BlogCancelUpload")', data);
+                }
+                
+                // Cleanup CKEditor images
+                const ckData = JSON.stringify({ sessionId: sessionId });
+                navigator.sendBeacon('@Url.Action("BlogRollbackCKEditorImages", "Admin")', ckData);
+            });
+
+            // Cleanup when clicking Cancel button
+            $('a[asp-action="BlogSettings"]').on('click', function(e) {
+                e.preventDefault();
+                const href = $(this).attr('href');
+                const tempFileName = $('#imageTempFileName').val();
+                
+                // Cleanup both temp files and CKEditor images
+                const promises = [];
+                
+                if (tempFileName) {
+                    promises.push($.ajax({
+                        url: '@Url.Action("BlogCancelUpload")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ imageTempFileName: tempFileName })
+                    }));
+                }
+                
+                promises.push($.ajax({
+                    url: '@Url.Action("BlogRollbackCKEditorImages", "Admin")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ sessionId: sessionId })
+                }));
+                
+                Promise.all(promises).finally(function() {
+                    window.location.href = href;
+                });
             });
         });
     </script>

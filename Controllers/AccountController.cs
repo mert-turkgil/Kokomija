@@ -19,6 +19,7 @@ namespace Kokomija.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AccountController> _logger;
         private readonly IReturnRequestService _returnRequestService;
+        private readonly IEmailService _emailService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -26,7 +27,8 @@ namespace Kokomija.Controllers
             IStripeCustomerService stripeCustomerService,
             IUnitOfWork unitOfWork,
             ILogger<AccountController> logger,
-            IReturnRequestService returnRequestService)
+            IReturnRequestService returnRequestService,
+            IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -34,6 +36,7 @@ namespace Kokomija.Controllers
             _unitOfWork = unitOfWork;
             _logger = logger;
             _returnRequestService = returnRequestService;
+            _emailService = emailService;
         }
 
         #region Login
@@ -265,10 +268,13 @@ namespace Kokomija.Controllers
 
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
             
-            // TODO: Send email with reset link
-            // var callbackUrl = Url.Action("ResetPassword", "Account", 
-            //     new { code, email = user.Email }, Request.Scheme);
-            // await _emailService.SendPasswordResetAsync(user.Email, callbackUrl);
+            var callbackUrl = Url.Action("ResetPassword", "Account", 
+                new { code, email = user.Email }, Request.Scheme);
+            
+            if (!string.IsNullOrEmpty(callbackUrl))
+            {
+                await _emailService.SendPasswordResetAsync(user.Email!, callbackUrl);
+            }
 
             _logger.LogInformation("Password reset requested for user {Email}", model.Email);
             return RedirectToAction("ForgotPasswordConfirmation");
@@ -371,7 +377,7 @@ namespace Kokomija.Controllers
             var wishlistCount = await _unitOfWork.Wishlists.GetWishlistCountAsync(user.Id);
 
             // Calculate VIP tier based on total spending
-            var vipStatus = CalculateVIPStatus(totalSpent, totalOrders);
+            var vipStatus = await CalculateVIPStatusAsync(totalSpent, totalOrders, user.Id);
 
             // Update user's VIP role to match current tier
             await UpdateUserVIPRoleAsync(user, vipStatus.TierName);
@@ -436,7 +442,7 @@ namespace Kokomija.Controllers
             return View(viewModel);
         }
 
-        private Models.ViewModels.Account.VIPStatusViewModel CalculateVIPStatus(decimal totalSpent, int totalOrders)
+        private async Task<Models.ViewModels.Account.VIPStatusViewModel> CalculateVIPStatusAsync(decimal totalSpent, int totalOrders, string userId)
         {
             string tierName;
             int tierLevel;
@@ -514,6 +520,21 @@ namespace Kokomija.Controllers
                 new() { Icon = "headset", Title = "Priority Support", Description = "24/7 dedicated support", IsUnlocked = tierLevel >= 4 }
             };
 
+            // Count available coupons for the user (using Repository<T> since no CouponUsage repository exists)
+            var couponUsageRepo = _unitOfWork.Repository<CouponUsage>();
+            var now = DateTime.UtcNow;
+            
+            var allCoupons = await _unitOfWork.Coupons.FindAsync(c => 
+                c.IsActive && 
+                (!c.ValidFrom.HasValue || c.ValidFrom.Value <= now) &&
+                (!c.ValidUntil.HasValue || c.ValidUntil.Value >= now));
+            
+            var usedCouponIds = (await couponUsageRepo.FindAsync(cu => cu.UserId == userId))
+                .Select(cu => cu.CouponId)
+                .ToList();
+            
+            var availableCoupons = allCoupons.Count(c => !usedCouponIds.Contains(c.Id));
+
             return new Models.ViewModels.Account.VIPStatusViewModel
             {
                 TierName = tierName,
@@ -525,7 +546,7 @@ namespace Kokomija.Controllers
                 HasFreeShipping = hasFreeShipping,
                 HasEarlyAccess = hasEarlyAccess,
                 HasBirthdayGift = hasBirthdayGift,
-                AvailableCoupons = 0, // TODO: Implement coupon counting
+                AvailableCoupons = availableCoupons,
                 Benefits = benefits
             };
         }

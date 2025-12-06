@@ -9,6 +9,11 @@ public interface IBlogImageService
     Task<(bool Success, string? TempFileName, string? TempUrl, string? Message)> UploadToTempAsync(IFormFile file);
 
     /// <summary>
+    /// Upload CKEditor image directly to permanent folder (for inline images/GIFs)
+    /// </summary>
+    Task<(bool Success, string? PermanentUrl, string? Message)> UploadCKEditorImageAsync(IFormFile file);
+
+    /// <summary>
     /// Move image from temp to permanent Blog folder
     /// </summary>
     Task<(bool Success, string? PermanentUrl, string? Message)> ProcessAndMoveFromTempAsync(string tempFileName);

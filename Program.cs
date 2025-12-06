@@ -223,6 +223,7 @@ builder.Services.AddScoped<ICarouselImageService, CarouselImageService>();
 
 // Register Blog Image Service (Blog image upload and management)
 builder.Services.AddScoped<IBlogImageService, BlogImageService>();
+builder.Services.AddSingleton<ICKEditorImageTrackingService, CKEditorImageTrackingService>();
 
 // Register Category Image Service (Category image upload and management)
 builder.Services.AddScoped<ICategoryImageService, CategoryImageService>();
@@ -301,6 +302,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Serve static files (needed for runtime-uploaded images like blog images)
+app.UseStaticFiles();
 
 // Add security headers
 app.UseSecurityHeaders();

@@ -3,16 +3,11 @@ using System.Reflection;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Localization;
 using Kokomija.Resources.SharedResources;
-using Kokomija.Resources.CarouselResources;
-using Kokomija.Resources.HomeResources;
-using Kokomija.Resources.ProductResources;
+using Kokomija.Resources.CommonResources;
 using Kokomija.Resources.AccountResources;
 using Kokomija.Resources.NavigationResources;
-using Kokomija.Resources.CommonResources;
 using Kokomija.Resources.FooterResources;
 using Kokomija.Resources.FAQResources;
-using Kokomija.Resources.WishlistResources;
-using Kokomija.Resources.ReviewResources;
 using Kokomija.Resources.CookieResources;
 using Kokomija.Resources.CartResources;
 
@@ -50,16 +45,16 @@ namespace Kokomija.Services
             // Create localizers for each resource file
             _localizers = new Dictionary<string, IStringLocalizer>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Carousel"] = _factory.Create(typeof(CarouselResources)),
-                ["Home"] = _factory.Create(typeof(HomeResources)),
-                ["Product"] = _factory.Create(typeof(ProductResources)),
-                ["Account"] = _factory.Create(typeof(AccountResources)),
-                ["Navigation"] = _factory.Create(typeof(NavigationResources)),
+                ["Carousel"] = _factory.Create(typeof(CommonResources)),
+                ["Home"] = _factory.Create(typeof(CommonResources)),
+                ["Product"] = _factory.Create(typeof(CommonResources)),
+                ["Account"] = _factory.Create(typeof(CommonResources)),
+                ["Navigation"] = _factory.Create(typeof(CommonResources)),
                 ["Common"] = _factory.Create(typeof(CommonResources)),
                 ["Footer"] = _factory.Create(typeof(FooterResources)),
                 ["FAQ"] = _factory.Create(typeof(FAQResources)),
-                ["Wishlist"] = _factory.Create(typeof(WishlistResources)),
-                ["Review"] = _factory.Create(typeof(ReviewResources)),
+                ["Wishlist"] = _factory.Create(typeof(CommonResources)),
+                ["Review"] = _factory.Create(typeof(CommonResources)),
                 ["Cookie"] = _factory.Create(typeof(CookieResources)),
                 ["Cart"] = _factory.Create(typeof(CartResources)),
                 ["Shared"] = _sharedLocalizer
@@ -151,16 +146,16 @@ namespace Kokomija.Services
                 var resourceTypes = new[]
                 {
                     typeof(SharedResources),
-                    typeof(CarouselResources),
-                    typeof(HomeResources),
-                    typeof(ProductResources),
-                    typeof(AccountResources),
-                    typeof(NavigationResources),
+                    typeof(CommonResources),
+                    typeof(CommonResources),
+                    typeof(CommonResources),
+                    typeof(CommonResources),
+                    typeof(CommonResources),
                     typeof(CommonResources),
                     typeof(FooterResources),
                     typeof(FAQResources),
-                    typeof(WishlistResources),
-                    typeof(ReviewResources),
+                    typeof(CommonResources),
+                    typeof(CommonResources),
                     typeof(CookieResources),
                     typeof(CartResources)
                 };

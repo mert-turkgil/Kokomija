@@ -3,7 +3,7 @@ using Kokomija.Models.ViewModels;
 using Kokomija.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using Kokomija.Resources.CarouselResources;
+using Kokomija.Resources.CommonResources;
 
 namespace Kokomija.ViewComponents
 {
@@ -15,13 +15,13 @@ namespace Kokomija.ViewComponents
         private readonly ICarouselService _carouselService;
         private readonly ILogger<CarouselSlideViewComponent> _logger;
         private readonly IWebHostEnvironment _environment;
-        private readonly IStringLocalizer<CarouselResources> _localizer;
+        private readonly IStringLocalizer<CommonResources> _localizer;
 
         public CarouselSlideViewComponent(
             ICarouselService carouselService,
             ILogger<CarouselSlideViewComponent> logger,
             IWebHostEnvironment environment,
-            IStringLocalizer<CarouselResources> localizer)
+            IStringLocalizer<CommonResources> localizer)
         {
             _carouselService = carouselService;
             _logger = logger;

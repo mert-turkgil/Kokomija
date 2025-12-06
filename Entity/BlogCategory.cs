@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Kokomija.Entity
 {
     /// <summary>
@@ -44,6 +46,14 @@ namespace Kokomija.Entity
         /// Language code (pl, en, etc.)
         /// </summary>
         public string Language { get; set; } = "pl";
+
+        /// <summary>
+        /// Optional: Link to product category for filtering related products
+        /// </summary>
+        public int? ProductCategoryId { get; set; }
+        
+        [ForeignKey("ProductCategoryId")]
+        public Category? ProductCategory { get; set; }
 
         /// <summary>
         /// Meta description for SEO

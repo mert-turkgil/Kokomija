@@ -104,7 +104,6 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new NewsletterSubscriptionConfiguration());
             modelBuilder.ApplyConfiguration(new WishlistNotificationConfiguration());
             modelBuilder.ApplyConfiguration(new ProductPriceHistoryConfiguration());
-            modelBuilder.ApplyConfiguration(new ProductTranslationConfiguration());
 
             // Order Management Configurations
             modelBuilder.ApplyConfiguration(new ReturnRequestConfiguration());

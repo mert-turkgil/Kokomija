@@ -95,47 +95,27 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-white">
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                             <h5 class="mb-0">
-                                <i class="bi bi-list"></i>
-                                All Products
+                                <i class="bi bi-list"></i> All Products
                             </h5>
-                            <div class="d-flex gap-2">
-                                <select class="form-select form-select-sm" id="categoryFilter" style="width: auto;">
-                                    <option value="">All Categories</option>
-                                </select>
-                                <select class="form-select form-select-sm" id="statusFilter" style="width: auto;">
-                                    <option value="">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                                <select class="form-select form-select-sm" id="stockFilter" style="width: auto;">
-                                    <option value="">All Stock</option>
-                                    <option value="instock">In Stock</option>
-                                    <option value="outofstock">Out of Stock</option>
-                                    <option value="lowstock">Low Stock (&lt; 20)</option>
-                                </select>
-                                <input type="text" class="form-control form-control-sm" id="searchProducts" placeholder="Search products..." style="width: 250px;">
-                            </div>
                         </div>
-                    </div>
-                    <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" id="productsTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th width="80">Image</th>
+                                        <th>Image</th>
                                         <th>Product</th>
-                                        <th width="120">Parent Category</th>
-                                        <th width="120">Category</th>
-                                        <th width="100">Price</th>
-                                        <th width="80">Pack</th>
-                                        <th width="80">Stock</th>
-                                        <th width="80">Variants</th>
-                                        <th width="120">Reviews</th>
-                                        <th width="100">Status</th>
-                                        <th width="150">Actions</th>
+                                        <th>Parent Category</th>
+                                        <th>Category</th>
+                                        <th>Price</th>
+                                        <th>Pack</th>
+                                        <th>Stock</th>
+                                        <th>Variants</th>
+                                        <th>Reviews</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -261,80 +241,9 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        // Filter functionality
-        function filterProducts() {
-            const categoryFilter = $('#categoryFilter').val().toLowerCase();
-            const statusFilter = $('#statusFilter').val();
-            const stockFilter = $('#stockFilter').val();
-            const searchTerm = $('#searchProducts').val().toLowerCase();
-
-            $('#productsTable tbody tr').each(function() {
-                const $row = $(this);
-                const category = $row.data('category')?.toString().toLowerCase() || '';
-                const status = $row.data('status');
-                const stock = parseInt($row.data('stock')) || 0;
-                const text = $row.text().toLowerCase();
-
-                let show = true;
-
-                if (categoryFilter && category !== categoryFilter) show = false;
-                if (statusFilter && status !== statusFilter) show = false;
-                if (stockFilter) {
-                    if (stockFilter === 'instock' && stock <= 0) show = false;
-                    if (stockFilter === 'outofstock' && stock > 0) show = false;
-                    if (stockFilter === 'lowstock' && (stock >= 20 || stock <= 0)) show = false;
-                }
-                if (searchTerm && text.indexOf(searchTerm) === -1) show = false;
-
-                $row.toggle(show);
-            });
-        }
-
-        $('#categoryFilter, #statusFilter, #stockFilter').on('change', filterProducts);
-        $('#searchProducts').on('keyup', filterProducts);
-
-        // Toggle product status
-        async function toggleProductStatus(productId) {
-            if (!confirm('Are you sure you want to change the product status?\n\nDeactivating will:\n- Archive the product in Stripe\n- Deactivate all prices\n- Remove from all carts')) {
-                return;
-            }
-
-            try {
-                const formData = new FormData();
-                formData.append('id', productId);
-                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
-
-                const response = await fetch('@Url.Action("ProductToggleActive")', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    location.reload();
-                } else {
-                    alert('Error: ' + (result.message || 'Failed to update product status'));
-                }
-            } catch (error) {
-                console.error('Error toggling product status:', error);
-                alert('An error occurred while updating product status');
-            }
-        }
-
-        // Delete product
-        function deleteProduct(productId, productName) {
-            if (!confirm(`Are you sure you want to delete "${productName}"?\n\nThis will:\n- Remove the product from Stripe\n- Delete all variants and images\n- Remove from all carts and wishlists\n\nThis action cannot be undone!`)) {
-                return;
-            }
-
-            // Implementation pending - will add in ProductDelete action
-            alert('Delete functionality will be implemented in the next update');
-        }
-    </script>
-
+@section Styles {
+    <link rel="stylesheet" href="~/lib/datatables/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="~/lib/datatables/responsive.bootstrap5.min.css" />
     <style>
         .col-md-2-4 {
             flex: 0 0 20%;
@@ -377,7 +286,119 @@
             display: block;
             margin-top: 2px;
         }
+
+        /* Dark theme support for stat cards */
+        [data-bs-theme="dark"] .stat-card-small {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-bs-theme="dark"] .stat-card-small h6 {
+            color: var(--bs-body-color);
+        }
+
+        [data-bs-theme="dark"] .stat-card-small small {
+            color: var(--bs-secondary-color);
+        }
+
+        /* Ensure images display well in dark theme */
+        [data-bs-theme="dark"] .img-thumbnail {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Product image placeholder in dark theme */
+        [data-bs-theme="dark"] .text-muted {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
     </style>
+}
+
+@section Scripts {
+    <script src="~/lib/datatables/dataTables.min.js"></script>
+    <script src="~/lib/datatables/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/dataTables.responsive.min.js"></script>
+    <script src="~/lib/datatables/responsive.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable with responsive extension
+            $('#productsTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [[1, 'asc']], // Sort by Product name ascending
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search products...",
+                    lengthMenu: "Show _MENU_ products per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ products",
+                    infoEmpty: "No products found",
+                    infoFiltered: "(filtered from _MAX_ total products)",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                },
+                columnDefs: [
+                    { responsivePriority: 1, targets: 0 }, // Image - always visible
+                    { responsivePriority: 2, targets: 1 }, // Product name - always visible
+                    { responsivePriority: 3, targets: -1 }, // Actions - always visible
+                    { responsivePriority: 4, targets: 4 }, // Price
+                    { responsivePriority: 5, targets: 6 }, // Stock
+                    { responsivePriority: 6, targets: 9 }, // Status
+                    { orderable: false, targets: [0, -1] } // Disable sorting on Image and Actions columns
+                ],
+                drawCallback: function() {
+                    // Ensure images display properly after redraw
+                    $('img.img-thumbnail').on('error', function() {
+                        $(this).attr('src', '/img/logo_black.png');
+                    });
+                }
+            });
+        });
+
+        // Toggle product status
+        async function toggleProductStatus(productId) {
+            if (!confirm('Are you sure you want to change the product status?\n\nDeactivating will:\n- Archive the product in Stripe\n- Deactivate all prices\n- Remove from all carts')) {
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('id', productId);
+                formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+                const response = await fetch('@Url.Action("ProductToggleActive")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update product status'));
+                }
+            } catch (error) {
+                console.error('Error toggling product status:', error);
+                alert('An error occurred while updating product status');
+            }
+        }
+
+        // Delete product
+        function deleteProduct(productId, productName) {
+            if (!confirm(`Are you sure you want to delete "${productName}"?\n\nThis will:\n- Remove the product from Stripe\n- Delete all variants and images\n- Remove from all carts and wishlists\n\nThis action cannot be undone!`)) {
+                return;
+            }
+
+            // Implementation pending - will add in ProductDelete action
+            alert('Delete functionality will be implemented in the next update');
+        }
+    </script>
 
     <form id="antiforgerForm" style="display:none;">
         @Html.AntiForgeryToken()

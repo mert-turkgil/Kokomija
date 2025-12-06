@@ -72,6 +72,57 @@ public class BlogImageService : IBlogImageService
         }
     }
 
+    public async Task<(bool Success, string? PermanentUrl, string? Message)> UploadCKEditorImageAsync(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return (false, null, "No file uploaded");
+            }
+
+            // Validate file size
+            if (file.Length > MaxFileSize)
+            {
+                return (false, null, $"File size exceeds maximum allowed size of {MaxFileSize / 1024 / 1024}MB");
+            }
+
+            // Validate file extension
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!_allowedExtensions.Contains(extension))
+            {
+                return (false, null, $"Invalid file type. Allowed types: {string.Join(", ", _allowedExtensions)}");
+            }
+
+            // Validate MIME type
+            var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            if (!allowedMimeTypes.Contains(file.ContentType.ToLowerInvariant()))
+            {
+                return (false, null, "Invalid image file");
+            }
+
+            // Generate permanent filename with timestamp for CKEditor images
+            var permanentFileName = $"ckeditor_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid()}{extension}";
+            var permanentFilePath = Path.Combine(_blogFolder, permanentFileName);
+
+            // Save file directly to permanent folder
+            using (var stream = new FileStream(permanentFilePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var permanentUrl = $"/img/Blog/{permanentFileName}";
+            _logger.LogInformation("CKEditor image uploaded to permanent: {FileName}", permanentFileName);
+
+            return (true, permanentUrl, "File uploaded successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading CKEditor image");
+            return (false, null, "Error uploading file");
+        }
+    }
+
     public async Task<(bool Success, string? PermanentUrl, string? Message)> ProcessAndMoveFromTempAsync(string tempFileName)
     {
         try

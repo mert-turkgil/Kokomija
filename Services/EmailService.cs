@@ -27,6 +27,11 @@ namespace Kokomija.Services
         // Developer earnings emails
         Task SendDeveloperEarningsSummaryAsync(string period, decimal amount);
         Task SendCommissionChangeAlertAsync(decimal oldRate, decimal newRate);
+        
+        // Account management emails
+        Task SendPasswordResetAsync(string email, string resetUrl);
+        Task SendPayoutFailureNotificationAsync(string adminEmail, string payoutId, string errorMessage);
+        Task SendPayoutSuccessNotificationAsync(string adminEmail, string payoutId, decimal amount);
     }
 
     /// <summary>
@@ -532,6 +537,98 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending commission change alert");
+            }
+        }
+
+        public async Task SendPasswordResetAsync(string email, string resetUrl)
+        {
+            try
+            {
+                var subject = "Kokomija - Password Reset Request";
+                var body = $@"
+                    <h2>Password Reset Request</h2>
+                    <p>Hello,</p>
+                    <p>We received a request to reset your password for your Kokomija account.</p>
+                    <p>Click the button below to reset your password:</p>
+                    <p style='margin: 20px 0;'>
+                        <a href='{resetUrl}' style='background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;'>
+                            Reset Password
+                        </a>
+                    </p>
+                    <p>Or copy and paste this link into your browser:</p>
+                    <p style='background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;'>
+                        {resetUrl}
+                    </p>
+                    <p><strong>This link will expire in 24 hours.</strong></p>
+                    <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
+                    <hr style='margin: 20px 0; border: none; border-top: 1px solid #ddd;'>
+                    <p style='color: #666; font-size: 12px;'>This is an automated email. Please do not reply.</p>";
+
+                await SendEmailAsync(email, subject, body, true);
+                _logger.LogInformation("Password reset email sent to {Email}", email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending password reset email to {Email}", email);
+            }
+        }
+
+        public async Task SendPayoutFailureNotificationAsync(string adminEmail, string payoutId, string errorMessage)
+        {
+            try
+            {
+                var subject = "⚠️ Kokomija - Automatic Payout Failed";
+                var body = $@"
+                    <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 20px;'>
+                        <h3 style='color: #721c24; margin: 0;'>Automatic Payout Failed</h3>
+                    </div>
+                    <p><strong>Payout ID:</strong> <code>{payoutId}</code></p>
+                    <p><strong>Error Message:</strong></p>
+                    <div style='background-color: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace;'>
+                        {errorMessage}
+                    </div>
+                    <p><strong>Time:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p>
+                    <p>Please review the developer earnings and manually process the payout if necessary.</p>
+                    <p style='margin-top: 20px;'>
+                        <a href='{_configuration["AppSettings:BaseUrl"]}/Admin/DeveloperEarnings' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>
+                            View Developer Earnings
+                        </a>
+                    </p>";
+
+                await SendEmailAsync(adminEmail, subject, body, true);
+                _logger.LogInformation("Payout failure notification sent to {AdminEmail} for payout {PayoutId}", adminEmail, payoutId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending payout failure notification for {PayoutId}", payoutId);
+            }
+        }
+
+        public async Task SendPayoutSuccessNotificationAsync(string adminEmail, string payoutId, decimal amount)
+        {
+            try
+            {
+                var subject = "✅ Kokomija - Automatic Payout Successful";
+                var body = $@"
+                    <div style='background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin-bottom: 20px;'>
+                        <h3 style='color: #155724; margin: 0;'>Automatic Payout Successful</h3>
+                    </div>
+                    <p><strong>Payout ID:</strong> <code>{payoutId}</code></p>
+                    <p><strong>Amount:</strong> {amount:C2} PLN</p>
+                    <p><strong>Time:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p>
+                    <p>The automatic payout has been successfully processed via Stripe.</p>
+                    <p style='margin-top: 20px;'>
+                        <a href='{_configuration["AppSettings:BaseUrl"]}/Admin/DeveloperEarnings' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>
+                            View Developer Earnings
+                        </a>
+                    </p>";
+
+                await SendEmailAsync(adminEmail, subject, body, true);
+                _logger.LogInformation("Payout success notification sent to {AdminEmail} for payout {PayoutId}", adminEmail, payoutId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending payout success notification for {PayoutId}", payoutId);
             }
         }
 

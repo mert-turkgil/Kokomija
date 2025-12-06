@@ -7,10 +7,13 @@ namespace Kokomija.Models.ViewModels.Admin
     /// </summary>
     public class BlogCreateDto
     {
+        [Required(ErrorMessage = "Category is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a category")]
         public int CategoryId { get; set; }
         public int? ProductId { get; set; }
         public string? FeaturedImage { get; set; }
         public string? ImageTempFileName { get; set; }
+        public string? SessionId { get; set; }
         public bool IsPublished { get; set; }
         public DateTime? PublishedDate { get; set; }
         public bool AllowComments { get; set; } = true;
@@ -24,10 +27,13 @@ namespace Kokomija.Models.ViewModels.Admin
     public class BlogUpdateDto
     {
         public int Id { get; set; }
+        [Required(ErrorMessage = "Category is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a category")]
         public int CategoryId { get; set; }
         public int? ProductId { get; set; }
         public string? FeaturedImage { get; set; }
         public string? NewImageTempFileName { get; set; }
+        public string? SessionId { get; set; }
         public bool IsPublished { get; set; }
         public DateTime? PublishedDate { get; set; }
         public bool AllowComments { get; set; } = true;
@@ -50,7 +56,6 @@ namespace Kokomija.Models.ViewModels.Admin
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
-        [Required]
         [MaxLength(200)]
         public string Slug { get; set; } = string.Empty;
 
@@ -76,6 +81,14 @@ namespace Kokomija.Models.ViewModels.Admin
     public class BlogCancelUploadDto
     {
         public string? ImageTempFileName { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for session-based operations
+    /// </summary>
+    public class BlogSessionDto
+    {
+        public string SessionId { get; set; } = string.Empty;
     }
 
     /// <summary>

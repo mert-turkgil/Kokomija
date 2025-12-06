@@ -11,5 +11,7 @@ namespace Kokomija.Data.Abstract
         Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status);
         Task<Order?> GetOrderWithItemsAsync(int id);
         Task<IEnumerable<Order>> GetRecentOrdersAsync(int count);
+        Task<IEnumerable<Order>> GetAllOrdersWithDetailsAsync();
+        Task<Order?> GetOrderWithFullDetailsAsync(int id);
     }
 }
