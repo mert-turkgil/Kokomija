@@ -341,7 +341,7 @@ public class AdminController : Controller
                 TrackingNumber = hasShipment ? shipment!.TrackingNumber : null,
                 HasActiveReturn = hasReturn,
                 ActiveReturnCount = hasReturn ? returnCount : 0,
-                IsDemoOrder = IsDemoOrder(o.StripePaymentIntentId)
+                IsDemoOrder = IsDemoOrder(o.StripePaymentIntentId),
                 IsDemoOrder = o.IsDemoOrder || o.OrderNumber.StartsWith("DEMO-")
             };
         }).ToList();
