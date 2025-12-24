@@ -379,7 +379,8 @@ public class AdminController : Controller
                 ShipmentStatus = hasShipment ? shipment!.Status : null,
                 TrackingNumber = hasShipment ? shipment!.TrackingNumber : null,
                 HasActiveReturn = hasReturn,
-                ActiveReturnCount = hasReturn ? returnCount : 0
+                ActiveReturnCount = hasReturn ? returnCount : 0,
+                IsDemoOrder = string.IsNullOrEmpty(o.StripePaymentIntentId) || o.StripePaymentIntentId.StartsWith("demo_") || o.StripePaymentIntentId == "demo"
             };
         }).ToList();
         

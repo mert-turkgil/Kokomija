@@ -69,6 +69,7 @@ namespace Kokomija.Models.ViewModels.Admin
         public string? TrackingNumber { get; set; }
         public bool HasActiveReturn { get; set; }
         public int ActiveReturnCount { get; set; }
+        public bool IsDemoOrder { get; set; }
     }
 
     /// <summary>
