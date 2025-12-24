@@ -56,7 +56,10 @@ namespace Kokomija.Entity
         public PayoutStatus PayoutStatus { get; set; } = PayoutStatus.Pending;
 
         [MaxLength(100)]
-        public string? PayoutId { get; set; } // Stripe payout ID
+        public string? PayoutId { get; set; } // Stripe payout ID (legacy)
+
+        [MaxLength(100)]
+        public string? StripePayoutId { get; set; } // Stripe transfer ID for payouts
 
         public DateTime? PayoutDate { get; set; }
     }

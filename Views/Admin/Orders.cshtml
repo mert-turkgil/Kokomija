@@ -32,6 +32,13 @@
         }
 
         /* ===== Stat Cards - Horizontal Modern Layout ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
         .stat-card {
             background: var(--ord-card-bg);
             border-radius: 16px;
@@ -93,6 +100,12 @@
             font-size: 0.7rem;
             color: var(--ord-text-muted);
             margin-top: 0.25rem;
+        }
+
+        .stat-link {
+            font-size: 0.7rem;
+            color: #3b82f6;
+            font-weight: 600;
         }
 
         /* ===== Other Components ===== */
@@ -207,6 +220,17 @@
 
         /* ===== Responsive ===== */
         @@media (max-width: 768px) {
+        @@media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .stat-card {
                 padding: 1rem;
             }
@@ -259,7 +283,24 @@
                             </h1>
                             <p class="mb-0">View and manage all customer orders with tracking and returns</p>
                         </div>
-                        <div>
+                        <div class="d-flex gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-database"></i> Demo
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item text-success" onclick="seedDemoData()">
+                                            <i class="bi bi-plus-circle me-2"></i>Generate Demo Orders
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" onclick="removeDemoData()">
+                                            <i class="bi bi-trash me-2"></i>Remove Demo Orders
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                             <a asp-action="Index" class="btn btn-light">
                                 <i class="bi bi-arrow-left"></i>
                                 Back to Dashboard
@@ -299,9 +340,16 @@
             </div>
 
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e3f2fd;">
-                        <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
+                <a asp-action="Financial" class="text-decoration-none">
+                    <div class="stat-card" style="cursor: pointer;">
+                        <div class="stat-icon" style="background: #e3f2fd;">
+                            <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
+                        </div>
+                        <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0") PLN</h3>
+                        <p class="stat-label">Gross Revenue</p>
+                        <small class="text-muted">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
+                        <br>
+                        <small class="text-primary">Click for detailed breakdown →</small>
                     </div>
                     <div class="stat-content">
                         <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0") PLN</h3>
@@ -309,6 +357,7 @@
                         <small class="text-muted">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
                     </div>
                 </div>
+                </a>
             </div>
 
             <div class="col-md-3 mb-3">
@@ -472,6 +521,22 @@
                                 <tr class="@(order.IsDemoOrder ? "table-light" : "")">
                                     <td>
                                         @if (order.IsDemoOrder)
+                                        {
+                                            <span class="fw-bold text-muted" title="Demo order - No Stripe data available">
+                                                @order.OrderNumber
+                                            </span>
+                                            <br>
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">
+                                                <i class="bi bi-cone-striped"></i> DEMO
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="fw-bold text-decoration-none">
+                                                @order.OrderNumber
+                                            </a>
+                                        }
+                                        @if (order.HasActiveReturn)
                                         {
                                             <div>
                                                 <span class="fw-bold text-muted" title="Demo order - No Stripe data available">
@@ -639,5 +704,26 @@
                 $('#filterForm').submit();
             });
         });
+
+        // Demo data functions
+        async function seedDemoData() {
+            if (!confirm('Generate ~100 demo orders for the last 90 days?')) return;
+            try {
+                const res = await fetch('@Url.Action("SeedDemoData")', { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function removeDemoData() {
+            if (!confirm('⚠️ Remove ALL demo orders? This cannot be undone.')) return;
+            try {
+                const res = await fetch('@Url.Action("RemoveDemoData")', { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
     </script>
 }

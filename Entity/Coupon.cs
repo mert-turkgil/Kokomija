@@ -47,6 +47,21 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string? StripePromotionCodeId { get; set; }
 
+        // User-specific coupon (if null, available to all users)
+        public string? UserId { get; set; }
+        [ForeignKey("UserId")]
+        public ApplicationUser? User { get; set; }
+
+        // Product restriction (if set, coupon only valid for this specific product)
+        public int? ProductId { get; set; }
+        [ForeignKey("ProductId")]
+        public Product? Product { get; set; }
+
+        // Category restriction (if set, coupon only valid for products in this category)
+        public int? CategoryId { get; set; }
+        [ForeignKey("CategoryId")]
+        public Category? Category { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }

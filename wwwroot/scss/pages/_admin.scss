@@ -2629,6 +2629,20 @@
     }
 }
 
+// Badge colors
+.badge {
+    &.bg-purple {
+        background-color: #9b59b6 !important;
+        color: #ffffff;
+    }
+    
+    [data-bs-theme="dark"] & {
+        &.bg-purple {
+            background-color: #b48ade !important;
+        }
+    }
+}
+
 // DataTables Responsive Dark Theme Support
 .admin-dashboard {
     // DataTables wrapper

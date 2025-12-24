@@ -1,0 +1,1632 @@
+@model Kokomija.Models.ViewModels.Admin.FinancialDashboardViewModel
+@{
+    ViewData["Title"] = "Financial Dashboard";
+    var totalDeductions = Model.Summary.TotalStripeFees + Model.Summary.TotalDeveloperCommission + Model.Summary.TotalTaxAmount + Model.Summary.TotalRefunds + Model.Summary.TotalDiscounts;
+}
+
+@section Styles {
+    <style>
+        /* ===== CSS Variables for Light/Dark Theme ===== */
+        :root {
+            --fin-bg: #f8fafc;
+            --fin-card-bg: #ffffff;
+            --fin-card-border: rgba(0,0,0,0.05);
+            --fin-card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --fin-card-shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+            --fin-text-primary: #1a1a2e;
+            --fin-text-secondary: #64748b;
+            --fin-text-muted: #94a3b8;
+            --fin-border-light: #f1f5f9;
+            --fin-hover-bg: #f8fafc;
+            --fin-input-bg: #ffffff;
+            --fin-table-header: #f8fafc;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        /* Dark Theme */
+        [data-bs-theme="dark"] {
+            --fin-bg: #0f172a;
+            --fin-card-bg: #1e293b;
+            --fin-card-border: rgba(255,255,255,0.1);
+            --fin-card-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --fin-card-shadow-hover: 0 12px 40px rgba(0,0,0,0.5);
+            --fin-text-primary: #f1f5f9;
+            --fin-text-secondary: #94a3b8;
+            --fin-text-muted: #64748b;
+            --fin-border-light: #334155;
+            --fin-hover-bg: #334155;
+            --fin-input-bg: #1e293b;
+            --fin-table-header: #1e293b;
+        }
+
+        .financial-page {
+            background: var(--fin-bg);
+            min-height: 100vh;
+        }
+
+        /* ===== Hero Section ===== */
+        .financial-hero {
+            background: var(--success-gradient);
+            color: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .financial-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -15%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .financial-hero h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hero-stat {
+            text-align: center;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+
+        .hero-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .hero-stat-label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Metric Cards ===== */
+        .metric-card {
+            background: var(--fin-card-bg);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--fin-card-shadow);
+            height: 100%;
+            transition: all 0.3s ease;
+            border: 1px solid var(--fin-card-border);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--fin-card-shadow-hover);
+        }
+
+        .metric-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--fin-text-primary);
+            margin-bottom: 0.125rem;
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--fin-text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 0.4rem;
+        }
+
+        .metric-change.positive { background: #dcfce7; color: #16a34a; }
+        .metric-change.negative { background: #fee2e2; color: #dc2626; }
+
+        /* ===== Period Tabs ===== */
+        .period-tabs {
+            background: var(--fin-card-bg);
+            border-radius: 12px;
+            padding: 0.375rem;
+            display: inline-flex;
+            gap: 0.2rem;
+            box-shadow: var(--fin-card-shadow);
+            flex-wrap: wrap;
+        }
+
+        .period-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--fin-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .period-tab:hover {
+            background: var(--fin-hover-bg);
+            color: var(--fin-text-primary);
+        }
+
+        .period-tab.active {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        /* ===== Chart Cards with Fixed Heights ===== */
+        .chart-card {
+            background: var(--fin-card-bg);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--fin-card-shadow);
+            border: 1px solid var(--fin-card-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--fin-text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Fixed height chart containers */
+        .chart-container {
+            position: relative;
+            height: 220px;
+            max-height: 220px;
+            width: 100%;
+        }
+
+        .chart-container-sm {
+            position: relative;
+            height: 180px;
+            max-height: 180px;
+            width: 100%;
+        }
+
+        .chart-container canvas,
+        .chart-container-sm canvas {
+            max-height: 100% !important;
+        }
+
+        /* ===== Breakdown List ===== */
+        .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--fin-hover-bg);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        [data-bs-theme="dark"] .breakdown-item {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .breakdown-item:hover {
+            background: var(--fin-border-light);
+        }
+
+        .breakdown-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .breakdown-info { flex: 1; }
+
+        .breakdown-label {
+            font-weight: 600;
+            color: var(--fin-text-primary);
+            font-size: 0.8rem;
+        }
+
+        .breakdown-percentage {
+            font-size: 0.7rem;
+            color: var(--fin-text-muted);
+        }
+
+        .breakdown-amount {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--fin-text-primary);
+        }
+
+        /* ===== Data Tables ===== */
+        .data-table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--fin-card-shadow);
+            background: var(--fin-card-bg);
+        }
+
+        .data-table .table {
+            margin-bottom: 0;
+            color: var(--fin-text-primary);
+        }
+
+        .data-table thead th {
+            background: var(--fin-table-header);
+            border: none;
+            padding: 0.875rem 1rem;
+            font-weight: 600;
+            color: var(--fin-text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tbody td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--fin-border-light);
+            vertical-align: middle;
+            font-size: 0.85rem;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--fin-hover-bg);
+        }
+
+        .order-link {
+            font-weight: 600;
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .order-link:hover { text-decoration: underline; }
+
+        .amount-positive { color: #16a34a; font-weight: 600; }
+        .amount-negative { color: #dc2626; font-weight: 600; }
+        .amount-neutral { color: var(--fin-text-secondary); }
+
+        /* ===== Status Pills ===== */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-pill.success { background: #dcfce7; color: #16a34a; }
+        .status-pill.warning { background: #fef3c7; color: #d97706; }
+        .status-pill.danger { background: #fee2e2; color: #dc2626; }
+
+        /* ===== Nav Pills ===== */
+        .nav-pills-custom {
+            background: var(--fin-card-bg);
+            border-radius: 12px;
+            padding: 0.375rem;
+            box-shadow: var(--fin-card-shadow);
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .nav-pills-custom .nav-link {
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            color: var(--fin-text-secondary);
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .nav-pills-custom .nav-link.active {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        /* ===== Buttons ===== */
+        .export-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        /* ===== Fee Cards ===== */
+        .fee-card {
+            padding: 1rem;
+            border-radius: 12px;
+            height: 100%;
+        }
+
+        .fee-card .fee-icon { font-size: 1.25rem; }
+        .fee-card .fee-title { font-size: 0.8rem; font-weight: 600; }
+        .fee-card .fee-value { font-size: 1.25rem; font-weight: 700; }
+        .fee-card .fee-desc { font-size: 0.7rem; color: var(--fin-text-muted); }
+
+        /* ===== Commission Section ===== */
+        .commission-card {
+            background: var(--fin-card-bg);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--fin-card-shadow);
+            border: 1px solid var(--fin-card-border);
+        }
+
+        .commission-alert {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        [data-bs-theme="dark"] .commission-alert {
+            background: linear-gradient(135deg, #422006 0%, #713f12 100%);
+            border-color: #ca8a04;
+        }
+
+        /* ===== Product Thumbnails ===== */
+        .product-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: var(--fin-border-light);
+        }
+
+        .profit-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--fin-border-light);
+            overflow: hidden;
+        }
+
+        .profit-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--fin-text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h5 { color: var(--fin-text-primary); }
+        .empty-state p { color: var(--fin-text-secondary); }
+
+        /* ===== Animations ===== */
+        .animate-in {
+            animation: slideIn 0.4s ease forwards;
+            opacity: 0;
+        }
+
+        @@keyframes slideIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .delay-1 { animation-delay: 0.05s; }
+        .delay-2 { animation-delay: 0.1s; }
+        .delay-3 { animation-delay: 0.15s; }
+        .delay-4 { animation-delay: 0.2s; }
+
+        /* ===== Responsive Styles ===== */
+        @@media (max-width: 1200px) {
+            .hero-stats { grid-template-columns: repeat(2, 1fr); }
+            .hero-stat-value { font-size: 1.25rem; }
+        }
+
+        @@media (max-width: 768px) {
+            .financial-hero {
+                padding: 1.25rem;
+                border-radius: 16px;
+            }
+
+            .financial-hero h1 { font-size: 1.25rem; }
+
+            .hero-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+
+            .hero-stat { padding: 0.4rem; }
+            .hero-stat-value { font-size: 1.1rem; }
+            .hero-stat-label { font-size: 0.65rem; }
+
+            .metric-card { padding: 1rem; }
+            .metric-value { font-size: 1.25rem; }
+            .metric-icon { width: 36px; height: 36px; font-size: 16px; }
+
+            .chart-container { height: 200px; max-height: 200px; }
+            .chart-container-sm { height: 160px; max-height: 160px; }
+
+            .period-tabs { padding: 0.25rem; }
+            .period-tab { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+
+            .fee-card .fee-value { font-size: 1rem; }
+
+            .data-table thead th,
+            .data-table tbody td {
+                padding: 0.6rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .nav-pills-custom .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .hero-stats { grid-template-columns: 1fr 1fr; }
+            .hero-stat-value { font-size: 1rem; }
+            
+            .chart-container { height: 180px; max-height: 180px; }
+            
+            .breakdown-list { max-height: 200px; }
+
+            .table-responsive {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* ===== Scrollbar Styles ===== */
+        .breakdown-list::-webkit-scrollbar,
+        .table-responsive::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .breakdown-list::-webkit-scrollbar-track,
+        .table-responsive::-webkit-scrollbar-track {
+            background: var(--fin-border-light);
+            border-radius: 3px;
+        }
+
+        .breakdown-list::-webkit-scrollbar-thumb,
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--fin-text-muted);
+            border-radius: 3px;
+        }
+
+        /* ===== Modal Dark Theme ===== */
+        [data-bs-theme="dark"] .modal-content {
+            background: var(--fin-card-bg);
+            border-color: var(--fin-card-border);
+        }
+
+        [data-bs-theme="dark"] .modal-header,
+        [data-bs-theme="dark"] .modal-footer {
+            border-color: var(--fin-border-light);
+        }
+
+        [data-bs-theme="dark"] .form-control {
+            background: var(--fin-input-bg);
+            border-color: var(--fin-border-light);
+            color: var(--fin-text-primary);
+        }
+
+        [data-bs-theme="dark"] .dropdown-menu {
+            background: var(--fin-card-bg);
+            border-color: var(--fin-card-border);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item {
+            color: var(--fin-text-primary);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item:hover {
+            background: var(--fin-hover-bg);
+        }
+
+        [data-bs-theme="dark"] .alert-info {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+    </style>
+}
+
+<div class="container-fluid py-3 financial-page">
+    <!-- Hero Section -->
+    <div class="financial-hero animate-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h1><i class="bi bi-graph-up-arrow me-2"></i>Financial Dashboard</h1>
+                <p class="mb-0 opacity-75 small">Complete earnings overview • Export ready</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-database"></i> Demo
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <button class="dropdown-item text-success" onclick="seedDemoData()">
+                                <i class="bi bi-plus-circle me-2"></i>Generate Data
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item text-danger" onclick="removeDemoData()">
+                                <i class="bi bi-trash me-2"></i>Remove Data
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <a href="@Url.Action("ExportFinancial", new { period = Model.SelectedPeriod, dateFrom = Model.DateFrom, dateTo = Model.DateTo })" class="export-btn">
+                    <i class="bi bi-file-earmark-excel"></i>Export
+                </a>
+                <a asp-action="Orders" class="btn btn-sm btn-light">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value">@Model.Summary.GrossRevenue.ToString("N0")</div>
+                <div class="hero-stat-label">@Model.Summary.Currency Gross</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">@Model.Summary.NetRevenue.ToString("N0")</div>
+                <div class="hero-stat-label">@Model.Summary.Currency Net</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">@Model.Summary.TotalOrders</div>
+                <div class="hero-stat-label">Orders</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">@Model.Summary.AverageOrderValue.ToString("N0")</div>
+                <div class="hero-stat-label">@Model.Summary.Currency Avg</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Selector -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 animate-in delay-1">
+        <div class="period-tabs">
+            <a href="@Url.Action("Financial", new { period = "day" })" class="period-tab @(Model.SelectedPeriod == "day" ? "active" : "")">Today</a>
+            <a href="@Url.Action("Financial", new { period = "week" })" class="period-tab @(Model.SelectedPeriod == "week" ? "active" : "")">Week</a>
+            <a href="@Url.Action("Financial", new { period = "month" })" class="period-tab @(Model.SelectedPeriod == "month" ? "active" : "")">Month</a>
+            <a href="@Url.Action("Financial", new { period = "year" })" class="period-tab @(Model.SelectedPeriod == "year" ? "active" : "")">Year</a>
+            <a href="@Url.Action("Financial", new { period = "all" })" class="period-tab @(Model.SelectedPeriod == "all" ? "active" : "")">All</a>
+            <button class="period-tab" data-bs-toggle="modal" data-bs-target="#customDateModal">
+                <i class="bi bi-calendar-range"></i>
+            </button>
+        </div>
+        @if (Model.DateFrom.HasValue && Model.DateTo.HasValue)
+        {
+            <small class="text-muted">
+                <i class="bi bi-calendar3 me-1"></i>
+                @Model.DateFrom.Value.ToString("MMM dd") - @Model.DateTo.Value.ToString("MMM dd, yyyy")
+            </small>
+        }
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row g-3 mb-3 animate-in delay-2">
+        <div class="col-xl-3 col-md-6">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                    <i class="bi bi-cash-stack" style="color: #2563eb;"></i>
+                </div>
+                <div class="metric-value">@Model.Summary.GrossRevenue.ToString("N2")</div>
+                <div class="metric-label">Gross Revenue</div>
+                @if (Model.Summary.GrossRevenueGrowth != 0)
+                {
+                    <div class="metric-change @(Model.Summary.GrossRevenueGrowth >= 0 ? "positive" : "negative")">
+                        <i class="bi bi-arrow-@(Model.Summary.GrossRevenueGrowth >= 0 ? "up" : "down")"></i>
+                        @Math.Abs(Model.Summary.GrossRevenueGrowth).ToString("N1")%
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="metric-card" style="border: 2px solid #10b981;">
+                <div class="metric-icon" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0);">
+                    <i class="bi bi-wallet2" style="color: #059669;"></i>
+                </div>
+                <div class="metric-value text-success">@Model.Summary.PersonalEarnings.ToString("N2")</div>
+                <div class="metric-label text-success fw-bold">💰 Your Earnings</div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(135deg, #fee2e2, #fecaca);">
+                    <i class="bi bi-receipt-cutoff" style="color: #dc2626;"></i>
+                </div>
+                <div class="metric-value text-danger">-@totalDeductions.ToString("N2")</div>
+                <div class="metric-label">Total Deductions</div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe);">
+                    <i class="bi bi-stripe" style="color: #635bff;"></i>
+                </div>
+                <div class="metric-value">@Model.Summary.TotalStripeFees.ToString("N2")</div>
+                <div class="metric-label">Stripe Fees</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-3 animate-in delay-3">
+        <!-- Deductions Breakdown -->
+        <div class="col-xl-5 col-lg-6">
+            <div class="chart-card h-100">
+                <div class="chart-title">
+                    <i class="bi bi-pie-chart-fill text-primary"></i>
+                    Deductions Breakdown
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <div class="chart-container-sm">
+                            <canvas id="deductionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="breakdown-list">
+                            @foreach (var item in Model.DeductionChart.Where(d => d.Amount > 0))
+                            {
+                                <div class="breakdown-item">
+                                    <div class="breakdown-color" style="background: @item.Color;"></div>
+                                    <div class="breakdown-info">
+                                        <div class="breakdown-label">@item.Category</div>
+                                        <div class="breakdown-percentage">@item.Percentage.ToString("N1")%</div>
+                                    </div>
+                                    <div class="breakdown-amount">@item.Amount.ToString("N0")</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="col-xl-7 col-lg-6">
+            <div class="chart-card h-100">
+                <div class="chart-title">
+                    <i class="bi bi-graph-up text-success"></i>
+                    Revenue Trend
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fee Summary Cards -->
+    <div class="row g-3 mb-3 animate-in delay-4">
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="bi bi-calculator text-info"></i>
+                    Fee Breakdown
+                </div>
+                <div class="row g-2">
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #f0f4ff;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-stripe fee-icon" style="color: #635bff;"></i>
+                                <span class="fee-title">Stripe</span>
+                            </div>
+                            <div class="fee-value" style="color: #635bff;">@Model.Summary.TotalStripeFees.ToString("N0")</div>
+                            <div class="fee-desc">2.9% + 1 PLN</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #fef3c7;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-percent fee-icon text-warning"></i>
+                                <span class="fee-title">Tax</span>
+                            </div>
+                            <div class="fee-value text-warning">@Model.Summary.TotalTaxAmount.ToString("N0")</div>
+                            <div class="fee-desc">VAT @(Model.Summary.EffectiveTaxRate.ToString("N0"))%</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #fee2e2;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-arrow-return-left fee-icon text-danger"></i>
+                                <span class="fee-title">Refunds</span>
+                            </div>
+                            <div class="fee-value text-danger">@Model.Summary.TotalRefunds.ToString("N0")</div>
+                            <div class="fee-desc">Processed</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #f3e8ff;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-tag fee-icon" style="color: #7c3aed;"></i>
+                                <span class="fee-title">Discounts</span>
+                            </div>
+                            <div class="fee-value" style="color: #7c3aed;">@Model.Summary.TotalDiscounts.ToString("N0")</div>
+                            <div class="fee-desc">Coupons</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #d1fae5;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-code-slash fee-icon text-success"></i>
+                                <span class="fee-title">Dev</span>
+                            </div>
+                            <div class="fee-value text-success">@Model.Summary.TotalDeveloperCommission.ToString("N0")</div>
+                            <div class="fee-desc">@Model.Summary.DeveloperCommissionRate%</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #ecfdf5; border: 2px solid #10b981;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-wallet-fill fee-icon text-success"></i>
+                                <span class="fee-title fw-bold">Net</span>
+                            </div>
+                            <div class="fee-value text-success">@Model.Summary.PersonalEarnings.ToString("N0")</div>
+                            <div class="fee-desc">Your profit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Commission -->
+        <div class="col-lg-4">
+            <div class="commission-card h-100">
+                <div class="chart-title d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-code-slash text-info"></i> Developer Commission</span>
+                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#commissionSettingsModal" title="Edit Settings">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                </div>
+                <div class="text-center mb-2">
+                    <div class="display-5 fw-bold text-info">@Model.Summary.DeveloperCommissionRate%</div>
+                    <small class="text-muted">Current Rate</small>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom small">
+                    <span class="text-muted">Total</span>
+                    <span class="fw-bold">@Model.Summary.TotalDeveloperCommission.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom small">
+                    <span class="text-muted">Paid</span>
+                    <span class="fw-bold text-success">@Model.Summary.TotalPaidToDeveloper.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 small">
+                    <span class="text-muted">Pending</span>
+                    <span class="fw-bold text-warning">@Model.Summary.PendingDeveloperPayout.ToString("N2")</span>
+                </div>
+
+                @if (Model.PendingCommissionRequests.Any())
+                {
+                    <div class="commission-alert mt-2">
+                        <div class="d-flex align-items-center gap-2 small">
+                            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                            <span class="fw-bold">@Model.PendingCommissionRequests.Count Request(s)</span>
+                        </div>
+                        <button class="btn btn-warning btn-sm mt-2 w-100" data-bs-toggle="modal" data-bs-target="#commissionRequestsModal">
+                            Review
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills-custom mb-3" id="financialTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#transactions">
+                <i class="bi bi-list-ul me-1"></i>Transactions (@Model.TotalTransactions)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#products">
+                <i class="bi bi-box me-1"></i>Products (@Model.ProductBreakdowns.Count)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tax">
+                <i class="bi bi-building me-1"></i>Tax
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Transactions -->
+        <div class="tab-pane fade show active" id="transactions">
+            <div class="data-table">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="transactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th class="text-end">Gross</th>
+                                <th class="text-end">Fee</th>
+                                <th class="text-end">Net</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Transactions.Any())
+                            {
+                                @foreach (var tx in Model.Transactions)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a href="@Url.Action("OrderDetails", new { id = tx.OrderId })" class="order-link">
+                                                @tx.OrderNumber
+                                            </a>
+                                            @if (tx.OrderNumber.StartsWith("DEMO-"))
+                                            {
+                                                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">DEMO</span>
+                                            }
+                                        </td>
+                                        <td data-order="@tx.Date.ToString("yyyy-MM-dd HH:mm")">@tx.Date.ToString("MM/dd HH:mm")</td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 120px;">@tx.CustomerName</div>
+                                        </td>
+                                        <td class="text-end fw-bold" data-order="@tx.GrossAmount">@tx.GrossAmount.ToString("N0")</td>
+                                        <td class="text-end amount-negative" data-order="@tx.StripeFee">-@tx.StripeFee.ToString("N0")</td>
+                                        <td class="text-end amount-positive" data-order="@tx.NetAmount">@tx.NetAmount.ToString("N0")</td>
+                                        <td>
+                                            <span class="status-pill @(tx.PaymentStatus == "paid" ? "success" : tx.PaymentStatus == "pending" ? "warning" : "danger")">
+                                                @tx.PaymentStatus
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h5>No transactions</h5>
+                                            <p class="text-muted mb-0">Data will appear when orders are completed.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="tab-pane fade" id="products">
+            <div class="data-table">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Gross</th>
+                                <th class="text-end">Net</th>
+                                <th style="width: 100px;">Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ProductBreakdowns.Any())
+                            {
+                                @foreach (var product in Model.ProductBreakdowns)
+                                {
+                                    var marginClass = product.ProfitMargin >= 70 ? "bg-success" : product.ProfitMargin >= 50 ? "bg-warning" : "bg-danger";
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if (!string.IsNullOrEmpty(product.ProductImage))
+                                                {
+                                                    <img src="@product.ProductImage" class="product-thumb" alt="">
+                                                }
+                                                <div class="text-truncate" style="max-width: 150px;">@product.ProductName</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center" data-order="@product.QuantitySold">
+                                            <span class="badge bg-secondary">@product.QuantitySold</span>
+                                        </td>
+                                        <td class="text-end fw-bold" data-order="@product.GrossSales">@product.GrossSales.ToString("N0")</td>
+                                        <td class="text-end amount-positive" data-order="@product.NetRevenue">@product.NetRevenue.ToString("N0")</td>
+                                        <td data-order="@product.ProfitMargin">
+                                            <div class="d-flex align-items-center gap-1">
+                                                <div class="profit-bar flex-grow-1">
+                                                    <div class="profit-bar-fill @marginClass" style="width: @Math.Min(product.ProfitMargin, 100)%;"></div>
+                                                </div>
+                                                <small class="fw-bold">@product.ProfitMargin.ToString("N0")%</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <i class="bi bi-box"></i>
+                                            <h5>No product data</h5>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax -->
+        <div class="tab-pane fade" id="tax">
+            <div class="chart-card">
+                <div class="chart-title d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-building text-primary"></i> Tax Summary</span>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#taxSettingsModal" title="Manage Tax Rates">
+                        <i class="bi bi-gear"></i> Manage
+                    </button>
+                </div>
+
+                @if (Model.TaxBreakdown.Any())
+                {
+                    <div class="table-responsive" style="max-height: 300px;">
+                        <table class="table table-sm">
+                            <thead style="position: sticky; top: 0; background: var(--fin-table-header);">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Rate</th>
+                                    <th class="text-end">Taxable</th>
+                                    <th class="text-end">Collected</th>
+                                    <th class="text-center">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var tax in Model.TaxBreakdown)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-info">@tax.TaxName</span></td>
+                                        <td>@tax.Rate%</td>
+                                        <td class="text-end">@tax.TaxableAmount.ToString("N0")</td>
+                                        <td class="text-end fw-bold">@tax.TaxCollected.ToString("N0")</td>
+                                        <td class="text-center">@tax.TransactionCount</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="3" class="text-end">Total:</td>
+                                    <td class="text-end">@Model.TaxBreakdown.Sum(t => t.TaxCollected).ToString("N0") @Model.Summary.Currency</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-receipt"></i>
+                        <h5>No tax data</h5>
+                    </div>
+                }
+
+                <div class="alert alert-info mt-3 mb-0 small d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Tax collected via Stripe. Effective rate: <strong>@Model.Summary.EffectiveTaxRate.ToString("N2")%</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Date Modal -->
+<div class="modal fade" id="customDateModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-calendar-range me-2"></i>Date Range</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Financial" method="get">
+                <div class="modal-body py-2">
+                    <input type="hidden" name="period" value="custom">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">From</label>
+                        <input type="date" class="form-control form-control-sm" name="dateFrom" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small fw-bold">To</label>
+                        <input type="date" class="form-control form-control-sm" name="dateTo" required>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="submit" class="btn btn-success btn-sm w-100">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Commission Requests Modal -->
+<div class="modal fade" id="commissionRequestsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Commission Requests</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @if (Model.PendingCommissionRequests.Any())
+                {
+                    @foreach (var request in Model.PendingCommissionRequests)
+                    {
+                        <div class="commission-alert mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <div class="fw-bold">@request.DeveloperName</div>
+                                    <small class="text-muted">@request.DeveloperEmail</small>
+                                </div>
+                                <small class="text-muted">@request.CreatedAt.ToString("MMM dd")</small>
+                            </div>
+                            <div class="d-flex gap-3 mb-2">
+                                <div class="text-center">
+                                    <small class="text-muted d-block">Current</small>
+                                    <span class="fw-bold">@request.CurrentRate%</span>
+                                </div>
+                                <div class="d-flex align-items-center"><i class="bi bi-arrow-right text-muted"></i></div>
+                                <div class="text-center">
+                                    <small class="text-muted d-block">Requested</small>
+                                    <span class="fw-bold text-primary">@request.RequestedRate%</span>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="fw-bold">Reason:</small>
+                                <p class="small mb-0 bg-white p-2 rounded mt-1">@request.Reason</p>
+                            </div>
+                            <textarea class="form-control form-control-sm mb-2" id="response-@request.Id" rows="2" placeholder="Response..."></textarea>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm flex-fill" onclick="reviewCommissionRequest(@request.Id, true)">
+                                    <i class="bi bi-check-lg"></i> Approve
+                                </button>
+                                <button class="btn btn-danger btn-sm flex-fill" onclick="reviewCommissionRequest(@request.Id, false)">
+                                    <i class="bi bi-x-lg"></i> Reject
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state py-4">
+                        <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                        <h6>All caught up!</h6>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Commission Settings Modal -->
+<div class="modal fade" id="commissionSettingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-gear text-info me-2"></i>Commission Settings</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning small py-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Changes will affect future commission calculations. Existing records are not affected.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Developer Commission Rate (%)</label>
+                    <input type="number" class="form-control" id="devRateInput" step="0.1" min="0" max="50" value="@Model.Summary.DeveloperCommissionRate">
+                    <small class="text-muted">Percentage of net revenue paid to developer</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Platform Commission Rate (%)</label>
+                    <input type="number" class="form-control" id="platformRateInput" step="0.1" min="0" max="50" value="@(Model.CommissionSettings?.PlatformCommissionRate ?? 1)">
+                    <small class="text-muted">Your platform fee percentage</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Minimum Payout Amount (PLN)</label>
+                    <input type="number" class="form-control" id="minPayoutInput" step="10" min="0" value="@(Model.CommissionSettings?.MinimumPayoutAmount ?? 100)">
+                </div>
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="autoPayoutCheck" @(Model.CommissionSettings?.AutoPayoutEnabled == true ? "checked" : "")>
+                    <label class="form-check-label" for="autoPayoutCheck">Enable automatic payouts</label>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info btn-sm" onclick="saveCommissionSettings()">
+                    <i class="bi bi-check-lg"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tax Settings Modal -->
+<div class="modal fade" id="taxSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="bi bi-building text-primary me-2"></i>Tax Rate Management</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info small py-2 mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Tax rates are synced with Stripe. Changes here update local settings only. Update Stripe tax rates separately.
+                </div>
+                
+                <div id="taxRatesContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="ms-2">Loading tax rates...</span>
+                    </div>
+                </div>
+                
+                <hr class="my-3">
+                <h6 class="small fw-bold mb-2"><i class="bi bi-plus-circle me-1"></i> Add New Tax Rate</h6>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-sm" id="newTaxName" placeholder="Name (e.g. VAT 23%)">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control form-control-sm" id="newTaxCountry" placeholder="Country (PL)">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control form-control-sm" id="newTaxRate" step="0.01" placeholder="Rate %">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-sm" id="newTaxStripeId" placeholder="Stripe Tax ID">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-success btn-sm w-100" onclick="createTaxRate()">
+                            <i class="bi bi-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <style>
+        /* DataTables Dark Mode */
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_length select,
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input {
+            background: var(--fin-card-bg);
+            border-color: var(--fin-card-border);
+            color: var(--fin-text-primary);
+        }
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_info,
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: var(--fin-text-secondary) !important;
+        }
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--fin-card-bg) !important;
+            border-color: var(--fin-card-border) !important;
+            color: var(--fin-text-primary) !important;
+        }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            font-size: 0.8rem;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+        }
+    </style>
+    <script>
+        // Initialize DataTables
+        $(document).ready(function() {
+            // Transactions table
+            if ($('#transactionsTable tbody tr').length > 0 && !$('#transactionsTable tbody tr td:first').hasClass('dataTables_empty')) {
+                $('#transactionsTable').DataTable({
+                    pageLength: 15,
+                    lengthMenu: [10, 15, 25, 50],
+                    order: [[1, 'desc']], // Sort by date descending
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search transactions...",
+                        lengthMenu: "Show _MENU_",
+                        info: "Showing _START_-_END_ of _TOTAL_"
+                    },
+                    columnDefs: [
+                        { orderable: false, targets: [6] } // Disable sorting on Status column
+                    ]
+                });
+            }
+
+            // Products table
+            if ($('#productsTable tbody tr').length > 0 && !$('#productsTable tbody tr td:first').hasClass('dataTables_empty')) {
+                $('#productsTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50],
+                    order: [[2, 'desc']], // Sort by Gross descending
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search products...",
+                        lengthMenu: "Show _MENU_",
+                        info: "Showing _START_-_END_ of _TOTAL_"
+                    }
+                });
+            }
+        });
+
+        // Demo data functions
+        async function seedDemoData() {
+            if (!confirm('Generate ~100 demo orders for the last 90 days?')) return;
+            try {
+                const res = await fetch('@Url.Action("SeedDemoData")', { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function removeDemoData() {
+            if (!confirm('⚠️ Remove ALL demo orders?')) return;
+            try {
+                const res = await fetch('@Url.Action("RemoveDemoData")', { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        // Chart.js defaults for dark mode
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+        Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
+
+        // Deduction Doughnut Chart
+        const deductionCtx = document.getElementById('deductionChart');
+        if (deductionCtx) {
+            new Chart(deductionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [@Html.Raw(string.Join(", ", Model.DeductionChart.Where(d => d.Amount > 0).Select(d => $"'{d.Category}'")))],
+                    datasets: [{
+                        data: [@Html.Raw(string.Join(", ", Model.DeductionChart.Where(d => d.Amount > 0).Select(d => d.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))))],
+                        backgroundColor: [@Html.Raw(string.Join(", ", Model.DeductionChart.Where(d => d.Amount > 0).Select(d => $"'{d.Color}'")))],
+                        borderWidth: 0,
+                        cutout: '65%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#fff',
+                            titleColor: isDark ? '#f1f5f9' : '#1a1a2e',
+                            bodyColor: isDark ? '#94a3b8' : '#64748b',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        // Revenue Line Chart
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: [@Html.Raw(string.Join(", ", Model.RevenueChart.Select(r => $"'{r.Label}'")))],
+                    datasets: [{
+                        label: 'Gross',
+                        data: [@Html.Raw(string.Join(", ", Model.RevenueChart.Select(r => r.GrossRevenue.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))))],
+                        borderColor: '#3b82f6',
+                        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }, {
+                        label: 'Net',
+                        data: [@Html.Raw(string.Join(", ", Model.RevenueChart.Select(r => r.NetRevenue.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))))],
+                        borderColor: '#10b981',
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { 
+                                usePointStyle: true,
+                                padding: 15,
+                                font: { size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#fff',
+                            titleColor: isDark ? '#f1f5f9' : '#1a1a2e',
+                            bodyColor: isDark ? '#94a3b8' : '#64748b',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 }, maxRotation: 0 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Commission request review
+        async function reviewCommissionRequest(requestId, approved) {
+            const response = document.getElementById('response-' + requestId)?.value || '';
+            if (!confirm(approved ? 'Approve this request?' : 'Reject this request?')) return;
+            try {
+                const res = await fetch('@Url.Action("ReviewCommissionRequest")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestId, approved, response })
+                });
+                const data = await res.json();
+                alert(data.success ? data.message : 'Error: ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error processing request'); }
+        }
+
+        // Save commission settings
+        async function saveCommissionSettings() {
+            const dto = {
+                developerRate: parseFloat(document.getElementById('devRateInput').value) || 0,
+                platformRate: parseFloat(document.getElementById('platformRateInput').value) || 0,
+                minimumPayout: parseFloat(document.getElementById('minPayoutInput').value) || 100,
+                autoPayoutEnabled: document.getElementById('autoPayoutCheck').checked
+            };
+            
+            try {
+                const res = await fetch('@Url.Action("UpdateCommissionSettings")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    location.reload();
+                } else {
+                    alert('⚠️ ' + data.message);
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // Load tax rates when modal opens
+        document.getElementById('taxSettingsModal')?.addEventListener('show.bs.modal', loadTaxRates);
+        
+        async function loadTaxRates() {
+            try {
+                const res = await fetch('@Url.Action("GetTaxRates")');
+                const data = await res.json();
+                if (data.success) {
+                    renderTaxRates(data.taxRates);
+                }
+            } catch (e) {
+                document.getElementById('taxRatesContainer').innerHTML = '<div class="alert alert-danger">Error loading tax rates</div>';
+            }
+        }
+
+        function renderTaxRates(rates) {
+            if (!rates.length) {
+                document.getElementById('taxRatesContainer').innerHTML = '<div class="text-muted text-center py-3">No tax rates configured</div>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-sm mb-0">';
+            html += '<thead><tr><th>Name</th><th>Country</th><th>Rate</th><th>Status</th><th>Default</th><th>Actions</th></tr></thead><tbody>';
+            
+            rates.forEach(r => {
+                html += `<tr data-id="${r.id}">
+                    <td><input type="text" class="form-control form-control-sm tax-name" value="${r.name}" style="width: 120px;"></td>
+                    <td>${r.countryCode}${r.stateCode ? '/' + r.stateCode : ''}</td>
+                    <td><input type="number" class="form-control form-control-sm tax-rate" value="${r.rate}" step="0.01" style="width: 70px;"></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input tax-active" ${r.isActive ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-check">
+                            <input type="radio" class="form-check-input tax-default" name="defaultTax" ${r.isDefault ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-success" onclick="saveTaxRate(${r.id})">
+                            <i class="bi bi-check"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('taxRatesContainer').innerHTML = html;
+        }
+
+        async function saveTaxRate(id) {
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            const dto = {
+                id: id,
+                name: row.querySelector('.tax-name').value,
+                rate: parseFloat(row.querySelector('.tax-rate').value) || 0,
+                isActive: row.querySelector('.tax-active').checked,
+                isDefault: row.querySelector('.tax-default').checked
+            };
+            
+            try {
+                const res = await fetch('@Url.Action("UpdateTaxRate")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+                const data = await res.json();
+                alert(data.success ? '✅ Tax rate updated' : '⚠️ ' + data.message);
+                if (data.success) loadTaxRates();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function createTaxRate() {
+            const dto = {
+                name: document.getElementById('newTaxName').value,
+                countryCode: document.getElementById('newTaxCountry').value,
+                rate: parseFloat(document.getElementById('newTaxRate').value) || 0,
+                stripeTaxRateId: document.getElementById('newTaxStripeId').value,
+                isActive: true,
+                isDefault: false
+            };
+            
+            if (!dto.name || !dto.countryCode) {
+                alert('Please enter name and country code');
+                return;
+            }
+            
+            try {
+                const res = await fetch('@Url.Action("CreateTaxRate")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dto)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Tax rate created');
+                    document.getElementById('newTaxName').value = '';
+                    document.getElementById('newTaxCountry').value = '';
+                    document.getElementById('newTaxRate').value = '';
+                    document.getElementById('newTaxStripeId').value = '';
+                    loadTaxRates();
+                } else {
+                    alert('⚠️ ' + data.message);
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+    </script>
+}

@@ -124,6 +124,11 @@ namespace Kokomija.Entity
         public DateTime? ShippedAt { get; set; }
         public DateTime? DeliveredAt { get; set; }
 
+        /// <summary>
+        /// Indicates if this is demo/test data (for Financial Dashboard testing)
+        /// </summary>
+        public bool IsDemoOrder { get; set; } = false;
+
         // Navigation properties
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }

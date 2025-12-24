@@ -17,6 +17,7 @@ namespace Kokomija.Services
         Task<Refund> CreateRefundAsync(string chargeId, long? amount = null);
         Task<Stripe.Coupon> CreateStripeCouponAsync(Entity.Coupon coupon);
         Task<PromotionCode> CreateStripePromotionCodeAsync(string stripeCouponId, string code);
+        Task<PromotionCode> UpdateStripePromotionCodeAsync(string promotionCodeId, bool isActive);
         Task<Stripe.Coupon> GetStripeCouponAsync(string couponId);
         Task<Stripe.Checkout.Session> CreateCheckoutSessionAsync(List<Stripe.Checkout.SessionLineItemOptions> lineItems, string successUrl, string cancelUrl, string? customerId = null, Dictionary<string, string>? metadata = null);
         Task<Stripe.Checkout.Session> GetCheckoutSessionAsync(string sessionId);
@@ -24,6 +25,10 @@ namespace Kokomija.Services
         Task<Stripe.PaymentMethod> AttachPaymentMethodToCustomerAsync(string paymentMethodId, string customerId);
         Task<Stripe.PaymentMethod> DetachPaymentMethodAsync(string paymentMethodId);
         Task<List<Stripe.PaymentMethod>> ListCustomerPaymentMethodsAsync(string customerId);
+        Task<Stripe.Coupon> CreateProductCouponAsync(Entity.Coupon coupon, string stripeProductId);
+        Task DeleteStripeCouponAsync(string couponId);
+        Task DeleteStripeProductAsync(string stripeProductId);
+        Task ArchiveStripeProductAsync(string stripeProductId);
     }
 
     public class StripeService : IStripeService
@@ -374,6 +379,77 @@ namespace Kokomija.Services
 
             var paymentMethods = await _paymentMethodService.ListAsync(options);
             return paymentMethods.Data.ToList();
+        }
+
+        public async Task<Stripe.Coupon> CreateProductCouponAsync(Entity.Coupon coupon, string stripeProductId)
+        {
+            var options = new CouponCreateOptions();
+
+            if (coupon.DiscountType == "percentage")
+            {
+                options.PercentOff = coupon.DiscountValue;
+            }
+            else if (coupon.DiscountType == "fixed_amount")
+            {
+                options.AmountOff = (long)(coupon.DiscountValue * 100); // Convert to cents
+                options.Currency = "pln";
+            }
+
+            options.Name = coupon.Code;
+            options.Duration = "once"; // Can be 'once', 'repeating', or 'forever'
+            
+            // Restrict to specific product
+            options.AppliesTo = new CouponAppliesToOptions
+            {
+                Products = new List<string> { stripeProductId }
+            };
+
+            if (coupon.MaximumDiscountAmount.HasValue)
+            {
+                options.MaxRedemptions = coupon.UsageLimit;
+            }
+            
+            if (coupon.ValidUntil.HasValue)
+            {
+                options.RedeemBy = coupon.ValidUntil.Value;
+            }
+
+            options.Metadata = new Dictionary<string, string>
+            {
+                { "coupon_id", coupon.Id.ToString() },
+                { "code", coupon.Code },
+                { "product_id", stripeProductId }
+            };
+
+            return await _couponService.CreateAsync(options);
+        }
+
+        public async Task DeleteStripeCouponAsync(string couponId)
+        {
+            await _couponService.DeleteAsync(couponId);
+        }
+
+        public async Task<PromotionCode> UpdateStripePromotionCodeAsync(string promotionCodeId, bool isActive)
+        {
+            var options = new PromotionCodeUpdateOptions
+            {
+                Active = isActive
+            };
+            return await _promotionCodeService.UpdateAsync(promotionCodeId, options);
+        }
+
+        public async Task DeleteStripeProductAsync(string stripeProductId)
+        {
+            await _productService.DeleteAsync(stripeProductId);
+        }
+
+        public async Task ArchiveStripeProductAsync(string stripeProductId)
+        {
+            var options = new ProductUpdateOptions
+            {
+                Active = false
+            };
+            await _productService.UpdateAsync(stripeProductId, options);
         }
     }
 }

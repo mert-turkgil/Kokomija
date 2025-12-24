@@ -128,7 +128,7 @@
                 </div>
             </div>
             <div class="col-md-3 mb-3">
-                <a asp-action="BlogSettings" class="text-decoration-none">
+                <a asp-controller="AdminBlog" asp-action="Index" class="text-decoration-none">
                     <div class="stat-card stat-card-clickable">
                         <div class="stat-icon bg-info">
                             <i class="bi bi-newspaper"></i>
@@ -359,7 +359,7 @@
                     </div>
                     <h5>User Management</h5>
                     <p class="text-muted">Manage customer accounts, ban users, and moderate reviews</p>
-                    <a asp-action="UserManagement" class="btn btn-outline-primary w-100">
+                    <a asp-controller="AdminUser" asp-action="Index" class="btn btn-outline-primary w-100">
                         Manage Users
                         <i class="bi bi-arrow-right ms-2"></i>
                     </a>
@@ -373,7 +373,7 @@
                     </div>
                     <h5>Product Management</h5>
                     <p class="text-muted">Add, edit, and manage your product catalog</p>
-                    <a asp-action="Products" class="btn btn-outline-primary w-100">
+                    <a asp-controller="AdminProduct" asp-action="Index" class="btn btn-outline-primary w-100">
                         Manage Products
                         <i class="bi bi-arrow-right ms-2"></i>
                     </a>
@@ -402,10 +402,10 @@
                     <h5>Blog Management</h5>
                     <p class="text-muted">Create and manage blog posts and articles</p>
                     <div class="d-grid gap-2">
-                        <a asp-action="BlogCreate" class="btn btn-primary">
+                        <a asp-controller="AdminBlog" asp-action="Create" class="btn btn-primary">
                             <i class="bi bi-plus-circle me-2"></i>Create New Blog
                         </a>
-                        <a asp-action="BlogSettings" class="btn btn-outline-primary">
+                        <a asp-controller="AdminBlog" asp-action="Index" class="btn btn-outline-primary">
                             <i class="bi bi-list-ul me-2"></i>Manage Blogs
                         </a>
                     </div>

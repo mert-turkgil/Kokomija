@@ -1,3 +1,4 @@
+using Kokomija.Data;
 using Kokomija.Data.Abstract;
 using Kokomija.Entity;
 using Kokomija.Models.ViewModels.Admin;
@@ -30,6 +31,7 @@ public class AdminController : Controller
     private readonly IShippingService _shippingService;
     private readonly ITaxService _taxService;
     private readonly IReturnRequestService _returnRequestService;
+    private readonly IStripeService _stripeService;
 
     // Constants for demo order detection
     private const string DemoPaymentIntentPrefix = "demo_";
@@ -50,7 +52,8 @@ public class AdminController : Controller
         UserManager<ApplicationUser> userManager,
         IShippingService shippingService,
         ITaxService taxService,
-        IReturnRequestService returnRequestService)
+        IReturnRequestService returnRequestService,
+        IStripeService stripeService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -67,6 +70,7 @@ public class AdminController : Controller
         _shippingService = shippingService;
         _taxService = taxService;
         _returnRequestService = returnRequestService;
+        _stripeService = stripeService;
     }
 
     public async Task<IActionResult> Index()
@@ -208,65 +212,6 @@ public class AdminController : Controller
         return View();
     }
 
-    /// <summary>
-    /// GET: Product Management page
-    /// </summary>
-    public async Task<IActionResult> Products()
-    {
-        _logger.LogInformation("Admin accessed product management");
-
-        var productsList = await _unitOfWork.Repository<Product>()
-            .FindAsync(p => true, p => p.Category!.ParentCategory!);
-        
-        var productDtos = new List<ProductListItemDto>();
-        
-        foreach (var product in productsList)
-        {
-            var variants = (await _unitOfWork.Repository<ProductVariant>()
-                .FindAsync(v => v.ProductId == product.Id)).ToList();
-            
-            var reviews = (await _unitOfWork.Repository<ProductReview>()
-                .FindAsync(r => r.ProductId == product.Id && r.IsVisible)).ToList();
-            
-            var images = (await _unitOfWork.Repository<ProductImage>()
-                .FindAsync(i => i.ProductId == product.Id)).OrderBy(i => i.DisplayOrder).ToList();
-
-            productDtos.Add(new ProductListItemDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                CategoryName = product.Category?.Name,
-                ParentCategoryName = product.Category?.ParentCategory?.Name,
-                Price = product.Price,
-                PackSize = product.PackSize,
-                IsActive = product.IsActive,
-                TotalStock = variants.Sum(v => v.StockQuantity),
-                TotalVariants = variants.Count,
-                ReviewCount = reviews.Count,
-                AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
-                FeaturedImage = images.FirstOrDefault()?.ImageUrl,
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt,
-                StripeProductId = product.StripeProductId,
-                StripePriceId = product.StripePriceId
-            });
-        }
-
-        var productsArray = productsList.ToList();
-
-        var viewModel = new ProductManagementViewModel
-        {
-            Products = productDtos.OrderByDescending(p => p.CreatedAt).ToList(),
-            TotalProducts = productsArray.Count,
-            ActiveProducts = productsArray.Count(p => p.IsActive),
-            InactiveProducts = productsArray.Count(p => !p.IsActive),
-            OutOfStockProducts = productDtos.Count(p => p.TotalStock == 0),
-            TotalInventoryValue = productDtos.Sum(p => p.Price * p.TotalStock)
-        };
-
-        ViewData["Title"] = "Product Management";
-        return View(viewModel);
-    }
 
     /// <summary>
     /// Helper method to determine if an order is a demo order based on payment intent ID
@@ -397,6 +342,7 @@ public class AdminController : Controller
                 HasActiveReturn = hasReturn,
                 ActiveReturnCount = hasReturn ? returnCount : 0,
                 IsDemoOrder = IsDemoOrder(o.StripePaymentIntentId)
+                IsDemoOrder = o.IsDemoOrder || o.OrderNumber.StartsWith("DEMO-")
             };
         }).ToList();
         
@@ -438,14 +384,14 @@ public class AdminController : Controller
         // Manually load shipment related data
         if (shipment != null)
         {
-            var providers = await _unitOfWork.Repository<ShippingProvider>().GetAllAsync(p => p.Id == shipment.ShippingProviderId);
+            var providers = await _unitOfWork.Repository<ShippingProvider>().FindAsync(p => p.Id == shipment.ShippingProviderId);
             shipment.ShippingProvider = providers.FirstOrDefault()!;
             
-            var rates = await _unitOfWork.Repository<ShippingRate>().GetAllAsync(r => r.Id == shipment.ShippingRateId);
+            var rates = await _unitOfWork.Repository<ShippingRate>().FindAsync(r => r.Id == shipment.ShippingRateId);
             shipment.ShippingRate = rates.FirstOrDefault()!;
             
             var trackingEvents = await _unitOfWork.Repository<ShipmentTrackingEvent>()
-                .GetAllAsync(e => e.OrderShipmentId == shipment.Id);
+                .FindAsync(e => e.OrderShipmentId == shipment.Id);
             shipment.TrackingEvents = trackingEvents.OrderByDescending(e => e.EventDate).ToList();
         }
         
@@ -462,12 +408,12 @@ public class AdminController : Controller
                 returnRequest.Reviewer = await _unitOfWork.Users.GetByIdAsync(returnRequest.ReviewedBy);
             }
             
-            var orderItems = await _unitOfWork.Repository<OrderItem>().GetAllAsync(oi => oi.Id == returnRequest.OrderItemId);
+            var orderItems = await _unitOfWork.Repository<OrderItem>().FindAsync(oi => oi.Id == returnRequest.OrderItemId);
             returnRequest.OrderItem = orderItems.FirstOrDefault()!;
         }
         
         // Get developer earnings
-        var earnings = await _unitOfWork.DeveloperEarnings.GetAllAsync(e => e.OrderId == id);
+        var earnings = await _unitOfWork.DeveloperEarnings.FindAsync(e => e.OrderId == id);
         var earning = earnings.FirstOrDefault();
         
         // Map to ViewModel
@@ -477,6 +423,7 @@ public class AdminController : Controller
             OrderNumber = orderEntity.OrderNumber,
             StripePaymentIntentId = orderEntity.StripePaymentIntentId,
             StripeChargeId = orderEntity.StripeChargeId,
+            IsDemoOrder = orderEntity.IsDemoOrder || orderEntity.OrderNumber.StartsWith("DEMO-"),
             
             // Customer
             UserId = orderEntity.UserId,
@@ -625,7 +572,7 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
             return Json(new { success = false, message = "Invalid data" });
         
-        var orders = await _unitOfWork.Orders.GetAllAsync(o => o.Id == dto.OrderId);
+        var orders = await _unitOfWork.Orders.FindAsync(o => o.Id == dto.OrderId);
         var order = orders.FirstOrDefault();
         
         if (order == null)
@@ -654,19 +601,19 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
             return Json(new { success = false, message = "Invalid data" });
         
-        var orders = await _unitOfWork.Orders.GetAllAsync(o => o.Id == dto.OrderId);
+        var orders = await _unitOfWork.Orders.FindAsync(o => o.Id == dto.OrderId);
         var order = orders.FirstOrDefault();
         
         if (order == null)
             return Json(new { success = false, message = "Order not found" });
         
         // Check if shipment already exists
-        var existingShipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync(s => s.OrderId == dto.OrderId);
+        var existingShipments = await _unitOfWork.Repository<OrderShipment>().FindAsync(s => s.OrderId == dto.OrderId);
         if (existingShipments.Any())
             return Json(new { success = false, message = "Shipment already exists for this order" });
         
         // Get shipping rate to calculate estimated delivery
-        var rates = await _unitOfWork.Repository<ShippingRate>().GetAllAsync(r => r.Id == dto.ShippingRateId);
+        var rates = await _unitOfWork.Repository<ShippingRate>().FindAsync(r => r.Id == dto.ShippingRateId);
         var rate = rates.FirstOrDefault();
         
         var shipment = new OrderShipment
@@ -707,7 +654,7 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
             return Json(new { success = false, message = "Invalid data" });
         
-        var shipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync(s => s.Id == dto.ShipmentId);
+        var shipments = await _unitOfWork.Repository<OrderShipment>().FindAsync(s => s.Id == dto.ShipmentId);
         var shipment = shipments.FirstOrDefault();
         
         if (shipment == null)
@@ -734,7 +681,7 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
             return Json(new { success = false, message = "Invalid data" });
         
-        var shipments = await _unitOfWork.Repository<OrderShipment>().GetAllAsync(s => s.Id == dto.ShipmentId);
+        var shipments = await _unitOfWork.Repository<OrderShipment>().FindAsync(s => s.Id == dto.ShipmentId);
         var shipment = shipments.FirstOrDefault();
         
         if (shipment == null)
@@ -761,7 +708,7 @@ public class AdminController : Controller
             shipment.ActualDeliveryDate = trackingEvent.EventDate;
             
             // Update order
-            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.Id == shipment.OrderId);
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.Id == shipment.OrderId);
             var order = orders.FirstOrDefault();
             if (order != null)
             {
@@ -960,63 +907,7 @@ public class AdminController : Controller
         return View(viewModel);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> BlogSettings()
-    {
-        _logger.LogInformation("Admin accessed blog settings");
 
-        var viewModel = new SiteSettingsViewModel();
-
-        try
-        {
-            // Get all blogs with their translations
-            var blogs = (await _unitOfWork.Blogs.GetAllAsync()).ToList();
-            var currentCulture = CultureInfo.CurrentCulture.Name;
-
-            viewModel.BlogPosts = new List<BlogItemViewModel>();
-
-            foreach (var blog in blogs.Where(b => !b.IsDeleted))
-            {
-                var translations = (await _unitOfWork.Repository<Entity.BlogTranslation>()
-                    .FindAsync(t => t.BlogId == blog.Id)).ToList();
-                
-                var translation = translations.FirstOrDefault(t => t.CultureCode == currentCulture)
-                                ?? translations.FirstOrDefault(t => t.CultureCode == "pl-PL");
-
-                if (translation != null)
-                {
-                    viewModel.BlogPosts.Add(new BlogItemViewModel
-                    {
-                        Id = blog.Id,
-                        Title = translation.Title,
-                        Slug = translation.Slug,
-                        FeaturedImage = blog.FeaturedImage,
-                        AuthorName = blog.Author?.UserName ?? "Unknown",
-                        CategoryName = blog.Category?.Name ?? "Uncategorized",
-                        IsPublished = blog.IsPublished,
-                        PublishedDate = blog.PublishedDate,
-                        Views = blog.Views,
-                        CreatedAt = blog.CreatedAt,
-                        UpdatedAt = blog.UpdatedAt
-                    });
-                }
-            }
-            
-            viewModel.TotalBlogs = blogs.Count(b => !b.IsDeleted);
-            viewModel.PublishedBlogs = blogs.Count(b => !b.IsDeleted && b.IsPublished);
-            viewModel.DraftBlogs = blogs.Count(b => !b.IsDeleted && !b.IsPublished);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading blog settings");
-        }
-
-        // Load blog categories for filter dropdown
-        var blogCategories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-        ViewBag.BlogCategories = blogCategories.OrderBy(c => c.DisplayOrder).ToList();
-
-        return View(viewModel);
-    }
 
     #region Carousel Slide Management
 
@@ -2002,739 +1893,7 @@ public class AdminController : Controller
 
     #endregion
 
-    #region Blog Management
 
-    /// <summary>
-    /// GET: Create new blog post form
-    /// </summary>
-    [HttpGet]
-    public async Task<IActionResult> BlogCreate()
-    {
-        ViewData["Title"] = _localizationService["Admin_Blog_CreateNew"];
-        
-        var viewModel = new BlogCreateDto
-        {
-            IsPublished = false,
-            AllowComments = true,
-            PublishedDate = DateTime.UtcNow,
-            Translations = new List<BlogTranslationDto>
-            {
-                new BlogTranslationDto 
-                { 
-                    CultureCode = "en-US",
-                    Title = "",
-                    Slug = "",
-                    Content = "",
-                    Excerpt = "",
-                    Tags = "",
-                    MetaDescription = "",
-                    MetaKeywords = ""
-                },
-                new BlogTranslationDto 
-                { 
-                    CultureCode = "pl-PL",
-                    Title = "",
-                    Slug = "",
-                    Content = "",
-                    Excerpt = "",
-                    Tags = "",
-                    MetaDescription = "",
-                    MetaKeywords = ""
-                }
-            }
-        };
-
-        // Load categories and products for dropdowns
-        var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-        var products = await _unitOfWork.Products.GetAllAsync();
-        ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
-        ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
-        ViewBag.CKEditorLicenseKey = _configuration["CKEditor:LicenseKey"];
-
-        return View(viewModel);
-    }
-
-    /// <summary>
-    /// POST: Create new blog post
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BlogCreate(BlogCreateDto model)
-    {
-        if (!ModelState.IsValid)
-        {
-            // Cleanup CKEditor images on validation failure
-            if (!string.IsNullOrEmpty(model.SessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                if (trackingService != null)
-                {
-                    await trackingService.RollbackImagesAsync(model.SessionId);
-                }
-            }
-            
-            // Cleanup temp featured image on validation failure
-            if (!string.IsNullOrEmpty(model.ImageTempFileName))
-            {
-                await _blogImageService.CancelUploadAsync(model.ImageTempFileName);
-            }
-            
-            var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-            var products = await _unitOfWork.Products.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
-            ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
-            TempData["Error"] = _localizationService["Admin_Blog_ErrorSave"];
-            return View(model);
-        }
-
-        var tempFilesToCleanup = new string[] { };
-
-        try
-        {
-            // Get current user ID
-            var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-
-            // Create blog entity
-            var blog = new Entity.Blog
-            {
-                CategoryId = model.CategoryId,
-                ProductId = model.ProductId,
-                AuthorId = userId, // Nullable - will be null if user is not authenticated
-                IsPublished = model.IsPublished,
-                PublishedDate = model.IsPublished ? (model.PublishedDate ?? DateTime.UtcNow) : null,
-                AllowComments = model.AllowComments,
-                Views = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                IsDeleted = false
-            };
-
-            // Process featured image if uploaded
-            if (!string.IsNullOrEmpty(model.ImageTempFileName))
-            {
-                tempFilesToCleanup = new[] { model.ImageTempFileName };
-                var result = await _blogImageService.ProcessAndMoveFromTempAsync(model.ImageTempFileName);
-                if (result.Success)
-                {
-                    blog.FeaturedImage = result.PermanentUrl;
-                }
-            }
-
-            // Add blog to context
-            await _unitOfWork.Blogs.AddAsync(blog);
-            await _unitOfWork.SaveChangesAsync();
-
-            // Create translations
-            var translations = new List<Entity.BlogTranslation>();
-            foreach (var translationDto in model.Translations)
-            {
-                if (string.IsNullOrWhiteSpace(translationDto.Title)) continue;
-
-                var translation = new Entity.BlogTranslation
-                {
-                    BlogId = blog.Id,
-                    CultureCode = translationDto.CultureCode,
-                    Title = translationDto.Title,
-                    Slug = GenerateSlug(translationDto.Title),
-                    Content = translationDto.Content,
-                    Excerpt = translationDto.Excerpt,
-                    Tags = translationDto.Tags,
-                    MetaDescription = translationDto.MetaDescription,
-                    MetaKeywords = translationDto.MetaKeywords,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                translations.Add(translation);
-            }
-
-            if (translations.Any())
-            {
-                foreach (var trans in translations)
-                {
-                    await _unitOfWork.Repository<Entity.BlogTranslation>().AddAsync(trans);
-                }
-                await _unitOfWork.SaveChangesAsync();
-            }
-
-            // Commit CKEditor images after successful save
-            if (!string.IsNullOrEmpty(model.SessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                if (trackingService != null)
-                {
-                    trackingService.CommitImages(model.SessionId);
-                }
-            }
-
-            _logger.LogInformation("Blog post created: {BlogId} by user {UserId}", blog.Id, userId);
-            TempData["Success"] = _localizationService["Admin_Blog_CreateSuccess"];
-            return RedirectToAction(nameof(BlogSettings));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating blog post");
-            TempData["Error"] = _localizationService["Admin_Blog_ErrorSave"];
-            
-            // Cleanup temp featured image
-            if (tempFilesToCleanup.Length > 0)
-            {
-                foreach (var tempFile in tempFilesToCleanup)
-                {
-                    await _blogImageService.CancelUploadAsync(tempFile);
-                }
-            }
-            
-            // Cleanup CKEditor images if session exists
-            if (!string.IsNullOrEmpty(model.SessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                if (trackingService != null)
-                {
-                    await trackingService.RollbackImagesAsync(model.SessionId);
-                }
-            }
-
-            var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-            var products = await _unitOfWork.Products.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
-            ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
-            return View(model);
-        }
-    }
-
-    /// <summary>
-    /// GET: Edit blog post form
-    /// </summary>
-    [HttpGet]
-    public async Task<IActionResult> BlogEdit(int id)
-    {
-        var blog = await _unitOfWork.Blogs.GetByIdAsync(id);
-        if (blog == null)
-        {
-            TempData["Error"] = "Blog post not found";
-            return RedirectToAction(nameof(Settings));
-        }
-
-        // Load translations
-        var translations = (await _unitOfWork.Repository<Entity.BlogTranslation>()
-            .FindAsync(t => t.BlogId == id)).ToList();
-
-        var viewModel = new BlogUpdateDto
-        {
-            Id = blog.Id,
-            CategoryId = blog.CategoryId,
-            ProductId = blog.ProductId,
-            FeaturedImage = blog.FeaturedImage,
-            IsPublished = blog.IsPublished,
-            PublishedDate = blog.PublishedDate,
-            AllowComments = blog.AllowComments,
-            Translations = translations.Select(t => new BlogTranslationDto
-            {
-                Id = t.Id,
-                CultureCode = t.CultureCode,
-                Title = t.Title,
-                Slug = t.Slug,
-                Content = t.Content,
-                Excerpt = t.Excerpt,
-                Tags = t.Tags,
-                MetaDescription = t.MetaDescription,
-                MetaKeywords = t.MetaKeywords
-            }).ToList()
-        };
-
-        // Ensure we have translations for both languages
-        if (!viewModel.Translations.Any(t => t.CultureCode == "en-US"))
-        {
-            viewModel.Translations.Add(new BlogTranslationDto { CultureCode = "en-US" });
-        }
-        if (!viewModel.Translations.Any(t => t.CultureCode == "pl-PL"))
-        {
-            viewModel.Translations.Add(new BlogTranslationDto { CultureCode = "pl-PL" });
-        }
-
-        // Load current image for preview
-        ViewBag.CurrentImage = blog.FeaturedImage;
-
-        // Load categories and products for dropdowns
-        var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-        var products = await _unitOfWork.Products.GetAllAsync();
-        ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
-        ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
-        ViewBag.CKEditorLicenseKey = _configuration["CKEditor:LicenseKey"];
-
-        ViewData["Title"] = _localizationService["Admin_Blog_Edit"];
-        return View(viewModel);
-    }
-
-    /// <summary>
-    /// POST: Update blog post
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BlogEdit(BlogUpdateDto model)
-    {
-        if (!ModelState.IsValid)
-        {
-            // Cleanup CKEditor images on validation failure
-            if (!string.IsNullOrEmpty(model.SessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                if (trackingService != null)
-                {
-                    await trackingService.RollbackImagesAsync(model.SessionId);
-                }
-            }
-            
-            // Cleanup temp featured image on validation failure
-            if (!string.IsNullOrEmpty(model.NewImageTempFileName))
-            {
-                await _blogImageService.CancelUploadAsync(model.NewImageTempFileName);
-            }
-            
-            var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-            var products = await _unitOfWork.Products.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
-            ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
-            TempData["Error"] = _localizationService["Admin_Blog_ErrorSave"];
-            return View(model);
-        }
-
-        var tempFilesToCleanup = new string[] { };
-
-        try
-        {
-            var blog = await _unitOfWork.Blogs.GetByIdAsync(model.Id);
-            
-            if (blog == null)
-            {
-                TempData["Error"] = "Blog post not found";
-                return RedirectToAction(nameof(Settings), new { tab = "blogs" });
-            }
-
-            // Update blog properties
-            blog.CategoryId = model.CategoryId;
-            blog.ProductId = model.ProductId;
-            blog.IsPublished = model.IsPublished;
-            blog.PublishedDate = model.IsPublished ? (model.PublishedDate ?? DateTime.UtcNow) : null;
-            blog.AllowComments = model.AllowComments;
-
-            // Process new featured image if uploaded
-            if (!string.IsNullOrEmpty(model.NewImageTempFileName))
-            {
-                tempFilesToCleanup = new[] { model.NewImageTempFileName };
-                
-                // Delete old image first
-                if (!string.IsNullOrEmpty(blog.FeaturedImage))
-                {
-                    await _blogImageService.DeleteImageAsync(blog.FeaturedImage);
-                }
-                
-                // Move new image from temp to permanent
-                var result = await _blogImageService.ProcessAndMoveFromTempAsync(model.NewImageTempFileName);
-                if (result.Success)
-                {
-                    blog.FeaturedImage = result.PermanentUrl;
-                }
-            }
-            
-            blog.UpdatedAt = DateTime.UtcNow;
-
-            _unitOfWork.Blogs.Update(blog);
-
-            // Update translations
-            var existingTranslations = (await _unitOfWork.Repository<Entity.BlogTranslation>()
-                .FindAsync(t => t.BlogId == model.Id)).ToList();
-
-            foreach (var translationDto in model.Translations)
-            {
-                if (string.IsNullOrWhiteSpace(translationDto.Title)) continue;
-
-                var existingTranslation = existingTranslations
-                    .FirstOrDefault(t => t.CultureCode == translationDto.CultureCode);
-
-                if (existingTranslation != null)
-                {
-                    // Update existing translation
-                    existingTranslation.Title = translationDto.Title;
-                    existingTranslation.Slug = GenerateSlug(translationDto.Title);
-                    existingTranslation.Content = translationDto.Content;
-                    existingTranslation.Excerpt = translationDto.Excerpt;
-                    existingTranslation.Tags = translationDto.Tags;
-                    existingTranslation.MetaDescription = translationDto.MetaDescription;
-                    existingTranslation.MetaKeywords = translationDto.MetaKeywords;
-                    existingTranslation.UpdatedAt = DateTime.UtcNow;
-
-                    _unitOfWork.Repository<Entity.BlogTranslation>().Update(existingTranslation);
-                }
-                else
-                {
-                    // Add new translation
-                    var newTranslation = new Entity.BlogTranslation
-                    {
-                        BlogId = blog.Id,
-                        CultureCode = translationDto.CultureCode,
-                        Title = translationDto.Title,
-                        Slug = GenerateSlug(translationDto.Title),
-                        Content = translationDto.Content,
-                        Excerpt = translationDto.Excerpt,
-                        Tags = translationDto.Tags,
-                        MetaDescription = translationDto.MetaDescription,
-                        MetaKeywords = translationDto.MetaKeywords,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-
-                    await _unitOfWork.Repository<Entity.BlogTranslation>().AddAsync(newTranslation);
-                }
-            }
-
-            await _unitOfWork.SaveChangesAsync();
-
-            // Commit CKEditor images after successful update
-            if (!string.IsNullOrEmpty(model.SessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                if (trackingService != null)
-                {
-                    trackingService.CommitImages(model.SessionId);
-                }
-            }
-
-            _logger.LogInformation("Blog post updated: {BlogId}", blog.Id);
-            TempData["Success"] = _localizationService["Admin_Blog_UpdateSuccess"];
-            return RedirectToAction(nameof(BlogSettings));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating blog post {BlogId}", model.Id);
-            TempData["Error"] = _localizationService["Admin_Blog_ErrorSave"];
-            
-            // Cleanup temp featured image
-            if (tempFilesToCleanup.Length > 0)
-            {
-                foreach (var tempFile in tempFilesToCleanup)
-                {
-                    await _blogImageService.CancelUploadAsync(tempFile);
-                }
-            }
-            
-            // Cleanup CKEditor images if session exists
-            if (!string.IsNullOrEmpty(model.SessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                if (trackingService != null)
-                {
-                    await trackingService.RollbackImagesAsync(model.SessionId);
-                }
-            }
-
-            var categories = await _unitOfWork.BlogCategories.GetActiveCategoriesAsync();
-            var products = await _unitOfWork.Products.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
-            ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
-            ViewBag.CurrentImage = model.FeaturedImage;
-            return View(model);
-        }
-    }
-
-    /// <summary>
-    /// POST: Delete blog post
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BlogDelete(int id)
-    {
-        try
-        {
-            var blog = await _unitOfWork.Blogs.GetByIdAsync(id);
-            if (blog == null)
-            {
-                TempData["Error"] = "Blog post not found";
-                return RedirectToAction(nameof(BlogSettings));
-            }
-
-            // Delete featured image if exists
-            if (!string.IsNullOrEmpty(blog.FeaturedImage))
-            {
-                await _blogImageService.DeleteImageAsync(blog.FeaturedImage);
-            }
-
-            // Soft delete
-            blog.IsDeleted = true;
-            blog.UpdatedAt = DateTime.UtcNow;
-            
-            _unitOfWork.Blogs.Update(blog);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Blog post soft deleted: {BlogId}", blog.Id);
-            TempData["Success"] = _localizationService["Admin_Blog_DeleteSuccess"];
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting blog post {BlogId}", id);
-            TempData["Error"] = _localizationService["Admin_Blog_ErrorDelete"];
-        }
-
-        return RedirectToAction(nameof(BlogSettings));
-    }
-
-    /// <summary>
-    /// GET: Get products by category (AJAX)
-    /// </summary>
-    [HttpGet]
-    public async Task<IActionResult> GetProductsByCategory(int categoryId)
-    {
-        try
-        {
-            var category = await _unitOfWork.BlogCategories.GetByIdAsync(categoryId);
-            if (category == null)
-            {
-                return Json(new { success = false, products = new List<object>() });
-            }
-
-            // Get products from the associated product category if exists
-            var products = await _unitOfWork.Products.GetAllAsync();
-            var filteredProducts = products
-                .Where(p => p.IsActive && category.ProductCategoryId.HasValue && p.CategoryId == category.ProductCategoryId.Value)
-                .Select(p => new { id = p.Id, name = p.Name })
-                .OrderBy(p => p.name)
-                .ToList();
-
-            return Json(new { success = true, products = filteredProducts });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting products by category");
-            return Json(new { success = false, products = new List<object>() });
-        }
-    }
-
-    /// <summary>
-    /// POST: Upload blog image to temp folder (AJAX)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> BlogUploadImage(IFormFile file)
-    {
-        var result = await _blogImageService.UploadToTempAsync(file);
-        
-        if (result.Success)
-        {
-            return Json(new { success = true, tempFileName = result.TempFileName, tempUrl = result.TempUrl });
-        }
-        
-        return Json(new { success = false, message = result.Message });
-    }
-
-    /// <summary>
-    /// POST: Delete temp files (AJAX) - called when user cancels
-    /// </summary>
-    [HttpPost]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> BlogCancelUpload([FromBody] BlogCancelUploadDto? model)
-    {
-        try
-        {
-            // Handle both JSON body and sendBeacon requests
-            string? tempFileName = model?.ImageTempFileName;
-            
-            // If model is null, try reading from request body directly
-            if (string.IsNullOrEmpty(tempFileName))
-            {
-                using var reader = new StreamReader(Request.Body);
-                var body = await reader.ReadToEndAsync();
-                
-                if (!string.IsNullOrEmpty(body))
-                {
-                    try
-                    {
-                        var jsonDoc = System.Text.Json.JsonDocument.Parse(body);
-                        if (jsonDoc.RootElement.TryGetProperty("imageTempFileName", out var fileNameElement))
-                        {
-                            tempFileName = fileNameElement.GetString();
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore JSON parse errors
-                    }
-                }
-            }
-            
-            if (!string.IsNullOrEmpty(tempFileName))
-            {
-                var result = await _blogImageService.CancelUploadAsync(tempFileName);
-                _logger.LogInformation("Temp file cleanup: {FileName}, Success: {Success}", tempFileName, result);
-            }
-            
-            return Json(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error canceling blog upload");
-            return Json(new { success = false });
-        }
-    }
-
-    /// <summary>
-    /// POST: Upload image for CKEditor content (inline images/GIFs)
-    /// Uploads directly to permanent folder and tracks for cleanup if blog is not saved
-    /// </summary>
-    [HttpPost]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> UploadCKEditorImage(IFormFile upload, [FromForm] string? sessionId)
-    {
-        try
-        {
-            if (upload == null || upload.Length == 0)
-            {
-                return Json(new { uploaded = false, error = new { message = "No file uploaded" } });
-            }
-
-            // Upload directly to permanent location for CKEditor images (GIFs, inline images)
-            var result = await _blogImageService.UploadCKEditorImageAsync(upload);
-            
-            if (!result.Success)
-            {
-                return Json(new { uploaded = false, error = new { message = result.Message } });
-            }
-
-            // Track the image for potential cleanup if blog creation is cancelled
-            if (!string.IsNullOrEmpty(sessionId))
-            {
-                var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-                trackingService?.TrackImage(sessionId, result.PermanentUrl!);
-            }
-
-            // CKEditor expects this specific JSON structure
-            return Json(new 
-            { 
-                uploaded = true, 
-                url = result.PermanentUrl 
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error uploading CKEditor image");
-            return Json(new { uploaded = false, error = new { message = "Error uploading image" } });
-        }
-    }
-
-    /// <summary>
-    /// POST: Toggle blog publish status (AJAX)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> BlogTogglePublish([FromBody] BlogTogglePublishDto dto)
-    {
-        try
-        {
-            var blog = await _unitOfWork.Blogs.GetByIdAsync(dto.Id);
-            
-            if (blog != null)
-            {
-                blog.IsPublished = !blog.IsPublished;
-                blog.PublishedDate = blog.IsPublished ? DateTime.UtcNow : null;
-                blog.UpdatedAt = DateTime.UtcNow;
-                
-                _unitOfWork.Blogs.Update(blog);
-                await _unitOfWork.SaveChangesAsync();
-
-                var statusMessage = blog.IsPublished ? "Blog post published successfully" : "Blog post unpublished (now private)";
-                return Json(new { success = true, isPublished = blog.IsPublished, message = statusMessage });
-            }
-            else
-            {
-                return Json(new { success = false, message = "Blog post not found" });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error toggling blog publish status {BlogId}", dto.Id);
-            return Json(new { success = false, message = "Error updating status" });
-        }
-    }
-
-    /// <summary>
-    /// Helper method to generate URL-friendly slug
-    /// </summary>
-    private string GenerateSlug(string title)
-    {
-        if (string.IsNullOrWhiteSpace(title)) return "";
-
-        // Convert to lowercase
-        string slug = title.ToLower();
-        
-        // Replace Polish characters
-        slug = slug.Replace("ą", "a").Replace("ć", "c").Replace("ę", "e")
-                   .Replace("ł", "l").Replace("ń", "n").Replace("ó", "o")
-                   .Replace("ś", "s").Replace("ź", "z").Replace("ż", "z");
-        
-        // Remove special characters
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9\s-]", "");
-        
-        // Replace spaces and multiple dashes
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"\s+", "-");
-        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"-+", "-");
-        
-        return slug.Trim('-');
-    }
-
-    /// <summary>
-    /// POST: Commit CKEditor images when blog is successfully saved
-    /// </summary>
-    [HttpPost]
-    public IActionResult BlogCommitCKEditorImages([FromBody] BlogSessionDto dto)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(dto.SessionId))
-            {
-                return Json(new { success = false, message = "Session ID required" });
-            }
-
-            var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-            trackingService?.CommitImages(dto.SessionId);
-            
-            _logger.LogInformation("CKEditor images committed for session {SessionId}", dto.SessionId);
-            return Json(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error committing CKEditor images");
-            return Json(new { success = false, message = "Error committing images" });
-        }
-    }
-
-    /// <summary>
-    /// POST: Rollback CKEditor images when blog creation is cancelled
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> BlogRollbackCKEditorImages([FromBody] BlogSessionDto dto)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(dto.SessionId))
-            {
-                return Json(new { success = false, message = "Session ID required" });
-            }
-
-            var trackingService = HttpContext.RequestServices.GetService<ICKEditorImageTrackingService>();
-            if (trackingService != null)
-            {
-                await trackingService.RollbackImagesAsync(dto.SessionId);
-            }
-            
-            _logger.LogInformation("CKEditor images rolled back for session {SessionId}", dto.SessionId);
-            return Json(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error rolling back CKEditor images");
-            return Json(new { success = false, message = "Error rolling back images" });
-        }
-    }
-
-    #endregion
 
     #region Translation Management
 
@@ -2893,1134 +2052,6 @@ public class AdminController : Controller
         {
             _logger.LogError(ex, "Error updating translation comment");
             return Json(new { success = false, message = ex.Message });
-        }
-    }
-
-    #endregion
-
-    #region User Management
-
-    /// <summary>
-    /// GET: User Management page
-    /// </summary>
-    public async Task<IActionResult> UserManagement()
-    {
-        _logger.LogInformation("Admin accessed user management");
-
-        var users = await _userManager.Users.ToListAsync();
-        var totalUsers = users.Count;
-        var activeUsers = users.Count(u => !u.LockoutEnd.HasValue || u.LockoutEnd <= DateTimeOffset.UtcNow);
-        var bannedUsers = users.Count(u => u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow);
-
-        // Get all orders and reviews for counting
-        var allOrders = await _unitOfWork.Orders.GetAllAsync();
-        var allReviews = await _unitOfWork.Repository<ProductReview>().GetAllAsync();
-
-        // Get current user to check if Root
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentUser = await _userManager.FindByIdAsync(currentUserId!);
-        var isCurrentUserRoot = currentUser != null && await _userManager.IsInRoleAsync(currentUser, "Root");
-        ViewBag.IsCurrentUserRoot = isCurrentUserRoot;
-
-        // Build user list with role information
-        var userDtos = new List<Models.ViewModels.Admin.UserListItemDto>();
-        foreach (var u in users)
-        {
-            var isRoot = await _userManager.IsInRoleAsync(u, "Root");
-            userDtos.Add(new Models.ViewModels.Admin.UserListItemDto
-            {
-                Id = u.Id,
-                Email = u.Email ?? "",
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                PhoneNumber = u.PhoneNumber,
-                EmailConfirmed = u.EmailConfirmed,
-                IsBanned = u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow,
-                BannedUntil = u.LockoutEnd,
-                CreatedAt = u.CreatedAt,
-                LastLogin = u.LastLoginAt,
-                TotalOrders = allOrders.Count(o => o.UserId == u.Id),
-                TotalReviews = allReviews.Count(r => r.UserId == u.Id),
-                IsRoot = isRoot
-            });
-        }
-
-        var viewModel = new Models.ViewModels.Admin.UserManagementViewModel
-        {
-            Users = userDtos.OrderByDescending(u => u.CreatedAt).ToList(),
-            TotalUsers = totalUsers,
-            ActiveUsers = activeUsers,
-            BannedUsers = bannedUsers,
-            NewUsersThisMonth = users.Count(u => u.CreatedAt >= DateTime.UtcNow.AddMonths(-1))
-        };
-
-        ViewData["Title"] = "User Management";
-        return View(viewModel);
-    }
-
-    /// <summary>
-    /// GET: Edit user
-    /// </summary>
-    public async Task<IActionResult> UserEdit(string id)
-    {
-        var user = await _userManager.FindByIdAsync(id);
-        if (user == null)
-        {
-            TempData["Error"] = "User not found";
-            return RedirectToAction(nameof(UserManagement));
-        }
-
-        // Check if editing user is Root and current user is not Root
-        var isUserRoot = await _userManager.IsInRoleAsync(user, "Root");
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var currentUser = await _userManager.FindByIdAsync(currentUserId!);
-        var isCurrentUserRoot = currentUser != null && await _userManager.IsInRoleAsync(currentUser, "Root");
-
-        if (isUserRoot && !isCurrentUserRoot)
-        {
-            TempData["Error"] = "Only Root users can edit Root accounts";
-            return RedirectToAction(nameof(UserManagement));
-        }
-
-        ViewBag.IsUserRoot = isUserRoot;
-        ViewBag.IsCurrentUserRoot = isCurrentUserRoot;
-
-        // Get user's reviews
-        var reviews = await _unitOfWork.Repository<ProductReview>()
-            .FindAsync(r => r.UserId == id);
-
-        var viewModel = new Models.ViewModels.Admin.UserEditDto
-        {
-            Id = user.Id,
-            Email = user.Email ?? "",
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            PhoneNumber = user.PhoneNumber,
-            EmailConfirmed = user.EmailConfirmed,
-            IsBanned = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow,
-            BannedUntil = user.LockoutEnd,
-            CreatedAt = user.CreatedAt,
-            LastLogin = user.LastLoginAt,
-            Reviews = reviews.Select(r => new Models.ViewModels.Admin.UserReviewDto
-            {
-                Id = r.Id,
-                ProductId = r.ProductId,
-                ProductName = r.Product?.Name ?? "Unknown Product",
-                Rating = r.Rating,
-                Comment = r.Comment,
-                IsVisible = r.IsVisible,
-                CreatedAt = r.CreatedAt,
-                AdminReply = r.AdminReply,
-                AdminReplyAt = r.AdminReplyAt
-            }).OrderByDescending(r => r.CreatedAt).ToList()
-        };
-
-        ViewData["Title"] = $"Edit User: {user.Email}";
-        return View(viewModel);
-    }
-
-    /// <summary>
-    /// POST: Update user
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UserEdit(Models.ViewModels.Admin.UserEditDto model)
-    {
-        if (!ModelState.IsValid)
-        {
-            TempData["Error"] = "Invalid data";
-            return View(model);
-        }
-
-        try
-        {
-            var user = await _userManager.FindByIdAsync(model.Id);
-            if (user == null)
-            {
-                TempData["Error"] = "User not found";
-                return RedirectToAction(nameof(UserManagement));
-            }
-
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.PhoneNumber = model.PhoneNumber;
-            user.EmailConfirmed = model.EmailConfirmed;
-
-            var result = await _userManager.UpdateAsync(user);
-            
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User updated: {UserId}", user.Id);
-                TempData["Success"] = "User updated successfully";
-                return RedirectToAction(nameof(UserManagement));
-            }
-            else
-            {
-                TempData["Error"] = string.Join(", ", result.Errors.Select(e => e.Description));
-                return View(model);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating user {UserId}", model.Id);
-            TempData["Error"] = "Error updating user";
-            return View(model);
-        }
-    }
-
-    /// <summary>
-    /// POST: Ban user
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UserBan(string id, int days)
-    {
-        try
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return Json(new { success = false, message = "User not found" });
-            }
-
-            // Protect Root users from being banned
-            var isRoot = await _userManager.IsInRoleAsync(user, "Root");
-            if (isRoot)
-            {
-                return Json(new { success = false, message = "Root users cannot be banned" });
-            }
-
-            // Ban user for specified days
-            user.LockoutEnd = DateTimeOffset.UtcNow.AddDays(days);
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User banned: {UserId} for {Days} days", id, days);
-                return Json(new { success = true, message = $"User banned for {days} days" });
-            }
-            else
-            {
-                return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error banning user {UserId}", id);
-            return Json(new { success = false, message = "Error banning user" });
-        }
-    }
-
-    /// <summary>
-    /// POST: Unban user
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UserUnban(string id)
-    {
-        try
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return Json(new { success = false, message = "User not found" });
-            }
-
-            user.LockoutEnd = null;
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User unbanned: {UserId}", id);
-                return Json(new { success = true, message = "User unbanned successfully" });
-            }
-            else
-            {
-                return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unbanning user {UserId}", id);
-            return Json(new { success = false, message = "Error unbanning user" });
-        }
-    }
-
-    /// <summary>
-    /// POST: Delete user
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UserDelete(string id)
-    {
-        try
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return Json(new { success = false, message = "User not found" });
-            }
-
-            // Protect Root users from being deleted
-            var isRoot = await _userManager.IsInRoleAsync(user, "Root");
-            if (isRoot)
-            {
-                return Json(new { success = false, message = "Root users cannot be deleted" });
-            }
-
-            var result = await _userManager.DeleteAsync(user);
-            
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User deleted: {UserId}", id);
-                return Json(new { success = true, message = "User deleted successfully" });
-            }
-            else
-            {
-                return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting user {UserId}", id);
-            return Json(new { success = false, message = "Error deleting user" });
-        }
-    }
-
-    /// <summary>
-    /// POST: Update review visibility
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ReviewToggleVisibility(int id)
-    {
-        try
-        {
-            var review = await _unitOfWork.Repository<ProductReview>().GetByIdAsync(id);
-            if (review == null)
-            {
-                return Json(new { success = false, message = "Review not found" });
-            }
-
-            review.IsVisible = !review.IsVisible;
-            review.UpdatedAt = DateTime.UtcNow;
-            
-            _unitOfWork.Repository<ProductReview>().Update(review);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Review visibility toggled: {ReviewId} to {IsVisible}", id, review.IsVisible);
-            return Json(new { success = true, isVisible = review.IsVisible });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error toggling review visibility {ReviewId}", id);
-            return Json(new { success = false, message = "Error updating review" });
-        }
-    }
-
-    /// <summary>
-    /// POST: Edit review content
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ReviewEdit(int id, string comment)
-    {
-        try
-        {
-            var review = await _unitOfWork.Repository<ProductReview>().GetByIdAsync(id);
-            if (review == null)
-            {
-                return Json(new { success = false, message = "Review not found" });
-            }
-
-            review.Comment = comment;
-            review.UpdatedAt = DateTime.UtcNow;
-            
-            _unitOfWork.Repository<ProductReview>().Update(review);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Review edited: {ReviewId}", id);
-            return Json(new { success = true, message = "Review updated successfully" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error editing review {ReviewId}", id);
-            return Json(new { success = false, message = "Error updating review" });
-        }
-    }
-
-    /// <summary>
-    /// POST: Delete review
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ReviewDelete(int id)
-    {
-        try
-        {
-            var review = await _unitOfWork.Repository<ProductReview>().GetByIdAsync(id);
-            if (review == null)
-            {
-                return Json(new { success = false, message = "Review not found" });
-            }
-
-            _unitOfWork.Repository<ProductReview>().Remove(review);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Review deleted: {ReviewId}", id);
-            return Json(new { success = true, message = "Review deleted successfully" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting review {ReviewId}", id);
-            return Json(new { success = false, message = "Error deleting review" });
-        }
-    }
-
-    #endregion
-
-    #region Product Management
-
-    /// <summary>
-    /// POST: Upload product image to temp (AJAX)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> ProductUploadImage(IFormFile file)
-    {
-        var result = await _productImageService.UploadToTempAsync(file);
-        
-        if (result.Success)
-        {
-            return Json(new { success = true, tempFileName = result.TempFileName, tempUrl = result.TempUrl });
-        }
-        
-        return Json(new { success = false, message = result.Message });
-    }
-
-    /// <summary>
-    /// POST: Cancel product image upload (AJAX)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> ProductCancelUpload([FromBody] ProductImageCancelDto model)
-    {
-        try
-        {
-            await _productImageService.CancelUploadAsync(model.TempFileNames.ToArray());
-            return Json(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error canceling product upload");
-            return Json(new { success = false });
-        }
-    }
-
-    /// <summary>
-    /// POST: Toggle product active status (AJAX)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> ProductToggleActive([FromForm] int id)
-    {
-        try
-        {
-            var product = await _unitOfWork.Products.GetByIdAsync(id);
-            
-            if (product == null)
-            {
-                return Json(new { success = false, message = "Product not found" });
-            }
-
-            product.IsActive = !product.IsActive;
-            product.UpdatedAt = DateTime.UtcNow;
-            
-            // Update or archive Stripe product
-            var stripeProductService = new Stripe.ProductService();
-            
-            if (!product.IsActive)
-            {
-                // Archive (deactivate) in Stripe when making inactive
-                await stripeProductService.UpdateAsync(product.StripeProductId, new Stripe.ProductUpdateOptions
-                {
-                    Active = false
-                });
-
-                // Deactivate all variant prices
-                var variants = await _unitOfWork.Repository<ProductVariant>()
-                    .FindAsync(v => v.ProductId == product.Id);
-                
-                var stripePriceService = new Stripe.PriceService();
-                foreach (var variant in variants)
-                {
-                    if (!string.IsNullOrEmpty(variant.StripePriceId))
-                    {
-                        await stripePriceService.UpdateAsync(variant.StripePriceId, new Stripe.PriceUpdateOptions
-                        {
-                            Active = false
-                        });
-                    }
-                }
-
-                // Deactivate base price
-                if (!string.IsNullOrEmpty(product.StripePriceId))
-                {
-                    await stripePriceService.UpdateAsync(product.StripePriceId, new Stripe.PriceUpdateOptions
-                    {
-                        Active = false
-                    });
-                }
-
-                // Remove from all carts
-                var cartItems = await _unitOfWork.Repository<Cart>()
-                    .FindAsync(c => c.ProductId == product.Id);
-                
-                foreach (var cartItem in cartItems)
-                {
-                    _unitOfWork.Repository<Cart>().Remove(cartItem);
-                }
-            }
-            else
-            {
-                // Reactivate in Stripe
-                await stripeProductService.UpdateAsync(product.StripeProductId, new Stripe.ProductUpdateOptions
-                {
-                    Active = true
-                });
-
-                // Reactivate prices
-                var stripePriceService = new Stripe.PriceService();
-                if (!string.IsNullOrEmpty(product.StripePriceId))
-                {
-                    await stripePriceService.UpdateAsync(product.StripePriceId, new Stripe.PriceUpdateOptions
-                    {
-                        Active = true
-                    });
-                }
-
-                var variants = await _unitOfWork.Repository<ProductVariant>()
-                    .FindAsync(v => v.ProductId == product.Id);
-                
-                foreach (var variant in variants)
-                {
-                    if (!string.IsNullOrEmpty(variant.StripePriceId))
-                    {
-                        await stripePriceService.UpdateAsync(variant.StripePriceId, new Stripe.PriceUpdateOptions
-                        {
-                            Active = true
-                        });
-                    }
-                }
-            }
-            
-            _unitOfWork.Products.Update(product);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Product {ProductId} {Action}. Carts cleared: {CartsCleared}", 
-                product.Id, 
-                product.IsActive ? "activated" : "deactivated",
-                !product.IsActive);
-
-            return Json(new { success = true, isActive = product.IsActive });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error toggling product status {ProductId}", id);
-            return Json(new { success = false, message = $"Error updating status: {ex.Message}" });
-        }
-    }
-
-    /// <summary>
-    /// GET: Create new product
-    /// </summary>
-    public async Task<IActionResult> ProductCreate()
-    {
-        var categories = await _unitOfWork.Categories.GetAllAsync();
-        var sizes = await _unitOfWork.Sizes.GetAllAsync();
-        var colors = await _unitOfWork.Colors.GetAllAsync();
-
-        var model = new ProductCreateDto
-        {
-            Categories = new SelectList(categories, "Id", "Name"),
-            AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList(),
-            AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList()
-        };
-
-        return View(model);
-    }
-
-    /// <summary>
-    /// POST: Create new product
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ProductCreate(ProductCreateDto model)
-    {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                // Reload dropdowns
-                var categories = await _unitOfWork.Categories.GetAllAsync();
-                var sizes = await _unitOfWork.Sizes.GetAllAsync();
-                var colors = await _unitOfWork.Colors.GetAllAsync();
-                
-                model.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
-                model.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
-                model.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-                
-                return View(model);
-            }
-
-            // Create Stripe product
-            var stripeProductService = new Stripe.ProductService();
-            var stripeProduct = await stripeProductService.CreateAsync(new Stripe.ProductCreateOptions
-            {
-                Name = model.Name,
-                Description = model.Description,
-                Active = model.IsActive,
-                Metadata = new Dictionary<string, string>
-                {
-                    { "category_id", model.CategoryId.ToString() },
-                    { "pack_size", model.PackSize.ToString() }
-                }
-            });
-
-            // Create Stripe price (base price)
-            var stripePriceService = new Stripe.PriceService();
-            var stripePrice = await stripePriceService.CreateAsync(new Stripe.PriceCreateOptions
-            {
-                Product = stripeProduct.Id,
-                UnitAmount = (long)(model.BasePrice * 100), // Convert to cents
-                Currency = "try",
-                Active = true
-            });
-
-            // Create product entity
-            var product = new Product
-            {
-                Name = model.Name,
-                Description = model.Description,
-                Price = model.BasePrice,
-                PackSize = model.PackSize,
-                CategoryId = model.CategoryId,
-                StripeProductId = stripeProduct.Id,
-                StripePriceId = stripePrice.Id,
-                StripeTaxCode = "txcd_99999999", // General product tax code
-                IsActive = model.IsActive,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            // Add to database to get ID
-            await _unitOfWork.Products.AddAsync(product);
-            await _unitOfWork.SaveChangesAsync();
-
-            // Add product translations
-            if (model.Translations != null && model.Translations.Any())
-            {
-                foreach (var translationDto in model.Translations)
-                {
-                    // Skip empty translations
-                    if (string.IsNullOrWhiteSpace(translationDto.Name))
-                        continue;
-
-                    var translation = new ProductTranslation
-                    {
-                        ProductId = product.Id,
-                        CultureCode = translationDto.CultureCode,
-                        Name = translationDto.Name,
-                        Description = translationDto.Description ?? string.Empty,
-                        Slug = translationDto.Slug ?? string.Empty,
-                        MetaDescription = translationDto.MetaDescription ?? string.Empty,
-                        MetaKeywords = translationDto.MetaKeywords ?? string.Empty
-                    };
-                    await _unitOfWork.Repository<ProductTranslation>().AddAsync(translation);
-                }
-                await _unitOfWork.SaveChangesAsync();
-            }
-
-            // Process uploaded images
-            if (model.TempImageFileNames != null && model.TempImageFileNames.Any())
-            {
-                foreach (var tempFileName in model.TempImageFileNames)
-                {
-                    var moveResult = await _productImageService.MoveTempToPermanentAsync(tempFileName, product.Id);
-                    if (moveResult.Success)
-                    {
-                        var productImage = new ProductImage
-                        {
-                            ProductId = product.Id,
-                            ImageUrl = moveResult.PermanentUrl!,
-                            DisplayOrder = model.TempImageFileNames.IndexOf(tempFileName),
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        await _unitOfWork.Repository<ProductImage>().AddAsync(productImage);
-                    }
-                }
-                await _unitOfWork.SaveChangesAsync();
-            }
-
-            // Add product sizes
-            if (model.SelectedSizeIds != null && model.SelectedSizeIds.Any())
-            {
-                foreach (var sizeId in model.SelectedSizeIds)
-                {
-                    var productSize = new ProductSize
-                    {
-                        ProductId = product.Id,
-                        SizeId = sizeId
-                    };
-                    await _unitOfWork.Repository<ProductSize>().AddAsync(productSize);
-                }
-            }
-
-            // Add product colors
-            if (model.SelectedColorIds != null && model.SelectedColorIds.Any())
-            {
-                foreach (var colorId in model.SelectedColorIds)
-                {
-                    var productColor = new ProductColor
-                    {
-                        ProductId = product.Id,
-                        ColorId = colorId
-                    };
-                    await _unitOfWork.Repository<ProductColor>().AddAsync(productColor);
-                }
-            }
-
-            // Add variants
-            if (model.Variants != null && model.Variants.Any())
-            {
-                foreach (var variantDto in model.Variants)
-                {
-                    // Create Stripe price for this variant
-                    var variantStripePrice = await stripePriceService.CreateAsync(new Stripe.PriceCreateOptions
-                    {
-                        Product = stripeProduct.Id,
-                        UnitAmount = (long)(variantDto.Price * 100),
-                        Currency = "try",
-                        Active = true,
-                        Metadata = new Dictionary<string, string>
-                        {
-                            { "size_id", variantDto.SizeId?.ToString() ?? "" },
-                            { "color_id", variantDto.ColorId?.ToString() ?? "" },
-                            { "sku", variantDto.SKU }
-                        }
-                    });
-
-                    var variant = new ProductVariant
-                    {
-                        ProductId = product.Id,
-                        SizeId = variantDto.SizeId,
-                        ColorId = variantDto.ColorId,
-                        SKU = variantDto.SKU,
-                        Price = variantDto.Price,
-                        StockQuantity = variantDto.StockQuantity,
-                        StripePriceId = variantStripePrice.Id,
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    await _unitOfWork.Repository<ProductVariant>().AddAsync(variant);
-                }
-            }
-
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Product created: {ProductId} - {ProductName}", product.Id, product.Name);
-            return RedirectToAction(nameof(Products));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating product");
-            ModelState.AddModelError("", "Error creating product. Please try again.");
-            
-            // Reload dropdowns
-            var categories = await _unitOfWork.Categories.GetAllAsync();
-            var sizes = await _unitOfWork.Sizes.GetAllAsync();
-            var colors = await _unitOfWork.Colors.GetAllAsync();
-            
-            model.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
-            model.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
-            model.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-            
-            return View(model);
-        }
-    }
-
-    /// <summary>
-    /// GET: Edit product
-    /// </summary>
-    public async Task<IActionResult> ProductEdit(int id)
-    {
-        var product = await _unitOfWork.Products.GetProductWithDetailsAsync(id);
-        
-        if (product == null)
-        {
-            return NotFound();
-        }
-
-        var categories = await _unitOfWork.Categories.GetAllAsync();
-        var sizes = await _unitOfWork.Sizes.GetAllAsync();
-        var colors = await _unitOfWork.Colors.GetAllAsync();
-
-        // Get existing variants
-        var variants = await _unitOfWork.Repository<ProductVariant>()
-            .FindAsync(v => v.ProductId == id, v => v.Size!, v => v.Color!);
-
-        // Get existing reviews with user info
-        var reviews = (await _unitOfWork.Repository<ProductReview>()
-            .FindAsync(r => r.ProductId == id, r => r.User!))
-            .OrderByDescending(r => r.CreatedAt)
-            .ToList();
-
-        // Get translations
-        var translations = await _unitOfWork.Repository<ProductTranslation>()
-            .FindAsync(t => t.ProductId == id);
-
-        // Get price history
-        var priceHistory = await _unitOfWork.Repository<ProductPriceHistory>()
-            .FindAsync(h => h.ProductId == id);
-
-        var model = new ProductUpdateDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Description = product.Description,
-            Translations = translations.Select(t => new ProductTranslationDto
-            {
-                Id = t.Id,
-                CultureCode = t.CultureCode,
-                Name = t.Name,
-                Description = t.Description,
-                Slug = t.Slug,
-                MetaDescription = t.MetaDescription,
-                MetaKeywords = t.MetaKeywords
-            }).ToList(),
-            Price = product.Price,
-            PackSize = product.PackSize,
-            CategoryId = product.CategoryId,
-            ProductGroupId = product.ProductGroupId,
-            StripeTaxCode = product.StripeTaxCode,
-            IsActive = product.IsActive,
-            StripeProductId = product.StripeProductId,
-            StripePriceId = product.StripePriceId,
-            ExistingImageUrls = product.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
-            Variants = variants.Select(v => new ProductVariantDto
-            {
-                Id = v.Id,
-                ColorId = v.ColorId,
-                ColorName = v.Color?.Name,
-                SizeId = v.SizeId,
-                SizeName = v.Size?.Name,
-                SKU = v.SKU,
-                Price = v.Price,
-                StockQuantity = v.StockQuantity
-            }).ToList(),
-            Reviews = reviews.Select(r => new ProductReviewManagementDto
-            {
-                Id = r.Id,
-                UserId = r.UserId,
-                UserName = r.User?.UserName ?? "Unknown",
-                UserEmail = r.User?.Email ?? "",
-                Rating = r.Rating,
-                Comment = r.Comment,
-                IsVisible = r.IsVisible,
-                IsVerifiedPurchase = r.IsVerifiedPurchase,
-                AdminReply = r.AdminReply,
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt,
-                UserIsBanned = r.User?.LockoutEnd > DateTimeOffset.UtcNow
-            }).ToList(),
-            PriceHistory = priceHistory.Select(h => new ProductPriceHistoryDto
-            {
-                Id = h.Id,
-                OldPrice = h.OldPrice,
-                NewPrice = h.NewPrice,
-                Reason = h.Reason,
-                ChangedAt = h.ChangedAt,
-                ChangedBy = h.ChangedBy
-            }).ToList()
-        };
-
-        // Populate dropdowns
-        ViewBag.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
-        ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
-        ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-
-        return View(model);
-    }
-
-    /// <summary>
-    /// POST: Edit product
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ProductEdit(ProductUpdateDto model)
-    {
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                // Reload data
-                var categories = await _unitOfWork.Categories.GetAllAsync();
-                var sizes = await _unitOfWork.Sizes.GetAllAsync();
-                var colors = await _unitOfWork.Colors.GetAllAsync();
-                
-                ViewBag.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
-                ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
-                ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-                
-                return View(model);
-            }
-
-            var product = await _unitOfWork.Products.GetByIdAsync(model.Id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            // Track price change for history
-            bool priceChanged = product.Price != model.Price;
-            decimal oldPrice = product.Price;
-
-            // Update product
-            product.Name = model.Name;
-            product.Description = model.Description;
-            product.Price = model.Price;
-            product.PackSize = model.PackSize;
-            product.CategoryId = model.CategoryId;
-            product.ProductGroupId = model.ProductGroupId;
-            product.StripeTaxCode = model.StripeTaxCode;
-            product.IsActive = model.IsActive;
-            product.UpdatedAt = DateTime.UtcNow;
-
-            // Update Stripe product
-            var stripeProductService = new Stripe.ProductService();
-            await stripeProductService.UpdateAsync(product.StripeProductId, new Stripe.ProductUpdateOptions
-            {
-                Name = model.Name,
-                Description = model.Description,
-                Active = model.IsActive
-            });
-
-            // If base price changed, create new Stripe price and update
-            if (priceChanged)
-            {
-                var stripePriceService = new Stripe.PriceService();
-                
-                // Deactivate old price
-                await stripePriceService.UpdateAsync(product.StripePriceId, new Stripe.PriceUpdateOptions
-                {
-                    Active = false
-                });
-
-                // Create new price
-                var newStripePrice = await stripePriceService.CreateAsync(new Stripe.PriceCreateOptions
-                {
-                    Product = product.StripeProductId,
-                    UnitAmount = (long)(model.Price * 100),
-                    Currency = "try",
-                    Active = true
-                });
-
-                product.StripePriceId = newStripePrice.Id;
-
-                // Log price change
-                await _unitOfWork.Repository<ProductPriceHistory>().AddAsync(new ProductPriceHistory
-                {
-                    ProductId = product.Id,
-                    OldPrice = oldPrice,
-                    NewPrice = model.Price,
-                    Reason = "Manual Update",
-                    ChangedBy = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                    ChangedAt = DateTime.UtcNow
-                });
-            }
-
-            _unitOfWork.Products.Update(product);
-
-            // Update translations
-            if (model.Translations != null && model.Translations.Any())
-            {
-                // Get existing translations
-                var existingTranslations = await _unitOfWork.Repository<ProductTranslation>()
-                    .FindAsync(t => t.ProductId == product.Id);
-                
-                foreach (var translationDto in model.Translations)
-                {
-                    // Skip empty translations
-                    if (string.IsNullOrWhiteSpace(translationDto.Name))
-                        continue;
-
-                    var existingTranslation = existingTranslations
-                        .FirstOrDefault(t => t.CultureCode == translationDto.CultureCode);
-
-                    if (existingTranslation != null)
-                    {
-                        // Update existing translation
-                        existingTranslation.Name = translationDto.Name;
-                        existingTranslation.Description = translationDto.Description ?? string.Empty;
-                        existingTranslation.Slug = translationDto.Slug ?? string.Empty;
-                        existingTranslation.MetaDescription = translationDto.MetaDescription ?? string.Empty;
-                        existingTranslation.MetaKeywords = translationDto.MetaKeywords ?? string.Empty;
-                        _unitOfWork.Repository<ProductTranslation>().Update(existingTranslation);
-                    }
-                    else
-                    {
-                        // Create new translation
-                        var newTranslation = new ProductTranslation
-                        {
-                            ProductId = product.Id,
-                            CultureCode = translationDto.CultureCode,
-                            Name = translationDto.Name,
-                            Description = translationDto.Description ?? string.Empty,
-                            Slug = translationDto.Slug ?? string.Empty,
-                            MetaDescription = translationDto.MetaDescription ?? string.Empty,
-                            MetaKeywords = translationDto.MetaKeywords ?? string.Empty
-                        };
-                        await _unitOfWork.Repository<ProductTranslation>().AddAsync(newTranslation);
-                    }
-                }
-            }
-
-            // Handle image deletions
-            if (model.ImagesToDelete != null && model.ImagesToDelete.Any())
-            {
-                var imagesToDelete = await _unitOfWork.Repository<ProductImage>()
-                    .FindAsync(img => model.ImagesToDelete.Contains(img.ImageUrl));
-                
-                foreach (var img in imagesToDelete)
-                {
-                    await _productImageService.DeleteProductImageAsync(img.ImageUrl);
-                    _unitOfWork.Repository<ProductImage>().Remove(img);
-                }
-            }
-
-            // Handle new image uploads
-            if (model.NewImageTempFileNames != null && model.NewImageTempFileNames.Any())
-            {
-                var currentMaxOrder = product.Images.Any() ? product.Images.Max(i => i.DisplayOrder) : 0;
-                
-                foreach (var tempFileName in model.NewImageTempFileNames)
-                {
-                    var moveResult = await _productImageService.MoveTempToPermanentAsync(tempFileName, product.Id);
-                    if (moveResult.Success)
-                    {
-                        var productImage = new ProductImage
-                        {
-                            ProductId = product.Id,
-                            ImageUrl = moveResult.PermanentUrl!,
-                            DisplayOrder = ++currentMaxOrder,
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        await _unitOfWork.Repository<ProductImage>().AddAsync(productImage);
-                    }
-                }
-            }
-
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Product updated: {ProductId} - {ProductName}", product.Id, product.Name);
-            return RedirectToAction(nameof(Products));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating product {ProductId}", model.Id);
-            ModelState.AddModelError("", "Error updating product. Please try again.");
-            
-            // Reload data
-            var categories = await _unitOfWork.Categories.GetAllAsync();
-            var sizes = await _unitOfWork.Sizes.GetAllAsync();
-            var colors = await _unitOfWork.Colors.GetAllAsync();
-            
-            ViewBag.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
-            ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
-            ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
-            
-            return View(model);
-        }
-    }
-
-    /// <summary>
-    /// POST: Delete product
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> ProductDelete(int id)
-    {
-        try
-        {
-            var product = await _unitOfWork.Products.GetProductWithDetailsAsync(id);
-            
-            if (product == null)
-            {
-                return Json(new { success = false, message = "Product not found" });
-            }
-
-            // Deactivate Stripe product and prices
-            try
-            {
-                var stripeProductService = new Stripe.ProductService();
-                await stripeProductService.UpdateAsync(product.StripeProductId, new Stripe.ProductUpdateOptions
-                {
-                    Active = false
-                });
-
-                var stripePriceService = new Stripe.PriceService();
-                await stripePriceService.UpdateAsync(product.StripePriceId, new Stripe.PriceUpdateOptions
-                {
-                    Active = false
-                });
-
-                // Deactivate all variant prices
-                foreach (var variant in product.Variants)
-                {
-                    await stripePriceService.UpdateAsync(variant.StripePriceId, new Stripe.PriceUpdateOptions
-                    {
-                        Active = false
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error deactivating Stripe resources for product {ProductId}", id);
-            }
-
-            // Remove from all carts
-            var cartItems = await _unitOfWork.Repository<Cart>()
-                .FindAsync(c => c.ProductId == product.Id);
-            
-            foreach (var cartItem in cartItems)
-            {
-                _unitOfWork.Repository<Cart>().Remove(cartItem);
-            }
-
-            // Remove from all wishlists
-            var wishlistItems = await _unitOfWork.Repository<Wishlist>()
-                .FindAsync(w => w.ProductId == product.Id);
-            
-            foreach (var wishlistItem in wishlistItems)
-            {
-                _unitOfWork.Repository<Wishlist>().Remove(wishlistItem);
-            }
-
-            // Delete product images from filesystem
-            foreach (var image in product.Images)
-            {
-                await _productImageService.DeleteProductImageAsync(image.ImageUrl);
-            }
-
-            // Soft delete: just mark as inactive instead of hard delete
-            product.IsActive = false;
-            product.UpdatedAt = DateTime.UtcNow;
-            _unitOfWork.Products.Update(product);
-
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.LogInformation("Product deleted: {ProductId} - {ProductName}", product.Id, product.Name);
-            return Json(new { success = true, message = "Product deleted successfully" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting product {ProductId}", id);
-            return Json(new { success = false, message = "Error deleting product" });
         }
     }
 
@@ -4216,7 +2247,7 @@ public class AdminController : Controller
     public async Task<IActionResult> CommissionSettings()
     {
         var settings = (await _unitOfWork.CommissionSettings.GetAllAsync()).FirstOrDefault();
-        var activeClosure = (await _unitOfWork.SiteClosures.GetAllAsync(sc => sc.IsClosed)).FirstOrDefault();
+        var activeClosure = (await _unitOfWork.SiteClosures.FindAsync(sc => sc.IsClosed)).FirstOrDefault();
 
         // Calculate earnings summary
         var today = DateTime.UtcNow.Date;
@@ -4428,7 +2459,7 @@ public class AdminController : Controller
         try
         {
             // Deactivate any existing active closures
-            var activeClosures = await _unitOfWork.SiteClosures.GetAllAsync(sc => sc.IsClosed);
+            var activeClosures = await _unitOfWork.SiteClosures.FindAsync(sc => sc.IsClosed);
             foreach (var closure in activeClosures)
             {
                 closure.IsClosed = false;
@@ -4528,5 +2559,868 @@ public class AdminController : Controller
     }
 
     #endregion
+
+    #region Financial Dashboard
+
+    /// <summary>
+    /// GET: Financial Dashboard - Comprehensive earnings and deductions view
+    /// </summary>
+    public async Task<IActionResult> Financial(string period = "month", DateTime? dateFrom = null, DateTime? dateTo = null, int page = 1)
+    {
+        try
+        {
+            var viewModel = new FinancialDashboardViewModel
+            {
+                SelectedPeriod = period,
+                DateFrom = dateFrom,
+                DateTo = dateTo,
+                CurrentPage = page
+            };
+
+            // Calculate date range based on period
+            DateTime startDate, endDate = DateTime.UtcNow;
+            switch (period.ToLower())
+            {
+                case "day":
+                    startDate = DateTime.UtcNow.Date;
+                    break;
+                case "week":
+                    startDate = DateTime.UtcNow.AddDays(-7);
+                    break;
+                case "month":
+                    startDate = DateTime.UtcNow.AddMonths(-1);
+                    break;
+                case "year":
+                    startDate = DateTime.UtcNow.AddYears(-1);
+                    break;
+                case "all":
+                    startDate = DateTime.MinValue;
+                    break;
+                case "custom":
+                    startDate = dateFrom ?? DateTime.UtcNow.AddMonths(-1);
+                    endDate = dateTo ?? DateTime.UtcNow;
+                    break;
+                default:
+                    startDate = DateTime.UtcNow.AddMonths(-1);
+                    break;
+            }
+
+            if (period != "custom")
+            {
+                viewModel.DateFrom = startDate;
+                viewModel.DateTo = endDate;
+            }
+
+            // Get all orders within the period
+            var allOrders = await _unitOfWork.Repository<Order>()
+                .FindAsync(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.PaymentStatus == "paid");
+            var orders = allOrders.ToList();
+
+            // Get orders from previous period for comparison
+            var previousPeriodStart = startDate.AddDays(-(endDate - startDate).TotalDays);
+            var previousOrdersQuery = await _unitOfWork.Repository<Order>()
+                .FindAsync(o => o.CreatedAt >= previousPeriodStart && o.CreatedAt < startDate && o.PaymentStatus == "paid");
+            var previousOrders = previousOrdersQuery.ToList();
+
+            // Get commission settings
+            var commissionSettings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+            viewModel.CommissionSettings = commissionSettings;
+
+            // Calculate Summary
+            var summary = new FinancialSummary
+            {
+                Currency = "PLN",
+                TotalOrders = orders.Count,
+                DeveloperCommissionRate = commissionSettings?.DeveloperCommissionRate ?? 0
+            };
+
+            // Gross Revenue
+            summary.GrossRevenue = orders.Sum(o => o.TotalAmount);
+            summary.GrossRevenueThisMonth = orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Sum(o => o.TotalAmount);
+            summary.GrossRevenueToday = orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Sum(o => o.TotalAmount);
+
+            // Calculate growth
+            var previousGross = previousOrders.Sum(o => o.TotalAmount);
+            summary.GrossRevenueGrowth = previousGross > 0 ? ((summary.GrossRevenue - previousGross) / previousGross) * 100 : 0;
+
+            // Deductions - Get from AdminCommission records
+            var adminCommissions = await _unitOfWork.Repository<AdminCommission>()
+                .FindAsync(ac => orders.Select(o => o.Id).Contains(ac.OrderId));
+            var commissionsList = adminCommissions.ToList();
+
+            summary.TotalStripeFees = commissionsList.Sum(c => c.TotalStripeFees);
+            summary.TotalPlatformCommission = commissionsList.Sum(c => c.PlatformCommissionAmount);
+            summary.TotalTaxAmount = orders.Sum(o => o.TaxAmount);
+            summary.TotalDiscounts = orders.Sum(o => o.DiscountAmount);
+
+            // Developer earnings
+            var developerEarnings = await _unitOfWork.Repository<DeveloperEarnings>()
+                .FindAsync(de => orders.Select(o => o.Id).Contains(de.OrderId));
+            var devEarningsList = developerEarnings.ToList();
+            
+            summary.TotalDeveloperCommission = devEarningsList.Sum(de => de.DeveloperCommission);
+            summary.TotalPaidToDeveloper = devEarningsList.Where(de => de.PayoutStatus == PayoutStatus.Processed).Sum(de => de.DeveloperCommission);
+            summary.PendingDeveloperPayout = devEarningsList.Where(de => de.PayoutStatus == PayoutStatus.Pending).Sum(de => de.DeveloperCommission);
+
+            // Refunds
+            var refundedOrders = await _unitOfWork.Repository<Order>()
+                .FindAsync(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.PaymentStatus == "refunded");
+            summary.TotalRefunds = refundedOrders.Sum(o => o.TotalAmount);
+
+            // Net Revenue (Company perspective)
+            summary.NetRevenue = summary.GrossRevenue - summary.TotalStripeFees - summary.TotalDeveloperCommission - summary.TotalRefunds;
+            summary.NetRevenueThisMonth = orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Sum(o => o.TotalAmount) 
+                - commissionsList.Where(c => orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Select(o => o.Id).Contains(c.OrderId)).Sum(c => c.TotalStripeFees);
+
+            // Personal Earnings (Admin's actual take-home after platform commission)
+            summary.PersonalEarnings = summary.NetRevenue; // For owner, net revenue is personal earnings
+            summary.PersonalEarningsThisMonth = summary.NetRevenueThisMonth;
+            summary.PersonalEarningsToday = orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Sum(o => o.TotalAmount)
+                - commissionsList.Where(c => orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Select(o => o.Id).Contains(c.OrderId)).Sum(c => c.TotalStripeFees);
+
+            // Statistics
+            summary.TotalProductsSold = orders.Sum(o => 1); // Will be updated with actual item count
+            summary.AverageOrderValue = orders.Any() ? summary.GrossRevenue / orders.Count : 0;
+            summary.EffectiveTaxRate = summary.GrossRevenue > 0 ? (summary.TotalTaxAmount / summary.GrossRevenue) * 100 : 0;
+
+            viewModel.Summary = summary;
+
+            // Chart Data - Group by day/week/month depending on period
+            viewModel.RevenueChart = GenerateRevenueChartData(orders, period, startDate, endDate);
+
+            // Deduction breakdown for pie chart
+            var totalDeductions = summary.TotalStripeFees + summary.TotalDeveloperCommission + summary.TotalTaxAmount + summary.TotalRefunds + summary.TotalDiscounts;
+            viewModel.DeductionChart = new List<DeductionBreakdown>
+            {
+                new() { Category = "Stripe Fees", Amount = summary.TotalStripeFees, Percentage = totalDeductions > 0 ? (summary.TotalStripeFees / totalDeductions) * 100 : 0, Color = "#635bff" },
+                new() { Category = "Developer Commission", Amount = summary.TotalDeveloperCommission, Percentage = totalDeductions > 0 ? (summary.TotalDeveloperCommission / totalDeductions) * 100 : 0, Color = "#00d4aa" },
+                new() { Category = "Tax", Amount = summary.TotalTaxAmount, Percentage = totalDeductions > 0 ? (summary.TotalTaxAmount / totalDeductions) * 100 : 0, Color = "#ff6b6b" },
+                new() { Category = "Refunds", Amount = summary.TotalRefunds, Percentage = totalDeductions > 0 ? (summary.TotalRefunds / totalDeductions) * 100 : 0, Color = "#ffd43b" },
+                new() { Category = "Discounts", Amount = summary.TotalDiscounts, Percentage = totalDeductions > 0 ? (summary.TotalDiscounts / totalDeductions) * 100 : 0, Color = "#845ef7" }
+            };
+
+            // Product Breakdowns
+            viewModel.ProductBreakdowns = await GetProductFinancialBreakdowns(orders.Select(o => o.Id).ToList());
+
+            // Transactions with pagination
+            var skip = (page - 1) * viewModel.PageSize;
+            viewModel.TotalTransactions = orders.Count;
+            viewModel.Transactions = await GetFinancialTransactions(orders.OrderByDescending(o => o.CreatedAt).Skip(skip).Take(viewModel.PageSize).ToList());
+
+            // Tax breakdown
+            viewModel.TaxBreakdown = GetTaxBreakdown(orders);
+
+            // Pending commission requests
+            var pendingRequests = await _unitOfWork.Repository<DeveloperCommissionRequest>()
+                .FindAsync(r => r.Status == CommissionRequestStatus.Pending);
+            viewModel.PendingCommissionRequests = pendingRequests.Select(r => new DeveloperCommissionRequestDto
+            {
+                Id = r.Id,
+                DeveloperName = r.Developer != null ? $"{r.Developer.FirstName} {r.Developer.LastName}" : "Unknown",
+                DeveloperEmail = r.Developer?.Email ?? "",
+                CurrentRate = r.CurrentRate,
+                RequestedRate = r.RequestedRate,
+                Reason = r.Reason,
+                Status = r.Status,
+                CreatedAt = r.CreatedAt
+            }).ToList();
+
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading financial dashboard");
+            return View(new FinancialDashboardViewModel());
+        }
+    }
+
+    /// <summary>
+    /// Export financial data to Excel
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> ExportFinancial(string period = "month", DateTime? dateFrom = null, DateTime? dateTo = null)
+    {
+        try
+        {
+            // Calculate date range
+            DateTime startDate, endDate = DateTime.UtcNow;
+            switch (period.ToLower())
+            {
+                case "day": startDate = DateTime.UtcNow.Date; break;
+                case "week": startDate = DateTime.UtcNow.AddDays(-7); break;
+                case "month": startDate = DateTime.UtcNow.AddMonths(-1); break;
+                case "year": startDate = DateTime.UtcNow.AddYears(-1); break;
+                case "all": startDate = DateTime.MinValue; break;
+                case "custom":
+                    startDate = dateFrom ?? DateTime.UtcNow.AddMonths(-1);
+                    endDate = dateTo ?? DateTime.UtcNow;
+                    break;
+                default: startDate = DateTime.UtcNow.AddMonths(-1); break;
+            }
+
+            var allOrders = await _unitOfWork.Repository<Order>()
+                .FindAsync(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.PaymentStatus == "paid");
+            var orders = allOrders.ToList();
+
+            // Generate Excel using ClosedXML or similar
+            var csvContent = GenerateFinancialCsv(orders, startDate, endDate);
+            
+            var fileName = $"Financial_Report_{startDate:yyyyMMdd}_to_{endDate:yyyyMMdd}.csv";
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
+            
+            return File(bytes, "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting financial data");
+            return BadRequest("Error generating export");
+        }
+    }
+
+    /// <summary>
+    /// Handle commission rate change request from developer
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> RequestCommissionChange([FromBody] CommissionChangeRequestDto dto)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId!);
+            
+            if (user == null)
+                return Json(new { success = false, message = "User not found" });
+
+            // Get current settings
+            var settings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+            var currentRate = settings?.DeveloperCommissionRate ?? 0;
+
+            // Create request
+            var request = new DeveloperCommissionRequest
+            {
+                DeveloperId = userId!,
+                CurrentRate = currentRate,
+                RequestedRate = dto.RequestedRate,
+                Reason = dto.Reason,
+                Status = CommissionRequestStatus.Pending,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Repository<DeveloperCommissionRequest>().AddAsync(request);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Send email notification to admin
+            await SendCommissionRequestNotification(request, user);
+
+            return Json(new { success = true, message = "Commission change request submitted. Admin will review and respond via email." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error submitting commission change request");
+            return Json(new { success = false, message = "Error submitting request" });
+        }
+    }
+
+    /// <summary>
+    /// Review commission change request (Admin only)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> ReviewCommissionRequest([FromBody] ReviewCommissionRequestDto dto)
+    {
+        try
+        {
+            var request = await _unitOfWork.Repository<DeveloperCommissionRequest>().GetByIdAsync(dto.RequestId);
+            if (request == null)
+                return Json(new { success = false, message = "Request not found" });
+
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            request.Status = dto.Approved ? CommissionRequestStatus.Approved : CommissionRequestStatus.Rejected;
+            request.ReviewedById = adminId;
+            request.AdminResponse = dto.Response;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.UpdatedAt = DateTime.UtcNow;
+
+            // If approved, update the commission settings
+            if (dto.Approved)
+            {
+                var settings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+                if (settings != null)
+                {
+                    settings.DeveloperCommissionRate = request.RequestedRate;
+                    settings.LastModifiedBy = adminId!;
+                    settings.LastModifiedAt = DateTime.UtcNow;
+                    _unitOfWork.Repository<CommissionSettings>().Update(settings);
+                }
+            }
+
+            _unitOfWork.Repository<DeveloperCommissionRequest>().Update(request);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Send notification to developer
+            await SendCommissionDecisionNotification(request);
+
+            return Json(new { success = true, message = dto.Approved ? "Request approved and commission rate updated" : "Request rejected" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reviewing commission request");
+            return Json(new { success = false, message = "Error processing request" });
+        }
+    }
+
+    /// <summary>
+    /// Get commission settings
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetCommissionSettings()
+    {
+        var settings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+        return Json(new { 
+            success = true, 
+            settings = new {
+                developerRate = settings?.DeveloperCommissionRate ?? 0,
+                platformRate = settings?.PlatformCommissionRate ?? 0,
+                stripeRate = settings?.StripeCommissionRate ?? 2.9m,
+                stripeFixedFee = settings?.StripeFixedFee ?? 0.30m,
+                autoPayoutEnabled = settings?.AutoPayoutEnabled ?? false,
+                minimumPayout = settings?.MinimumPayoutAmount ?? 100
+            }
+        });
+    }
+
+    /// <summary>
+    /// Update commission settings (Root only)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> UpdateCommissionSettings([FromBody] UpdateCommissionSettingsDto dto)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var settings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+            
+            if (settings == null)
+            {
+                settings = new CommissionSettings
+                {
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.Repository<CommissionSettings>().AddAsync(settings);
+            }
+            
+            settings.DeveloperCommissionRate = dto.DeveloperRate;
+            settings.PlatformCommissionRate = dto.PlatformRate;
+            settings.AutoPayoutEnabled = dto.AutoPayoutEnabled;
+            settings.MinimumPayoutAmount = dto.MinimumPayout;
+            settings.LastModifiedBy = userId!;
+            settings.LastModifiedAt = DateTime.UtcNow;
+            
+            _unitOfWork.Repository<CommissionSettings>().Update(settings);
+            await _unitOfWork.SaveChangesAsync();
+            
+            return Json(new { success = true, message = "Commission settings updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating commission settings");
+            return Json(new { success = false, message = "Error updating settings" });
+        }
+    }
+
+    /// <summary>
+    /// Get all tax rates
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetTaxRates()
+    {
+        var taxRates = await _unitOfWork.Repository<TaxRate>().GetAllAsync();
+        return Json(new { 
+            success = true, 
+            taxRates = taxRates.Select(t => new {
+                id = t.Id,
+                name = t.Name,
+                countryCode = t.CountryCode,
+                stateCode = t.StateCode,
+                rate = t.Rate,
+                isActive = t.IsActive,
+                isDefault = t.IsDefault,
+                stripeTaxRateId = t.StripeTaxRateId
+            }).OrderBy(t => t.countryCode).ThenBy(t => t.name)
+        });
+    }
+
+    /// <summary>
+    /// Update tax rate (Root only)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> UpdateTaxRate([FromBody] UpdateTaxRateDto dto)
+    {
+        try
+        {
+            var taxRate = await _unitOfWork.Repository<TaxRate>().GetByIdAsync(dto.Id);
+            if (taxRate == null)
+                return Json(new { success = false, message = "Tax rate not found" });
+            
+            taxRate.Name = dto.Name;
+            taxRate.Rate = dto.Rate;
+            taxRate.IsActive = dto.IsActive;
+            taxRate.IsDefault = dto.IsDefault;
+            taxRate.UpdatedAt = DateTime.UtcNow;
+            
+            // If setting as default, unset others
+            if (dto.IsDefault)
+            {
+                var allTaxRates = await _unitOfWork.Repository<TaxRate>().GetAllAsync();
+                foreach (var tr in allTaxRates.Where(t => t.Id != dto.Id && t.IsDefault))
+                {
+                    tr.IsDefault = false;
+                    _unitOfWork.Repository<TaxRate>().Update(tr);
+                }
+            }
+            
+            _unitOfWork.Repository<TaxRate>().Update(taxRate);
+            await _unitOfWork.SaveChangesAsync();
+            
+            return Json(new { success = true, message = "Tax rate updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating tax rate");
+            return Json(new { success = false, message = "Error updating tax rate" });
+        }
+    }
+
+    /// <summary>
+    /// Create new tax rate (Root only)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> CreateTaxRate([FromBody] CreateTaxRateDto dto)
+    {
+        try
+        {
+            var taxRate = new TaxRate
+            {
+                Name = dto.Name,
+                CountryCode = dto.CountryCode,
+                StateCode = dto.StateCode,
+                Rate = dto.Rate,
+                IsActive = dto.IsActive,
+                IsDefault = dto.IsDefault,
+                StripeTaxRateId = dto.StripeTaxRateId ?? "",
+                Description = dto.Description,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            
+            // If setting as default, unset others
+            if (dto.IsDefault)
+            {
+                var allTaxRates = await _unitOfWork.Repository<TaxRate>().GetAllAsync();
+                foreach (var tr in allTaxRates.Where(t => t.IsDefault))
+                {
+                    tr.IsDefault = false;
+                    _unitOfWork.Repository<TaxRate>().Update(tr);
+                }
+            }
+            
+            await _unitOfWork.Repository<TaxRate>().AddAsync(taxRate);
+            await _unitOfWork.SaveChangesAsync();
+            
+            return Json(new { success = true, message = "Tax rate created successfully", id = taxRate.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating tax rate");
+            return Json(new { success = false, message = "Error creating tax rate" });
+        }
+    }
+
+    // Helper methods for Financial Dashboard
+    private List<RevenueChartData> GenerateRevenueChartData(List<Order> orders, string period, DateTime startDate, DateTime endDate)
+    {
+        var chartData = new List<RevenueChartData>();
+        
+        IEnumerable<IGrouping<string, Order>> grouped;
+        
+        if (period == "day" || (endDate - startDate).TotalDays <= 7)
+        {
+            // Group by hour
+            grouped = orders.GroupBy(o => o.CreatedAt.ToString("HH:00"));
+        }
+        else if ((endDate - startDate).TotalDays <= 31)
+        {
+            // Group by day
+            grouped = orders.GroupBy(o => o.CreatedAt.ToString("MMM dd"));
+        }
+        else if ((endDate - startDate).TotalDays <= 365)
+        {
+            // Group by week - use date range as label
+            grouped = orders.GroupBy(o => o.CreatedAt.ToString("MMM dd"));
+        }
+        else
+        {
+            // Group by month
+            grouped = orders.GroupBy(o => o.CreatedAt.ToString("MMM yyyy"));
+        }
+
+        foreach (var group in grouped.OrderBy(g => g.Min(o => o.CreatedAt)))
+        {
+            var grossRevenue = group.Sum(o => o.TotalAmount);
+            // Calculate net: Gross - StripeFees(~2.9% + 1 PLN per transaction) - Tax - DevCommission(~10%)
+            var stripeFees = group.Sum(o => (o.TotalAmount * 0.029m) + 1.00m);
+            var taxAmount = group.Sum(o => o.TaxAmount);
+            var devCommission = (grossRevenue - stripeFees - taxAmount) * 0.10m; // 10% dev commission on net
+            var netRevenue = grossRevenue - stripeFees - devCommission;
+            
+            chartData.Add(new RevenueChartData
+            {
+                Label = group.Key,
+                GrossRevenue = grossRevenue,
+                NetRevenue = netRevenue,
+                PersonalEarnings = netRevenue,
+                OrderCount = group.Count()
+            });
+        }
+
+        return chartData;
+    }
+
+    private async Task<List<ProductFinancialBreakdown>> GetProductFinancialBreakdowns(List<int> orderIds)
+    {
+        var breakdowns = new List<ProductFinancialBreakdown>();
+        
+        var orderItems = await _unitOfWork.Repository<OrderItem>()
+            .FindAsync(oi => orderIds.Contains(oi.OrderId));
+
+        // Group by ProductVariantId since OrderItem doesn't have ProductId directly
+        var productGroups = orderItems.GroupBy(oi => oi.ProductVariantId);
+
+        foreach (var group in productGroups.OrderByDescending(g => g.Sum(oi => oi.TotalPrice)))
+        {
+            var variant = await _unitOfWork.Repository<ProductVariant>().GetByIdAsync(group.Key, v => v.Product);
+            if (variant?.Product == null) continue;
+
+            var grossSales = group.Sum(oi => oi.TotalPrice);
+            var quantity = group.Sum(oi => oi.Quantity);
+            
+            // Estimate fees (Stripe 2.9% + 1 PLN)
+            var stripeFees = (grossSales * 0.029m) + (group.Count() * 1.00m);
+            
+            breakdowns.Add(new ProductFinancialBreakdown
+            {
+                ProductId = variant.Product.Id,
+                ProductName = variant.Product.Name,
+                ProductImage = variant.Product.Images.FirstOrDefault()?.ImageUrl,
+                QuantitySold = quantity,
+                GrossSales = grossSales,
+                StripeFees = stripeFees,
+                TaxAmount = 0, // Tax is on order level, not item level
+                DeveloperCommission = 0, // Will be calculated from settings
+                PlatformCommission = grossSales * 0.01m,
+                NetRevenue = grossSales - stripeFees,
+                ProfitMargin = grossSales > 0 ? ((grossSales - stripeFees) / grossSales) * 100 : 0,
+                AveragePrice = quantity > 0 ? grossSales / quantity : 0
+            });
+        }
+
+        return breakdowns.Take(20).ToList(); // Top 20 products
+    }
+
+    private async Task<List<FinancialTransaction>> GetFinancialTransactions(List<Order> orders)
+    {
+        var transactions = new List<FinancialTransaction>();
+
+        foreach (var order in orders)
+        {
+            // Estimate Stripe fee (2.9% + fixed)
+            var stripeFee = (order.TotalAmount * 0.029m) + 1.00m; // 1 PLN fixed fee for Poland
+
+            var transaction = new FinancialTransaction
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                Date = order.CreatedAt,
+                CustomerName = order.CustomerName ?? "Guest",
+                CustomerEmail = order.CustomerEmail,
+                GrossAmount = order.TotalAmount,
+                SubtotalAmount = order.SubtotalAmount,
+                ShippingAmount = order.ShippingCost,
+                DiscountAmount = order.DiscountAmount,
+                TaxAmount = order.TaxAmount,
+                StripeFee = stripeFee,
+                DeveloperCommission = 0, // From DeveloperEarnings
+                PlatformCommission = order.CommissionAmount,
+                NetAmount = order.TotalAmount - stripeFee - order.CommissionAmount,
+                PaymentStatus = order.PaymentStatus,
+                OrderStatus = order.OrderStatus,
+                Currency = "PLN"
+            };
+
+            // Get order items
+            var items = await _unitOfWork.Repository<OrderItem>().FindAsync(oi => oi.OrderId == order.Id);
+            transaction.Items = items.Select(i => new TransactionItem
+            {
+                ProductId = i.ProductVariantId, // Use variant ID as product reference
+                ProductName = i.ProductName,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                Total = i.TotalPrice,
+                Tax = 0 // Tax is at order level
+            }).ToList();
+
+            transactions.Add(transaction);
+        }
+
+        return transactions;
+    }
+
+    private List<TaxSummary> GetTaxBreakdown(List<Order> orders)
+    {
+        return orders
+            .Where(o => o.TaxRate > 0)
+            .GroupBy(o => new { o.TaxRate, Country = o.ShippingCountry ?? "Unknown" })
+            .Select(g => new TaxSummary
+            {
+                TaxName = $"VAT {g.Key.TaxRate * 100:F0}%",
+                Rate = g.Key.TaxRate * 100,
+                Country = g.Key.Country,
+                TaxableAmount = g.Sum(o => o.SubtotalAmount),
+                TaxCollected = g.Sum(o => o.TaxAmount),
+                TransactionCount = g.Count()
+            })
+            .ToList();
+    }
+
+    private async Task<string> GenerateFinancialCsvAsync(List<Order> orders, DateTime startDate, DateTime endDate)
+    {
+        var sb = new System.Text.StringBuilder();
+        
+        // Get commission and earnings data
+        var orderIds = orders.Select(o => o.Id).ToList();
+        var adminCommissions = (await _unitOfWork.Repository<AdminCommission>()
+            .FindAsync(ac => orderIds.Contains(ac.OrderId))).ToDictionary(ac => ac.OrderId);
+        var developerEarnings = (await _unitOfWork.Repository<DeveloperEarnings>()
+            .FindAsync(de => orderIds.Contains(de.OrderId))).ToDictionary(de => de.OrderId);
+        var commissionSettings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+
+        // Calculate totals
+        var grossRevenue = orders.Sum(o => o.TotalAmount);
+        var totalTax = orders.Sum(o => o.TaxAmount);
+        var totalDiscounts = orders.Sum(o => o.DiscountAmount);
+        var totalStripeFees = adminCommissions.Values.Sum(c => c.TotalStripeFees);
+        var totalDevCommission = developerEarnings.Values.Sum(d => d.DeveloperCommission);
+        var netRevenue = grossRevenue - totalStripeFees - totalDevCommission;
+        
+        // Header
+        sb.AppendLine("KOKOMIJA FINANCIAL REPORT");
+        sb.AppendLine($"Period: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+        sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine();
+        
+        // Summary Section
+        sb.AppendLine("=== SUMMARY ===");
+        sb.AppendLine($"Total Orders,{orders.Count}");
+        sb.AppendLine($"Gross Revenue,{grossRevenue:F2} PLN");
+        sb.AppendLine($"Total Tax Collected,{totalTax:F2} PLN");
+        sb.AppendLine($"Total Discounts Given,{totalDiscounts:F2} PLN");
+        sb.AppendLine($"Total Stripe Fees,{totalStripeFees:F2} PLN");
+        sb.AppendLine($"Developer Commission ({commissionSettings?.DeveloperCommissionRate ?? 0}%),{totalDevCommission:F2} PLN");
+        sb.AppendLine($"Net Revenue (Your Earnings),{netRevenue:F2} PLN");
+        sb.AppendLine();
+        
+        // Deductions Breakdown
+        sb.AppendLine("=== DEDUCTIONS BREAKDOWN ===");
+        sb.AppendLine("Category,Amount (PLN),Percentage");
+        var totalDeductions = totalStripeFees + totalDevCommission + totalTax;
+        if (totalDeductions > 0)
+        {
+            sb.AppendLine($"Stripe Fees,{totalStripeFees:F2},{(totalStripeFees / totalDeductions * 100):F1}%");
+            sb.AppendLine($"Developer Commission,{totalDevCommission:F2},{(totalDevCommission / totalDeductions * 100):F1}%");
+            sb.AppendLine($"Tax,{totalTax:F2},{(totalTax / totalDeductions * 100):F1}%");
+        }
+        sb.AppendLine();
+        
+        // Transactions Detail
+        sb.AppendLine("=== TRANSACTION DETAILS ===");
+        sb.AppendLine("Order Number,Type,Date,Customer,Email,Subtotal,Shipping,Discount,Tax,Gross Total,Stripe Fee,Dev Commission,Net Amount,Payment Status,Order Status");
+        
+        foreach (var order in orders.OrderByDescending(o => o.CreatedAt))
+        {
+            var isDemo = order.OrderNumber.StartsWith("DEMO-") ? "[DEMO] " : "";
+            var stripeFee = adminCommissions.TryGetValue(order.Id, out var ac) ? ac.TotalStripeFees : (order.TotalAmount * 0.029m + 1m);
+            var devComm = developerEarnings.TryGetValue(order.Id, out var de) ? de.DeveloperCommission : 0m;
+            var netAmount = order.TotalAmount - stripeFee - devComm;
+            
+            sb.AppendLine($"{order.OrderNumber},{isDemo.Trim()},{order.CreatedAt:yyyy-MM-dd HH:mm},{order.CustomerName?.Replace(",", " ")},{order.CustomerEmail},{order.SubtotalAmount:F2},{order.ShippingCost:F2},{order.DiscountAmount:F2},{order.TaxAmount:F2},{order.TotalAmount:F2},{stripeFee:F2},{devComm:F2},{netAmount:F2},{order.PaymentStatus},{order.OrderStatus}");
+        }
+        sb.AppendLine();
+        
+        // Developer Earnings Summary
+        sb.AppendLine("=== DEVELOPER EARNINGS ===");
+        sb.AppendLine("Status,Amount (PLN)");
+        var paidDev = developerEarnings.Values.Where(d => d.PayoutStatus == PayoutStatus.Processed).Sum(d => d.DeveloperCommission);
+        var pendingDev = developerEarnings.Values.Where(d => d.PayoutStatus == PayoutStatus.Pending).Sum(d => d.DeveloperCommission);
+        sb.AppendLine($"Paid,{paidDev:F2}");
+        sb.AppendLine($"Pending,{pendingDev:F2}");
+        sb.AppendLine($"Total,{totalDevCommission:F2}");
+        sb.AppendLine();
+        
+        // Tax Summary
+        sb.AppendLine("=== TAX SUMMARY ===");
+        var taxByRate = orders.GroupBy(o => o.TaxRate)
+            .Select(g => new { Rate = g.Key * 100, Amount = g.Sum(o => o.TaxAmount), Count = g.Count() })
+            .OrderByDescending(t => t.Amount);
+        sb.AppendLine("Tax Rate,Tax Collected,Order Count");
+        foreach (var tax in taxByRate)
+        {
+            sb.AppendLine($"{tax.Rate:F0}%,{tax.Amount:F2} PLN,{tax.Count}");
+        }
+
+        return sb.ToString();
+    }
+
+    private string GenerateFinancialCsv(List<Order> orders, DateTime startDate, DateTime endDate)
+    {
+        // Sync wrapper for backward compatibility
+        return GenerateFinancialCsvAsync(orders, startDate, endDate).GetAwaiter().GetResult();
+    }
+
+    private async Task SendCommissionRequestNotification(DeveloperCommissionRequest request, ApplicationUser developer)
+    {
+        try
+        {
+            // Log the notification - in production, integrate with email service
+            var developerName = $"{developer.FirstName} {developer.LastName}".Trim();
+            _logger.LogInformation(
+                "Commission change request notification: Developer {Developer} ({Email}) requested rate change from {CurrentRate}% to {RequestedRate}%",
+                developerName,
+                developer.Email,
+                request.CurrentRate,
+                request.RequestedRate
+            );
+            
+            request.AdminNotified = true;
+            _unitOfWork.Repository<DeveloperCommissionRequest>().Update(request);
+            
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending commission request notification");
+        }
+    }
+
+    private async Task SendCommissionDecisionNotification(DeveloperCommissionRequest request)
+    {
+        try
+        {
+            var developer = await _userManager.FindByIdAsync(request.DeveloperId);
+            if (developer == null) return;
+
+            var statusText = request.Status == CommissionRequestStatus.Approved ? "APPROVED" : "REJECTED";
+            
+            // Log the notification - in production, integrate with email service
+            _logger.LogInformation(
+                "Commission decision notification: Request {RequestId} was {Status}. Developer: {Email}, Requested Rate: {Rate}%",
+                request.Id,
+                statusText,
+                developer.Email,
+                request.RequestedRate
+            );
+            
+            request.DeveloperNotified = true;
+            _unitOfWork.Repository<DeveloperCommissionRequest>().Update(request);
+            
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending commission decision notification");
+        }
+    }
+
+    /// <summary>
+    /// POST: Seed demo financial data for testing
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> SeedDemoData()
+    {
+        try
+        {
+            await FinancialDataSeeder.SeedFinancialDataAsync(HttpContext.RequestServices);
+            return Json(new { success = true, message = "Demo data seeded successfully. Refresh to see results." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding demo data");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// POST: Remove demo financial data
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> RemoveDemoData()
+    {
+        try
+        {
+            await FinancialDataSeeder.RemoveFinancialDataAsync(HttpContext.RequestServices);
+            return Json(new { success = true, message = "Demo data removed successfully." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing demo data");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    #endregion
 }
 
+public class CommissionChangeRequestDto
+{
+    public decimal RequestedRate { get; set; }
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class ReviewCommissionRequestDto
+{
+    public int RequestId { get; set; }
+    public bool Approved { get; set; }
+    public string? Response { get; set; }
+}
+
+public class UpdateCommissionSettingsDto
+{
+    public decimal DeveloperRate { get; set; }
+    public decimal PlatformRate { get; set; }
+    public bool AutoPayoutEnabled { get; set; }
+    public decimal MinimumPayout { get; set; }
+}
+
+public class UpdateTaxRateDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Rate { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsDefault { get; set; }
+}
+
+public class CreateTaxRateDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string CountryCode { get; set; } = string.Empty;
+    public string? StateCode { get; set; }
+    public decimal Rate { get; set; }
+    public bool IsActive { get; set; } = true;
+    public bool IsDefault { get; set; }
+    public string? StripeTaxRateId { get; set; }
+    public string? Description { get; set; }
+}

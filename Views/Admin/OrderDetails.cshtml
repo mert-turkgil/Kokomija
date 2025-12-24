@@ -12,18 +12,29 @@
                 <h1 class="mb-2">
                     <i class="bi bi-receipt"></i>
                     Order #@Model.OrderNumber
+                    @if (Model.IsDemoOrder)
+                    {
+                        <span class="badge bg-warning text-dark ms-2" style="font-size: 0.5em; vertical-align: middle;">
+                            <i class="bi bi-cone-striped"></i> DEMO
+                        </span>
+                    }
                 </h1>
                 <p class="mb-3 opacity-75">Created on @Model.CreatedAt.ToString("MMMM dd, yyyy 'at' HH:mm")</p>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     <span class="status-badge status-@Model.OrderStatus.ToLower()">
-                        @Model.OrderStatus.ToUpper()
-                    <i class="bi bi-arrow-return-left"></i>
+                        <i class="bi bi-box"></i>
                         @Model.OrderStatus.ToUpper()
                     </span>
                     <span class="status-badge status-@Model.PaymentStatus.ToLower()">
                         <i class="bi bi-credit-card"></i>
                         Payment: @Model.PaymentStatus.ToUpper()
                     </span>
+                    @if (Model.IsDemoOrder)
+                    {
+                        <span class="badge bg-info">
+                            <i class="bi bi-info-circle"></i> Demo data - Stripe operations simulated
+                        </span>
+                    }
                 </div>
             </div>
             <div>
@@ -331,7 +342,18 @@
                 <h5 class="mb-3">
                     <i class="bi bi-wallet2"></i>
                     Payment Information
+                    @if (Model.IsDemoOrder)
+                    {
+                        <span class="badge bg-warning text-dark ms-2" style="font-size: 0.7em;">DEMO</span>
+                    }
                 </h5>
+                
+                @if (Model.IsDemoOrder)
+                {
+                    <div class="alert alert-info py-2 mb-3">
+                        <small><i class="bi bi-info-circle"></i> This is demo data. Stripe IDs are simulated and not linked to real transactions.</small>
+                    </div>
+                }
                 
                 <div class="info-row">
                     <span class="info-label">Status</span>
@@ -344,7 +366,7 @@
                     <div class="info-row">
                         <span class="info-label">Payment Intent</span>
                         <span class="info-value">
-                            <small><code>@Model.StripePaymentIntentId</code></small>
+                            <small><code class="@(Model.IsDemoOrder ? "text-muted" : "")">@Model.StripePaymentIntentId</code></small>
                         </span>
                     </div>
                 }
@@ -353,7 +375,7 @@
                     <div class="info-row">
                         <span class="info-label">Charge ID</span>
                         <span class="info-value">
-                            <small><code>@Model.StripeChargeId</code></small>
+                            <small><code class="@(Model.IsDemoOrder ? "text-muted" : "")">@Model.StripeChargeId</code></small>
                         </span>
                     </div>
                 }
