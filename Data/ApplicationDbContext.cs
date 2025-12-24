@@ -67,6 +67,7 @@ namespace Kokomija.Data
         public DbSet<DeveloperEarnings> DeveloperEarnings { get; set; }
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
         public DbSet<SiteBlockLog> SiteBlockLogs { get; set; }
+        public DbSet<DeveloperCommissionRequest> DeveloperCommissionRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

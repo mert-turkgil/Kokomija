@@ -1,0 +1,1464 @@
+@model Kokomija.Models.ViewModels.Admin.UserEditDto
+@{
+    ViewData["Title"] = $"Edit User: {Model.Email}";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1>
+                                <i class="bi bi-person-badge"></i>
+                                Edit User
+                            </h1>
+                            <p class="mb-0">Manage user information and review their activity</p>
+                        </div>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i>
+                            Back to Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- User Information -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-person-circle"></i> User Information
+                        </h5>
+                        <form asp-action="Edit" method="post">
+                            <input type="hidden" asp-for="Id" />
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" asp-for="Email" readonly />
+                                <small class="text-muted">Email cannot be changed</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" asp-for="FirstName" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="LastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" asp-for="LastName" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" asp-for="PhoneNumber" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" asp-for="EmailConfirmed" id="emailConfirmed" />
+                                <label class="form-check-label" for="emailConfirmed">
+                                    Email Confirmed
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Stats -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-graph-up"></i> Account Statistics
+                        </h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <small class="text-muted">Account Status</small>
+                                <h6 class="mb-0">
+                                    @if (ViewBag.IsUserRoot == true)
+                                    {
+                                        <span class="badge bg-dark">
+                                            <i class="bi bi-shield-fill-check"></i> Root Administrator
+                                        </span>
+                                        <small class="d-block text-muted mt-1">Protected - Cannot be banned or deleted</small>
+                                    }
+                                    else if (Model.IsBanned)
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-shield-fill-exclamation"></i> Banned
+                                        </span>
+                                        if (Model.BannedUntil.HasValue)
+                                        {
+                                            <small class="d-block text-muted">Until @Model.BannedUntil.Value.ToString("MMMM dd, yyyy")</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle-fill"></i> Active
+                                        </span>
+                                    }
+                                </h6>
+                            </div>
+                            <div>
+                                @if (ViewBag.IsUserRoot != true)
+                                {
+                                    @if (Model.IsBanned)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-success" onclick="unbanUser('@Model.Id')">
+                                            <i class="bi bi-unlock"></i> Unban
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-warning" onclick="showBanModal('@Model.Id')">
+                                            <i class="bi bi-shield-exclamation"></i> Ban User
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <small class="text-muted">Member Since</small>
+                                <h6 class="mb-0">@Model.CreatedAt.ToString("MMMM dd, yyyy")</h6>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <small class="text-muted">Last Login</small>
+                                <h6 class="mb-0">
+                                    @if (Model.LastLogin.HasValue)
+                                    {
+                                        @Model.LastLogin.Value.ToString("MMMM dd, yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Never</span>
+                                    }
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">Total Reviews</small>
+                                <h6 class="mb-0">@Model.Reviews.Count</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                @if (ViewBag.IsUserRoot != true)
+                {
+                    <div class="card border-danger mt-4">
+                        <div class="card-body">
+                            <h6 class="border-bottom border-danger pb-2 mb-3 text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Danger Zone
+                            </h6>
+                            <p class="mb-2">Permanently delete this user account. This action cannot be undone!</p>
+                            <button type="button" class="btn btn-danger" onclick="deleteUser('@Model.Id', '@Model.Email')">
+                                <i class="bi bi-trash"></i> Delete User
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card border-dark mt-4">
+                        <div class="card-body">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-shield-fill-check"></i> Root Protection
+                            </h6>
+                            <p class="mb-0"><strong>Root users are protected:</strong></p>
+                            <ul class="mb-0 mt-2">
+                                <li>Cannot be banned</li>
+                                <li>Cannot be deleted</li>
+                                <li>Only Root users can edit Root accounts</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- User Orders -->
+        @if (Model.Orders.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-cart-fill"></i> Order History (@Model.Orders.Count)
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="ordersTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Items</th>
+                                            <th>Total</th>
+                                            <th>Discount</th>
+                                            <th>Coupon</th>
+                                            <th>Status</th>
+                                            <th>Payment</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var order in Model.Orders)
+                                        {
+                                            <tr>
+                                                <td><strong>@order.OrderNumber</strong></td>
+                                                <td><small>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small></td>
+                                                <td><span class="badge bg-info">@order.ItemCount</span></td>
+                                                <td><strong>@order.TotalAmount.ToString("C")</strong></td>
+                                                <td>
+                                                    @if (order.DiscountAmount > 0)
+                                                    {
+                                                        <span class="text-success">-@order.DiscountAmount.ToString("C")</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(order.CouponCode))
+                                                    {
+                                                        <span class="badge bg-warning">@order.CouponCode</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        var statusBadge = order.OrderStatus.ToLower() switch
+                                                        {
+                                                            "delivered" => "bg-success",
+                                                            "shipped" => "bg-info",
+                                                            "processing" => "bg-primary",
+                                                            "cancelled" => "bg-danger",
+                                                            _ => "bg-secondary"
+                                                        };
+                                                    }
+                                                    <span class="badge @statusBadge">@order.OrderStatus</span>
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        var paymentBadge = order.PaymentStatus.ToLower() switch
+                                                        {
+                                                            "paid" => "bg-success",
+                                                            "pending" => "bg-warning",
+                                                            "failed" => "bg-danger",
+                                                            "refunded" => "bg-secondary",
+                                                            _ => "bg-secondary"
+                                                        };
+                                                    }
+                                                    <span class="badge @paymentBadge">@order.PaymentStatus</span>
+                                                </td>
+                                                <td>
+                                                    <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- User Wishlist -->
+        @if (Model.Wishlist.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-heart-fill"></i> Wishlist (@Model.Wishlist.Count)
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="wishlistTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Product</th>
+                                            <th>Price</th>
+                                            <th>Stock</th>
+                                            <th>Status</th>
+                                            <th>Added</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.Wishlist)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(item.FeaturedImage))
+                                                    {
+                                                        <img src="@item.FeaturedImage" alt="@item.ProductName" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-muted d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border: 1px dashed #ddd; border-radius: 4px;">
+                                                            <i class="bi bi-image"></i>
+                                                        </div>
+                                                    }
+                                                </td>
+                                                <td><strong>@item.ProductName</strong></td>
+                                                <td><strong>@item.Price.ToString("C")</strong></td>
+                                                <td>
+                                                    @if (item.InStock)
+                                                    {
+                                                        <span class="badge bg-success">In Stock</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Out of Stock</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (item.IsActive)
+                                                    {
+                                                        <span class="badge bg-success">Active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Inactive</span>
+                                                    }
+                                                </td>
+                                                <td><small>@item.AddedAt.ToString("MMM dd, yyyy")</small></td>
+                                                <td>
+                                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Coupons Section -->
+        <div class="row mt-4">
+            <!-- Used Coupons -->
+            @if (Model.UsedCoupons.Any())
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-ticket-perforated-fill"></i> Used Coupons (@Model.UsedCoupons.Count)
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0" id="usedCouponsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Discount</th>
+                                            <th>Times Used</th>
+                                            <th>Restrictions</th>
+                                            <th>Last Used</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var coupon in Model.UsedCoupons)
+                                        {
+                                            <tr id="used-coupon-@coupon.Id">
+                                                <td>
+                                                    <strong>@coupon.Code</strong>
+                                                    @if (!string.IsNullOrEmpty(coupon.Description))
+                                                    {
+                                                        <br><small class="text-muted">@coupon.Description</small>
+                                                    }
+                                                    @if (!coupon.IsActive)
+                                                    {
+                                                        <br><span class="badge bg-secondary">Inactive</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.DiscountType == "percentage")
+                                                    {
+                                                        <span class="badge bg-primary">@coupon.DiscountValue%</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success">@coupon.DiscountValue.ToString("C")</span>
+                                                    }
+                                                </td>
+                                                <td><span class="badge bg-info">@coupon.UserUsageCount</span></td>
+                                                <td>
+                                                    @if (coupon.IsUserSpecific)
+                                                    {
+                                                        <span class="badge bg-purple" title="User-specific coupon" data-bs-toggle="tooltip">
+                                                            <i class="bi bi-person-fill"></i> User Only
+                                                        </span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(coupon.RestrictedToProduct))
+                                                    {
+                                                        <span class="badge bg-info" title="Product: @coupon.RestrictedToProduct" data-bs-toggle="tooltip">
+                                                            <i class="bi bi-box"></i> @coupon.RestrictedToProduct
+                                                        </span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(coupon.RestrictedToCategory))
+                                                    {
+                                                        <span class="badge bg-success" title="Category: @coupon.RestrictedToCategory" data-bs-toggle="tooltip">
+                                                            <i class="bi bi-tag"></i> @coupon.RestrictedToCategory
+                                                        </span>
+                                                    }
+                                                    @if (!coupon.IsUserSpecific && string.IsNullOrEmpty(coupon.RestrictedToProduct) && string.IsNullOrEmpty(coupon.RestrictedToCategory))
+                                                    {
+                                                        <span class="badge bg-secondary">General</span>
+                                                    }
+                                                </td>
+                                                <td><small>@coupon.LastUsedAt?.ToString("MMM dd, yyyy")</small></td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary" onclick="openEditCouponModal(@coupon.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-@(coupon.IsActive ? "warning" : "success")" onclick="toggleUserCoupon(@coupon.Id)" title="@(coupon.IsActive ? "Deactivate" : "Activate")">
+                                                            <i class="bi bi-@(coupon.IsActive ? "pause" : "play")"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-danger" onclick="deleteUserCoupon(@coupon.Id, '@coupon.Code')" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Available Coupons -->
+            @if (Model.AvailableCoupons.Any())
+            {
+                <div class="col-md-@(Model.UsedCoupons.Any() ? "6" : "12") mb-4">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                                <h5 class="mb-0 text-success">
+                                    <i class="bi bi-gift-fill"></i> Available Coupons (@Model.AvailableCoupons.Count)
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-success" onclick="showCreateCouponModal()">
+                                    <i class="bi bi-plus-circle"></i> Create Coupon
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0" id="availableCouponsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Discount</th>
+                                            <th>Min. Order</th>
+                                            <th>Restrictions</th>
+                                            <th>Valid Until</th>
+                                            <th>Usage</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var coupon in Model.AvailableCoupons)
+                                        {
+                                            <tr id="available-coupon-@coupon.Id">
+                                                <td>
+                                                    <strong class="text-success">@coupon.Code</strong>
+                                                    @if (!string.IsNullOrEmpty(coupon.Description))
+                                                    {
+                                                        <br><small class="text-muted">@coupon.Description</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.DiscountType == "percentage")
+                                                    {
+                                                        <span class="badge bg-primary">@coupon.DiscountValue%</span>
+                                                        @if (coupon.MaximumDiscountAmount.HasValue)
+                                                        {
+                                                            <br><small class="text-muted">Max: @coupon.MaximumDiscountAmount.Value.ToString("C")</small>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success">@coupon.DiscountValue.ToString("C")</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.MinimumOrderAmount.HasValue)
+                                                    {
+                                                        <small>@coupon.MinimumOrderAmount.Value.ToString("C")</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">None</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.IsUserSpecific)
+                                                    {
+                                                        <span class="badge bg-purple" title="User-specific coupon" data-bs-toggle="tooltip">
+                                                            <i class="bi bi-person-fill"></i> User Only
+                                                        </span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(coupon.RestrictedToProduct))
+                                                    {
+                                                        <span class="badge bg-info" title="Product: @coupon.RestrictedToProduct" data-bs-toggle="tooltip">
+                                                            <i class="bi bi-box"></i> @coupon.RestrictedToProduct
+                                                        </span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(coupon.RestrictedToCategory))
+                                                    {
+                                                        <span class="badge bg-success" title="Category: @coupon.RestrictedToCategory" data-bs-toggle="tooltip">
+                                                            <i class="bi bi-tag"></i> @coupon.RestrictedToCategory
+                                                        </span>
+                                                    }
+                                                    @if (!coupon.IsUserSpecific && string.IsNullOrEmpty(coupon.RestrictedToProduct) && string.IsNullOrEmpty(coupon.RestrictedToCategory))
+                                                    {
+                                                        <span class="badge bg-secondary">General</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.ValidUntil.HasValue)
+                                                    {
+                                                        <small>@coupon.ValidUntil.Value.ToString("MMM dd, yyyy")</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-success">No expiry</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.UsageLimitPerUser.HasValue)
+                                                    {
+                                                        <small>@coupon.UserUsageCount / @coupon.UsageLimitPerUser</small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">Unlimited</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-primary" onclick="openEditCouponModal(@coupon.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-warning" onclick="toggleUserCoupon(@coupon.Id)" title="Deactivate">
+                                                            <i class="bi bi-pause"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-danger" onclick="deleteUserCoupon(@coupon.Id, '@coupon.Code')" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            
+            <!-- No Coupons Available - Show Create Button -->
+            @if (!Model.AvailableCoupons.Any() && !Model.UsedCoupons.Any())
+            {
+                <div class="col-12 mb-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-gift fs-1 text-success mb-3 d-block"></i>
+                            <h5 class="text-muted">No Coupons</h5>
+                            <p class="text-muted mb-3">This user has no coupons yet. Create a personalized coupon for them!</p>
+                            <button type="button" class="btn btn-success" onclick="showCreateCouponModal()">
+                                <i class="bi bi-plus-circle"></i> Create User Coupon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- User Reviews -->
+        @if (Model.Reviews.Any())
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-star-fill"></i> User Reviews (@Model.Reviews.Count)
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="reviewsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Rating</th>
+                                            <th>Comment</th>
+                                            <th>Date</th>
+                                            <th>Visible</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var review in Model.Reviews)
+                                        {
+                                            <tr id="review-@review.Id">
+                                                <td>
+                                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@review.ProductId" target="_blank">
+                                                        @Html.Raw(System.Net.WebUtility.HtmlEncode(review.ProductName))
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    @for (int i = 1; i <= 5; i++)
+                                                    {
+                                                        if (i <= review.Rating)
+                                                        {
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="bi bi-star text-muted"></i>
+                                                        }
+                                                    }
+                                                    <small class="text-muted">(@review.Rating.ToString("0.0"))</small>
+                                                </td>
+                                                <td>
+                                                    <div class="review-comment-cell" id="comment-display-@review.Id">
+                                                        @Html.Raw(System.Net.WebUtility.HtmlEncode(review.Comment))
+                                                    </div>
+                                                    <textarea class="form-control d-none" id="comment-edit-@review.Id" rows="2">@Html.Raw(System.Net.WebUtility.HtmlEncode(review.Comment))</textarea>
+                                                </td>
+                                                <td>
+                                                    <small>@review.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-@(review.IsVisible ? "success" : "secondary")" id="visibility-badge-@review.Id">
+                                                        @(review.IsVisible ? "Visible" : "Hidden")
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary d-none" id="save-btn-@review.Id" onclick="saveReview(@review.Id)">
+                                                            <i class="bi bi-check"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="cancel-btn-@review.Id" onclick="cancelEdit(@review.Id)">
+                                                            <i class="bi bi-x"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" id="edit-btn-@review.Id" onclick="editReview(@review.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleVisibility(@review.Id)" title="Toggle Visibility">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteReview(@review.Id)" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Ban User Modal -->
+<div class="modal fade" id="banUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ban User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ban user: <strong>@Model.Email</strong></p>
+                <form id="banUserForm">
+                    <div class="mb-3">
+                        <label class="form-label">Ban Duration</label>
+                        <select class="form-select" id="banDays" required>
+                            <option value="1">1 Day</option>
+                            <option value="3">3 Days</option>
+                            <option value="7" selected>7 Days</option>
+                            <option value="30">30 Days</option>
+                            <option value="90">90 Days</option>
+                            <option value="365">1 Year</option>
+                            <option value="3650">Permanent (10 Years)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmBan()">
+                    <i class="bi bi-shield-exclamation"></i> Ban User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Coupon Modal -->
+<div class="modal fade" id="createCouponModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create User-Specific Coupon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Create a coupon for: <strong>@Model.Email</strong></p>
+                <form id="createCouponForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Coupon Code *</label>
+                            <input type="text" class="form-control" id="couponCode" required 
+                                   placeholder="e.g., WELCOME10" style="text-transform: uppercase;" />
+                            <small class="text-muted">Will be automatically converted to uppercase</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Discount Type *</label>
+                            <select class="form-select" id="discountType" required onchange="updateDiscountFields()">
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount ($)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Discount Value *</label>
+                            <input type="number" class="form-control" id="discountValue" required 
+                                   min="0" step="0.01" placeholder="10" />
+                        </div>
+                        <div class="col-md-6 mb-3" id="maxDiscountField" style="display: none;">
+                            <label class="form-label">Maximum Discount Amount</label>
+                            <input type="number" class="form-control" id="maxDiscount" 
+                                   min="0" step="0.01" placeholder="Optional" />
+                            <small class="text-muted">For percentage discounts</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="couponDescription" rows="2" 
+                                  placeholder="e.g., Special discount for valued customer"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Minimum Order Amount</label>
+                            <input type="number" class="form-control" id="minOrderAmount" 
+                                   min="0" step="0.01" placeholder="Optional" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Valid From</label>
+                            <input type="datetime-local" class="form-control" id="validFrom" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Valid Until</label>
+                            <input type="datetime-local" class="form-control" id="validUntil" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Usage Limit (Total)</label>
+                            <input type="number" class="form-control" id="usageLimit" 
+                                   min="1" placeholder="Unlimited" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Usage Limit Per User</label>
+                        <input type="number" class="form-control" id="usageLimitPerUser" 
+                               min="1" placeholder="Unlimited" />
+                        <small class="text-muted">How many times this user can use the coupon</small>
+                    </div>
+
+                    <hr />
+                    <h6 class="mb-3">Restrictions (Optional)</h6>
+
+                    <div class="mb-3">
+                        <label class="form-label">Restrict to Specific Product</label>
+                        <select class="form-select" id="productRestriction">
+                            <option value="">No restriction - Any product</option>
+                            @foreach (var product in (List<Kokomija.Entity.Product>)ViewBag.Products)
+                            {
+                                <option value="@product.Id">@product.Name - @product.Price.ToString("C")</option>
+                            }
+                        </select>
+                        <small class="text-muted">Coupon will only work for this product</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Restrict to Category</label>
+                        <select class="form-select" id="categoryRestriction">
+                            <option value="">No restriction - Any category</option>
+                            @foreach (var category in (List<Kokomija.Entity.Category>)ViewBag.Categories)
+                            {
+                                var categoryName = category.Translations?.FirstOrDefault(t => t.CultureCode == "en-US")?.Name 
+                                    ?? category.Translations?.FirstOrDefault()?.Name 
+                                    ?? category.Name;
+                                <option value="@category.Id">@categoryName</option>
+                            }
+                        </select>
+                        <small class="text-muted">Coupon will only work for products in this category</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="createCoupon()">
+                    <i class="bi bi-gift"></i> Create Coupon
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Coupon Modal -->
+<div class="modal fade" id="editCouponModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Coupon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCouponForm">
+                    <input type="hidden" id="editCouponId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Coupon Code</label>
+                            <input type="text" class="form-control" id="editCouponCode" readonly disabled />
+                            <small class="text-muted">Code cannot be changed after creation</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Discount</label>
+                            <input type="text" class="form-control" id="editCouponDiscount" readonly disabled />
+                            <small class="text-muted">Discount cannot be changed (Stripe limitation)</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="editCouponDescription" rows="2" 
+                                  placeholder="Internal notes about this coupon"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Minimum Order Amount</label>
+                            <input type="number" class="form-control" id="editMinOrderAmount" 
+                                   min="0" step="0.01" placeholder="Optional" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Maximum Discount Amount</label>
+                            <input type="number" class="form-control" id="editMaxDiscount" 
+                                   min="0" step="0.01" placeholder="Optional (for %) " />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Valid Until</label>
+                            <input type="datetime-local" class="form-control" id="editValidUntil" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Usage Limit (Total)</label>
+                            <input type="number" class="form-control" id="editUsageLimit" 
+                                   min="1" placeholder="Unlimited" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Usage Limit Per User</label>
+                            <input type="number" class="form-control" id="editUsageLimitPerUser" 
+                                   min="1" placeholder="Unlimited" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="editCouponActive" />
+                                <label class="form-check-label" for="editCouponActive">
+                                    Active (can be used)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>Stripe Sync:</strong> Changes will be synchronized with Stripe. Note that coupon discount values cannot be changed in Stripe after creation.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateUserCoupon()">
+                    <i class="bi bi-check-circle"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ban User Modal -->
+<div class="modal fade" id="banUserModal" tabindex="-1">
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script src="~/lib/datatables/dataTables.min.js"></script>
+    <script src="~/lib/datatables/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/dataTables.responsive.min.js"></script>
+    <script src="~/lib/datatables/responsive.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize Reviews DataTable
+            @if (Model.Reviews.Any())
+            {
+                <text>
+                $('#reviewsTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    order: [[3, 'desc']], // Sort by date descending
+                    columnDefs: [
+                        { responsivePriority: 1, targets: 0 }, // Product
+                        { responsivePriority: 2, targets: 1 }, // Rating
+                        { responsivePriority: 3, targets: -1 }, // Actions
+                        { orderable: false, targets: [2, -1] } // Disable sorting on Comment and Actions
+                    ],
+                    language: {
+                        search: "Search reviews:",
+                        lengthMenu: "Show _MENU_ reviews",
+                        info: "Showing _START_ to _END_ of _TOTAL_ reviews"
+                    }
+                });
+                </text>
+            }
+
+            // Initialize Orders DataTable
+            @if (Model.Orders.Any())
+            {
+                <text>
+                $('#ordersTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    order: [[1, 'desc']], // Sort by date descending
+                    columnDefs: [
+                        { responsivePriority: 1, targets: 0 }, // Order #
+                        { responsivePriority: 2, targets: 3 }, // Total
+                        { responsivePriority: 3, targets: -1 }, // Actions
+                        { orderable: false, targets: -1 } // Disable sorting on Actions
+                    ],
+                    language: {
+                        search: "Search orders:",
+                        lengthMenu: "Show _MENU_ orders",
+                        info: "Showing _START_ to _END_ of _TOTAL_ orders"
+                    }
+                });
+                </text>
+            }
+
+            // Initialize Wishlist DataTable
+            @if (Model.Wishlist.Any())
+            {
+                <text>
+                $('#wishlistTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    order: [[5, 'desc']], // Sort by Added date descending
+                    columnDefs: [
+                        { responsivePriority: 1, targets: 1 }, // Product
+                        { responsivePriority: 2, targets: 2 }, // Price
+                        { responsivePriority: 3, targets: -1 }, // Actions
+                        { orderable: false, targets: [0, -1] } // Disable sorting on Image and Actions
+                    ],
+                    language: {
+                        search: "Search wishlist:",
+                        lengthMenu: "Show _MENU_ items",
+                        info: "Showing _START_ to _END_ of _TOTAL_ items"
+                    }
+                });
+                </text>
+            }
+
+            // Initialize Used Coupons DataTable
+            @if (Model.UsedCoupons.Any())
+            {
+                <text>
+                $('#usedCouponsTable').DataTable({
+                    responsive: true,
+                    pageLength: 5,
+                    order: [[3, 'desc']], // Sort by Last Used descending
+                    searching: false,
+                    lengthChange: false,
+                    info: false
+                });
+                </text>
+            }
+
+            // Initialize Available Coupons DataTable
+            @if (Model.AvailableCoupons.Any())
+            {
+                <text>
+                $('#availableCouponsTable').DataTable({
+                    responsive: true,
+                    pageLength: 5,
+                    order: [[3, 'asc']], // Sort by Valid Until ascending
+                    searching: false,
+                    lengthChange: false,
+                    info: false
+                });
+                </text>
+            }
+        });
+
+        function showBanModal(userId) {
+            $('#banUserModal').modal('show');
+        }
+
+        function confirmBan() {
+            const days = $('#banDays').val();
+            
+            $.ajax({
+                url: '@Url.Action("UserBan")',
+                type: 'POST',
+                data: {
+                    id: '@Model.Id',
+                    days: days,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error banning user');
+                }
+            });
+        }
+
+        function unbanUser(userId) {
+            if (!confirm('Are you sure you want to unban this user?')) return;
+
+            $.ajax({
+                url: '@Url.Action("UserUnban")',
+                type: 'POST',
+                data: {
+                    id: userId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error unbanning user');
+                }
+            });
+        }
+
+        function showCreateCouponModal() {
+            // Reset form
+            $('#createCouponForm')[0].reset();
+            // Set default valid from to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            $('#validFrom').val(now.toISOString().slice(0, 16));
+            // Show modal
+            $('#createCouponModal').modal('show');
+        }
+
+        function updateDiscountFields() {
+            const discountType = $('#discountType').val();
+            if (discountType === 'percentage') {
+                $('#maxDiscountField').show();
+                $('#discountValue').attr('max', '100');
+            } else {
+                $('#maxDiscountField').hide();
+                $('#discountValue').removeAttr('max');
+            }
+        }
+
+        function createCoupon() {
+            const code = $('#couponCode').val().trim().toUpperCase();
+            const discountType = $('#discountType').val();
+            const discountValue = parseFloat($('#discountValue').val());
+            const description = $('#couponDescription').val().trim();
+            const minOrderAmount = $('#minOrderAmount').val() ? parseFloat($('#minOrderAmount').val()) : null;
+            const maxDiscount = $('#maxDiscount').val() ? parseFloat($('#maxDiscount').val()) : null;
+            const validFrom = $('#validFrom').val() ? new Date($('#validFrom').val()).toISOString() : null;
+            const validUntil = $('#validUntil').val() ? new Date($('#validUntil').val()).toISOString() : null;
+            const usageLimit = $('#usageLimit').val() ? parseInt($('#usageLimit').val()) : null;
+            const usageLimitPerUser = $('#usageLimitPerUser').val() ? parseInt($('#usageLimitPerUser').val()) : null;
+            const productId = $('#productRestriction').val() ? parseInt($('#productRestriction').val()) : null;
+            const categoryId = $('#categoryRestriction').val() ? parseInt($('#categoryRestriction').val()) : null;
+
+            // Validation
+            if (!code) {
+                alert('Please enter a coupon code');
+                return;
+            }
+            if (!discountValue || discountValue <= 0) {
+                alert('Please enter a valid discount value');
+                return;
+            }
+            if (discountType === 'percentage' && discountValue > 100) {
+                alert('Percentage discount cannot exceed 100%');
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("CreateUserCoupon")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    userId: '@Model.Id',
+                    code: code,
+                    description: description,
+                    discountType: discountType,
+                    discountValue: discountValue,
+                    minimumOrderAmount: minOrderAmount,
+                    maximumDiscountAmount: maxDiscount,
+                    validFrom: validFrom,
+                    validUntil: validUntil,
+                    usageLimit: usageLimit,
+                    usageLimitPerUser: usageLimitPerUser,
+                    productId: productId,
+                    categoryId: categoryId
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        $('#createCouponModal').modal('hide');
+                        alert('Coupon "' + response.couponCode + '" created successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error creating coupon');
+                }
+            });
+        }
+
+        function deleteUser(userId, userEmail) {
+            if (!confirm('Are you sure you want to DELETE user "' + userEmail + '"? This action cannot be undone!')) return;
+
+            $.ajax({
+                url: '@Url.Action("UserDelete")',
+                type: 'POST',
+                data: {
+                    id: userId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = '@Url.Action("UserManagement")';
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error deleting user');
+                }
+            });
+        }
+
+        // Review management
+        function editReview(id) {
+            $('#comment-display-' + id).addClass('d-none');
+            $('#comment-edit-' + id).removeClass('d-none');
+            $('#edit-btn-' + id).addClass('d-none');
+            $('#save-btn-' + id).removeClass('d-none');
+            $('#cancel-btn-' + id).removeClass('d-none');
+        }
+
+        function cancelEdit(id) {
+            $('#comment-display-' + id).removeClass('d-none');
+            $('#comment-edit-' + id).addClass('d-none');
+            $('#edit-btn-' + id).removeClass('d-none');
+            $('#save-btn-' + id).addClass('d-none');
+            $('#cancel-btn-' + id).addClass('d-none');
+        }
+
+        function saveReview(id) {
+            const comment = $('#comment-edit-' + id).val();
+            
+            $.ajax({
+                url: '@Url.Action("ReviewEdit")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    comment: comment,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#comment-display-' + id).text(comment);
+                        cancelEdit(id);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error updating review');
+                }
+            });
+        }
+
+        function toggleVisibility(id) {
+            $.ajax({
+                url: '@Url.Action("ReviewToggleVisibility")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const badge = $('#visibility-badge-' + id);
+                        if (response.isVisible) {
+                            badge.removeClass('bg-secondary').addClass('bg-success').text('Visible');
+                        } else {
+                            badge.removeClass('bg-success').addClass('bg-secondary').text('Hidden');
+                        }
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error toggling visibility');
+                }
+            });
+        }
+
+        function deleteReview(id) {
+            if (!confirm('Are you sure you want to delete this review?')) return;
+
+            $.ajax({
+                url: '@Url.Action("ReviewDelete")',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#review-' + id).fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error deleting review');
+                }
+            });
+        }
+
+        // ========================================
+        // Coupon Management Functions
+        // ========================================
+        
+        // Open Edit Coupon Modal
+        function openEditCouponModal(couponId) {
+            // Fetch coupon data from server
+            $.ajax({
+                url: '@Url.Action("GetUserCoupon")',
+                type: 'GET',
+                data: { id: couponId },
+                success: function(response) {
+                    if (response.success) {
+                        const coupon = response.coupon;
+                        
+                        // Populate form fields
+                        $('#editCouponId').val(coupon.id);
+                        $('#editCouponCode').val(coupon.code);
+                        
+                        // Display discount (read-only)
+                        const discountText = coupon.discountType === 'percentage' 
+                            ? coupon.discountValue + '%' 
+                            : coupon.discountValue.toLocaleString('en-US', {style: 'currency', currency: 'USD'});
+                        $('#editCouponDiscount').val(discountText);
+                        
+                        $('#editCouponDescription').val(coupon.description || '');
+                        $('#editMinOrderAmount').val(coupon.minimumOrderAmount || '');
+                        $('#editMaxDiscount').val(coupon.maximumDiscountAmount || '');
+                        
+                        // Handle datetime
+                        if (coupon.validUntil) {
+                            const date = new Date(coupon.validUntil);
+                            date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                            $('#editValidUntil').val(date.toISOString().slice(0, 16));
+                        } else {
+                            $('#editValidUntil').val('');
+                        }
+                        
+                        $('#editUsageLimit').val(coupon.usageLimit || '');
+                        $('#editUsageLimitPerUser').val(coupon.usageLimitPerUser || '');
+                        $('#editCouponActive').prop('checked', coupon.isActive);
+                        
+                        // Show modal
+                        $('#editCouponModal').modal('show');
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error loading coupon data');
+                }
+            });
+        }
+        
+        // Update User Coupon
+        function updateUserCoupon() {
+            const couponId = $('#editCouponId').val();
+            const description = $('#editCouponDescription').val().trim();
+            const minOrderAmount = $('#editMinOrderAmount').val() ? parseFloat($('#editMinOrderAmount').val()) : null;
+            const maxDiscount = $('#editMaxDiscount').val() ? parseFloat($('#editMaxDiscount').val()) : null;
+            const validUntil = $('#editValidUntil').val() ? new Date($('#editValidUntil').val()).toISOString() : null;
+            const usageLimit = $('#editUsageLimit').val() ? parseInt($('#editUsageLimit').val()) : null;
+            const usageLimitPerUser = $('#editUsageLimitPerUser').val() ? parseInt($('#editUsageLimitPerUser').val()) : null;
+            const isActive = $('#editCouponActive').is(':checked');
+
+            $.ajax({
+                url: '@Url.Action("UpdateUserCoupon")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    id: parseInt(couponId),
+                    description: description,
+                    minimumOrderAmount: minOrderAmount,
+                    maximumDiscountAmount: maxDiscount,
+                    validUntil: validUntil,
+                    usageLimit: usageLimit,
+                    usageLimitPerUser: usageLimitPerUser,
+                    isActive: isActive
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        $('#editCouponModal').modal('hide');
+                        alert('Coupon updated successfully! Changes synced with Stripe.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error updating coupon');
+                }
+            });
+        }
+        
+        // Delete User Coupon
+        function deleteUserCoupon(couponId, couponCode) {
+            if (!confirm('Are you sure you want to DELETE coupon "' + couponCode + '"?\n\nThis will also delete it from Stripe and cannot be undone!')) return;
+
+            $.ajax({
+                url: '@Url.Action("DeleteUserCoupon")',
+                type: 'POST',
+                data: {
+                    id: couponId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Remove row from table
+                        $('#used-coupon-' + couponId).fadeOut(300, function() { $(this).remove(); });
+                        $('#available-coupon-' + couponId).fadeOut(300, function() { $(this).remove(); });
+                        alert('Coupon deleted successfully! Removed from Stripe.');
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error deleting coupon');
+                }
+            });
+        }
+        
+        // Toggle User Coupon Active Status
+        function toggleUserCoupon(couponId) {
+            $.ajax({
+                url: '@Url.Action("ToggleUserCoupon")',
+                type: 'POST',
+                data: {
+                    id: couponId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message + ' Synced with Stripe.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error toggling coupon status');
+                }
+            });
+        }
+    </script>
+}

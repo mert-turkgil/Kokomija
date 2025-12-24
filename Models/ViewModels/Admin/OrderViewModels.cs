@@ -69,6 +69,7 @@ namespace Kokomija.Models.ViewModels.Admin
         public string? TrackingNumber { get; set; }
         public bool HasActiveReturn { get; set; }
         public int ActiveReturnCount { get; set; }
+        public bool IsDemoOrder { get; set; }
     }
 
     /// <summary>
@@ -80,6 +81,7 @@ namespace Kokomija.Models.ViewModels.Admin
         public string OrderNumber { get; set; } = string.Empty;
         public string StripePaymentIntentId { get; set; } = string.Empty;
         public string? StripeChargeId { get; set; }
+        public bool IsDemoOrder { get; set; }
         
         // Customer Information
         public string? UserId { get; set; }

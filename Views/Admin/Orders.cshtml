@@ -5,64 +5,131 @@
 
 @section Styles {
     <style>
+        /* ===== CSS Variables for Light/Dark Theme ===== */
+        :root {
+            --ord-bg: #f8fafc;
+            --ord-card-bg: #ffffff;
+            --ord-card-border: rgba(0,0,0,0.05);
+            --ord-card-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --ord-text-primary: #1a1a2e;
+            --ord-text-secondary: #64748b;
+            --ord-text-muted: #94a3b8;
+        }
+
+        [data-bs-theme="dark"] {
+            --ord-bg: #0f172a;
+            --ord-card-bg: #1e293b;
+            --ord-card-border: rgba(255,255,255,0.1);
+            --ord-card-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --ord-text-primary: #f1f5f9;
+            --ord-text-secondary: #94a3b8;
+            --ord-text-muted: #64748b;
+        }
+
+        .orders-page {
+            background: var(--ord-bg);
+            min-height: 100vh;
+        }
+
+        /* ===== Stat Cards - Horizontal Modern Layout ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
         .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.2s;
-            height: 100%;
+            background: var(--ord-card-bg);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--ord-card-shadow);
+            border: 1px solid var(--ord-card-border);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
         .stat-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transform: translateY(-3px);
+        }
+
+        .stat-card.clickable {
+            cursor: pointer;
         }
         
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 52px;
+            height: 52px;
+            min-width: 52px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            margin-bottom: 1rem;
+        }
+
+        .stat-content {
+            flex: 1;
+            min-width: 0;
         }
         
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
-            color: #2c3e50;
+            color: var(--ord-text-primary);
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         .stat-label {
-            font-size: 0.875rem;
-            color: #6c757d;
+            font-size: 0.75rem;
+            color: var(--ord-text-secondary);
             margin: 0.25rem 0 0 0;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        
+
+        .stat-meta {
+            font-size: 0.7rem;
+            color: var(--ord-text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .stat-link {
+            font-size: 0.7rem;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        /* ===== Other Components ===== */
         .order-table-wrapper {
-            background: white;
-            border-radius: 12px;
+            background: var(--ord-card-bg);
+            border-radius: 16px;
             padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: var(--ord-card-shadow);
+            border: 1px solid var(--ord-card-border);
         }
         
         .filter-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--ord-card-bg);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: var(--ord-card-shadow);
+            border: 1px solid var(--ord-card-border);
             margin-bottom: 1.5rem;
         }
         
         .status-badge {
             padding: 0.35rem 0.75rem;
             border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -100,38 +167,103 @@
         
         .tracking-number {
             font-family: 'Courier New', monospace;
-            background: #f8f9fa;
+            background: var(--ord-card-border);
             padding: 0.25rem 0.5rem;
             border-radius: 4px;
             font-size: 0.8rem;
         }
-        
-        .pagination {
-            margin-top: 1.5rem;
-        }
-        
-        .quick-actions .btn {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
-        }
-        
+
         .welcome-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
         }
         
         .welcome-card h1 {
             color: white;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
             font-weight: 700;
+            font-size: 1.5rem;
         }
         
         .welcome-card p {
             color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .table {
+            color: var(--ord-text-primary);
+        }
+
+        .table thead th {
+            background: var(--ord-bg);
+            color: var(--ord-text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            border: none;
+        }
+
+        .table tbody td {
+            border-color: var(--ord-card-border);
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background: var(--ord-bg);
+        }
+
+        /* ===== Responsive ===== */
+        @@media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-icon {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                font-size: 20px;
+            }
+
+            .welcome-card {
+                padding: 1.25rem;
+            }
+
+            .welcome-card h1 {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Dark mode table */
+        [data-bs-theme="dark"] .table-light {
+            background: var(--ord-card-bg) !important;
+        }
+
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background: var(--ord-card-bg);
+            border-color: var(--ord-card-border);
+            color: var(--ord-text-primary);
         }
     </style>
 }
@@ -150,7 +282,24 @@
                             </h1>
                             <p class="mb-0">View and manage all customer orders with tracking and returns</p>
                         </div>
-                        <div>
+                        <div class="d-flex gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-database"></i> Demo
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item text-success" onclick="seedDemoData()">
+                                            <i class="bi bi-plus-circle me-2"></i>Generate Demo Orders
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" onclick="removeDemoData()">
+                                            <i class="bi bi-trash me-2"></i>Remove Demo Orders
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                             <a asp-action="Index" class="btn btn-light">
                                 <i class="bi bi-arrow-left"></i>
                                 Back to Dashboard
@@ -186,14 +335,18 @@
             </div>
 
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e3f2fd;">
-                        <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
+                <a asp-action="Financial" class="text-decoration-none">
+                    <div class="stat-card" style="cursor: pointer;">
+                        <div class="stat-icon" style="background: #e3f2fd;">
+                            <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
+                        </div>
+                        <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0") PLN</h3>
+                        <p class="stat-label">Gross Revenue</p>
+                        <small class="text-muted">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
+                        <br>
+                        <small class="text-primary">Click for detailed breakdown →</small>
                     </div>
-                    <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0") PLN</h3>
-                    <p class="stat-label">Total Revenue</p>
-                    <small class="text-muted">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
-                </div>
+                </a>
             </div>
 
             <div class="col-md-3 mb-3">
@@ -344,11 +497,24 @@
                         <tbody>
                             @foreach (var order in Model.Orders)
                             {
-                                <tr>
+                                <tr class="@(order.IsDemoOrder ? "table-light" : "")">
                                     <td>
-                                        <a asp-action="OrderDetails" asp-route-id="@order.Id" class="fw-bold text-decoration-none">
-                                            @order.OrderNumber
-                                        </a>
+                                        @if (order.IsDemoOrder)
+                                        {
+                                            <span class="fw-bold text-muted" title="Demo order - No Stripe data available">
+                                                @order.OrderNumber
+                                            </span>
+                                            <br>
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">
+                                                <i class="bi bi-cone-striped"></i> DEMO
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="fw-bold text-decoration-none">
+                                                @order.OrderNumber
+                                            </a>
+                                        }
                                         @if (order.HasActiveReturn)
                                         {
                                             <br>
@@ -359,13 +525,13 @@
                                         }
                                     </td>
                                     <td>
-                                        <div class="fw-semibold">@order.CustomerName</div>
+                                        <div class="fw-semibold @(order.IsDemoOrder ? "text-muted" : "")">@order.CustomerName</div>
                                         <small class="text-muted">@order.CustomerEmail</small>
                                     </td>
                                     <td>
                                         <span class="badge bg-secondary">@order.ItemCount item@(order.ItemCount > 1 ? "s" : "")</span>
                                     </td>
-                                    <td class="fw-bold">@order.TotalAmount.ToString("N2") @order.Currency</td>
+                                    <td class="fw-bold @(order.IsDemoOrder ? "text-muted" : "")">@order.TotalAmount.ToString("N2") @order.Currency</td>
                                     <td>
                                         <span class="status-badge status-@order.OrderStatus">
                                             @order.OrderStatus
@@ -399,10 +565,19 @@
                                     </td>
                                     <td>
                                         <div class="quick-actions">
-                                            <a asp-action="OrderDetails" asp-route-id="@order.Id" 
-                                               class="btn btn-sm btn-outline-primary" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
+                                            @if (order.IsDemoOrder)
+                                            {
+                                                <button class="btn btn-sm btn-outline-secondary" disabled title="Demo data - No Stripe details">
+                                                    <i class="bi bi-eye-slash"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <a asp-action="OrderDetails" asp-route-id="@order.Id" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -490,5 +665,26 @@
                 $('#filterForm').submit();
             });
         });
+
+        // Demo data functions
+        async function seedDemoData() {
+            if (!confirm('Generate ~100 demo orders for the last 90 days?')) return;
+            try {
+                const res = await fetch('@Url.Action("SeedDemoData")', { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function removeDemoData() {
+            if (!confirm('⚠️ Remove ALL demo orders? This cannot be undone.')) return;
+            try {
+                const res = await fetch('@Url.Action("RemoveDemoData")', { method: 'POST' });
+                const data = await res.json();
+                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
+                if (data.success) location.reload();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
     </script>
 }

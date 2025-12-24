@@ -4,6 +4,7 @@ using Kokomija.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kokomija.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251219160758_AddDeveloperCommissionRequest")]
+    partial class AddDeveloperCommissionRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -431,12 +434,12 @@ namespace Kokomija.Data.Migrations
                             Id = 1,
                             AllowComments = true,
                             CategoryId = 3,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(8488),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(8607),
                             FeaturedImage = "/img/Blog/fashion-trends-2025.jpg",
                             IsDeleted = false,
                             IsPublished = true,
-                            PublishedDate = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(6949),
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(8922),
+                            PublishedDate = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(7258),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(8906),
                             Views = 0
                         });
                 });
@@ -535,7 +538,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 282, DateTimeKind.Utc).AddTicks(9599),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2174),
                             Description = "Porady dotyczące zakupów i stylizacji",
                             DisplayOrder = 1,
                             IsActive = true,
@@ -544,12 +547,12 @@ namespace Kokomija.Data.Migrations
                             MetaDescription = "Porady zakupowe i stylizacyjne dla klientów Kokomija",
                             Name = "Porady",
                             Slug = "porady",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(20)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2485)
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(447),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2784),
                             Description = "Najnowsze produkty i kolekcje",
                             DisplayOrder = 2,
                             IsActive = true,
@@ -558,12 +561,12 @@ namespace Kokomija.Data.Migrations
                             MetaDescription = "Najnowsze produkty i kolekcje w Kokomija",
                             Name = "Nowości",
                             Slug = "nowosci",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(448)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2785)
                         },
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(451),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2787),
                             Description = "Najnowsze trendy w modzie",
                             DisplayOrder = 3,
                             IsActive = true,
@@ -572,12 +575,12 @@ namespace Kokomija.Data.Migrations
                             MetaDescription = "Najnowsze trendy w modzie i stylizacji",
                             Name = "Trendy",
                             Slug = "trendy",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(452)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2788)
                         },
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(455),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2791),
                             Description = "Inspiracje stylizacyjne i lookbooki",
                             DisplayOrder = 4,
                             IsActive = true,
@@ -586,12 +589,12 @@ namespace Kokomija.Data.Migrations
                             MetaDescription = "Inspiracje stylizacyjne i lookbooki od Kokomija",
                             Name = "Inspiracje",
                             Slug = "inspiracje",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(456)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2791)
                         },
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(459),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2794),
                             Description = "Informacje o marce Kokomija",
                             DisplayOrder = 5,
                             IsActive = true,
@@ -600,7 +603,7 @@ namespace Kokomija.Data.Migrations
                             MetaDescription = "Informacje o marce Kokomija i naszej misji",
                             Name = "O marce",
                             Slug = "o-marce",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 283, DateTimeKind.Utc).AddTicks(460)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 15, DateTimeKind.Utc).AddTicks(2794)
                         });
                 });
 
@@ -672,7 +675,7 @@ namespace Kokomija.Data.Migrations
                             Id = 1,
                             BlogId = 1,
                             Content = "<p>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish.</p><p>This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</p><p><strong>Key trends:</strong></p><ul><li>Sustainable and eco-friendly materials</li><li>Bold color combinations</li><li>Oversized silhouettes</li><li>Minimalist accessories</li><li>Vintage revival</li></ul><p>Stay tuned for more fashion tips and style inspiration on our blog!</p>",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 284, DateTimeKind.Utc).AddTicks(8716),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 16, DateTimeKind.Utc).AddTicks(5679),
                             CultureCode = "en-US",
                             Excerpt = "Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors.",
                             MetaDescription = "Discover the hottest fashion trends for 2025 - sustainable materials, bold colors, and timeless style.",
@@ -680,14 +683,14 @@ namespace Kokomija.Data.Migrations
                             Slug = "fashion-trends-2025",
                             Tags = "fashion,trends,2025,style",
                             Title = "Fashion Trends for 2025",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 284, DateTimeKind.Utc).AddTicks(9173)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 16, DateTimeKind.Utc).AddTicks(5988)
                         },
                         new
                         {
                             Id = 2,
                             BlogId = 1,
                             Content = "<p>Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory, prezentujemy wszystko, co musisz wiedzieć, aby być na czasie.</p><p>Ten sezon przynosi powrót do klasyki z nowoczesnym akcentem - oversize'owe marynarki, midi spódnice i minimalistyczna biżuteria to must-have w każdej garderobie.</p><p><strong>Kluczowe trendy:</strong></p><ul><li>Zrównoważone i ekologiczne materiały</li><li>Odważne kombinacje kolorów</li><li>Oversize'owe sylwetki</li><li>Minimalistyczne akcesoria</li><li>Powrót vintage</li></ul><p>Bądź na bieżąco z naszymi poradami modowymi i inspiracjami stylistycznymi na blogu!</p>",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 284, DateTimeKind.Utc).AddTicks(9620),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 16, DateTimeKind.Utc).AddTicks(6370),
                             CultureCode = "pl-PL",
                             Excerpt = "Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory.",
                             MetaDescription = "Odkryj najgorętsze trendy modowe na rok 2025 - zrównoważone materiały, odważne kolory i ponadczasowy styl.",
@@ -695,7 +698,7 @@ namespace Kokomija.Data.Migrations
                             Slug = "trendy-modowe-2025",
                             Tags = "moda,trendy,2025,styl",
                             Title = "Trendy Modowe na 2025",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 284, DateTimeKind.Utc).AddTicks(9621)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 16, DateTimeKind.Utc).AddTicks(6371)
                         });
                 });
 
@@ -863,7 +866,7 @@ namespace Kokomija.Data.Migrations
                             AnimationType = "fade",
                             ButtonClass = "btn-primary",
                             ButtonText = "Carousel_ShopNow",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 298, DateTimeKind.Utc).AddTicks(9767),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 27, DateTimeKind.Utc).AddTicks(6031),
                             DisplayOrder = 1,
                             Duration = 5000,
                             ImageAlt = "New Spring 2025 Collection",
@@ -872,7 +875,7 @@ namespace Kokomija.Data.Migrations
                             IsDeleted = false,
                             Location = "Home",
                             MobileImagePath = "/img/Carousel/3.jpg",
-                            StartDate = new DateTime(2025, 12, 24, 16, 55, 29, 298, DateTimeKind.Utc).AddTicks(9204),
+                            StartDate = new DateTime(2025, 12, 19, 16, 7, 56, 27, DateTimeKind.Utc).AddTicks(5689),
                             Subtitle = "Carousel_NewCollection_Subtitle",
                             TabletImagePath = "/img/Carousel/2.jpg",
                             TextAlign = "center",
@@ -958,7 +961,7 @@ namespace Kokomija.Data.Migrations
                             ButtonText = "Shop Now",
                             CarouselSlideId = 1,
                             ControllerName = "Product",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 300, DateTimeKind.Utc).AddTicks(214),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 28, DateTimeKind.Utc).AddTicks(2335),
                             CultureCode = "en-US",
                             ImageAlt = "Kokomija Spring 2025 Fashion Collection - Premium Women's and Men's Underwear",
                             Subtitle = "Discover the latest trends in women's and men's fashion",
@@ -971,7 +974,7 @@ namespace Kokomija.Data.Migrations
                             ButtonText = "Kup Teraz",
                             CarouselSlideId = 1,
                             ControllerName = "Product",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 300, DateTimeKind.Utc).AddTicks(625),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 28, DateTimeKind.Utc).AddTicks(2641),
                             CultureCode = "pl-PL",
                             ImageAlt = "Kokomija Kolekcja Wiosna 2025 - Wysokiej Jakości Bielizna Damska i Męska",
                             Subtitle = "Odkryj najnowsze trendy w modzie damskiej i męskiej",
@@ -1097,7 +1100,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(2498),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(4787),
                             Description = "Odzież damska",
                             DisplayOrder = 1,
                             IconCssClass = "fas fa-female",
@@ -1111,7 +1114,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3128),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5103),
                             Description = "Odzież męska",
                             DisplayOrder = 2,
                             IconCssClass = "fas fa-male",
@@ -1125,7 +1128,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3134),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5106),
                             Description = "Kurtki i płaszcze",
                             DisplayOrder = 3,
                             IconCssClass = "fas fa-wind",
@@ -1139,7 +1142,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3141),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5109),
                             Description = "Dodatki i akcesoria",
                             DisplayOrder = 4,
                             IconCssClass = "fas fa-shopping-bag",
@@ -1153,7 +1156,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3674),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5437),
                             Description = "Eleganckie sukienki damskie",
                             DisplayOrder = 1,
                             IconCssClass = "fas fa-tshirt",
@@ -1167,7 +1170,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3683),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5444),
                             Description = "Modne spódnice",
                             DisplayOrder = 2,
                             IconCssClass = "fas fa-tshirt",
@@ -1181,7 +1184,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 7,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3746),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5446),
                             Description = "Eleganckie bluzki damskie",
                             DisplayOrder = 3,
                             IconCssClass = "fas fa-tshirt",
@@ -1195,7 +1198,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3750),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5449),
                             Description = "Spodnie damskie",
                             DisplayOrder = 4,
                             IconCssClass = "fas fa-tshirt",
@@ -1209,7 +1212,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 9,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3757),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5452),
                             Description = "Eleganckie koszule męskie",
                             DisplayOrder = 1,
                             IconCssClass = "fas fa-tshirt",
@@ -1223,7 +1226,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 10,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3761),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5455),
                             Description = "Spodnie męskie",
                             DisplayOrder = 2,
                             IconCssClass = "fas fa-tshirt",
@@ -1237,7 +1240,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 11,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3765),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5459),
                             Description = "Koszulki męskie",
                             DisplayOrder = 3,
                             IconCssClass = "fas fa-tshirt",
@@ -1251,7 +1254,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 12,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 280, DateTimeKind.Utc).AddTicks(3769),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 13, DateTimeKind.Utc).AddTicks(5461),
                             Description = "Bluzy męskie",
                             DisplayOrder = 4,
                             IconCssClass = "fas fa-tshirt",
@@ -1364,7 +1367,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2076),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(1691),
                             DisplayName = "Black",
                             DisplayOrder = 1,
                             HexCode = "#000000",
@@ -1374,7 +1377,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2578),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2012),
                             DisplayName = "White",
                             DisplayOrder = 2,
                             HexCode = "#FFFFFF",
@@ -1384,7 +1387,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2581),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2014),
                             DisplayName = "Red",
                             DisplayOrder = 3,
                             HexCode = "#FF0000",
@@ -1394,7 +1397,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2584),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2016),
                             DisplayName = "Blue",
                             DisplayOrder = 4,
                             HexCode = "#0000FF",
@@ -1404,7 +1407,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2587),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2018),
                             DisplayName = "Green",
                             DisplayOrder = 5,
                             HexCode = "#00FF00",
@@ -1414,7 +1417,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2590),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2020),
                             DisplayName = "Yellow",
                             DisplayOrder = 6,
                             HexCode = "#FFFF00",
@@ -1424,7 +1427,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 7,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2593),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2023),
                             DisplayName = "Navy Blue",
                             DisplayOrder = 7,
                             HexCode = "#000080",
@@ -1434,7 +1437,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 278, DateTimeKind.Utc).AddTicks(2597),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 12, DateTimeKind.Utc).AddTicks(2025),
                             DisplayName = "Gray",
                             DisplayOrder = 8,
                             HexCode = "#808080",
@@ -1594,7 +1597,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 1,
                             Code = "WELCOME10",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 292, DateTimeKind.Utc).AddTicks(2848),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 22, DateTimeKind.Utc).AddTicks(5375),
                             Description = "10% off your first order",
                             DiscountType = "percentage",
                             DiscountValue = 10.00m,
@@ -1606,8 +1609,8 @@ namespace Kokomija.Data.Migrations
                             UsageCount = 0,
                             UsageLimit = 1000,
                             UsageLimitPerUser = 1,
-                            ValidFrom = new DateTime(2025, 12, 24, 16, 55, 29, 292, DateTimeKind.Utc).AddTicks(298),
-                            ValidUntil = new DateTime(2026, 6, 24, 16, 55, 29, 292, DateTimeKind.Utc).AddTicks(776)
+                            ValidFrom = new DateTime(2025, 12, 19, 16, 7, 56, 22, DateTimeKind.Utc).AddTicks(3360),
+                            ValidUntil = new DateTime(2026, 6, 19, 16, 7, 56, 22, DateTimeKind.Utc).AddTicks(3743)
                         });
                 });
 
@@ -1737,10 +1740,6 @@ namespace Kokomija.Data.Migrations
                     b.Property<string>("PayoutStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("StripePayoutId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("StripeProcessingFee")
                         .HasColumnType("decimal(18,2)");
@@ -1980,9 +1979,6 @@ namespace Kokomija.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
-
-                    b.Property<bool>("IsDemoOrder")
-                        .HasColumnType("bit");
 
                     b.Property<string>("OrderNumber")
                         .IsRequired()
@@ -2433,7 +2429,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 1,
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 294, DateTimeKind.Utc).AddTicks(4907),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 24, DateTimeKind.Utc).AddTicks(5154),
                             Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
                             IsActive = true,
                             Name = "Majtki damskie bawełniane wysokie - 5 pak",
@@ -2448,7 +2444,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 2,
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 294, DateTimeKind.Utc).AddTicks(5321),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 24, DateTimeKind.Utc).AddTicks(5565),
                             Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
                             IsActive = true,
                             Name = "Majtki damskie bawełniane wysokie - 6 pak",
@@ -2463,7 +2459,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 3,
                             CategoryId = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 294, DateTimeKind.Utc).AddTicks(5326),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 24, DateTimeKind.Utc).AddTicks(5572),
                             Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
                             IsActive = true,
                             Name = "Majtki damskie bawełniane wysokie - 8 pak",
@@ -2549,7 +2545,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 293, DateTimeKind.Utc).AddTicks(1296),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 23, DateTimeKind.Utc).AddTicks(835),
                             Description = "High-quality women's cotton briefs in various pack sizes",
                             DescriptionKey = "ProductGroup_WomenBriefs_Description",
                             Name = "Women's Cotton Briefs Pack Collection",
@@ -2606,7 +2602,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 1,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 1",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5178),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7356),
                             DisplayOrder = 1,
                             ImageUrl = "products/briefs-5pack/image-1.jpg",
                             IsPrimary = true,
@@ -2616,7 +2612,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 2,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 2",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5579),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7735),
                             DisplayOrder = 2,
                             ImageUrl = "products/briefs-5pack/image-2.jpg",
                             IsPrimary = false,
@@ -2626,7 +2622,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 3,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 3",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5584),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7739),
                             DisplayOrder = 3,
                             ImageUrl = "products/briefs-5pack/image-3.jpg",
                             IsPrimary = false,
@@ -2636,7 +2632,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 4,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 4",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5588),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7742),
                             DisplayOrder = 4,
                             ImageUrl = "products/briefs-5pack/image-4.jpg",
                             IsPrimary = false,
@@ -2646,7 +2642,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 5,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 5",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5591),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7745),
                             DisplayOrder = 5,
                             ImageUrl = "products/briefs-5pack/image-5.jpg",
                             IsPrimary = false,
@@ -2656,7 +2652,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 6,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 6",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5612),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7757),
                             DisplayOrder = 6,
                             ImageUrl = "products/briefs-5pack/image-6.jpg",
                             IsPrimary = false,
@@ -2666,7 +2662,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 7,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 7",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5615),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7760),
                             DisplayOrder = 7,
                             ImageUrl = "products/briefs-5pack/image-7.jpg",
                             IsPrimary = false,
@@ -2676,7 +2672,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 8,
                             AltText = "Majtki damskie bawełniane 5-pak - zdjęcie 8",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5618),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7763),
                             DisplayOrder = 8,
                             ImageUrl = "products/briefs-5pack/image-8.jpg",
                             IsPrimary = false,
@@ -2686,7 +2682,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 9,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 1",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5624),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7768),
                             DisplayOrder = 1,
                             ImageUrl = "products/briefs-6pack/image-1.jpg",
                             IsPrimary = true,
@@ -2696,7 +2692,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 10,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 2",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5629),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7811),
                             DisplayOrder = 2,
                             ImageUrl = "products/briefs-6pack/image-2.jpg",
                             IsPrimary = false,
@@ -2706,7 +2702,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 11,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 3",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5632),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7814),
                             DisplayOrder = 3,
                             ImageUrl = "products/briefs-6pack/image-3.jpg",
                             IsPrimary = false,
@@ -2716,7 +2712,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 12,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 4",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5635),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7816),
                             DisplayOrder = 4,
                             ImageUrl = "products/briefs-6pack/image-4.jpg",
                             IsPrimary = false,
@@ -2726,7 +2722,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 13,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 5",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5638),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7818),
                             DisplayOrder = 5,
                             ImageUrl = "products/briefs-6pack/image-5.jpg",
                             IsPrimary = false,
@@ -2736,7 +2732,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 14,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 6",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5642),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7821),
                             DisplayOrder = 6,
                             ImageUrl = "products/briefs-6pack/image-6.jpg",
                             IsPrimary = false,
@@ -2746,7 +2742,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 15,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 7",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5722),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7823),
                             DisplayOrder = 7,
                             ImageUrl = "products/briefs-6pack/image-7.jpg",
                             IsPrimary = false,
@@ -2756,7 +2752,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 16,
                             AltText = "Majtki damskie bawełniane 6-pak - zdjęcie 8",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5725),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7825),
                             DisplayOrder = 8,
                             ImageUrl = "products/briefs-6pack/image-8.jpg",
                             IsPrimary = false,
@@ -2766,7 +2762,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 17,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 1",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5731),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7830),
                             DisplayOrder = 1,
                             ImageUrl = "products/briefs-8pack/image-1.jpg",
                             IsPrimary = true,
@@ -2776,7 +2772,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 18,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 2",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5735),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7833),
                             DisplayOrder = 2,
                             ImageUrl = "products/briefs-8pack/image-2.jpg",
                             IsPrimary = false,
@@ -2786,7 +2782,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 19,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 3",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5739),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7836),
                             DisplayOrder = 3,
                             ImageUrl = "products/briefs-8pack/image-3.jpg",
                             IsPrimary = false,
@@ -2796,7 +2792,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 20,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 4",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5742),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7838),
                             DisplayOrder = 4,
                             ImageUrl = "products/briefs-8pack/image-4.jpg",
                             IsPrimary = false,
@@ -2806,7 +2802,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 21,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 5",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5745),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7841),
                             DisplayOrder = 5,
                             ImageUrl = "products/briefs-8pack/image-5.jpg",
                             IsPrimary = false,
@@ -2816,7 +2812,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 22,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 6",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5748),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7843),
                             DisplayOrder = 6,
                             ImageUrl = "products/briefs-8pack/image-6.jpg",
                             IsPrimary = false,
@@ -2826,7 +2822,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 23,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 7",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5751),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7845),
                             DisplayOrder = 7,
                             ImageUrl = "products/briefs-8pack/image-7.jpg",
                             IsPrimary = false,
@@ -2836,7 +2832,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 24,
                             AltText = "Majtki damskie bawełniane 8-pak - zdjęcie 8",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 295, DateTimeKind.Utc).AddTicks(5754),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 25, DateTimeKind.Utc).AddTicks(7847),
                             DisplayOrder = 8,
                             ImageUrl = "products/briefs-8pack/image-8.jpg",
                             IsPrimary = false,
@@ -3097,7 +3093,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 1,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(3303),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8170),
                             IsActive = true,
                             Price = 49.75m,
                             ProductId = 1,
@@ -3110,7 +3106,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 2,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5348),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8504),
                             IsActive = true,
                             Price = 49.75m,
                             ProductId = 1,
@@ -3123,7 +3119,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 3,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5353),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8506),
                             IsActive = true,
                             Price = 49.75m,
                             ProductId = 1,
@@ -3136,7 +3132,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 4,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5359),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8508),
                             IsActive = true,
                             Price = 49.75m,
                             ProductId = 1,
@@ -3149,7 +3145,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 5,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5363),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8510),
                             IsActive = true,
                             Price = 49.75m,
                             ProductId = 1,
@@ -3162,7 +3158,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 6,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5385),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8517),
                             IsActive = true,
                             Price = 59.70m,
                             ProductId = 2,
@@ -3175,7 +3171,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 7,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5391),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8520),
                             IsActive = true,
                             Price = 59.70m,
                             ProductId = 2,
@@ -3188,7 +3184,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 8,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5395),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8521),
                             IsActive = true,
                             Price = 59.70m,
                             ProductId = 2,
@@ -3201,7 +3197,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 9,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5399),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8523),
                             IsActive = true,
                             Price = 59.70m,
                             ProductId = 2,
@@ -3214,7 +3210,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 10,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5405),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8526),
                             IsActive = true,
                             Price = 59.70m,
                             ProductId = 2,
@@ -3227,7 +3223,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 11,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5414),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8530),
                             IsActive = true,
                             Price = 79.60m,
                             ProductId = 3,
@@ -3240,7 +3236,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 12,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5419),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8532),
                             IsActive = true,
                             Price = 79.60m,
                             ProductId = 3,
@@ -3253,7 +3249,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 13,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5424),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8534),
                             IsActive = true,
                             Price = 79.60m,
                             ProductId = 3,
@@ -3266,7 +3262,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 14,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5427),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8550),
                             IsActive = true,
                             Price = 79.60m,
                             ProductId = 3,
@@ -3279,7 +3275,7 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 15,
                             ColorId = 8,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 297, DateTimeKind.Utc).AddTicks(5431),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 26, DateTimeKind.Utc).AddTicks(8552),
                             IsActive = true,
                             Price = 79.60m,
                             ProductId = 3,
@@ -3524,61 +3520,61 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 1,
                             Code = "inpost",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(6959),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(7395),
                             EstimatedDeliveryDays = 2,
                             IsActive = true,
                             Name = "InPost",
                             SupportedCountries = "[\"PL\"]",
                             TrackingUrlTemplate = "https://inpost.pl/sledzenie-przesylek?number={trackingNumber}",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7478)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(7838)
                         },
                         new
                         {
                             Id = 2,
                             Code = "dhl",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7936),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8268),
                             EstimatedDeliveryDays = 3,
                             IsActive = true,
                             Name = "DHL",
                             SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\"]",
                             TrackingUrlTemplate = "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7936)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8269)
                         },
                         new
                         {
                             Id = 3,
                             Code = "ups",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7940),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8273),
                             EstimatedDeliveryDays = 3,
                             IsActive = true,
                             Name = "UPS",
                             SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\"]",
                             TrackingUrlTemplate = "https://www.ups.com/track?tracknum={trackingNumber}",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7941)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8273)
                         },
                         new
                         {
                             Id = 4,
                             Code = "fedex",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7944),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8334),
                             EstimatedDeliveryDays = 3,
                             IsActive = true,
                             Name = "FedEx",
                             SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\"]",
                             TrackingUrlTemplate = "https://www.fedex.com/fedextrack/?trknbr={trackingNumber}",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7945)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8334)
                         },
                         new
                         {
                             Id = 5,
                             Code = "poczta_polska",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7948),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8339),
                             EstimatedDeliveryDays = 5,
                             IsActive = true,
                             Name = "Poczta Polska",
                             SupportedCountries = "[\"PL\"]",
                             TrackingUrlTemplate = "https://emonitoring.poczta-polska.pl/?numer={trackingNumber}",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 287, DateTimeKind.Utc).AddTicks(7949)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 18, DateTimeKind.Utc).AddTicks(8339)
                         });
                 });
 
@@ -3651,7 +3647,7 @@ namespace Kokomija.Data.Migrations
                             Id = 1,
                             BasePrice = 9.99m,
                             CountryCode = "PL",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(3851),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(5326),
                             Description = "Delivery to InPost parcel locker",
                             FreeShippingThreshold = 100.00m,
                             IsActive = true,
@@ -3659,14 +3655,14 @@ namespace Kokomija.Data.Migrations
                             MinDeliveryDays = 1,
                             Name = "InPost Paczkomat",
                             ShippingProviderId = 1,
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4270)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(5697)
                         },
                         new
                         {
                             Id = 2,
                             BasePrice = 14.99m,
                             CountryCode = "PL",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4695),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6017),
                             Description = "Home delivery by InPost courier",
                             FreeShippingThreshold = 150.00m,
                             IsActive = true,
@@ -3674,40 +3670,40 @@ namespace Kokomija.Data.Migrations
                             MinDeliveryDays = 1,
                             Name = "InPost Courier",
                             ShippingProviderId = 1,
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4696)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6018)
                         },
                         new
                         {
                             Id = 3,
                             BasePrice = 29.99m,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4700),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6020),
                             Description = "Standard international delivery",
                             IsActive = true,
                             MaxDeliveryDays = 5,
                             MinDeliveryDays = 3,
                             Name = "DHL Standard",
                             ShippingProviderId = 2,
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4700)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6021)
                         },
                         new
                         {
                             Id = 4,
                             BasePrice = 49.99m,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4760),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6025),
                             Description = "Express international delivery",
                             IsActive = true,
                             MaxDeliveryDays = 2,
                             MinDeliveryDays = 1,
                             Name = "DHL Express",
                             ShippingProviderId = 2,
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4761)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6025)
                         },
                         new
                         {
                             Id = 5,
                             BasePrice = 12.99m,
                             CountryCode = "PL",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4765),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6029),
                             Description = "Standard postal delivery",
                             FreeShippingThreshold = 120.00m,
                             IsActive = true,
@@ -3715,7 +3711,7 @@ namespace Kokomija.Data.Migrations
                             MinDeliveryDays = 3,
                             Name = "Poczta Polska Standard",
                             ShippingProviderId = 5,
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 289, DateTimeKind.Utc).AddTicks(4765)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 20, DateTimeKind.Utc).AddTicks(6029)
                         });
                 });
 
@@ -3922,7 +3918,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "string",
                             Description = "Super admin email for site control and emergency commands",
                             Key = "SuperAdminEmail",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(80),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5505),
                             Value = "admin@kokomija.com"
                         },
                         new
@@ -3932,7 +3928,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "decimal",
                             Description = "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)",
                             Key = "PlatformCommissionRate",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(411),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5815),
                             Value = "0.01"
                         },
                         new
@@ -3942,7 +3938,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "decimal",
                             Description = "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)",
                             Key = "StripeProcessingFeeRate",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(413),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5817),
                             Value = "0.014"
                         },
                         new
@@ -3952,7 +3948,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "decimal",
                             Description = "Stripe fixed fee per transaction in PLN",
                             Key = "StripeFixedFee",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(416),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5819),
                             Value = "1.00"
                         },
                         new
@@ -3962,7 +3958,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "boolean",
                             Description = "Is site currently closed for maintenance",
                             Key = "SiteClosureEnabled",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(418),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5820),
                             Value = "false"
                         },
                         new
@@ -3972,7 +3968,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "string",
                             Description = "Message displayed when site is closed",
                             Key = "SiteClosureMessage",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(420),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5822),
                             Value = "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji."
                         },
                         new
@@ -3982,7 +3978,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "integer",
                             Description = "Automatically reopen site after X days of closure",
                             Key = "AutoReopenAfterDays",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(422),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5824),
                             Value = "30"
                         },
                         new
@@ -3992,7 +3988,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "boolean",
                             Description = "Send daily confirmation emails during site closure",
                             Key = "DailyConfirmationEmailEnabled",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(424),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5826),
                             Value = "true"
                         },
                         new
@@ -4002,7 +3998,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "decimal",
                             Description = "Tax rate (VAT) applied to orders (decimal, e.g., 0.23 = 23%)",
                             Key = "TaxRate",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(426),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5828),
                             Value = "0.23"
                         },
                         new
@@ -4012,7 +4008,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "decimal",
                             Description = "Standard shipping cost in PLN",
                             Key = "ShippingRate",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(428),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5830),
                             Value = "15.00"
                         },
                         new
@@ -4022,7 +4018,7 @@ namespace Kokomija.Data.Migrations
                             DataType = "decimal",
                             Description = "Minimum order value for free shipping in PLN",
                             Key = "FreeShippingThreshold",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 286, DateTimeKind.Utc).AddTicks(430),
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 17, DateTimeKind.Utc).AddTicks(5832),
                             Value = "200.00"
                         });
                 });
@@ -4071,7 +4067,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 275, DateTimeKind.Utc).AddTicks(3495),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 10, DateTimeKind.Utc).AddTicks(6085),
                             DisplayName = "Extra Small",
                             DisplayOrder = 1,
                             IsActive = true,
@@ -4080,7 +4076,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 275, DateTimeKind.Utc).AddTicks(3844),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 10, DateTimeKind.Utc).AddTicks(6423),
                             DisplayName = "Small",
                             DisplayOrder = 2,
                             IsActive = true,
@@ -4089,7 +4085,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 275, DateTimeKind.Utc).AddTicks(3846),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 10, DateTimeKind.Utc).AddTicks(6425),
                             DisplayName = "Medium",
                             DisplayOrder = 3,
                             IsActive = true,
@@ -4098,7 +4094,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 275, DateTimeKind.Utc).AddTicks(3848),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 10, DateTimeKind.Utc).AddTicks(6427),
                             DisplayName = "Large",
                             DisplayOrder = 4,
                             IsActive = true,
@@ -4107,7 +4103,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 275, DateTimeKind.Utc).AddTicks(3851),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 10, DateTimeKind.Utc).AddTicks(6430),
                             DisplayName = "Extra Large",
                             DisplayOrder = 5,
                             IsActive = true,
@@ -4116,7 +4112,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 275, DateTimeKind.Utc).AddTicks(3853),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 10, DateTimeKind.Utc).AddTicks(6432),
                             DisplayName = "2X Large",
                             DisplayOrder = 6,
                             IsActive = true,
@@ -4189,7 +4185,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 281, DateTimeKind.Utc).AddTicks(8504),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 14, DateTimeKind.Utc).AddTicks(2417),
                             CultureCode = "pl-PL",
                             DisplayName = "Polski",
                             DisplayOrder = 1,
@@ -4202,7 +4198,7 @@ namespace Kokomija.Data.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 281, DateTimeKind.Utc).AddTicks(8954),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 14, DateTimeKind.Utc).AddTicks(2796),
                             CultureCode = "en-US",
                             DisplayName = "English",
                             DisplayOrder = 2,
@@ -4277,40 +4273,40 @@ namespace Kokomija.Data.Migrations
                         {
                             Id = 1,
                             CountryCode = "PL",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 290, DateTimeKind.Utc).AddTicks(4416),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 21, DateTimeKind.Utc).AddTicks(3598),
                             Description = "Standard VAT rate for Poland",
                             IsActive = true,
                             IsDefault = true,
                             Name = "VAT 23% (Poland)",
                             Rate = 23.00m,
                             StripeTaxRateId = "txr_placeholder_pl_23",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 290, DateTimeKind.Utc).AddTicks(4910)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 21, DateTimeKind.Utc).AddTicks(3901)
                         },
                         new
                         {
                             Id = 2,
                             CountryCode = "PL",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 290, DateTimeKind.Utc).AddTicks(5457),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 21, DateTimeKind.Utc).AddTicks(4203),
                             Description = "Reduced VAT rate for specific products",
                             IsActive = true,
                             IsDefault = false,
                             Name = "VAT 8% (Poland - Reduced)",
                             Rate = 8.00m,
                             StripeTaxRateId = "txr_placeholder_pl_8",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 290, DateTimeKind.Utc).AddTicks(5458)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 21, DateTimeKind.Utc).AddTicks(4204)
                         },
                         new
                         {
                             Id = 3,
                             CountryCode = "PL",
-                            CreatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 290, DateTimeKind.Utc).AddTicks(5462),
+                            CreatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 21, DateTimeKind.Utc).AddTicks(4207),
                             Description = "Super reduced VAT rate",
                             IsActive = false,
                             IsDefault = false,
                             Name = "VAT 5% (Poland - Super Reduced)",
                             Rate = 5.00m,
                             StripeTaxRateId = "txr_placeholder_pl_5",
-                            UpdatedAt = new DateTime(2025, 12, 24, 16, 55, 29, 290, DateTimeKind.Utc).AddTicks(5462)
+                            UpdatedAt = new DateTime(2025, 12, 19, 16, 7, 56, 21, DateTimeKind.Utc).AddTicks(4207)
                         });
                 });
 

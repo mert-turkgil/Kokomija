@@ -59,10 +59,24 @@ public class ProductCreateDto
 
     public int? ProductGroupId { get; set; }
 
+    /// <summary>
+    /// Optional: Associate a coupon with this product for automatic discount
+    /// </summary>
+    public int? CouponId { get; set; }
+
     [StringLength(50)]
     public string? StripeTaxCode { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Custom color hex code if not in the predefined palette
+    /// </summary>
+    [StringLength(7)]
+    public string? CustomColorHex { get; set; }
+
+    [StringLength(50)]
+    public string? CustomColorName { get; set; }
 
     // Image upload - temp file names from AJAX upload
     public List<string> TempImageFileNames { get; set; } = new();
@@ -105,10 +119,24 @@ public class ProductUpdateDto
 
     public int? ProductGroupId { get; set; }
 
+    /// <summary>
+    /// Optional: Associate a coupon with this product for automatic discount
+    /// </summary>
+    public int? CouponId { get; set; }
+
     [StringLength(50)]
     public string? StripeTaxCode { get; set; }
 
     public bool IsActive { get; set; }
+
+    /// <summary>
+    /// Custom color hex code if not in the predefined palette
+    /// </summary>
+    [StringLength(7)]
+    public string? CustomColorHex { get; set; }
+
+    [StringLength(50)]
+    public string? CustomColorName { get; set; }
 
     public string StripeProductId { get; set; } = string.Empty;
     public string StripePriceId { get; set; } = string.Empty;

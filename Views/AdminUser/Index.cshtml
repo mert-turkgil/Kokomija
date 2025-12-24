@@ -17,7 +17,7 @@
                             </h1>
                             <p class="mb-0">Manage user accounts, permissions, and monitor user activity</p>
                         </div>
-                        <a asp-action="Index" class="btn btn-secondary">
+                        <a asp-controller="Admin" asp-action="Index" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i>
                             Back to Dashboard
                         </a>
@@ -51,7 +51,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card-small">
+                <div class="stat-card-small" style="cursor: pointer;" onclick="showBannedUsers()" title="Click to view banned users">
                     <div class="stat-icon-small bg-danger">
                         <i class="bi bi-shield-fill-exclamation"></i>
                     </div>
@@ -174,7 +174,7 @@
                                             </td>
                                             <td class="text-end">
                                                 <div class="btn-group" role="group">
-                                                    <a asp-action="UserEdit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary" title="Edit">
+                                                    <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary" title="Edit">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
                                                     @if (!user.IsRoot)
@@ -254,6 +254,41 @@
         </div>
     </div>
 </div>
+
+<!-- Banned Users Modal -->
+<div class="modal fade" id="bannedUsersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-shield-fill-exclamation"></i> Banned Users
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="bannedUsersTable">
+                        <thead>
+                            <tr class="text-dark">
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Banned Until</th>
+                                <th>Banned On</th>
+                                <th>Reason</th>
+                                <th>Orders</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data loaded via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     <link rel="stylesheet" href="~/lib/datatables/dataTables.bootstrap5.min.css" />
     <link rel="stylesheet" href="~/lib/datatables/responsive.bootstrap5.min.css" />
@@ -276,7 +311,11 @@
 @section Scripts {
     <script src="~/lib/datatables/dataTables.min.js"></script>
     <script src="~/lib/datatables/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/datatables/dataTables.responsive.min.js"></script>
+    <script src="~/lib/datatables/responsive.bootstrap5.min.js"></script>
     <script>
+        let bannedUsersDataTable = null;
+
         $(document).ready(function() {
             // Initialize DataTable with responsive extension
             $('#usersTable').DataTable({
@@ -314,6 +353,167 @@
             });
         });
 
+        // Show banned users modal with server-side DataTable
+        function showBannedUsers() {
+            $('#bannedUsersModal').modal('show');
+            
+            // Initialize DataTable only once
+            if (bannedUsersDataTable === null) {
+                bannedUsersDataTable = $('#bannedUsersTable').DataTable({
+                    responsive: true,
+                    processing: true,
+                    serverSide: true,
+                    pageLength: 25,
+                    ajax: {
+                        url: '@Url.Action("GetBannedUsers")',
+                        type: 'POST',
+                        data: function(d) {
+                            d.__RequestVerificationToken = $('input[name="__RequestVerificationToken"]').val();
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('Error loading banned users:', error);
+                            alert('Error loading banned users. Please try again.');
+                        }
+                    },
+                    columns: [
+                        {
+                            data: 'fullName',
+                            render: function(data, type, row) {
+                                let avatar = '<div class="avatar-circle me-2">' + (data ? data.charAt(0).toUpperCase() : '?') + '</div>';
+                                let badges = '';
+                                if (row.isRoot) {
+                                    badges += '<span class="badge bg-dark ms-2"><i class="bi bi-shield-fill-check"></i> Root</span>';
+                                }
+                                badges += '<span class="badge bg-danger ms-2"><i class="bi bi-shield-fill-exclamation"></i> Banned</span>';
+                                if (!row.emailConfirmed) {
+                                    badges += '<span class="badge bg-warning ms-2"><i class="bi bi-exclamation-triangle"></i> Unverified</span>';
+                                }
+                                return '<div class="d-flex align-items-center">' + avatar + '<div><strong>' + data + '</strong>' + badges + '</div></div>';
+                            }
+                        },
+                        { data: 'email' },
+                        {
+                            data: 'bannedUntil',
+                            render: function(data, type, row) {
+                                if (!data) return '<span class="badge bg-danger">Permanent</span>';
+                                let date = new Date(data);
+                                return '<small>' + date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + '</small>';
+                            }
+                        },
+                        {
+                            data: 'bannedAt',
+                            render: function(data, type, row) {
+                                if (!data) return '-';
+                                let date = new Date(data);
+                                return '<small>' + date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + '</small>';
+                            }
+                        },
+                        {
+                            data: 'banReason',
+                            render: function(data) {
+                                return data || '<span class="text-muted">No reason provided</span>';
+                            }
+                        },
+                        {
+                            data: 'totalOrders',
+                            render: function(data) {
+                                return '<span class="badge bg-primary">' + data + '</span>';
+                            }
+                        },
+                        {
+                            data: null,
+                            orderable: false,
+                            className: 'text-end',
+                            render: function(data, type, row) {
+                                if (row.isRoot) {
+                                    return '<button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Root user - Protected"><i class="bi bi-shield-fill-check"></i></button>';
+                                }
+                                return '<div class="btn-group" role="group">' +
+                                    '<button type="button" class="btn btn-sm btn-outline-success" onclick="unbanUserFromModal(\'' + row.id + '\')" title="Unban"><i class="bi bi-unlock"></i></button>' +
+                                    '<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteUserFromModal(\'' + row.id + '\', \'' + row.fullName + '\')" title="Delete"><i class="bi bi-trash"></i></button>' +
+                                    '</div>';
+                            }
+                        }
+                    ],
+                    order: [[2, 'asc']], // Sort by Banned Until ascending
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search banned users...",
+                        lengthMenu: "Show _MENU_ users",
+                        info: "Showing _START_ to _END_ of _TOTAL_ banned users",
+                        infoEmpty: "No banned users found",
+                        processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    },
+                    columnDefs: [
+                        { responsivePriority: 1, targets: 0 }, // User name
+                        { responsivePriority: 2, targets: -1 }, // Actions
+                        { responsivePriority: 3, targets: 2 } // Banned Until
+                    ]
+                });
+            } else {
+                // Reload data if already initialized
+                bannedUsersDataTable.ajax.reload();
+            }
+        }
+
+        // Unban from modal
+        function unbanUserFromModal(userId) {
+            if (!confirm('Are you sure you want to unban this user?')) return;
+
+            $.ajax({
+                url: '@Url.Action("Unban")',
+                type: 'POST',
+                data: {
+                    id: userId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        bannedUsersDataTable.ajax.reload();
+                        // Also reload main page to update stats
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error unbanning user');
+                }
+            });
+        }
+
+        // Delete from modal
+        function deleteUserFromModal(userId, userName) {
+            if (!confirm('Are you sure you want to DELETE user "' + userName + '"? This action cannot be undone!')) return;
+
+            $.ajax({
+                url: '@Url.Action("Delete")',
+                type: 'POST',
+                data: {
+                    id: userId,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        bannedUsersDataTable.ajax.reload();
+                        // Also reload main page to update stats
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error deleting user');
+                }
+            });
+        }
+
         // Show ban modal
         function showBanModal(userId, userName) {
             $('#banUserId').val(userId);
@@ -327,7 +527,7 @@
             const days = $('#banDays').val();
             
             $.ajax({
-                url: '@Url.Action("UserBan")',
+                url: '@Url.Action("Ban")',
                 type: 'POST',
                 data: {
                     id: userId,
@@ -352,7 +552,7 @@
             if (!confirm('Are you sure you want to unban this user?')) return;
 
             $.ajax({
-                url: '@Url.Action("UserUnban")',
+                url: '@Url.Action("Unban")',
                 type: 'POST',
                 data: {
                     id: userId,
@@ -376,7 +576,7 @@
             if (!confirm('Are you sure you want to DELETE user "' + userName + '"? This action cannot be undone!')) return;
 
             $.ajax({
-                url: '@Url.Action("UserDelete")',
+                url: '@Url.Action("Delete")',
                 type: 'POST',
                 data: {
                     id: userId,

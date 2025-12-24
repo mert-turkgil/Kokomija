@@ -1,0 +1,870 @@
+@model Kokomija.Models.ViewModels.Admin.ProductCreateDto
+@{
+    ViewData["Title"] = "Create New Product";
+}
+<div class="container-fluid">
+    <div class="admin-dashboard">
+        <!-- Welcome Card -->
+        <div class="welcome-card mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-box-seam me-2"></i>Create New Product
+                    </h2>
+                    <p class="text-white-50 mb-0">Add a new product with complete details, translations, and package options</p>
+                </div>
+                <a asp-action="Index" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Back to Products
+                </a>
+            </div>
+        </div>
+       
+        <form asp-action="Create" method="post" id="productForm">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div asp-validation-summary="All" class="alert alert-danger"></div>
+            
+            <div class="row">
+                <!-- Left Column: Basic Info -->
+                <div class="col-lg-8">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle"></i> Basic Information
+                            </h5>
+
+                            <!-- Translation Tabs -->
+                            <div class="translation-tabs">
+                                <ul class="nav nav-tabs mb-3" id="translationTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="en-tab" data-bs-toggle="tab" data-bs-target="#en" type="button" role="tab">
+                                            <i class="bi bi-flag-usa"></i> English
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pl-tab" data-bs-toggle="tab" data-bs-target="#pl" type="button" role="tab">
+                                            <i class="bi bi-flag"></i> Polski
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content" id="translationTabContent">
+                            <!-- English Translation -->
+                            <div class="tab-pane fade show active" id="en" role="tabpanel">
+                                <input type="hidden" name="Translations[0].CultureCode" value="en-US" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Product Name (English) *</label>
+                                    <input name="Translations[0].Name" class="form-control" placeholder="Enter product name in English" required />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Description (English) *</label>
+                                    <textarea name="Translations[0].Description" class="form-control" rows="5" placeholder="Detailed product description in English" required></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Slug (URL-friendly)</label>
+                                        <input name="Translations[0].Slug" class="form-control" placeholder="product-name-slug" />
+                                        <small class="text-muted">Leave empty to auto-generate from name</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Meta Description</label>
+                                        <input name="Translations[0].MetaDescription" class="form-control" placeholder="SEO meta description" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Meta Keywords</label>
+                                    <input name="Translations[0].MetaKeywords" class="form-control" placeholder="keyword1, keyword2, keyword3" />
+                                </div>
+                            </div>
+
+                            <!-- Polish Translation -->
+                            <div class="tab-pane fade" id="pl" role="tabpanel">
+                                <input type="hidden" name="Translations[1].CultureCode" value="pl-PL" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Nazwa Produktu (Polski) *</label>
+                                    <input name="Translations[1].Name" class="form-control" placeholder="Wprowadź nazwę produktu po polsku" required />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Opis (Polski) *</label>
+                                    <textarea name="Translations[1].Description" class="form-control" rows="5" placeholder="Szczegółowy opis produktu po polsku" required></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Slug (przyjazny URL)</label>
+                                        <input name="Translations[1].Slug" class="form-control" placeholder="nazwa-produktu-slug" />
+                                        <small class="text-muted">Pozostaw puste, aby automatycznie wygenerować z nazwy</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Meta Opis</label>
+                                        <input name="Translations[1].MetaDescription" class="form-control" placeholder="SEO meta opis" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Słowa Kluczowe Meta</label>
+                                    <input name="Translations[1].MetaKeywords" class="form-control" placeholder="słowo1, słowo2, słowo3" />
+                                </div>
+                            </div>
+                            </div>
+
+                            <!-- Default Fallback Values (hidden, for backwards compatibility) -->
+                            <input type="hidden" asp-for="Name" id="defaultName" />
+                            <input type="hidden" asp-for="Description" id="defaultDescription" />
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Category -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-currency-dollar"></i> Pricing, Category & Options
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="BasePrice" class="form-label">Base Price (zł) *</label>
+                                    <input asp-for="BasePrice" type="number" step="0.01" class="form-control" placeholder="49.99" />
+                                    <span asp-validation-for="BasePrice" class="text-danger"></span>
+                                    <small class="text-muted">Stripe price created automatically</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="PackSize" class="form-label">Pack Size *</label>
+                                    <input asp-for="PackSize" type="number" class="form-control" placeholder="1" value="1" />
+                                    <span asp-validation-for="PackSize" class="text-danger"></span>
+                                    <small class="text-muted">E.g., 5 for 5-pack</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Product Group</label>
+                                    <select asp-for="ProductGroupId" class="form-select">
+                                        <option value="">No group</option>
+                                        @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
+                                        {
+                                            <option value="@group.Id">@group.Name</option>
+                                        }
+                                    </select>
+                                    <small class="text-muted">Group related products</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Category *</label>
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                                    <i class="bi bi-search"></i> Select Category
+                                </button>
+                                <input type="hidden" asp-for="CategoryId" id="selectedCategoryId" required />
+                                <div id="selectedCategoryDisplay" class="mt-2 text-muted">No category selected</div>
+                                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Associate Coupon (Optional)</label>
+                                <select asp-for="CouponId" class="form-select">
+                                    <option value="">No coupon - Regular pricing</option>
+                                    @foreach (var coupon in (List<Kokomija.Entity.Coupon>)ViewBag.Coupons)
+                                    {
+                                        var displayText = $"{coupon.Code} - ";
+                                        if (coupon.DiscountType == "percentage")
+                                        {
+                                            displayText += $"{coupon.DiscountValue}% off";
+                                        }
+                                        else
+                                        {
+                                            displayText += $"{coupon.DiscountValue} zł off";
+                                        }
+                                        
+                                        if (coupon.UserId != null)
+                                        {
+                                            displayText += " (User-specific)";
+                                        }
+                                        
+                                        <option value="@coupon.Id">@displayText</option>
+                                    }
+                                </select>
+                                <small class="text-muted">Automatically apply discount to this product</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Images -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-images"></i> Product Images
+                            </h5>
+                            <div class="mb-3">
+                                <label class="form-label">Upload Images (Max 5MB each, JPG/PNG/WEBP)</label>
+                                
+                                <!-- Drag & Drop Zone -->
+                                <div id="dropZone" class="border border-2 border-dashed rounded p-4 text-center" 
+                                     style="cursor: pointer; transition: all 0.3s;">
+                                    <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                                    <p class="mb-2"><strong>Drag & Drop images here</strong></p>
+                                    <p class="text-muted mb-2">or</p>
+                                    <button type="button" class="btn btn-primary" id="selectFilesBtn">
+                                        <i class="bi bi-folder2-open"></i> Browse Files
+                                    </button>
+                                    <input type="file" id="imageUpload" class="d-none" accept=".jpg,.jpeg,.png,.webp" multiple />
+                                </div>
+                                <small class="text-muted">You can upload multiple images. Click the star icon to set primary image.</small>
+                            </div>
+                            
+                            <div id="imagePreview" class="row g-3 mt-2"></div>
+                            
+                            <!-- Hidden input to store temp file names -->
+                            <input type="hidden" id="tempImageFileNames" name="TempImageFileNames" />
+                        </div>
+                    </div>
+
+                    <!-- Variants Section -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-grid-3x3-gap"></i> Product Variants
+                            </h5>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Create variants for different size/color combinations. Each variant can have its own price and stock level.
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" id="addVariantBtn">
+                                    <i class="bi bi-plus-circle me-1"></i> Add Variant
+                                </button>
+                            </div>
+
+                            <div id="variantsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Attributes & Status -->
+                <div class="col-lg-4">
+                    <!-- Sizes & Colors -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-palette"></i> Attributes
+                            </h5>
+                        <div class="mb-3">
+                            <label class="form-label">Available Sizes</label>
+                            <div class="size-checkboxes">
+                                @foreach (var size in Model.AvailableSizes)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input size-checkbox" type="checkbox" name="SelectedSizeIds" value="@size.Value" id="size_@size.Value" />
+                                        <label class="form-check-label" for="size_@size.Value">
+                                            @size.Text
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Available Colors</label>
+                            <div class="color-checkboxes">
+                                @foreach (var color in Model.AvailableColors)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input color-checkbox" type="checkbox" name="SelectedColorIds" value="@color.Value" id="color_@color.Value" />
+                                        <label class="form-check-label" for="color_@color.Value">
+                                            @color.Text
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Custom Colors (Outside Palette)</label>
+                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#customColorModal">
+                                <i class="bi bi-plus-circle"></i> Add Custom Color
+                            </button>
+                            <input type="hidden" asp-for="CustomColorHex" id="customColorHexInput" />
+                            <input type="hidden" asp-for="CustomColorName" id="customColorNameInput" />
+                            <div id="customColorsList" class="mt-2"></div>
+                            <small class="text-muted">Add colors not in the standard palette with hex codes</small>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-toggle-on"></i> Status
+                            </h5>
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" id="isActiveSwitch" checked />
+                            <label class="form-check-label" for="isActiveSwitch">
+                                Active (visible to customers)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 bg-body-tertiary p-3 rounded-3 mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-circle"></i> Create Product
+            </button>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+</div>
+
+<!-- Category Selection Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">
+                    <i class="bi bi-grid-3x3-gap"></i> Select Category
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table id="categoryTable" class="table table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Display Order</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in (List<Kokomija.Entity.Category>)ViewBag.Categories)
+                        {
+                            var translation = category.Translations?.FirstOrDefault(t => t.CultureCode == "en-US") 
+                                ?? category.Translations?.FirstOrDefault();
+                            var categoryName = translation?.Name ?? category.Name ?? "Unnamed";
+                            <tr>
+                                <td>@categoryName</td>
+                                <td>
+                                    @if (category.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>@category.DisplayOrder</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary select-category" 
+                                            data-category-id="@category.Id" 
+                                            data-category-name="@categoryName">
+                                        Select
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Color Modal -->
+<div class="modal fade" id="customColorModal" tabindex="-1" aria-labelledby="customColorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customColorModalLabel">
+                    <i class="bi bi-palette"></i> Add Custom Color
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="customColorName" class="form-label">Color Name *</label>
+                    <input type="text" id="customColorName" class="form-control" placeholder="E.g., Rose Gold" />
+                </div>
+                <div class="mb-3">
+                    <label for="customColorHex" class="form-label">Hex Code *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">#</span>
+                        <input type="text" id="customColorHex" class="form-control" placeholder="FF69B4" maxlength="6" />
+                        <input type="color" id="colorPicker" class="form-control form-control-color" title="Choose color" />
+                    </div>
+                    <small class="text-muted">6-digit hex color code (without #)</small>
+                </div>
+                <div id="customColorPreview" class="p-3 rounded text-center" style="border: 2px dashed #ddd;">
+                    <strong>Preview</strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="addCustomColorBtn">Add Color</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .image-preview-item {
+            position: relative;
+        }
+        .image-preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .image-remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 53, 69, 0.9);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .image-remove-btn:hover {
+            background: rgb(220, 53, 69);
+            transform: scale(1.1);
+        }
+        .variant-card {
+            border: 1px solid var(--bs-border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: var(--bs-tertiary-bg);
+        }
+        [data-bs-theme="dark"] .variant-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .variant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        let tempImageFileNames = [];
+        let variantIndex = 0;
+        let primaryImageFileName = null;
+
+        // === Drag & Drop Image Upload ===
+        const dropZone = document.getElementById('dropZone');
+        const imageUpload = document.getElementById('imageUpload');
+        const selectFilesBtn = document.getElementById('selectFilesBtn');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop zone when dragging
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.style.borderColor = '#0d6efd';
+            dropZone.style.backgroundColor = 'rgba(13, 110, 253, 0.05)';
+        }
+
+        function unhighlight(e) {
+            dropZone.style.borderColor = '';
+            dropZone.style.backgroundColor = '';
+        }
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', handleDrop, false);
+        dropZone.addEventListener('click', () => imageUpload.click());
+        selectFilesBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            imageUpload.click();
+        });
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        async function handleFiles(files) {
+            const fileArray = Array.from(files);
+            for (const file of fileArray) {
+                await uploadFile(file);
+            }
+        }
+
+        // Image Upload
+        document.getElementById('imageUpload').addEventListener('change', async function(e) {
+            await handleFiles(e.target.files);
+            e.target.value = '';
+        });
+
+        async function uploadFile(file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`File ${file.name} is too large. Max size is 5MB.`);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('@Url.Action("UploadImage")', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    tempImageFileNames.push(result.tempFileName);
+                    
+                    // Set first image as primary
+                    if (tempImageFileNames.length === 1) {
+                        primaryImageFileName = result.tempFileName;
+                    }
+                    
+                    addImagePreview(result.tempUrl, result.tempFileName);
+                    updateHiddenInput();
+                } else {
+                    alert(`Error uploading ${file.name}: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert(`Error uploading ${file.name}`);
+            }
+        }
+
+        function addImagePreview(url, fileName) {
+            const isPrimary = fileName === primaryImageFileName;
+            const previewHtml = `
+                <div class="col-md-3 image-preview-item" data-filename="${fileName}">
+                    <div class="position-relative">
+                        <img src="${url}" alt="Product Image" />
+                        <button type="button" class="image-remove-btn" onclick="removeImage('${fileName}')">
+                            <i class="bi bi-x"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm ${isPrimary ? 'btn-warning' : 'btn-outline-light'} position-absolute top-0 start-0 m-2" 
+                                onclick="setPrimaryImage('${fileName}')" title="Set as primary">
+                            <i class="bi bi-star${isPrimary ? '-fill' : ''}"></i>
+                        </button>
+                        ${isPrimary ? '<span class="badge bg-warning text-dark position-absolute bottom-0 start-50 translate-middle-x mb-2">Primary</span>' : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('imagePreview').insertAdjacentHTML('beforeend', previewHtml);
+        }
+
+        function setPrimaryImage(fileName) {
+            primaryImageFileName = fileName;
+            
+            // Move primary image to first position in array
+            tempImageFileNames = tempImageFileNames.filter(f => f !== fileName);
+            tempImageFileNames.unshift(fileName);
+            updateHiddenInput();
+            
+            // Rebuild preview to show updated primary status
+            rebuildImagePreviews();
+        }
+
+        function rebuildImagePreviews() {
+            const previewContainer = document.getElementById('imagePreview');
+            const existingPreviews = Array.from(previewContainer.querySelectorAll('.image-preview-item'));
+            
+            // Extract URLs from existing previews
+            const imageData = existingPreviews.map(item => ({
+                fileName: item.dataset.filename,
+                url: item.querySelector('img').src
+            }));
+            
+            // Clear and rebuild
+            previewContainer.innerHTML = '';
+            tempImageFileNames.forEach(fileName => {
+                const data = imageData.find(d => d.fileName === fileName);
+                if (data) {
+                    addImagePreview(data.url, fileName);
+                }
+            });
+        }
+
+        async function removeImage(fileName) {
+            if (!confirm('Remove this image?')) return;
+
+            try {
+                const response = await fetch('@Url.Action("CancelUpload")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify({ tempFileNames: [fileName] })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    tempImageFileNames = tempImageFileNames.filter(f => f !== fileName);
+                    
+                    // If removed primary, set new primary
+                    if (fileName === primaryImageFileName) {
+                        primaryImageFileName = tempImageFileNames.length > 0 ? tempImageFileNames[0] : null;
+                    }
+                    
+                    document.querySelector(`.image-preview-item[data-filename="${fileName}"]`).remove();
+                    updateHiddenInput();
+                    
+                    // Rebuild to update primary status
+                    if (tempImageFileNames.length > 0) {
+                        rebuildImagePreviews();
+                    }
+                }
+            } catch (error) {
+                console.error('Error removing image:', error);
+            }
+        }
+
+        function updateHiddenInput() {
+            document.getElementById('tempImageFileNames').value = tempImageFileNames.join(',');
+        }
+
+        // Variant Management
+        document.getElementById('addVariantBtn').addEventListener('click', function() {
+            const sizes = @Html.Raw(Json.Serialize(Model.AvailableSizes));
+            const colors = @Html.Raw(Json.Serialize(Model.AvailableColors));
+            
+            const variantHtml = `
+                <div class="variant-card" data-variant-index="${variantIndex}">
+                    <div class="variant-header">
+                        <h6 class="mb-0">Variant #${variantIndex + 1}</h6>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeVariant(${variantIndex})">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Size</label>
+                            <select name="Variants[${variantIndex}].SizeId" class="form-select form-select-sm">
+                                <option value="">-- Optional --</option>
+                                ${sizes.map(s => `<option value="${s.value}">${s.text}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Color</label>
+                            <select name="Variants[${variantIndex}].ColorId" class="form-select form-select-sm">
+                                <option value="">-- Optional --</option>
+                                ${colors.map(c => `<option value="${c.value}">${c.text}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">SKU *</label>
+                            <input name="Variants[${variantIndex}].SKU" type="text" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Price (₺) *</label>
+                            <input name="Variants[${variantIndex}].Price" type="number" step="0.01" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label">Stock *</label>
+                            <input name="Variants[${variantIndex}].StockQuantity" type="number" class="form-control form-control-sm" required />
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('variantsContainer').insertAdjacentHTML('beforeend', variantHtml);
+            variantIndex++;
+        });
+
+        function removeVariant(index) {
+            document.querySelector(`.variant-card[data-variant-index="${index}"]`).remove();
+        }
+
+        // Form submit - cleanup on cancel
+        window.addEventListener('beforeunload', async function(e) {
+            if (tempImageFileNames.length > 0 && !document.getElementById('productForm').submitted) {
+                await fetch('@Url.Action("CancelUpload")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify({ tempFileNames: tempImageFileNames }),
+                    keepalive: true
+                });
+            }
+        });
+
+        document.getElementById('productForm').addEventListener('submit', function() {
+            this.submitted = true;
+            
+            // Sync default Name/Description from English translation for backwards compatibility
+            const enName = document.querySelector('input[name="Translations[0].Name"]').value;
+            const enDesc = document.querySelector('textarea[name="Translations[0].Description"]').value;
+            document.getElementById('defaultName').value = enName;
+            document.getElementById('defaultDescription').value = enDesc;
+        });
+
+        // === Category DataTables ===
+        $(document).ready(function() {
+            const categoryTable = $('#categoryTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [[2, 'asc']], // Sort by Display Order
+                language: {
+                    search: "Search categories:",
+                    lengthMenu: "Show _MENU_ categories",
+                    info: "Showing _START_ to _END_ of _TOTAL_ categories",
+                    emptyTable: "No categories available"
+                }
+            });
+
+            // Category selection handler
+            $(document).on('click', '.select-category', function() {
+                const categoryId = $(this).data('category-id');
+                const categoryName = $(this).data('category-name');
+                
+                $('#selectedCategoryId').val(categoryId);
+                $('#selectedCategoryDisplay').html(
+                    `<span class="badge bg-success"><i class="bi bi-check-circle"></i> ${categoryName}</span>`
+                );
+                
+                $('#categoryModal').modal('hide');
+            });
+        });
+
+        // === Custom Color Functionality ===
+        let customColorHexValues = [];
+        let customColorNameValues = [];
+
+        // Sync color picker with hex input
+        document.getElementById('colorPicker').addEventListener('input', function(e) {
+            const hex = e.target.value.substring(1); // Remove #
+            document.getElementById('customColorHex').value = hex.toUpperCase();
+            updateColorPreview(hex);
+        });
+
+        document.getElementById('customColorHex').addEventListener('input', function(e) {
+            const hex = e.target.value.replace('#', '');
+            if (hex.length === 6 && /^[0-9A-Fa-f]{6}$/.test(hex)) {
+                document.getElementById('colorPicker').value = '#' + hex;
+                updateColorPreview(hex);
+            }
+        });
+
+        function updateColorPreview(hex) {
+            const preview = document.getElementById('customColorPreview');
+            const color = '#' + hex;
+            preview.style.backgroundColor = color;
+            
+            // Calculate contrast for text color
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            preview.style.color = brightness > 128 ? '#000' : '#fff';
+        }
+
+        document.getElementById('addCustomColorBtn').addEventListener('click', function() {
+            const colorName = document.getElementById('customColorName').value.trim();
+            const colorHex = document.getElementById('customColorHex').value.trim().toUpperCase();
+
+            if (!colorName || !colorHex) {
+                alert('Please provide both color name and hex code');
+                return;
+            }
+
+            if (!/^[0-9A-F]{6}$/.test(colorHex)) {
+                alert('Invalid hex code. Use 6-digit format (e.g., FF69B4)');
+                return;
+            }
+
+            customColorHexValues.push(colorHex);
+            customColorNameValues.push(colorName);
+
+            // Update hidden inputs
+            document.getElementById('customColorHexInput').value = customColorHexValues.join(',');
+            document.getElementById('customColorNameInput').value = customColorNameValues.join(',');
+
+            // Display added color
+            const colorList = document.getElementById('customColorsList');
+            const badge = document.createElement('span');
+            badge.className = 'badge me-2 mb-2';
+            badge.style.backgroundColor = '#' + colorHex;
+            badge.style.color = calculateTextColor(colorHex);
+            badge.innerHTML = `${colorName} <i class="bi bi-x-circle ms-1" style="cursor:pointer;" onclick="removeCustomColor(${customColorHexValues.length - 1})"></i>`;
+            colorList.appendChild(badge);
+
+            // Reset modal
+            document.getElementById('customColorName').value = '';
+            document.getElementById('customColorHex').value = '';
+            document.getElementById('colorPicker').value = '#000000';
+            document.getElementById('customColorPreview').style.backgroundColor = 'transparent';
+            
+            $('#customColorModal').modal('hide');
+        });
+
+        function calculateTextColor(hex) {
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 128 ? '#000' : '#fff';
+        }
+
+        function removeCustomColor(index) {
+            customColorHexValues.splice(index, 1);
+            customColorNameValues.splice(index, 1);
+            
+            document.getElementById('customColorHexInput').value = customColorHexValues.join(',');
+            document.getElementById('customColorNameInput').value = customColorNameValues.join(',');
+            
+            // Rebuild display
+            const colorList = document.getElementById('customColorsList');
+            colorList.innerHTML = '';
+            customColorHexValues.forEach((hex, i) => {
+                const badge = document.createElement('span');
+                badge.className = 'badge me-2 mb-2';
+                badge.style.backgroundColor = '#' + hex;
+                badge.style.color = calculateTextColor(hex);
+                badge.innerHTML = `${customColorNameValues[i]} <i class="bi bi-x-circle ms-1" style="cursor:pointer;" onclick="removeCustomColor(${i})"></i>`;
+                colorList.appendChild(badge);
+            });
+        }
+    </script>
+}

@@ -175,6 +175,7 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IStripeCustomerService, StripeCustomerService>();
 builder.Services.AddScoped<IStripeProductSeeder, StripeProductSeeder>();
+builder.Services.AddScoped<IStripePayoutService, StripePayoutService>();
 builder.Services.AddScoped<IPriceHistoryService, PriceHistoryService>();
 
 // Register Cookie Consent Service
@@ -281,6 +282,14 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Seeding Stripe products...");
         await stripeSeeder.SeedProductsToStripeAsync();
         logger.LogInformation("Stripe product seeding completed successfully.");
+        
+        // Seed demo financial data (only in development, can be removed via admin panel)
+        if (builder.Environment.IsDevelopment())
+        {
+            logger.LogInformation("Seeding financial demo data...");
+            await FinancialDataSeeder.SeedFinancialDataAsync(services);
+            logger.LogInformation("Financial demo data seeding completed.");
+        }
     }
     catch (Exception ex)
     {
