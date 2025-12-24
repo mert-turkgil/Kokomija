@@ -269,6 +269,18 @@ public class AdminController : Controller
     }
 
     /// <summary>
+    /// Helper method to determine if an order is a demo order based on payment intent ID
+    /// </summary>
+    private static bool IsDemoOrder(string? paymentIntentId)
+    {
+        if (string.IsNullOrEmpty(paymentIntentId))
+            return true;
+
+        return paymentIntentId.Equals(DemoPaymentIntent, StringComparison.OrdinalIgnoreCase) ||
+               paymentIntentId.StartsWith(DemoPaymentIntentPrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// GET: Order Management page with list and statistics
     /// </summary>
     public async Task<IActionResult> Orders(int page = 1, string? search = null, string? status = null, 
@@ -384,9 +396,7 @@ public class AdminController : Controller
                 TrackingNumber = hasShipment ? shipment!.TrackingNumber : null,
                 HasActiveReturn = hasReturn,
                 ActiveReturnCount = hasReturn ? returnCount : 0,
-                IsDemoOrder = string.IsNullOrEmpty(o.StripePaymentIntentId) || 
-                             o.StripePaymentIntentId.StartsWith(DemoPaymentIntentPrefix) || 
-                             o.StripePaymentIntentId == DemoPaymentIntent
+                IsDemoOrder = IsDemoOrder(o.StripePaymentIntentId)
             };
         }).ToList();
         
