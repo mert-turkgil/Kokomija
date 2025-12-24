@@ -342,7 +342,7 @@ public class AdminController : Controller
                 HasActiveReturn = hasReturn,
                 ActiveReturnCount = hasReturn ? returnCount : 0,
                 IsDemoOrder = IsDemoOrder(o.StripePaymentIntentId),
-                IsDemoOrder = o.IsDemoOrder || o.OrderNumber.StartsWith("DEMO-")
+                IsDemoOrder = o.IsDemoOrder || o.OrderNumber.StartsWith("DEMO-"),
             };
         }).ToList();
         
