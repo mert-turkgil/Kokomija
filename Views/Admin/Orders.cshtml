@@ -95,12 +95,6 @@
             margin-top: 0.25rem;
         }
 
-        .stat-link {
-            font-size: 0.7rem;
-            color: #3b82f6;
-            font-weight: 600;
-        }
-
         /* ===== Other Components ===== */
         .order-table-wrapper {
             background: var(--ord-card-bg);
@@ -482,11 +476,12 @@
                                     <td>
                                         @if (order.IsDemoOrder)
                                         {
-                                            <span class="fw-bold text-muted" title="Demo order - No Stripe data available">
-                                                @order.OrderNumber
-                                            </span>
-                                            <br>
-                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">
+                                            <div>
+                                                <span class="fw-bold text-muted" title="Demo order - No Stripe data available">
+                                                    @order.OrderNumber
+                                                </span>
+                                            </div>
+                                            <span class="badge bg-warning text-dark mt-1" style="font-size: 0.65rem;">
                                                 <i class="bi bi-cone-striped"></i> DEMO
                                             </span>
                                         }
@@ -498,11 +493,12 @@
                                         }
                                         @if (order.HasActiveReturn)
                                         {
-                                            <br>
-                                            <span class="return-indicator">
-                                                <i class="bi bi-arrow-return-left"></i>
-                                                @order.ActiveReturnCount Return@(order.ActiveReturnCount > 1 ? "s" : "")
-                                            </span>
+                                            <div class="mt-1">
+                                                <span class="return-indicator">
+                                                    <i class="bi bi-arrow-return-left"></i>
+                                                    @order.ActiveReturnCount Return@(order.ActiveReturnCount > 1 ? "s" : "")
+                                                </span>
+                                            </div>
                                         }
                                     </td>
                                     <td>

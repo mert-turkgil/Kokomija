@@ -31,6 +31,10 @@ public class AdminController : Controller
     private readonly ITaxService _taxService;
     private readonly IReturnRequestService _returnRequestService;
 
+    // Constants for demo order detection
+    private const string DemoPaymentIntentPrefix = "demo_";
+    private const string DemoPaymentIntent = "demo";
+
     public AdminController(
         IUnitOfWork unitOfWork, 
         ILogger<AdminController> logger,
@@ -380,7 +384,9 @@ public class AdminController : Controller
                 TrackingNumber = hasShipment ? shipment!.TrackingNumber : null,
                 HasActiveReturn = hasReturn,
                 ActiveReturnCount = hasReturn ? returnCount : 0,
-                IsDemoOrder = string.IsNullOrEmpty(o.StripePaymentIntentId) || o.StripePaymentIntentId.StartsWith("demo_") || o.StripePaymentIntentId == "demo"
+                IsDemoOrder = string.IsNullOrEmpty(o.StripePaymentIntentId) || 
+                             o.StripePaymentIntentId.StartsWith(DemoPaymentIntentPrefix) || 
+                             o.StripePaymentIntentId == DemoPaymentIntent
             };
         }).ToList();
         
