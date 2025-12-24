@@ -338,7 +338,7 @@
             </div>
 
             <div class="col-md-3 mb-3">
-                <a asp-action="Financial" class="text-decoration-none">
+                <a asp-controller="Admin" asp-action="Financial" class="text-decoration-none">
                     <div class="stat-card" style="cursor: pointer;">
                         <div class="stat-icon" style="background: #e3f2fd;">
                             <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
@@ -349,13 +349,14 @@
                         <br>
                         <small class="text-primary">Click for detailed breakdown →</small>
                     </div>
+                </a>
                     <div class="stat-content">
                         <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0") PLN</h3>
                         <p class="stat-label">Gross Revenue</p>
                         <small class="text-muted">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
                     </div>
                 </div>
-                </a>
+                
             </div>
 
             <div class="col-md-3 mb-3">
