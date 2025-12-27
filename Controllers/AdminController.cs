@@ -36,6 +36,10 @@ public class AdminController : Controller
     private readonly IStripePayoutService _stripePayoutService;
     private readonly ICarrierApiService _carrierApiService;
 
+    // Constants for demo order detection
+    private const string DemoPaymentIntentPrefix = "demo_";
+    private const string DemoPaymentIntent = "demo";
+
     public AdminController(
         IUnitOfWork unitOfWork, 
         ILogger<AdminController> logger,
@@ -215,6 +219,18 @@ public class AdminController : Controller
         return View();
     }
 
+
+    /// <summary>
+    /// Helper method to determine if an order is a demo order based on payment intent ID
+    /// </summary>
+    private static bool IsDemoOrder(string? paymentIntentId)
+    {
+        if (string.IsNullOrEmpty(paymentIntentId))
+            return true;
+
+        return paymentIntentId.Equals(DemoPaymentIntent, StringComparison.OrdinalIgnoreCase) ||
+               paymentIntentId.StartsWith(DemoPaymentIntentPrefix, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// GET: Order Management page with list and statistics
