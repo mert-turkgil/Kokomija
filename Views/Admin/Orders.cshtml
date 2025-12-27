@@ -173,27 +173,6 @@
             font-size: 0.8rem;
         }
 
-        .welcome-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 1.5rem 2rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-        }
-        
-        .welcome-card h1 {
-            color: white;
-            margin-bottom: 0.25rem;
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        
-        .welcome-card p {
-            color: rgba(255, 255, 255, 0.9);
-            margin: 0;
-            font-size: 0.9rem;
-        }
 
         .table {
             color: var(--ord-text-primary);
@@ -244,14 +223,6 @@
                 min-width: 44px;
                 font-size: 20px;
             }
-
-            .welcome-card {
-                padding: 1.25rem;
-            }
-
-            .welcome-card h1 {
-                font-size: 1.25rem;
-            }
         }
 
         /* Dark mode table */
@@ -264,6 +235,186 @@
             background: var(--ord-card-bg);
             border-color: var(--ord-card-border);
             color: var(--ord-text-primary);
+        }
+
+        /* Dark mode dropdown styling */
+        [data-bs-theme="dark"] .dropdown-menu {
+            background: var(--ord-card-bg);
+            border-color: var(--ord-card-border);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item {
+            color: var(--ord-text-primary);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item:hover,
+        [data-bs-theme="dark"] .dropdown-item:focus {
+            background: var(--ord-bg);
+            color: var(--ord-text-primary);
+        }
+
+        [data-bs-theme="dark"] .dropdown-item.text-success {
+            color: #34d399 !important;
+        }
+
+        [data-bs-theme="dark"] .dropdown-item.text-danger {
+            color: #f87171 !important;
+        }
+
+        [data-bs-theme="dark"] .dropdown-divider {
+            border-color: var(--ord-card-border);
+        }
+
+        [data-bs-theme="dark"] .btn-light {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        [data-bs-theme="dark"] .btn-light:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.3);
+            color: #fff;
+        }
+
+        /* Modal styling for dark mode */
+        [data-bs-theme="dark"] .modal-content {
+            background: var(--ord-card-bg);
+            border-color: var(--ord-card-border);
+        }
+
+        [data-bs-theme="dark"] .modal-header,
+        [data-bs-theme="dark"] .modal-footer {
+            border-color: var(--ord-card-border);
+        }
+
+        [data-bs-theme="dark"] .btn-close {
+            filter: invert(1);
+        }
+
+        /* Demo Modal Styles */
+        .demo-modal .modal-content {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        }
+
+        .demo-modal .modal-body {
+            padding: 2rem;
+        }
+
+        .confirm-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .confirm-icon.success {
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .confirm-icon.success i {
+            font-size: 2.5rem;
+            color: #10b981;
+        }
+
+        .confirm-icon.danger {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .confirm-icon.danger i {
+            font-size: 2.5rem;
+            color: #ef4444;
+        }
+
+        .confirm-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ord-text-primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .confirm-text {
+            color: var(--ord-text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .confirm-features {
+            background: var(--ord-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .confirm-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: var(--ord-text-primary);
+            font-size: 0.875rem;
+        }
+
+        .confirm-feature i {
+            color: #10b981;
+            font-size: 1rem;
+        }
+
+        .confirm-feature i.text-danger {
+            color: #ef4444 !important;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-card {
+            background: var(--ord-card-bg);
+            border-radius: 20px;
+            padding: 2rem 3rem;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--ord-card-border);
+            border-top: 4px solid #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--ord-text-primary);
+            font-weight: 600;
         }
     </style>
 }
@@ -284,19 +435,32 @@
                         </div>
                         <div class="d-flex gap-2">
                             <div class="dropdown">
-                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-database"></i> Demo
+                                <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                    <i class="bi bi-database-fill-gear"></i> Demo Data
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="position: absolute; z-index: 1100;">
+                                    <li class="px-3 py-2">
+                                        <small class="text-muted fw-semibold text-uppercase">Demo Order Management</small>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <button class="dropdown-item text-success" onclick="seedDemoData()">
-                                            <i class="bi bi-plus-circle me-2"></i>Generate Demo Orders
+                                        <button class="dropdown-item py-2" type="button" onclick="showAddModal()">
+                                            <i class="bi bi-plus-circle text-success me-2"></i>
+                                            <span class="text-success fw-semibold">Generate Demo Orders</span>
                                         </button>
                                     </li>
                                     <li>
-                                        <button class="dropdown-item text-danger" onclick="removeDemoData()">
-                                            <i class="bi bi-trash me-2"></i>Remove Demo Orders
+                                        <button class="dropdown-item py-2" type="button" onclick="showRemoveModal()">
+                                            <i class="bi bi-trash3 text-danger me-2"></i>
+                                            <span class="text-danger fw-semibold">Remove Demo Orders</span>
                                         </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="px-3 py-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Demo orders include returns for testing
+                                        </small>
                                     </li>
                                 </ul>
                             </div>
@@ -313,97 +477,123 @@
         <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e8f5e9;">
-                        <i class="bi bi-bag-check-fill" style="color: #4caf50;"></i>
-                    </div>
-                    <h3 class="stat-value">@Model.Statistics.TotalOrders</h3>
-                    <p class="stat-label">Total Orders</p>
-                    <small class="text-muted">@Model.Statistics.DeliveredOrders Delivered</small>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #fff3e0;">
-                        <i class="bi bi-clock-history" style="color: #ff9800;"></i>
-                    </div>
-                    <h3 class="stat-value">@Model.Statistics.PendingOrders</h3>
-                    <p class="stat-label">Pending Orders</p>
-                    <small class="text-muted">@Model.Statistics.ProcessingOrders Processing</small>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <a asp-action="Financial" class="text-decoration-none">
-                    <div class="stat-card" style="cursor: pointer;">
-                        <div class="stat-icon" style="background: #e3f2fd;">
-                            <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
+                <a href="@Url.Action("Orders", new { status = "" })" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #e8f5e9;">
+                            <i class="bi bi-bag-check-fill" style="color: #4caf50;"></i>
                         </div>
-                        <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0") PLN</h3>
-                        <p class="stat-label">Gross Revenue</p>
-                        <small class="text-muted">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
-                        <br>
-                        <small class="text-primary">Click for detailed breakdown →</small>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.TotalOrders</h3>
+                            <p class="stat-label">Total Orders</p>
+                            <small class="stat-meta">@Model.Statistics.DeliveredOrders Delivered</small>
+                        </div>
                     </div>
                 </a>
             </div>
 
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #fce4ec;">
-                        <i class="bi bi-truck" style="color: #e91e63;"></i>
+                <a href="@Url.Action("Orders", new { status = "Pending" })" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #fff3e0;">
+                            <i class="bi bi-clock-history" style="color: #ff9800;"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.PendingOrders</h3>
+                            <p class="stat-label">Pending Orders</p>
+                            <small class="stat-meta">@Model.Statistics.ProcessingOrders Processing</small>
+                        </div>
                     </div>
-                    <h3 class="stat-value">@Model.Statistics.AwaitingShipment</h3>
-                    <p class="stat-label">Awaiting Shipment</p>
-                    <small class="text-muted">@Model.Statistics.ShippedOrders Shipped</small>
-                </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a asp-action="Financial" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #e3f2fd;">
+                            <i class="bi bi-currency-dollar" style="color: #2196f3;"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.TotalRevenue.ToString("N0")<small class="text-muted fs-6">PLN</small></h3>
+                            <p class="stat-label">Gross Revenue</p>
+                            <small class="stat-meta">@Model.Statistics.MonthRevenue.ToString("N0") PLN This Month</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#shipmentManagementModal">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #fce4ec;">
+                            <i class="bi bi-truck" style="color: #e91e63;"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.AwaitingShipment</h3>
+                            <p class="stat-label">Awaiting Shipment</p>
+                            <small class="stat-meta">@Model.Statistics.ShippedOrders Shipped</small>
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
 
         <!-- Additional Stats Row -->
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #f3e5f5;">
-                        <i class="bi bi-graph-up-arrow" style="color: #9c27b0;"></i>
-                    </div>
-                    <h3 class="stat-value">@Model.Statistics.AverageOrderValue.ToString("N2") PLN</h3>
-                    <p class="stat-label">Average Order Value</p>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #e0f2f1;">
-                        <i class="bi bi-calendar-day" style="color: #009688;"></i>
-                    </div>
-                    <h3 class="stat-value">@Model.Statistics.TodayRevenue.ToString("N0") PLN</h3>
-                    <p class="stat-label">Today's Revenue</p>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-3">
-                <a asp-action="ReturnRequests" class="text-decoration-none">
-                    <div class="stat-card" style="cursor: pointer;">
-                        <div class="stat-icon" style="background: #fff3e0;">
-                            <i class="bi bi-arrow-return-left" style="color: #ff9800;"></i>
+                <a asp-action="Financial" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #f3e5f5;">
+                            <i class="bi bi-graph-up-arrow" style="color: #9c27b0;"></i>
                         </div>
-                        <h3 class="stat-value">@Model.Statistics.PendingReturns</h3>
-                        <p class="stat-label">Pending Returns</p>
-                        <small class="text-primary">Click to manage →</small>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.AverageOrderValue.ToString("N2")<small class="text-muted fs-6">PLN</small></h3>
+                            <p class="stat-label">Average Order Value</p>
+                        </div>
                     </div>
                 </a>
             </div>
 
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: #ffebee;">
-                        <i class="bi bi-x-circle" style="color: #f44336;"></i>
+                <a asp-action="Financial" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #e0f2f1;">
+                            <i class="bi bi-calendar-day" style="color: #009688;"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.TodayRevenue.ToString("N0")<small class="text-muted fs-6">PLN</small></h3>
+                            <p class="stat-label">Today's Revenue</p>
+                        </div>
                     </div>
-                    <h3 class="stat-value">@Model.Statistics.CancelledOrders</h3>
-                    <p class="stat-label">Cancelled Orders</p>
-                </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a asp-action="ReturnRequests" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #fff3e0;">
+                            <i class="bi bi-arrow-return-left" style="color: #ff9800;"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.PendingReturns</h3>
+                            <p class="stat-label">Pending Returns</p>
+                            <small class="stat-link">Click to manage →</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a href="@Url.Action("Orders", new { status = "Cancelled" })" class="text-decoration-none">
+                    <div class="stat-card clickable">
+                        <div class="stat-icon" style="background: #ffebee;">
+                            <i class="bi bi-x-circle" style="color: #f44336;"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.Statistics.CancelledOrders</h3>
+                            <p class="stat-label">Cancelled Orders</p>
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
 
@@ -657,34 +847,789 @@
     </div>
 </div>
 
+<!-- Generate Demo Orders Modal -->
+<div class="modal fade demo-modal" id="addDemoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center px-4 pb-4">
+                <div class="confirm-icon success">
+                    <i class="bi bi-plus-circle-fill"></i>
+                </div>
+                <h5 class="confirm-title">Generate Demo Orders</h5>
+                <p class="confirm-text">
+                    This will create approximately 100 demo orders spanning the last 90 days for testing purposes.
+                </p>
+                <div class="confirm-features">
+                    <div class="confirm-feature">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>~100 orders with various statuses (pending, shipped, delivered, cancelled)</span>
+                    </div>
+                    <div class="confirm-feature">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Random items, quantities, and amounts for realistic data</span>
+                    </div>
+                    <div class="confirm-feature">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>~10% of orders will have return requests to test refund workflows</span>
+                    </div>
+                    <div class="confirm-feature">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Financial records for commission and earnings testing</span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="seedDemoData()">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Generate Orders
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Demo Orders Modal -->
+<div class="modal fade demo-modal" id="removeDemoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center px-4 pb-4">
+                <div class="confirm-icon danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <h5 class="confirm-title">Remove All Demo Orders</h5>
+                <p class="confirm-text">
+                    Are you sure you want to remove all demo orders? This action cannot be undone.
+                </p>
+                <div class="confirm-features" style="background: rgba(239, 68, 68, 0.1);">
+                    <div class="confirm-feature">
+                        <i class="bi bi-trash-fill text-danger"></i>
+                        <span>All demo orders (DEMO-*) will be permanently deleted</span>
+                    </div>
+                    <div class="confirm-feature">
+                        <i class="bi bi-trash-fill text-danger"></i>
+                        <span>Associated return requests will be removed</span>
+                    </div>
+                    <div class="confirm-feature">
+                        <i class="bi bi-trash-fill text-danger"></i>
+                        <span>Financial records (earnings, commissions) will be deleted</span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="removeDemoData()">
+                        <i class="bi bi-trash3 me-2"></i>
+                        Remove All Demo Orders
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shipment Management Modal -->
+<div class="modal fade" id="shipmentManagementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-truck me-2 text-primary"></i>Shipment Management</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Carrier Status Cards -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3"><i class="bi bi-router"></i> Carrier API Status</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-3">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/DHL_Logo.svg" alt="DHL" height="30" class="mb-2">
+                                <div id="dhlStatus" class="badge bg-secondary">Checking...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-3">
+                                <span class="fw-bold text-danger fs-5">InPost</span>
+                                <div id="inpostStatus" class="badge bg-secondary mt-2 d-block">Checking...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-3">
+                                <span class="fw-bold text-primary fs-5">DPD</span>
+                                <div id="dpdStatus" class="badge bg-secondary mt-2 d-block">Checking...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-3">
+                                <span class="fw-bold text-warning fs-5">GLS</span>
+                                <div id="glsStatus" class="badge bg-secondary mt-2 d-block">Checking...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Awaiting Shipment List -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-3"><i class="bi bi-box-seam"></i> Orders Awaiting Shipment</h6>
+                        <div id="awaitingShipmentList" class="table-responsive">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-primary" onclick="refreshShipmentData()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                            <a asp-action="ShippingProviders" class="btn btn-outline-secondary">
+                                <i class="bi bi-gear"></i> Manage Carriers
+                            </a>
+                            <button class="btn btn-outline-info" onclick="showBulkLabelModal()">
+                                <i class="bi bi-printer"></i> Bulk Print Labels
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Track Shipment Modal -->
+<div class="modal fade" id="trackShipmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-geo-alt me-2 text-success"></i>Track Shipment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tracking Search -->
+                <div class="input-group mb-4">
+                    <input type="text" class="form-control" id="trackingNumberInput" placeholder="Enter tracking number...">
+                    <select class="form-select" id="carrierSelect" style="max-width: 150px;">
+                        <option value="auto">Auto-detect</option>
+                        <option value="dhl">DHL</option>
+                        <option value="inpost">InPost</option>
+                        <option value="dpd">DPD</option>
+                        <option value="gls">GLS</option>
+                        <option value="poczta_polska">Poczta Polska</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="trackShipment()">
+                        <i class="bi bi-search"></i> Track
+                    </button>
+                </div>
+
+                <!-- Tracking Results -->
+                <div id="trackingResults">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-box-seam fs-1 d-block mb-3"></i>
+                        <p>Enter a tracking number to see shipment status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Shipment Modal -->
+<div class="modal fade" id="createShipmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-success"></i>Create Shipment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createShipmentForm">
+                    <input type="hidden" id="shipmentOrderId">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Shipping Provider</label>
+                            <select class="form-select" id="shipmentProvider" required>
+                                <option value="">Select provider...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Service Type</label>
+                            <select class="form-select" id="shipmentService">
+                                <option value="standard">Standard</option>
+                                <option value="express">Express</option>
+                                <option value="overnight">Overnight</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Weight (kg)</label>
+                            <input type="number" class="form-control" id="packageWeight" step="0.1" min="0.1" value="0.5">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Dimensions (L×W×H cm)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="packageLength" placeholder="L" min="1" value="20">
+                                <input type="number" class="form-control" id="packageWidth" placeholder="W" min="1" value="15">
+                                <input type="number" class="form-control" id="packageHeight" placeholder="H" min="1" value="10">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Declared Value (PLN)</label>
+                            <input type="number" class="form-control" id="declaredValue" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="signatureRequired">
+                        <label class="form-check-label" for="signatureRequired">
+                            Signature required on delivery
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Special Instructions</label>
+                        <textarea class="form-control" id="specialInstructions" rows="2" placeholder="e.g., Fragile, Leave at door..."></textarea>
+                    </div>
+
+                    <!-- Shipping Quote Preview -->
+                    <div id="shippingQuotePreview" class="alert alert-info d-none">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Estimated Cost:</strong> <span id="estimatedCost">--</span>
+                            </div>
+                            <div>
+                                <strong>Delivery:</strong> <span id="estimatedDelivery">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-primary" onclick="getShippingQuote()">
+                    <i class="bi bi-calculator"></i> Get Quote
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitCreateShipment()">
+                    <i class="bi bi-plus-lg"></i> Create Shipment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Processing...</div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
+        // Modal instances
+        let addModal, removeModal, shipmentModal, trackModal, createShipmentModal;
+
         $(document).ready(function() {
+            // Initialize modals
+            addModal = new bootstrap.Modal(document.getElementById('addDemoModal'));
+            removeModal = new bootstrap.Modal(document.getElementById('removeDemoModal'));
+            shipmentModal = new bootstrap.Modal(document.getElementById('shipmentManagementModal'));
+            trackModal = new bootstrap.Modal(document.getElementById('trackShipmentModal'));
+            createShipmentModal = new bootstrap.Modal(document.getElementById('createShipmentModal'));
+
+            // Load shipment data when modal opens
+            document.getElementById('shipmentManagementModal').addEventListener('show.bs.modal', function() {
+                loadCarrierStatuses();
+                loadAwaitingShipments();
+                loadShippingProviders();
+            });
+
+            // Fix dropdown in welcome-card with overflow:hidden
+            // Move dropdown menu to body when shown to escape overflow clipping
+            document.querySelectorAll('.welcome-card .dropdown').forEach(function(dropdown) {
+                dropdown.addEventListener('shown.bs.dropdown', function(e) {
+                    const menu = this.querySelector('.dropdown-menu');
+                    if (menu) {
+                        const rect = menu.getBoundingClientRect();
+                        menu.style.position = 'fixed';
+                        menu.style.top = rect.top + 'px';
+                        menu.style.left = (rect.left - menu.offsetWidth + this.querySelector('.dropdown-toggle').offsetWidth) + 'px';
+                        menu.style.transform = 'none';
+                    }
+                });
+            });
+
             // Auto-submit form on filter change
             $('#filterForm select').on('change', function() {
                 $('#filterForm').submit();
             });
         });
 
-        // Demo data functions
+        function showAddModal() {
+            addModal.show();
+        }
+
+        function showRemoveModal() {
+            removeModal.show();
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
         async function seedDemoData() {
-            if (!confirm('Generate ~100 demo orders for the last 90 days?')) return;
+            addModal.hide();
+            showLoading('Generating demo orders... This may take a moment.');
+            
             try {
-                const res = await fetch('@Url.Action("SeedDemoData")', { method: 'POST' });
-                const data = await res.json();
-                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
-                if (data.success) location.reload();
-            } catch (e) { alert('Error: ' + e.message); }
+                const response = await fetch('@Url.Action("SeedDemoData")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                hideLoading();
+                
+                if (data.success) {
+                    showToast('success', 'Success!', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('danger', 'Error', data.message);
+                }
+            } catch (error) {
+                hideLoading();
+                showToast('danger', 'Error', 'An error occurred while generating demo data.');
+                console.error(error);
+            }
         }
 
         async function removeDemoData() {
-            if (!confirm('⚠️ Remove ALL demo orders? This cannot be undone.')) return;
+            removeModal.hide();
+            showLoading('Removing demo orders...');
+            
             try {
-                const res = await fetch('@Url.Action("RemoveDemoData")', { method: 'POST' });
-                const data = await res.json();
-                alert(data.success ? '✅ ' + data.message : '⚠️ ' + data.message);
-                if (data.success) location.reload();
-            } catch (e) { alert('Error: ' + e.message); }
+                const response = await fetch('@Url.Action("RemoveDemoData")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                hideLoading();
+                
+                if (data.success) {
+                    showToast('success', 'Success!', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('danger', 'Error', data.message);
+                }
+            } catch (error) {
+                hideLoading();
+                showToast('danger', 'Error', 'An error occurred while removing demo data.');
+                console.error(error);
+            }
+        }
+
+        function showToast(type, title, message) {
+            // Create toast container if it doesn't exist
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container position-fixed top-0 end-0 p-3';
+                container.style.zIndex = '10000';
+                document.body.appendChild(container);
+            }
+
+            const toastId = 'toast-' + Date.now();
+            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body d-flex align-items-center gap-2">
+                            <i class="bi ${icon}"></i>
+                            <div>
+                                <strong>${title}</strong><br>
+                                <small>${message}</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+            toast.show();
+
+            // Remove toast element after it hides
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+
+        // ==================== Shipment Management Functions ====================
+
+        async function loadCarrierStatuses() {
+            try {
+                const response = await fetch('@Url.Action("GetCarrierStatuses", "Admin")');
+                const data = await response.json();
+                
+                if (data.success) {
+                    data.statuses.forEach(status => {
+                        const el = document.getElementById(status.carrierCode + 'Status');
+                        if (el) {
+                            if (status.isConnected) {
+                                el.className = 'badge bg-success mt-2 d-block';
+                                el.textContent = 'Connected';
+                            } else if (status.hasApiKey) {
+                                el.className = 'badge bg-warning mt-2 d-block';
+                                el.textContent = 'Configured';
+                            } else {
+                                el.className = 'badge bg-secondary mt-2 d-block';
+                                el.textContent = 'Not Configured';
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading carrier statuses:', e);
+            }
+        }
+
+        async function loadAwaitingShipments() {
+            try {
+                const response = await fetch('@Url.Action("GetAwaitingShipments", "Admin")');
+                const data = await response.json();
+                
+                const container = document.getElementById('awaitingShipmentList');
+                
+                if (data.success && data.orders.length > 0) {
+                    let html = `
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Address</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.orders.forEach(order => {
+                        html += `
+                            <tr>
+                                <td>
+                                    <a href="/Admin/OrderDetails/${order.id}" class="fw-bold">${order.orderNumber}</a>
+                                </td>
+                                <td>${order.customerName}</td>
+                                <td><span class="badge bg-primary">${order.itemCount} items</span></td>
+                                <td class="small">${order.shippingAddress || 'N/A'}</td>
+                                <td class="small">${new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="openCreateShipment(${order.id}, ${order.totalAmount})">
+                                        <i class="bi bi-truck"></i> Ship
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+                            <p>All orders have been shipped!</p>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.error('Error loading awaiting shipments:', e);
+                document.getElementById('awaitingShipmentList').innerHTML = `
+                    <div class="alert alert-danger">Error loading shipments</div>
+                `;
+            }
+        }
+
+        async function loadShippingProviders() {
+            try {
+                const response = await fetch('@Url.Action("GetShippingProvidersList", "Admin")');
+                const data = await response.json();
+                
+                const select = document.getElementById('shipmentProvider');
+                select.innerHTML = '<option value="">Select provider...</option>';
+                
+                if (data.success) {
+                    data.providers.forEach(p => {
+                        select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading shipping providers:', e);
+            }
+        }
+
+        function refreshShipmentData() {
+            loadCarrierStatuses();
+            loadAwaitingShipments();
+        }
+
+        function openCreateShipment(orderId, totalAmount) {
+            document.getElementById('shipmentOrderId').value = orderId;
+            document.getElementById('declaredValue').value = totalAmount;
+            document.getElementById('shippingQuotePreview').classList.add('d-none');
+            shipmentModal.hide();
+            createShipmentModal.show();
+        }
+
+        async function getShippingQuote() {
+            const providerId = document.getElementById('shipmentProvider').value;
+            if (!providerId) {
+                alert('Please select a shipping provider');
+                return;
+            }
+
+            // Show estimated cost (mock for now until API is connected)
+            const preview = document.getElementById('shippingQuotePreview');
+            document.getElementById('estimatedCost').textContent = '~15.00 PLN';
+            document.getElementById('estimatedDelivery').textContent = '2-3 business days';
+            preview.classList.remove('d-none');
+        }
+
+        async function submitCreateShipment() {
+            const orderId = document.getElementById('shipmentOrderId').value;
+            const providerId = document.getElementById('shipmentProvider').value;
+            
+            if (!providerId) {
+                alert('Please select a shipping provider');
+                return;
+            }
+
+            showLoading('Creating shipment...');
+
+            try {
+                const response = await fetch('@Url.Action("CreateShipmentForOrder", "Admin")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: parseInt(orderId),
+                        shippingProviderId: parseInt(providerId),
+                        serviceType: document.getElementById('shipmentService').value,
+                        weight: parseFloat(document.getElementById('packageWeight').value),
+                        length: parseFloat(document.getElementById('packageLength').value),
+                        width: parseFloat(document.getElementById('packageWidth').value),
+                        height: parseFloat(document.getElementById('packageHeight').value),
+                        declaredValue: parseFloat(document.getElementById('declaredValue').value) || 0,
+                        signatureRequired: document.getElementById('signatureRequired').checked,
+                        specialInstructions: document.getElementById('specialInstructions').value
+                    })
+                });
+
+                const data = await response.json();
+                hideLoading();
+
+                if (data.success) {
+                    showToast('success', 'Shipment Created', data.message);
+                    createShipmentModal.hide();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('danger', 'Error', data.message);
+                }
+            } catch (e) {
+                hideLoading();
+                showToast('danger', 'Error', 'Failed to create shipment');
+                console.error(e);
+            }
+        }
+
+        // ==================== Tracking Functions ====================
+
+        function showTrackingModal(trackingNumber, carrierCode) {
+            document.getElementById('trackingNumberInput').value = trackingNumber || '';
+            document.getElementById('carrierSelect').value = carrierCode || 'auto';
+            document.getElementById('trackingResults').innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-box-seam fs-1 d-block mb-3"></i>
+                    <p>Enter a tracking number to see shipment status</p>
+                </div>
+            `;
+            trackModal.show();
+            
+            if (trackingNumber) {
+                trackShipment();
+            }
+        }
+
+        async function trackShipment() {
+            const trackingNumber = document.getElementById('trackingNumberInput').value.trim();
+            const carrierCode = document.getElementById('carrierSelect').value;
+            
+            if (!trackingNumber) {
+                alert('Please enter a tracking number');
+                return;
+            }
+
+            document.getElementById('trackingResults').innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Fetching tracking information...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`@Url.Action("GetTrackingInfo", "Admin")?trackingNumber=${encodeURIComponent(trackingNumber)}&carrierCode=${carrierCode}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderTrackingResults(data.tracking);
+                } else {
+                    document.getElementById('trackingResults').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            ${data.message}
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('trackingResults').innerHTML = `
+                    <div class="alert alert-danger">
+                        Error fetching tracking information
+                    </div>
+                `;
+                console.error(e);
+            }
+        }
+
+        function renderTrackingResults(tracking) {
+            let statusColor = 'secondary';
+            if (tracking.currentStatus === 'DELIVERED') statusColor = 'success';
+            else if (tracking.currentStatus === 'IN_TRANSIT') statusColor = 'primary';
+            else if (tracking.currentStatus === 'OUT_FOR_DELIVERY') statusColor = 'info';
+
+            let html = `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${tracking.trackingNumber}</h6>
+                                <span class="badge bg-${statusColor}">${tracking.currentStatus}</span>
+                            </div>
+                            <span class="text-muted small">${tracking.carrierCode.toUpperCase()}</span>
+                        </div>
+                        ${tracking.estimatedDelivery ? `<p class="mt-2 mb-0 small text-muted">Est. Delivery: ${new Date(tracking.estimatedDelivery).toLocaleDateString()}</p>` : ''}
+                        ${tracking.currentLocation ? `<p class="mb-0 small text-muted">Location: ${tracking.currentLocation}</p>` : ''}
+                    </div>
+                </div>
+                
+                <h6 class="mb-3"><i class="bi bi-clock-history"></i> Tracking History</h6>
+                <div class="timeline">
+            `;
+
+            tracking.events.forEach((event, index) => {
+                html += `
+                    <div class="timeline-item ${index === 0 ? 'active' : ''}">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between">
+                                <strong>${event.status}</strong>
+                                <small class="text-muted">${new Date(event.timestamp).toLocaleString()}</small>
+                            </div>
+                            <p class="mb-0 small">${event.description}</p>
+                            ${event.location ? `<small class="text-muted">${event.location}</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            
+            document.getElementById('trackingResults').innerHTML = html;
+        }
+
+        function showBulkLabelModal() {
+            alert('Bulk label printing will be available when carrier APIs are configured.');
         }
     </script>
+    
+    <style>
+        /* Timeline styles for tracking */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+            border-left: 2px solid var(--ord-card-border);
+            padding-left: 20px;
+            margin-left: 6px;
+        }
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--ord-card-bg);
+            border: 2px solid #6c757d;
+        }
+        .timeline-item.active .timeline-marker {
+            background: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .timeline-content {
+            background: var(--ord-bg);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+    </style>
 }

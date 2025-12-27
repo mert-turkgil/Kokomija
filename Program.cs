@@ -190,6 +190,9 @@ builder.Services.AddScoped<IReturnRequestService, ReturnRequestService>();
 // Register Shipping Service
 builder.Services.AddScoped<IShippingService, ShippingService>();
 
+// Register Carrier API Service
+builder.Services.AddScoped<ICarrierApiService, CarrierApiService>();
+
 // Register Tax Service
 builder.Services.AddScoped<ITaxService, Kokomija.Services.TaxService>();
 

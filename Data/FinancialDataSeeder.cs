@@ -48,9 +48,16 @@ public static class FinancialDataSeeder
                 .Take(10)
                 .ToListAsync();
 
+            // If no variants, try to create them from existing products
             if (!variants.Any())
             {
-                logger.LogWarning("No product variants found. Skipping financial data seed.");
+                logger.LogInformation("No product variants found. Creating variants from existing products...");
+                variants = await CreateVariantsFromProductsAsync(context);
+            }
+
+            if (!variants.Any())
+            {
+                logger.LogWarning("No products available. Skipping financial data seed.");
                 return;
             }
 
@@ -104,6 +111,27 @@ public static class FinancialDataSeeder
 
             var orderIds = demoOrders.Select(o => o.Id).ToList();
 
+            // Get return request IDs first
+            var returnRequestIds = await context.ReturnRequests
+                .Where(r => orderIds.Contains(r.OrderId))
+                .Select(r => r.Id)
+                .ToListAsync();
+
+            // Remove return status history (depends on return requests)
+            if (returnRequestIds.Any())
+            {
+                var returnStatusHistory = await context.ReturnStatusHistories
+                    .Where(h => returnRequestIds.Contains(h.ReturnRequestId))
+                    .ToListAsync();
+                context.ReturnStatusHistories.RemoveRange(returnStatusHistory);
+
+                // Remove return request images (depends on return requests)
+                var returnImages = await context.ReturnRequestImages
+                    .Where(i => returnRequestIds.Contains(i.ReturnRequestId))
+                    .ToListAsync();
+                context.ReturnRequestImages.RemoveRange(returnImages);
+            }
+
             // Remove return requests
             var returnRequests = await context.ReturnRequests
                 .Where(r => orderIds.Contains(r.OrderId))
@@ -121,6 +149,33 @@ public static class FinancialDataSeeder
                 .ToListAsync();
             context.AdminCommissions.RemoveRange(adminCommissions);
 
+            // Remove payment transactions
+            var paymentTransactions = await context.PaymentTransactions
+                .Where(pt => orderIds.Contains(pt.OrderId ?? 0) || returnRequestIds.Contains(pt.ReturnRequestId ?? 0))
+                .ToListAsync();
+            context.PaymentTransactions.RemoveRange(paymentTransactions);
+
+            // Get shipment IDs first
+            var shipmentIds = await context.OrderShipments
+                .Where(s => orderIds.Contains(s.OrderId))
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            // Remove shipment tracking events
+            if (shipmentIds.Any())
+            {
+                var trackingEvents = await context.ShipmentTrackingEvents
+                    .Where(e => shipmentIds.Contains(e.OrderShipmentId))
+                    .ToListAsync();
+                context.ShipmentTrackingEvents.RemoveRange(trackingEvents);
+            }
+
+            // Remove order shipments
+            var orderShipments = await context.OrderShipments
+                .Where(s => orderIds.Contains(s.OrderId))
+                .ToListAsync();
+            context.OrderShipments.RemoveRange(orderShipments);
+
             // Remove order items
             var orderItems = await context.OrderItems
                 .Where(i => orderIds.Contains(i.OrderId))
@@ -132,11 +187,76 @@ public static class FinancialDataSeeder
 
             await context.SaveChangesAsync();
 
-            // Remove demo customer
+            // Remove demo customer - but first update any references to them
             var demoCustomer = await userManager.FindByEmailAsync("demo.customer@kokomija.com");
             if (demoCustomer != null)
             {
+                // Find an admin user to reassign CommissionSettings.LastModifiedBy
+                var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
+                var adminUser = adminUsers.FirstOrDefault(u => u.Id != demoCustomer.Id);
+                
+                // If no other admin, try root user
+                if (adminUser == null)
+                {
+                    var rootUsers = await userManager.GetUsersInRoleAsync("Root");
+                    adminUser = rootUsers.FirstOrDefault(u => u.Id != demoCustomer.Id);
+                }
+
+                // Update CommissionSettings that reference the demo customer
+                if (adminUser != null)
+                {
+                    var settingsToUpdate = await context.CommissionSettings
+                        .Where(cs => cs.LastModifiedBy == demoCustomer.Id)
+                        .ToListAsync();
+
+                    foreach (var settings in settingsToUpdate)
+                    {
+                        settings.LastModifiedBy = adminUser.Id;
+                    }
+
+                    if (settingsToUpdate.Any())
+                    {
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // Remove demo customer's cart items and cart
+                var demoCart = await context.Carts
+                    .Where(c => c.UserId == demoCustomer.Id)
+                    .ToListAsync();
+                context.Carts.RemoveRange(demoCart);
+
+                // Remove demo customer's wishlist
+                var demoWishlist = await context.Wishlists
+                    .Where(w => w.UserId == demoCustomer.Id)
+                    .ToListAsync();
+                
+                // Remove wishlist notifications for demo customer's wishlist items
+                var demoWishlistIds = demoWishlist.Select(w => w.Id).ToList();
+                if (demoWishlistIds.Any())
+                {
+                    var demoWishlistNotifications = await context.WishlistNotifications
+                        .Where(wn => demoWishlistIds.Contains(wn.WishlistId))
+                        .ToListAsync();
+                    context.WishlistNotifications.RemoveRange(demoWishlistNotifications);
+                }
+                
+                context.Wishlists.RemoveRange(demoWishlist);
+
+                await context.SaveChangesAsync();
+
+                // Now safely delete the demo customer
                 await userManager.DeleteAsync(demoCustomer);
+            }
+
+            // Remove demo product variants (created by seeder)
+            var demoVariants = await context.ProductVariants
+                .Where(v => v.SKU.StartsWith("DEMO-"))
+                .ToListAsync();
+            if (demoVariants.Any())
+            {
+                context.ProductVariants.RemoveRange(demoVariants);
+                await context.SaveChangesAsync();
             }
 
             logger.LogInformation("Removed {Count} demo orders and related financial records.", demoOrders.Count);
@@ -198,6 +318,88 @@ public static class FinancialDataSeeder
             await context.CommissionSettings.AddAsync(settings);
             await context.SaveChangesAsync();
         }
+    }
+
+    /// <summary>
+    /// Creates product variants from existing products if none exist
+    /// </summary>
+    private static async Task<List<ProductVariant>> CreateVariantsFromProductsAsync(ApplicationDbContext context)
+    {
+        var products = await context.Products
+            .Include(p => p.Images)
+            .Where(p => p.IsActive)
+            .ToListAsync();
+
+        if (!products.Any())
+            return new List<ProductVariant>();
+
+        // Get or create default sizes
+        var sizes = await context.Sizes.ToListAsync();
+        if (!sizes.Any())
+        {
+            sizes = new List<Size>
+            {
+                new Size { Name = "S", DisplayOrder = 1 },
+                new Size { Name = "M", DisplayOrder = 2 },
+                new Size { Name = "L", DisplayOrder = 3 },
+                new Size { Name = "XL", DisplayOrder = 4 }
+            };
+            await context.Sizes.AddRangeAsync(sizes);
+            await context.SaveChangesAsync();
+        }
+
+        // Get or create default colors
+        var colors = await context.Colors.ToListAsync();
+        if (!colors.Any())
+        {
+            colors = new List<Color>
+            {
+                new Color { Name = "Black", HexCode = "#000000" },
+                new Color { Name = "White", HexCode = "#FFFFFF" },
+                new Color { Name = "Navy", HexCode = "#000080" },
+                new Color { Name = "Grey", HexCode = "#808080" }
+            };
+            await context.Colors.AddRangeAsync(colors);
+            await context.SaveChangesAsync();
+        }
+
+        var variants = new List<ProductVariant>();
+        var skuCounter = 1;
+
+        foreach (var product in products)
+        {
+            // Create a few variants for each product (different size/color combos)
+            foreach (var size in sizes.Take(3))
+            {
+                foreach (var color in colors.Take(2))
+                {
+                    var variant = new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        SizeId = size.Id,
+                        ColorId = color.Id,
+                        SKU = $"DEMO-{product.Id}-{size.Name}-{color.Name.Substring(0, 2).ToUpper()}-{skuCounter++:D4}",
+                        Price = product.Price,
+                        StockQuantity = _random.Next(10, 100),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    variants.Add(variant);
+                }
+            }
+        }
+
+        await context.ProductVariants.AddRangeAsync(variants);
+        await context.SaveChangesAsync();
+
+        // Reload with navigation properties
+        return await context.ProductVariants
+            .Include(v => v.Product)
+                .ThenInclude(p => p.Images)
+            .Include(v => v.Size)
+            .Include(v => v.Color)
+            .Where(v => v.SKU.StartsWith("DEMO-"))
+            .ToListAsync();
     }
 
     private static List<Order> GenerateDemoOrders(ApplicationUser customer, List<ProductVariant> variants)

@@ -315,4 +315,37 @@ namespace Kokomija.Models.ViewModels.Admin
         
         public DateTime? EventDate { get; set; }
     }
+
+    /// <summary>
+    /// DTO for creating shipment via carrier API
+    /// </summary>
+    public class CreateShipmentFromOrderDto
+    {
+        [Required]
+        public int OrderId { get; set; }
+        
+        [Required]
+        public int ShippingProviderId { get; set; }
+        
+        public string? ServiceType { get; set; } = "standard";
+        
+        [Range(0.01, 9999.99)]
+        public decimal Weight { get; set; } = 1.0m;
+        
+        [Range(1, 999)]
+        public decimal Length { get; set; } = 30.0m;
+        
+        [Range(1, 999)]
+        public decimal Width { get; set; } = 20.0m;
+        
+        [Range(1, 999)]
+        public decimal Height { get; set; } = 15.0m;
+        
+        public decimal? DeclaredValue { get; set; }
+        
+        public bool SignatureRequired { get; set; }
+        
+        [MaxLength(500)]
+        public string? SpecialInstructions { get; set; }
+    }
 }

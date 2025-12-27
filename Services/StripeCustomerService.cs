@@ -55,12 +55,44 @@ namespace Kokomija.Services
                     }
                     catch (StripeException ex) when (ex.StripeError?.Type == "invalid_request_error")
                     {
-                        // Customer doesn't exist, create a new one
-                        _logger.LogWarning("Stripe customer {CustomerId} not found, creating new one for user {UserId}", user.StripeCustomerId, user.Id);
+                        // Customer doesn't exist, search by email or create a new one
+                        _logger.LogWarning("Stripe customer {CustomerId} not found, searching by email for user {UserId}", user.StripeCustomerId, user.Id);
                     }
                 }
 
-                // Create new customer
+                // Search for existing customer by email before creating a new one
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    var searchOptions = new CustomerSearchOptions
+                    {
+                        Query = $"email:'{user.Email}'"
+                    };
+                    
+                    var searchResult = await _customerService.SearchAsync(searchOptions);
+                    if (searchResult?.Data?.Count > 0)
+                    {
+                        var existingCustomer = searchResult.Data.First();
+                        _logger.LogInformation("Found existing Stripe customer {CustomerId} by email {Email} for user {UserId}", 
+                            existingCustomer.Id, user.Email, user.Id);
+                        
+                        // Update the existing customer with latest info and user_id metadata
+                        var updateOptions = new CustomerUpdateOptions
+                        {
+                            Name = $"{user.FirstName} {user.LastName}".Trim(),
+                            Phone = user.PhoneNumber,
+                            Metadata = new Dictionary<string, string>
+                            {
+                                { "user_id", user.Id },
+                                { "updated_at", DateTime.UtcNow.ToString("O") }
+                            }
+                        };
+                        
+                        await _customerService.UpdateAsync(existingCustomer.Id, updateOptions);
+                        return existingCustomer.Id;
+                    }
+                }
+
+                // Create new customer only if no existing customer found
                 var options = new CustomerCreateOptions
                 {
                     Email = user.Email,
@@ -74,7 +106,7 @@ namespace Kokomija.Services
                 };
 
                 var customer = await _customerService.CreateAsync(options);
-                _logger.LogInformation("Created Stripe customer {CustomerId} for user {UserId}", customer.Id, user.Id);
+                _logger.LogInformation("Created new Stripe customer {CustomerId} for user {UserId}", customer.Id, user.Id);
                 
                 return customer.Id;
             }

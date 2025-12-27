@@ -100,6 +100,27 @@ namespace Kokomija.Models.ViewModels
         public DeveloperEarningsSummaryDto? EarningsSummary { get; set; }
         public List<DeveloperEarningDto> RecentEarnings { get; set; } = new();
         public SiteClosureDto? ActiveSiteClosure { get; set; }
+        
+        // Stripe Connect Account Info
+        public StripeConnectAccountDto? ConnectAccount { get; set; }
+    }
+
+    /// <summary>
+    /// Stripe Connect Account information
+    /// </summary>
+    public class StripeConnectAccountDto
+    {
+        public string AccountId { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? BusinessName { get; set; }
+        public bool IsVerified { get; set; }
+        public bool PayoutsEnabled { get; set; }
+        public bool ChargesEnabled { get; set; }
+        public string? Country { get; set; }
+        public string? Currency { get; set; }
+        public string? BusinessType { get; set; }
+        public string? Status { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 
     /// <summary>

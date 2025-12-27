@@ -55,6 +55,13 @@ namespace Kokomija.Models.ViewModels.Admin
         public decimal TotalRefunds { get; set; }
         public decimal TotalDiscounts { get; set; }
         
+        // Shipping
+        public decimal TotalShippingCollected { get; set; } // What customer paid
+        public decimal TotalShippingCost { get; set; } // Actual cost to us
+        public decimal ShippingProfit { get; set; } // Difference
+        public int OrdersWithShipping { get; set; }
+        public int OrdersWithFreeShipping { get; set; }
+        
         // Net Amounts
         public decimal NetRevenue { get; set; } // After all deductions
         public decimal NetRevenueThisMonth { get; set; }
@@ -67,6 +74,7 @@ namespace Kokomija.Models.ViewModels.Admin
         // Statistics
         public int TotalOrders { get; set; }
         public int TotalProductsSold { get; set; }
+        public int UniqueProductsSold { get; set; }
         public decimal AverageOrderValue { get; set; }
         public decimal EffectiveTaxRate { get; set; }
         

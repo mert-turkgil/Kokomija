@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Kokomija.Data;
 using Kokomija.Data.Abstract;
 using Kokomija.Entity;
@@ -32,6 +33,8 @@ public class AdminController : Controller
     private readonly ITaxService _taxService;
     private readonly IReturnRequestService _returnRequestService;
     private readonly IStripeService _stripeService;
+    private readonly IStripePayoutService _stripePayoutService;
+    private readonly ICarrierApiService _carrierApiService;
 
     public AdminController(
         IUnitOfWork unitOfWork, 
@@ -49,7 +52,9 @@ public class AdminController : Controller
         IShippingService shippingService,
         ITaxService taxService,
         IReturnRequestService returnRequestService,
-        IStripeService stripeService)
+        IStripeService stripeService,
+        IStripePayoutService stripePayoutService,
+        ICarrierApiService carrierApiService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -67,6 +72,8 @@ public class AdminController : Controller
         _taxService = taxService;
         _returnRequestService = returnRequestService;
         _stripeService = stripeService;
+        _stripePayoutService = stripePayoutService;
+        _carrierApiService = carrierApiService;
     }
 
     public async Task<IActionResult> Index()
@@ -722,6 +729,296 @@ public class AdminController : Controller
         
         return Json(new { success = true, message = "Tracking event added successfully" });
     }
+
+    #region Carrier API Endpoints
+
+    /// <summary>
+    /// GET: Get all carrier statuses
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetCarrierStatuses()
+    {
+        try
+        {
+            var statuses = await _carrierApiService.GetAllCarrierStatusesAsync();
+            return Json(new { success = true, statuses });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting carrier statuses");
+            return Json(new { success = false, message = "Error retrieving carrier statuses" });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get orders awaiting shipment
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAwaitingShipments()
+    {
+        try
+        {
+            var orders = await _unitOfWork.Orders.FindAsync(o => 
+                (o.OrderStatus == "processing" || o.OrderStatus == "pending" || o.OrderStatus == "confirmed") &&
+                o.PaymentStatus == "paid");
+            
+            var orderList = orders.OrderBy(o => o.CreatedAt).Select(o => new
+            {
+                id = o.Id,
+                orderNumber = o.OrderNumber,
+                customerName = o.User != null ? $"{o.User.FirstName} {o.User.LastName}" : (o.CustomerName ?? o.CustomerEmail ?? "Guest"),
+                itemCount = o.OrderItems?.Count ?? 0,
+                shippingAddress = $"{o.ShippingAddress}, {o.ShippingCity} {o.ShippingPostalCode}",
+                createdAt = o.CreatedAt,
+                totalAmount = o.TotalAmount
+            }).ToList();
+            
+            return Json(new { success = true, orders = orderList });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting awaiting shipments");
+            return Json(new { success = false, message = "Error retrieving orders" });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get shipping providers list
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetShippingProvidersList()
+    {
+        try
+        {
+            var providers = await _unitOfWork.Repository<ShippingProvider>().FindAsync(p => p.IsActive);
+            var providerList = providers.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name,
+                code = p.Code,
+                trackingUrl = p.TrackingUrlTemplate
+            }).ToList();
+            
+            return Json(new { success = true, providers = providerList });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting shipping providers");
+            return Json(new { success = false, message = "Error retrieving providers" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Create shipment via carrier API
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreateShipmentForOrder([FromBody] CreateShipmentFromOrderDto dto)
+    {
+        try
+        {
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.Id == dto.OrderId);
+            var order = orders.FirstOrDefault();
+            
+            if (order == null)
+                return Json(new { success = false, message = "Order not found" });
+            
+            var providers = await _unitOfWork.Repository<ShippingProvider>().FindAsync(p => p.Id == dto.ShippingProviderId);
+            var provider = providers.FirstOrDefault();
+            
+            if (provider == null)
+                return Json(new { success = false, message = "Shipping provider not found" });
+            
+            // Build shipment request
+            var request = new CreateShipmentRequest
+            {
+                OrderId = dto.OrderId,
+                ShippingProviderId = dto.ShippingProviderId,
+                ServiceType = dto.ServiceType ?? "standard",
+                SignatureRequired = dto.SignatureRequired,
+                SpecialInstructions = dto.SpecialInstructions,
+                Sender = new AddressInfo
+                {
+                    Name = _configuration["Store:Name"] ?? "Kokomija",
+                    Street = _configuration["Store:Address"] ?? "",
+                    City = _configuration["Store:City"] ?? "",
+                    PostalCode = _configuration["Store:PostalCode"] ?? "",
+                    Country = _configuration["Store:Country"] ?? "PL",
+                    Phone = _configuration["Store:Phone"] ?? "",
+                    Email = _configuration["Store:Email"] ?? ""
+                },
+                Recipient = new AddressInfo
+                {
+                    Name = order.User != null ? $"{order.User.FirstName} {order.User.LastName}" : (order.CustomerName ?? ""),
+                    Street = order.ShippingAddress ?? "",
+                    City = order.ShippingCity ?? "",
+                    PostalCode = order.ShippingPostalCode ?? "",
+                    Country = order.ShippingCountry ?? "PL",
+                    Phone = order.User?.PhoneNumber ?? order.CustomerPhone ?? "",
+                    Email = order.User?.Email ?? order.CustomerEmail ?? ""
+                },
+                Package = new PackageInfo
+                {
+                    Weight = dto.Weight,
+                    Length = dto.Length,
+                    Width = dto.Width,
+                    Height = dto.Height,
+                    DeclaredValue = dto.DeclaredValue ?? order.TotalAmount,
+                    Currency = "PLN"
+                }
+            };
+            
+            var result = await _carrierApiService.CreateShipmentAsync(request);
+            
+            if (result.Success)
+            {
+                // Get first shipping rate for the provider (for the required field)
+                var rates = await _unitOfWork.Repository<ShippingRate>().FindAsync(r => r.ShippingProviderId == dto.ShippingProviderId);
+                var firstRate = rates.FirstOrDefault();
+                
+                // Create OrderShipment record
+                var shipment = new OrderShipment
+                {
+                    OrderId = dto.OrderId,
+                    ShippingProviderId = dto.ShippingProviderId,
+                    ShippingRateId = firstRate?.Id ?? 1, // Default to first available rate
+                    TrackingNumber = result.TrackingNumber,
+                    Status = ShipmentStatus.Pending,
+                    ShippingCost = result.ShippingCost ?? order.ShippingCost,
+                    Weight = dto.Weight,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
+                await _unitOfWork.Repository<OrderShipment>().AddAsync(shipment);
+                
+                // Update order status
+                order.OrderStatus = "shipped";
+                order.ShippedAt = DateTime.UtcNow;
+                _unitOfWork.Orders.Update(order);
+                
+                await _unitOfWork.SaveChangesAsync();
+                
+                return Json(new { 
+                    success = true, 
+                    message = $"Shipment created with tracking number: {result.TrackingNumber}",
+                    trackingNumber = result.TrackingNumber,
+                    labelUrl = result.LabelUrl
+                });
+            }
+            
+            return Json(new { success = false, message = result.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating shipment for order {OrderId}", dto.OrderId);
+            return Json(new { success = false, message = "Error creating shipment" });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get tracking information via carrier API
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetTrackingInfo(string trackingNumber, string carrierCode = "auto")
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(trackingNumber))
+                return Json(new { success = false, message = "Tracking number is required" });
+            
+            var result = await _carrierApiService.GetTrackingInfoAsync(trackingNumber, carrierCode);
+            
+            if (result.Success)
+            {
+                return Json(new { success = true, tracking = result });
+            }
+            
+            return Json(new { success = false, message = result.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting tracking info for {TrackingNumber}", trackingNumber);
+            return Json(new { success = false, message = "Error retrieving tracking information" });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get shipping quotes from carriers
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetShippingQuotes(int orderId, decimal weight, decimal length, decimal width, decimal height)
+    {
+        try
+        {
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.Id == orderId);
+            var order = orders.FirstOrDefault();
+            
+            if (order == null)
+                return Json(new { success = false, message = "Order not found" });
+            
+            var request = new ShippingQuoteRequest
+            {
+                Origin = new AddressInfo
+                {
+                    PostalCode = _configuration["Store:PostalCode"] ?? "",
+                    Country = _configuration["Store:Country"] ?? "PL"
+                },
+                Destination = new AddressInfo
+                {
+                    PostalCode = order.ShippingPostalCode ?? "",
+                    Country = order.ShippingCountry ?? "PL"
+                },
+                Package = new PackageInfo
+                {
+                    Weight = weight,
+                    Length = length,
+                    Width = width,
+                    Height = height,
+                    DeclaredValue = order.TotalAmount
+                }
+            };
+            
+            var quotes = await _carrierApiService.GetShippingQuotesAsync(request);
+            
+            return Json(new { success = true, quotes });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting shipping quotes for order {OrderId}", orderId);
+            return Json(new { success = false, message = "Error retrieving shipping quotes" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Process carrier webhook
+    /// </summary>
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> CarrierWebhook([FromRoute] string carrierCode)
+    {
+        try
+        {
+            using var reader = new StreamReader(Request.Body);
+            var payload = await reader.ReadToEndAsync();
+            var signature = Request.Headers["X-Webhook-Signature"].ToString();
+            
+            var result = await _carrierApiService.ProcessWebhookAsync(carrierCode, payload, signature);
+            
+            if (result.Success)
+            {
+                return Ok(new { success = true });
+            }
+            
+            return BadRequest(new { success = false, message = result.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing carrier webhook for {CarrierCode}", carrierCode);
+            return StatusCode(500, new { success = false, message = "Error processing webhook" });
+        }
+    }
+
+    #endregion
 
     public async Task<IActionResult> Settings(string? tab = null)
     {
@@ -2313,6 +2610,40 @@ public class AdminController : Controller
             }
         };
 
+        // Fetch Stripe Connect account info
+        var connectedAccountId = _configuration["Stripe:ConnectedAccountId"];
+        if (!string.IsNullOrEmpty(connectedAccountId))
+        {
+            try
+            {
+                var accountService = new Stripe.AccountService();
+                var account = await accountService.GetAsync(connectedAccountId);
+                
+                viewModel.ConnectAccount = new Kokomija.Models.ViewModels.StripeConnectAccountDto
+                {
+                    AccountId = account.Id,
+                    Email = account.Email,
+                    BusinessName = account.BusinessProfile?.Name ?? account.Individual?.FirstName + " " + account.Individual?.LastName,
+                    IsVerified = account.DetailsSubmitted,
+                    PayoutsEnabled = account.PayoutsEnabled,
+                    ChargesEnabled = account.ChargesEnabled,
+                    Country = account.Country,
+                    Currency = account.DefaultCurrency?.ToUpper(),
+                    BusinessType = account.Type,
+                    Status = account.PayoutsEnabled ? "Active" : (account.DetailsSubmitted ? "Pending Verification" : "Incomplete")
+                };
+            }
+            catch (Stripe.StripeException ex)
+            {
+                viewModel.ConnectAccount = new Kokomija.Models.ViewModels.StripeConnectAccountDto
+                {
+                    AccountId = connectedAccountId,
+                    Status = "Error",
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
         return View(viewModel);
     }
 
@@ -2334,6 +2665,9 @@ public class AdminController : Controller
                 return Json(new { success = false, message = "Platform commission rate must be between 0 and 100" });
             }
 
+            // Get the current user's ID (not name)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
             var settings = (await _unitOfWork.CommissionSettings.GetAllAsync()).FirstOrDefault();
 
             if (settings == null)
@@ -2348,7 +2682,7 @@ public class AdminController : Controller
                     MinimumPayoutAmount = dto.MinimumPayoutAmount,
                     PayoutFrequency = Enum.Parse<Entity.PayoutFrequency>(dto.PayoutFrequency),
                     AutoPayoutEnabled = dto.AutoPayoutEnabled,
-                    LastModifiedBy = User.Identity?.Name ?? "Unknown",
+                    LastModifiedBy = userId!,
                     LastModifiedAt = DateTime.UtcNow
                 };
                 await _unitOfWork.CommissionSettings.AddAsync(settings);
@@ -2363,7 +2697,7 @@ public class AdminController : Controller
                 settings.MinimumPayoutAmount = dto.MinimumPayoutAmount;
                 settings.PayoutFrequency = Enum.Parse<Entity.PayoutFrequency>(dto.PayoutFrequency);
                 settings.AutoPayoutEnabled = dto.AutoPayoutEnabled;
-                settings.LastModifiedBy = User.Identity?.Name ?? "Unknown";
+                settings.LastModifiedBy = userId!;
                 settings.LastModifiedAt = DateTime.UtcNow;
             }
 
@@ -2376,6 +2710,42 @@ public class AdminController : Controller
         {
             _logger.LogError(ex, "Error updating commission settings");
             return Json(new { success = false, message = "Error updating commission settings" });
+        }
+    }
+
+    // POST: /Admin/ProcessDeveloperPayout
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> ProcessDeveloperPayout()
+    {
+        try
+        {
+            // Get pending amount first
+            var pendingAmount = await _stripePayoutService.GetPendingPayoutAmountAsync();
+            
+            if (pendingAmount <= 0)
+            {
+                return Json(new { success = false, message = "No pending earnings to process." });
+            }
+
+            // Process the payout
+            var (success, message) = await _stripePayoutService.ProcessPendingDeveloperEarningsAsync();
+
+            if (success)
+            {
+                _logger.LogInformation("Manual developer payout processed by {User} for {Amount} PLN", 
+                    User.Identity?.Name, pendingAmount);
+                return Json(new { success = true, message = message, amount = $"{pendingAmount:N2} PLN" });
+            }
+            else
+            {
+                return Json(new { success = false, message = message });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing manual developer payout");
+            return Json(new { success = false, message = "An error occurred while processing the payout." });
         }
     }
 
@@ -2650,6 +3020,26 @@ public class AdminController : Controller
                 .FindAsync(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.PaymentStatus == "refunded");
             summary.TotalRefunds = refundedOrders.Sum(o => o.TotalAmount);
 
+            // Shipping calculations
+            summary.TotalShippingCollected = orders.Sum(o => o.ShippingCost);
+            summary.OrdersWithShipping = orders.Count(o => o.ShippingCost > 0);
+            summary.OrdersWithFreeShipping = orders.Count(o => o.ShippingCost == 0);
+            
+            // Get actual shipping costs from OrderShipment
+            var orderIds = orders.Select(o => o.Id).ToList();
+            var shipmentsQuery = await _unitOfWork.Repository<OrderShipment>()
+                .FindAsync(s => orderIds.Contains(s.OrderId));
+            var shipments = shipmentsQuery.ToList();
+            summary.TotalShippingCost = shipments.Sum(s => s.ShippingCost);
+            summary.ShippingProfit = summary.TotalShippingCollected - summary.TotalShippingCost;
+
+            // Get order items for product stats
+            var orderItemsQuery = await _unitOfWork.Repository<OrderItem>()
+                .FindAsync(oi => orderIds.Contains(oi.OrderId));
+            var orderItemsList = orderItemsQuery.ToList();
+            summary.TotalProductsSold = orderItemsList.Sum(oi => oi.Quantity);
+            summary.UniqueProductsSold = orderItemsList.Select(oi => oi.ProductName).Distinct().Count();
+
             // Net Revenue (Company perspective)
             summary.NetRevenue = summary.GrossRevenue - summary.TotalStripeFees - summary.TotalDeveloperCommission - summary.TotalRefunds;
             summary.NetRevenueThisMonth = orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Sum(o => o.TotalAmount) 
@@ -2662,7 +3052,6 @@ public class AdminController : Controller
                 - commissionsList.Where(c => orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Select(o => o.Id).Contains(c.OrderId)).Sum(c => c.TotalStripeFees);
 
             // Statistics
-            summary.TotalProductsSold = orders.Sum(o => 1); // Will be updated with actual item count
             summary.AverageOrderValue = orders.Any() ? summary.GrossRevenue / orders.Count : 0;
             summary.EffectiveTaxRate = summary.GrossRevenue > 0 ? (summary.TotalTaxAmount / summary.GrossRevenue) * 100 : 0;
 
@@ -2718,7 +3107,7 @@ public class AdminController : Controller
     }
 
     /// <summary>
-    /// Export financial data to Excel
+    /// Export financial data to Excel (.xlsx)
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> ExportFinancial(string period = "month", DateTime? dateFrom = null, DateTime? dateTo = null)
@@ -2745,13 +3134,12 @@ public class AdminController : Controller
                 .FindAsync(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.PaymentStatus == "paid");
             var orders = allOrders.ToList();
 
-            // Generate Excel using ClosedXML or similar
-            var csvContent = GenerateFinancialCsv(orders, startDate, endDate);
+            // Generate Excel using ClosedXML
+            var excelBytes = await GenerateFinancialExcelAsync(orders, startDate, endDate);
             
-            var fileName = $"Financial_Report_{startDate:yyyyMMdd}_to_{endDate:yyyyMMdd}.csv";
-            var bytes = System.Text.Encoding.UTF8.GetBytes(csvContent);
+            var fileName = $"Financial_Report_{startDate:yyyyMMdd}_to_{endDate:yyyyMMdd}.xlsx";
             
-            return File(bytes, "text/csv", fileName);
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
         catch (Exception ex)
         {
@@ -2871,46 +3259,6 @@ public class AdminController : Controller
                 minimumPayout = settings?.MinimumPayoutAmount ?? 100
             }
         });
-    }
-
-    /// <summary>
-    /// Update commission settings (Root only)
-    /// </summary>
-    [HttpPost]
-    [Authorize(Roles = "Root")]
-    public async Task<IActionResult> UpdateCommissionSettings([FromBody] UpdateCommissionSettingsDto dto)
-    {
-        try
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var settings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
-            
-            if (settings == null)
-            {
-                settings = new CommissionSettings
-                {
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _unitOfWork.Repository<CommissionSettings>().AddAsync(settings);
-            }
-            
-            settings.DeveloperCommissionRate = dto.DeveloperRate;
-            settings.PlatformCommissionRate = dto.PlatformRate;
-            settings.AutoPayoutEnabled = dto.AutoPayoutEnabled;
-            settings.MinimumPayoutAmount = dto.MinimumPayout;
-            settings.LastModifiedBy = userId!;
-            settings.LastModifiedAt = DateTime.UtcNow;
-            
-            _unitOfWork.Repository<CommissionSettings>().Update(settings);
-            await _unitOfWork.SaveChangesAsync();
-            
-            return Json(new { success = true, message = "Commission settings updated successfully" });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating commission settings");
-            return Json(new { success = false, message = "Error updating settings" });
-        }
     }
 
     /// <summary>
@@ -3271,6 +3619,809 @@ public class AdminController : Controller
     {
         // Sync wrapper for backward compatibility
         return GenerateFinancialCsvAsync(orders, startDate, endDate).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Generate Excel file using ClosedXML
+    /// </summary>
+    private async Task<byte[]> GenerateFinancialExcelAsync(List<Order> orders, DateTime startDate, DateTime endDate)
+    {
+        using var workbook = new XLWorkbook();
+        
+        // Get commission and earnings data
+        var orderIds = orders.Select(o => o.Id).ToList();
+        var adminCommissions = (await _unitOfWork.Repository<AdminCommission>()
+            .FindAsync(ac => orderIds.Contains(ac.OrderId))).ToDictionary(ac => ac.OrderId);
+        var developerEarnings = (await _unitOfWork.Repository<DeveloperEarnings>()
+            .FindAsync(de => orderIds.Contains(de.OrderId))).ToDictionary(de => de.OrderId);
+        var commissionSettings = (await _unitOfWork.Repository<CommissionSettings>().GetAllAsync()).FirstOrDefault();
+        
+        // Get shipping data for this period
+        var shipments = (await _unitOfWork.Repository<OrderShipment>()
+            .FindAsync(s => orderIds.Contains(s.OrderId))).ToList();
+        var shippingProviders = (await _unitOfWork.Repository<ShippingProvider>().GetAllAsync()).ToDictionary(p => p.Id);
+        var shippingRates = (await _unitOfWork.Repository<ShippingRate>().GetAllAsync()).ToDictionary(r => r.Id);
+
+        // Calculate totals
+        var grossRevenue = orders.Sum(o => o.TotalAmount);
+        var totalTax = orders.Sum(o => o.TaxAmount);
+        var totalDiscounts = orders.Sum(o => o.DiscountAmount);
+        var totalShippingCollected = orders.Sum(o => o.ShippingCost);
+        var totalShippingCost = shipments.Sum(s => s.ShippingCost); // Actual cost to you
+        var totalStripeFees = adminCommissions.Values.Sum(c => c.TotalStripeFees);
+        var totalDevCommission = developerEarnings.Values.Sum(d => d.DeveloperCommission);
+        var shippingProfit = totalShippingCollected - totalShippingCost;
+        var netRevenue = grossRevenue - totalStripeFees - totalDevCommission;
+
+        // === SUMMARY SHEET ===
+        var summarySheet = workbook.Worksheets.Add("Summary");
+        
+        // Title
+        summarySheet.Cell("A1").Value = "KOKOMIJA FINANCIAL REPORT";
+        summarySheet.Cell("A1").Style.Font.Bold = true;
+        summarySheet.Cell("A1").Style.Font.FontSize = 16;
+        summarySheet.Range("A1:D1").Merge();
+        
+        summarySheet.Cell("A2").Value = $"Period: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}";
+        summarySheet.Cell("A3").Value = $"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC";
+        
+        // Get order items for product count
+        var orderItemsQuery = await _unitOfWork.Repository<OrderItem>()
+            .FindAsync(oi => orderIds.Contains(oi.OrderId));
+        var orderItems = orderItemsQuery.ToList();
+        var uniqueProductsCount = orderItems.Select(oi => oi.ProductName).Distinct().Count();
+        var totalItemsSold = orderItems.Sum(oi => oi.Quantity);
+        
+        // Summary data
+        var row = 5;
+        summarySheet.Cell(row, 1).Value = "Metric";
+        summarySheet.Cell(row, 2).Value = "Value";
+        summarySheet.Range(row, 1, row, 2).Style.Font.Bold = true;
+        summarySheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightBlue;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Total Orders";
+        summarySheet.Cell(row, 2).Value = orders.Count;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Unique Products Sold";
+        summarySheet.Cell(row, 2).Value = uniqueProductsCount;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Total Items Sold";
+        summarySheet.Cell(row, 2).Value = totalItemsSold;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Gross Revenue (incl. Shipping)";
+        summarySheet.Cell(row, 2).Value = grossRevenue;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Product Subtotal";
+        summarySheet.Cell(row, 2).Value = orders.Sum(o => o.SubtotalAmount);
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Shipping Revenue Collected";
+        summarySheet.Cell(row, 2).Value = totalShippingCollected;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Actual Shipping Cost (Your Cost)";
+        summarySheet.Cell(row, 2).Value = totalShippingCost;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        summarySheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Shipping Profit/Loss";
+        summarySheet.Cell(row, 2).Value = shippingProfit;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        summarySheet.Cell(row, 2).Style.Font.FontColor = shippingProfit >= 0 ? XLColor.Green : XLColor.Red;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Total Tax Collected (VAT)";
+        summarySheet.Cell(row, 2).Value = totalTax;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Total Discounts Given";
+        summarySheet.Cell(row, 2).Value = totalDiscounts;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        summarySheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = "Total Stripe Fees";
+        summarySheet.Cell(row, 2).Value = totalStripeFees;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        summarySheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+        
+        row++;
+        summarySheet.Cell(row, 1).Value = $"Developer Commission ({commissionSettings?.DeveloperCommissionRate ?? 0}%)";
+        summarySheet.Cell(row, 2).Value = totalDevCommission;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        summarySheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+        
+        row++;
+        summarySheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightGreen;
+        summarySheet.Cell(row, 1).Value = "NET REVENUE (Your Earnings)";
+        summarySheet.Cell(row, 1).Style.Font.Bold = true;
+        summarySheet.Cell(row, 2).Value = netRevenue;
+        summarySheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        summarySheet.Cell(row, 2).Style.Font.Bold = true;
+        summarySheet.Cell(row, 2).Style.Font.FontColor = XLColor.DarkGreen;
+        
+        // Order status breakdown
+        row += 2;
+        summarySheet.Cell(row, 1).Value = "Order Status Breakdown";
+        summarySheet.Cell(row, 1).Style.Font.Bold = true;
+        summarySheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightYellow;
+        
+        var statusGroups = orders.GroupBy(o => o.OrderStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count(), Revenue = g.Sum(o => o.TotalAmount) })
+            .OrderByDescending(s => s.Count);
+        
+        foreach (var status in statusGroups)
+        {
+            row++;
+            summarySheet.Cell(row, 1).Value = $"  {status.Status.ToUpper()}";
+            summarySheet.Cell(row, 2).Value = $"{status.Count} orders ({status.Revenue:N2} PLN)";
+        }
+        
+        // Payment status breakdown
+        row += 2;
+        summarySheet.Cell(row, 1).Value = "Payment Status Breakdown";
+        summarySheet.Cell(row, 1).Style.Font.Bold = true;
+        summarySheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightYellow;
+        
+        var paymentGroups = orders.GroupBy(o => o.PaymentStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count(), Revenue = g.Sum(o => o.TotalAmount) })
+            .OrderByDescending(s => s.Count);
+        
+        foreach (var status in paymentGroups)
+        {
+            row++;
+            summarySheet.Cell(row, 1).Value = $"  {status.Status.ToUpper()}";
+            summarySheet.Cell(row, 2).Value = $"{status.Count} orders ({status.Revenue:N2} PLN)";
+        }
+        
+        summarySheet.Columns().AdjustToContents();
+
+        // === TRANSACTIONS SHEET ===
+        var transSheet = workbook.Worksheets.Add("Transactions");
+        
+        // Headers
+        var headers = new[] { "Order Number", "Type", "Date", "Customer", "Email", "Subtotal", "Shipping", "Discount", "Tax", "Gross Total", "Stripe Fee", "Dev Commission", "Net Amount", "Payment Status", "Order Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            transSheet.Cell(1, i + 1).Value = headers[i];
+        }
+        transSheet.Range(1, 1, 1, headers.Length).Style.Font.Bold = true;
+        transSheet.Range(1, 1, 1, headers.Length).Style.Fill.BackgroundColor = XLColor.LightBlue;
+        
+        // Data rows
+        row = 2;
+        foreach (var order in orders.OrderByDescending(o => o.CreatedAt))
+        {
+            var isDemo = order.OrderNumber.StartsWith("DEMO-") ? "[DEMO]" : "";
+            var stripeFee = adminCommissions.TryGetValue(order.Id, out var ac) ? ac.TotalStripeFees : (order.TotalAmount * 0.029m + 1m);
+            var devComm = developerEarnings.TryGetValue(order.Id, out var de) ? de.DeveloperCommission : 0m;
+            var netAmount = order.TotalAmount - stripeFee - devComm;
+            
+            transSheet.Cell(row, 1).Value = order.OrderNumber;
+            transSheet.Cell(row, 2).Value = isDemo;
+            transSheet.Cell(row, 3).Value = order.CreatedAt;
+            transSheet.Cell(row, 3).Style.NumberFormat.Format = "yyyy-MM-dd HH:mm";
+            transSheet.Cell(row, 4).Value = order.CustomerName;
+            transSheet.Cell(row, 5).Value = order.CustomerEmail;
+            transSheet.Cell(row, 6).Value = order.SubtotalAmount;
+            transSheet.Cell(row, 7).Value = order.ShippingCost;
+            transSheet.Cell(row, 8).Value = order.DiscountAmount;
+            transSheet.Cell(row, 9).Value = order.TaxAmount;
+            transSheet.Cell(row, 10).Value = order.TotalAmount;
+            transSheet.Cell(row, 11).Value = stripeFee;
+            transSheet.Cell(row, 12).Value = devComm;
+            transSheet.Cell(row, 13).Value = netAmount;
+            transSheet.Cell(row, 14).Value = order.PaymentStatus;
+            transSheet.Cell(row, 15).Value = order.OrderStatus;
+            
+            // Format currency columns
+            for (int col = 6; col <= 13; col++)
+            {
+                transSheet.Cell(row, col).Style.NumberFormat.Format = "#,##0.00";
+            }
+            
+            // Color net amount
+            transSheet.Cell(row, 13).Style.Font.FontColor = netAmount >= 0 ? XLColor.Green : XLColor.Red;
+            
+            row++;
+        }
+        
+        // Create table
+        if (orders.Any())
+        {
+            var tableRange = transSheet.Range(1, 1, row - 1, headers.Length);
+            tableRange.CreateTable("TransactionsTable");
+        }
+        
+        transSheet.Columns().AdjustToContents();
+
+        // === DEVELOPER EARNINGS SHEET ===
+        var devSheet = workbook.Worksheets.Add("Developer Earnings");
+        
+        devSheet.Cell("A1").Value = "Developer Earnings Summary";
+        devSheet.Cell("A1").Style.Font.Bold = true;
+        devSheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        var paidDev = developerEarnings.Values.Where(d => d.PayoutStatus == PayoutStatus.Processed).Sum(d => d.DeveloperCommission);
+        var pendingDev = developerEarnings.Values.Where(d => d.PayoutStatus == PayoutStatus.Pending).Sum(d => d.DeveloperCommission);
+        
+        devSheet.Cell("A3").Value = "Status";
+        devSheet.Cell("B3").Value = "Amount (PLN)";
+        devSheet.Range("A3:B3").Style.Font.Bold = true;
+        devSheet.Range("A3:B3").Style.Fill.BackgroundColor = XLColor.LightGreen;
+        
+        devSheet.Cell("A4").Value = "Paid";
+        devSheet.Cell("B4").Value = paidDev;
+        devSheet.Cell("B4").Style.NumberFormat.Format = "#,##0.00";
+        
+        devSheet.Cell("A5").Value = "Pending";
+        devSheet.Cell("B5").Value = pendingDev;
+        devSheet.Cell("B5").Style.NumberFormat.Format = "#,##0.00";
+        
+        devSheet.Cell("A6").Value = "Total";
+        devSheet.Cell("B6").Value = totalDevCommission;
+        devSheet.Cell("B6").Style.NumberFormat.Format = "#,##0.00";
+        devSheet.Cell("B6").Style.Font.Bold = true;
+        
+        devSheet.Columns().AdjustToContents();
+
+        // === TAX SUMMARY SHEET ===
+        var taxSheet = workbook.Worksheets.Add("Tax Summary");
+        
+        taxSheet.Cell("A1").Value = "Tax Summary";
+        taxSheet.Cell("A1").Style.Font.Bold = true;
+        taxSheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        taxSheet.Cell("A3").Value = "Tax Rate";
+        taxSheet.Cell("B3").Value = "Tax Collected";
+        taxSheet.Cell("C3").Value = "Order Count";
+        taxSheet.Range("A3:C3").Style.Font.Bold = true;
+        taxSheet.Range("A3:C3").Style.Fill.BackgroundColor = XLColor.LightYellow;
+        
+        var taxByRate = orders.GroupBy(o => o.TaxRate)
+            .Select(g => new { Rate = g.Key * 100, Amount = g.Sum(o => o.TaxAmount), Count = g.Count() })
+            .OrderByDescending(t => t.Amount)
+            .ToList();
+        
+        row = 4;
+        foreach (var tax in taxByRate)
+        {
+            taxSheet.Cell(row, 1).Value = $"{tax.Rate:F0}%";
+            taxSheet.Cell(row, 2).Value = tax.Amount;
+            taxSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+            taxSheet.Cell(row, 3).Value = tax.Count;
+            row++;
+        }
+        
+        taxSheet.Columns().AdjustToContents();
+
+        // === DAILY BREAKDOWN SHEET ===
+        var dailySheet = workbook.Worksheets.Add("Daily Breakdown");
+        
+        dailySheet.Cell("A1").Value = "Daily Revenue Breakdown";
+        dailySheet.Cell("A1").Style.Font.Bold = true;
+        dailySheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        dailySheet.Cell("A3").Value = "Date";
+        dailySheet.Cell("B3").Value = "Orders";
+        dailySheet.Cell("C3").Value = "Gross Revenue";
+        dailySheet.Cell("D3").Value = "Fees";
+        dailySheet.Cell("E3").Value = "Net Revenue";
+        dailySheet.Cell("F3").Value = "Avg Order Value";
+        dailySheet.Range("A3:F3").Style.Font.Bold = true;
+        dailySheet.Range("A3:F3").Style.Fill.BackgroundColor = XLColor.LightCoral;
+        
+        var dailyData = orders.GroupBy(o => o.CreatedAt.Date)
+            .Select(g => new {
+                Date = g.Key,
+                OrderCount = g.Count(),
+                GrossRevenue = g.Sum(o => o.TotalAmount),
+                Fees = g.Sum(o => adminCommissions.TryGetValue(o.Id, out var ac) ? ac.TotalStripeFees : (o.TotalAmount * 0.029m + 1m)) +
+                       g.Sum(o => developerEarnings.TryGetValue(o.Id, out var de) ? de.DeveloperCommission : 0m),
+                AvgOrderValue = g.Average(o => o.TotalAmount)
+            })
+            .OrderByDescending(d => d.Date)
+            .ToList();
+        
+        row = 4;
+        foreach (var day in dailyData)
+        {
+            dailySheet.Cell(row, 1).Value = day.Date;
+            dailySheet.Cell(row, 1).Style.NumberFormat.Format = "yyyy-MM-dd";
+            dailySheet.Cell(row, 2).Value = day.OrderCount;
+            dailySheet.Cell(row, 3).Value = day.GrossRevenue;
+            dailySheet.Cell(row, 3).Style.NumberFormat.Format = "#,##0.00";
+            dailySheet.Cell(row, 4).Value = day.Fees;
+            dailySheet.Cell(row, 4).Style.NumberFormat.Format = "#,##0.00";
+            dailySheet.Cell(row, 5).Value = day.GrossRevenue - day.Fees;
+            dailySheet.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+            dailySheet.Cell(row, 5).Style.Font.FontColor = XLColor.Green;
+            dailySheet.Cell(row, 6).Value = day.AvgOrderValue;
+            dailySheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
+            row++;
+        }
+        
+        // Add totals row
+        if (dailyData.Any())
+        {
+            dailySheet.Cell(row, 1).Value = "TOTAL";
+            dailySheet.Cell(row, 1).Style.Font.Bold = true;
+            dailySheet.Cell(row, 2).Value = dailyData.Sum(d => d.OrderCount);
+            dailySheet.Cell(row, 2).Style.Font.Bold = true;
+            dailySheet.Cell(row, 3).Value = dailyData.Sum(d => d.GrossRevenue);
+            dailySheet.Cell(row, 3).Style.NumberFormat.Format = "#,##0.00";
+            dailySheet.Cell(row, 3).Style.Font.Bold = true;
+            dailySheet.Cell(row, 4).Value = dailyData.Sum(d => d.Fees);
+            dailySheet.Cell(row, 4).Style.NumberFormat.Format = "#,##0.00";
+            dailySheet.Cell(row, 4).Style.Font.Bold = true;
+            dailySheet.Cell(row, 5).Value = dailyData.Sum(d => d.GrossRevenue - d.Fees);
+            dailySheet.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+            dailySheet.Cell(row, 5).Style.Font.Bold = true;
+            dailySheet.Cell(row, 5).Style.Font.FontColor = XLColor.Green;
+            dailySheet.Range(row, 1, row, 6).Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+        
+        dailySheet.Columns().AdjustToContents();
+
+        // === PRODUCTS PERFORMANCE SHEET ===
+        var productsSheet = workbook.Worksheets.Add("Products Performance");
+        
+        productsSheet.Cell("A1").Value = $"Products Sold in Period ({startDate:MMM dd} - {endDate:MMM dd, yyyy})";
+        productsSheet.Cell("A1").Style.Font.Bold = true;
+        productsSheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        productsSheet.Cell("A2").Value = $"Only showing products that were sold during this period";
+        productsSheet.Cell("A2").Style.Font.Italic = true;
+        productsSheet.Cell("A2").Style.Font.FontColor = XLColor.Gray;
+        
+        productsSheet.Cell("A4").Value = "Product Name";
+        productsSheet.Cell("B4").Value = "Size";
+        productsSheet.Cell("C4").Value = "Color";
+        productsSheet.Cell("D4").Value = "Units Sold";
+        productsSheet.Cell("E4").Value = "Gross Revenue";
+        productsSheet.Cell("F4").Value = "Avg Unit Price";
+        productsSheet.Cell("G4").Value = "% of Total Revenue";
+        productsSheet.Range("A4:G4").Style.Font.Bold = true;
+        productsSheet.Range("A4:G4").Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
+        
+        // orderItems already loaded in Summary section
+        var totalProductRevenue = orderItems.Sum(oi => oi.TotalPrice);
+        
+        var productPerformance = orderItems
+            .GroupBy(oi => new { oi.ProductName, Size = oi.Size ?? "-", Color = oi.Color ?? "-" })
+            .Select(g => new {
+                ProductName = g.Key.ProductName,
+                Size = g.Key.Size,
+                Color = g.Key.Color,
+                UnitsSold = g.Sum(oi => oi.Quantity),
+                GrossRevenue = g.Sum(oi => oi.TotalPrice),
+                AvgPrice = g.Average(oi => oi.UnitPrice),
+                RevenuePercent = totalProductRevenue > 0 ? (g.Sum(oi => oi.TotalPrice) / totalProductRevenue) : 0
+            })
+            .OrderByDescending(p => p.GrossRevenue)
+            .ToList();
+        
+        row = 5;
+        foreach (var product in productPerformance)
+        {
+            productsSheet.Cell(row, 1).Value = product.ProductName;
+            productsSheet.Cell(row, 2).Value = product.Size;
+            productsSheet.Cell(row, 3).Value = product.Color;
+            productsSheet.Cell(row, 4).Value = product.UnitsSold;
+            productsSheet.Cell(row, 5).Value = product.GrossRevenue;
+            productsSheet.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+            productsSheet.Cell(row, 6).Value = product.AvgPrice;
+            productsSheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
+            productsSheet.Cell(row, 7).Value = product.RevenuePercent;
+            productsSheet.Cell(row, 7).Style.NumberFormat.Format = "0.0%";
+            row++;
+        }
+        
+        // Add totals
+        if (productPerformance.Any())
+        {
+            productsSheet.Cell(row, 1).Value = "TOTAL";
+            productsSheet.Cell(row, 1).Style.Font.Bold = true;
+            productsSheet.Cell(row, 4).Value = productPerformance.Sum(p => p.UnitsSold);
+            productsSheet.Cell(row, 4).Style.Font.Bold = true;
+            productsSheet.Cell(row, 5).Value = productPerformance.Sum(p => p.GrossRevenue);
+            productsSheet.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+            productsSheet.Cell(row, 5).Style.Font.Bold = true;
+            productsSheet.Cell(row, 7).Value = 1;
+            productsSheet.Cell(row, 7).Style.NumberFormat.Format = "0%";
+            productsSheet.Cell(row, 7).Style.Font.Bold = true;
+            productsSheet.Range(row, 1, row, 7).Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+        
+        // Add unique products count summary
+        row += 2;
+        productsSheet.Cell(row, 1).Value = "Summary:";
+        productsSheet.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+        productsSheet.Cell(row, 1).Value = $"Unique Products Sold: {productPerformance.Select(p => p.ProductName).Distinct().Count()}";
+        row++;
+        productsSheet.Cell(row, 1).Value = $"Total Product Variants: {productPerformance.Count}";
+        row++;
+        productsSheet.Cell(row, 1).Value = $"Total Units Sold: {productPerformance.Sum(p => p.UnitsSold)}";
+        
+        productsSheet.Columns().AdjustToContents();
+
+        // === ORDERS DETAIL SHEET ===
+        var ordersSheet = workbook.Worksheets.Add("Orders Detail");
+        
+        ordersSheet.Cell("A1").Value = "Complete Orders Report";
+        ordersSheet.Cell("A1").Style.Font.Bold = true;
+        ordersSheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        // Order headers
+        var orderHeaders = new[] { 
+            "Order #", "Date", "Customer", "Email", "Phone", "Shipping Address", 
+            "Product", "Size", "Color", "Qty", "Unit Price", "Line Total",
+            "Subtotal", "Shipping", "Discount", "Tax", "Grand Total", "Payment Status", "Order Status", "Currency"
+        };
+        for (int i = 0; i < orderHeaders.Length; i++)
+        {
+            ordersSheet.Cell(3, i + 1).Value = orderHeaders[i];
+        }
+        ordersSheet.Range(3, 1, 3, orderHeaders.Length).Style.Font.Bold = true;
+        ordersSheet.Range(3, 1, 3, orderHeaders.Length).Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
+        
+        row = 4;
+        foreach (var order in orders.OrderByDescending(o => o.CreatedAt))
+        {
+            // Get order items
+            var items = orderItems.Where(oi => oi.OrderId == order.Id).ToList();
+            
+            var shippingAddress = $"{order.ShippingAddress}, {order.ShippingCity}, {order.ShippingPostalCode}, {order.ShippingCountry}";
+            var isFirstItem = true;
+            
+            if (items.Any())
+            {
+                foreach (var item in items)
+                {
+                    ordersSheet.Cell(row, 1).Value = order.OrderNumber;
+                    ordersSheet.Cell(row, 2).Value = order.CreatedAt;
+                    ordersSheet.Cell(row, 2).Style.NumberFormat.Format = "yyyy-MM-dd HH:mm";
+                    ordersSheet.Cell(row, 3).Value = order.CustomerName;
+                    ordersSheet.Cell(row, 4).Value = order.CustomerEmail;
+                    ordersSheet.Cell(row, 5).Value = order.CustomerPhone;
+                    ordersSheet.Cell(row, 6).Value = shippingAddress;
+                    ordersSheet.Cell(row, 7).Value = item.ProductName;
+                    ordersSheet.Cell(row, 8).Value = item.Size ?? "-";
+                    ordersSheet.Cell(row, 9).Value = item.Color ?? "-";
+                    ordersSheet.Cell(row, 10).Value = item.Quantity;
+                    ordersSheet.Cell(row, 11).Value = item.UnitPrice;
+                    ordersSheet.Cell(row, 11).Style.NumberFormat.Format = "#,##0.00";
+                    ordersSheet.Cell(row, 12).Value = item.TotalPrice;
+                    ordersSheet.Cell(row, 12).Style.NumberFormat.Format = "#,##0.00";
+                    
+                    // Only show order totals on first item row
+                    if (isFirstItem)
+                    {
+                        ordersSheet.Cell(row, 13).Value = order.SubtotalAmount;
+                        ordersSheet.Cell(row, 13).Style.NumberFormat.Format = "#,##0.00";
+                        ordersSheet.Cell(row, 14).Value = order.ShippingCost;
+                        ordersSheet.Cell(row, 14).Style.NumberFormat.Format = "#,##0.00";
+                        ordersSheet.Cell(row, 15).Value = order.DiscountAmount;
+                        ordersSheet.Cell(row, 15).Style.NumberFormat.Format = "#,##0.00";
+                        ordersSheet.Cell(row, 16).Value = order.TaxAmount;
+                        ordersSheet.Cell(row, 16).Style.NumberFormat.Format = "#,##0.00";
+                        ordersSheet.Cell(row, 17).Value = order.TotalAmount;
+                        ordersSheet.Cell(row, 17).Style.NumberFormat.Format = "#,##0.00";
+                        ordersSheet.Cell(row, 17).Style.Font.Bold = true;
+                        ordersSheet.Cell(row, 18).Value = order.PaymentStatus;
+                        ordersSheet.Cell(row, 19).Value = order.OrderStatus;
+                        ordersSheet.Cell(row, 20).Value = order.Currency.ToUpper();
+                        isFirstItem = false;
+                    }
+                    
+                    row++;
+                }
+            }
+            else
+            {
+                // Order without items (edge case)
+                ordersSheet.Cell(row, 1).Value = order.OrderNumber;
+                ordersSheet.Cell(row, 2).Value = order.CreatedAt;
+                ordersSheet.Cell(row, 2).Style.NumberFormat.Format = "yyyy-MM-dd HH:mm";
+                ordersSheet.Cell(row, 3).Value = order.CustomerName;
+                ordersSheet.Cell(row, 4).Value = order.CustomerEmail;
+                ordersSheet.Cell(row, 5).Value = order.CustomerPhone;
+                ordersSheet.Cell(row, 6).Value = shippingAddress;
+                ordersSheet.Cell(row, 7).Value = "(No items)";
+                ordersSheet.Cell(row, 13).Value = order.SubtotalAmount;
+                ordersSheet.Cell(row, 13).Style.NumberFormat.Format = "#,##0.00";
+                ordersSheet.Cell(row, 14).Value = order.ShippingCost;
+                ordersSheet.Cell(row, 14).Style.NumberFormat.Format = "#,##0.00";
+                ordersSheet.Cell(row, 15).Value = order.DiscountAmount;
+                ordersSheet.Cell(row, 15).Style.NumberFormat.Format = "#,##0.00";
+                ordersSheet.Cell(row, 16).Value = order.TaxAmount;
+                ordersSheet.Cell(row, 16).Style.NumberFormat.Format = "#,##0.00";
+                ordersSheet.Cell(row, 17).Value = order.TotalAmount;
+                ordersSheet.Cell(row, 17).Style.NumberFormat.Format = "#,##0.00";
+                ordersSheet.Cell(row, 17).Style.Font.Bold = true;
+                ordersSheet.Cell(row, 18).Value = order.PaymentStatus;
+                ordersSheet.Cell(row, 19).Value = order.OrderStatus;
+                ordersSheet.Cell(row, 20).Value = order.Currency.ToUpper();
+                row++;
+            }
+            
+            // Add separator row with light background between orders
+            ordersSheet.Range(row - 1, 1, row - 1, orderHeaders.Length).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+            ordersSheet.Range(row - 1, 1, row - 1, orderHeaders.Length).Style.Border.BottomBorderColor = XLColor.LightGray;
+        }
+        
+        ordersSheet.Columns().AdjustToContents();
+        
+        // Freeze header row
+        ordersSheet.SheetView.FreezeRows(3);
+
+        // === SHIPPING SUMMARY SHEET ===
+        var shippingSheet = workbook.Worksheets.Add("Shipping Summary");
+        
+        shippingSheet.Cell("A1").Value = "Shipping Analysis";
+        shippingSheet.Cell("A1").Style.Font.Bold = true;
+        shippingSheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        shippingSheet.Cell("A2").Value = $"Period: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}";
+        shippingSheet.Cell("A2").Style.Font.Italic = true;
+        shippingSheet.Cell("A2").Style.Font.FontColor = XLColor.Gray;
+        
+        // Shipping overview
+        shippingSheet.Cell("A4").Value = "Overview";
+        shippingSheet.Cell("A4").Style.Font.Bold = true;
+        shippingSheet.Range("A4:B4").Style.Fill.BackgroundColor = XLColor.LightBlue;
+        
+        row = 5;
+        shippingSheet.Cell(row, 1).Value = "Total Orders with Shipping";
+        shippingSheet.Cell(row, 2).Value = orders.Count(o => o.ShippingCost > 0);
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Orders with Free Shipping";
+        shippingSheet.Cell(row, 2).Value = orders.Count(o => o.ShippingCost == 0);
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Total Shipping Charged to Customers";
+        shippingSheet.Cell(row, 2).Value = totalShippingCollected;
+        shippingSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Total Actual Shipping Cost";
+        shippingSheet.Cell(row, 2).Value = totalShippingCost;
+        shippingSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        shippingSheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Shipping Profit/Loss";
+        shippingSheet.Cell(row, 2).Value = shippingProfit;
+        shippingSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        shippingSheet.Cell(row, 2).Style.Font.Bold = true;
+        shippingSheet.Cell(row, 2).Style.Font.FontColor = shippingProfit >= 0 ? XLColor.Green : XLColor.Red;
+        shippingSheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightGray;
+        
+        // Shipping by Provider
+        row += 2;
+        shippingSheet.Cell(row, 1).Value = "Shipping by Provider";
+        shippingSheet.Cell(row, 1).Style.Font.Bold = true;
+        shippingSheet.Range(row, 1, row, 5).Style.Fill.BackgroundColor = XLColor.LightSteelBlue;
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Provider";
+        shippingSheet.Cell(row, 2).Value = "Shipments";
+        shippingSheet.Cell(row, 3).Value = "Total Cost";
+        shippingSheet.Cell(row, 4).Value = "Avg Cost";
+        shippingSheet.Cell(row, 5).Value = "% of Total";
+        shippingSheet.Range(row, 1, row, 5).Style.Font.Bold = true;
+        
+        var shipmentsByProvider = shipments
+            .GroupBy(s => s.ShippingProviderId)
+            .Select(g => new {
+                Provider = shippingProviders.TryGetValue(g.Key, out var p) ? p.Name : "Unknown",
+                Count = g.Count(),
+                TotalCost = g.Sum(s => s.ShippingCost),
+                AvgCost = g.Average(s => s.ShippingCost)
+            })
+            .OrderByDescending(s => s.TotalCost)
+            .ToList();
+        
+        row++;
+        if (shipmentsByProvider.Any())
+        {
+            foreach (var provider in shipmentsByProvider)
+            {
+                shippingSheet.Cell(row, 1).Value = provider.Provider;
+                shippingSheet.Cell(row, 2).Value = provider.Count;
+                shippingSheet.Cell(row, 3).Value = provider.TotalCost;
+                shippingSheet.Cell(row, 3).Style.NumberFormat.Format = "#,##0.00";
+                shippingSheet.Cell(row, 4).Value = provider.AvgCost;
+                shippingSheet.Cell(row, 4).Style.NumberFormat.Format = "#,##0.00";
+                shippingSheet.Cell(row, 5).Value = totalShippingCost > 0 ? (provider.TotalCost / totalShippingCost) : 0;
+                shippingSheet.Cell(row, 5).Style.NumberFormat.Format = "0.0%";
+                row++;
+            }
+        }
+        else
+        {
+            shippingSheet.Cell(row, 1).Value = "(No shipment records - using order shipping costs)";
+            shippingSheet.Cell(row, 1).Style.Font.Italic = true;
+            row++;
+        }
+        
+        // Shipping by Status
+        row += 2;
+        shippingSheet.Cell(row, 1).Value = "Shipment Status Breakdown";
+        shippingSheet.Cell(row, 1).Style.Font.Bold = true;
+        shippingSheet.Range(row, 1, row, 3).Style.Fill.BackgroundColor = XLColor.LightYellow;
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Status";
+        shippingSheet.Cell(row, 2).Value = "Count";
+        shippingSheet.Cell(row, 3).Value = "Shipping Cost";
+        shippingSheet.Range(row, 1, row, 3).Style.Font.Bold = true;
+        
+        var shipmentsByStatus = shipments
+            .GroupBy(s => s.Status)
+            .Select(g => new {
+                Status = g.Key.ToString(),
+                Count = g.Count(),
+                TotalCost = g.Sum(s => s.ShippingCost)
+            })
+            .OrderByDescending(s => s.Count)
+            .ToList();
+        
+        row++;
+        if (shipmentsByStatus.Any())
+        {
+            foreach (var status in shipmentsByStatus)
+            {
+                shippingSheet.Cell(row, 1).Value = status.Status;
+                shippingSheet.Cell(row, 2).Value = status.Count;
+                shippingSheet.Cell(row, 3).Value = status.TotalCost;
+                shippingSheet.Cell(row, 3).Style.NumberFormat.Format = "#,##0.00";
+                row++;
+            }
+        }
+        else
+        {
+            shippingSheet.Cell(row, 1).Value = "(No shipment tracking data yet)";
+            shippingSheet.Cell(row, 1).Style.Font.Italic = true;
+            row++;
+        }
+        
+        // Individual shipment details
+        row += 2;
+        shippingSheet.Cell(row, 1).Value = "Shipment Details";
+        shippingSheet.Cell(row, 1).Style.Font.Bold = true;
+        shippingSheet.Range(row, 1, row, 7).Style.Fill.BackgroundColor = XLColor.LightGreen;
+        
+        row++;
+        shippingSheet.Cell(row, 1).Value = "Order #";
+        shippingSheet.Cell(row, 2).Value = "Provider";
+        shippingSheet.Cell(row, 3).Value = "Rate/Service";
+        shippingSheet.Cell(row, 4).Value = "Tracking #";
+        shippingSheet.Cell(row, 5).Value = "Status";
+        shippingSheet.Cell(row, 6).Value = "Shipped Date";
+        shippingSheet.Cell(row, 7).Value = "Cost";
+        shippingSheet.Range(row, 1, row, 7).Style.Font.Bold = true;
+        
+        row++;
+        foreach (var shipment in shipments.OrderByDescending(s => s.CreatedAt))
+        {
+            var order = orders.FirstOrDefault(o => o.Id == shipment.OrderId);
+            var provider = shippingProviders.TryGetValue(shipment.ShippingProviderId, out var p) ? p.Name : "Unknown";
+            var rate = shippingRates.TryGetValue(shipment.ShippingRateId, out var r) ? r.Name : "Standard";
+            
+            shippingSheet.Cell(row, 1).Value = order?.OrderNumber ?? $"Order #{shipment.OrderId}";
+            shippingSheet.Cell(row, 2).Value = provider;
+            shippingSheet.Cell(row, 3).Value = rate;
+            shippingSheet.Cell(row, 4).Value = shipment.TrackingNumber ?? "-";
+            shippingSheet.Cell(row, 5).Value = shipment.Status.ToString();
+            shippingSheet.Cell(row, 6).Value = shipment.ShippedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-";
+            shippingSheet.Cell(row, 7).Value = shipment.ShippingCost;
+            shippingSheet.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
+            row++;
+        }
+        
+        // Note about API integration
+        row += 2;
+        shippingSheet.Cell(row, 1).Value = "Note: Shipping costs shown are current values. When shipping provider APIs are integrated,";
+        shippingSheet.Cell(row, 1).Style.Font.Italic = true;
+        shippingSheet.Cell(row, 1).Style.Font.FontColor = XLColor.Gray;
+        row++;
+        shippingSheet.Cell(row, 1).Value = "real-time rates and tracking data will be available.";
+        shippingSheet.Cell(row, 1).Style.Font.Italic = true;
+        shippingSheet.Cell(row, 1).Style.Font.FontColor = XLColor.Gray;
+        
+        shippingSheet.Columns().AdjustToContents();
+
+        // === DEDUCTIONS BREAKDOWN SHEET ===
+        var deductSheet = workbook.Worksheets.Add("Deductions Breakdown");
+        
+        deductSheet.Cell("A1").Value = "Deductions & Costs Analysis";
+        deductSheet.Cell("A1").Style.Font.Bold = true;
+        deductSheet.Cell("A1").Style.Font.FontSize = 14;
+        
+        deductSheet.Cell("A3").Value = "Category";
+        deductSheet.Cell("B3").Value = "Amount (PLN)";
+        deductSheet.Cell("C3").Value = "% of Total";
+        deductSheet.Cell("D3").Value = "Notes";
+        deductSheet.Range("A3:D3").Style.Font.Bold = true;
+        deductSheet.Range("A3:D3").Style.Fill.BackgroundColor = XLColor.LightPink;
+        
+        var totalDeductions = totalStripeFees + totalDevCommission + totalTax + totalDiscounts + totalShippingCost;
+        var deductions = new[]
+        {
+            new { Category = "Stripe Processing Fees", Amount = totalStripeFees, Note = "2.9% + fixed fee per transaction" },
+            new { Category = "Developer Commission", Amount = totalDevCommission, Note = $"{commissionSettings?.DeveloperCommissionRate ?? 0}% of order total" },
+            new { Category = "Tax Collected (VAT)", Amount = totalTax, Note = "To be remitted to tax authority" },
+            new { Category = "Discounts Applied", Amount = totalDiscounts, Note = "Coupons and promotional discounts" },
+            new { Category = "Actual Shipping Costs", Amount = totalShippingCost, Note = "Cost paid to shipping providers" }
+        };
+        
+        row = 4;
+        foreach (var deduction in deductions)
+        {
+            deductSheet.Cell(row, 1).Value = deduction.Category;
+            deductSheet.Cell(row, 2).Value = deduction.Amount;
+            deductSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00";
+            deductSheet.Cell(row, 3).Value = totalDeductions > 0 ? (deduction.Amount / totalDeductions) : 0;
+            deductSheet.Cell(row, 3).Style.NumberFormat.Format = "0.0%";
+            deductSheet.Cell(row, 4).Value = deduction.Note;
+            deductSheet.Cell(row, 4).Style.Font.FontColor = XLColor.Gray;
+            row++;
+        }
+        
+        deductSheet.Cell(row, 1).Value = "TOTAL DEDUCTIONS & COSTS";
+        deductSheet.Cell(row, 1).Style.Font.Bold = true;
+        deductSheet.Cell(row, 2).Value = totalDeductions;
+        deductSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00";
+        deductSheet.Cell(row, 2).Style.Font.Bold = true;
+        deductSheet.Cell(row, 3).Value = 1;
+        deductSheet.Cell(row, 3).Style.NumberFormat.Format = "0%";
+        deductSheet.Range(row, 1, row, 4).Style.Fill.BackgroundColor = XLColor.LightGray;
+        
+        // Add profit summary after deductions
+        row += 2;
+        deductSheet.Cell(row, 1).Value = "Profit Summary";
+        deductSheet.Cell(row, 1).Style.Font.Bold = true;
+        deductSheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightGreen;
+        
+        row++;
+        deductSheet.Cell(row, 1).Value = "Gross Revenue";
+        deductSheet.Cell(row, 2).Value = grossRevenue;
+        deductSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        
+        row++;
+        deductSheet.Cell(row, 1).Value = "Total Deductions & Costs";
+        deductSheet.Cell(row, 2).Value = totalDeductions;
+        deductSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        deductSheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+        
+        row++;
+        deductSheet.Cell(row, 1).Value = "NET PROFIT";
+        deductSheet.Cell(row, 1).Style.Font.Bold = true;
+        deductSheet.Cell(row, 2).Value = grossRevenue - totalDeductions;
+        deductSheet.Cell(row, 2).Style.NumberFormat.Format = "#,##0.00 \"PLN\"";
+        deductSheet.Cell(row, 2).Style.Font.Bold = true;
+        deductSheet.Cell(row, 2).Style.Font.FontColor = (grossRevenue - totalDeductions) >= 0 ? XLColor.DarkGreen : XLColor.Red;
+        deductSheet.Range(row, 1, row, 2).Style.Fill.BackgroundColor = XLColor.LightGray;
+        
+        deductSheet.Columns().AdjustToContents();
+
+        // Save to memory stream and return bytes
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
     }
 
     private async Task SendCommissionRequestNotification(DeveloperCommissionRequest request, ApplicationUser developer)

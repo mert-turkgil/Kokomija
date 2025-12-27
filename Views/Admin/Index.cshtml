@@ -54,78 +54,90 @@
         <!-- Quick Stats Row 1 -->
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-primary">
-                        <i class="bi bi-people"></i>
+                <a asp-controller="AdminUser" asp-action="Index" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-primary">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.TotalUsers</h3>
+                            <p class="stat-label">Total Users</p>
+                            <small class="text-muted">@Model.ActiveUsers Active</small>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.TotalUsers</h3>
-                        <p class="stat-label">Total Users</p>
-                        <small class="text-muted">@Model.ActiveUsers Active</small>
-                    </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-success">
-                        <i class="bi bi-bag-check"></i>
+                <a asp-controller="Admin" asp-action="Orders" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-success">
+                            <i class="bi bi-bag-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.TotalOrders</h3>
+                            <p class="stat-label">Total Orders</p>
+                            <small class="text-muted">@Model.PendingOrders Pending</small>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.TotalOrders</h3>
-                        <p class="stat-label">Total Orders</p>
-                        <small class="text-muted">@Model.PendingOrders Pending</small>
-                    </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-warning">
-                        <i class="bi bi-box-seam"></i>
+                <a asp-controller="AdminProduct" asp-action="Index" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-warning">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.TotalProducts</h3>
+                            <p class="stat-label">Products</p>
+                            <small class="text-muted">@Model.ActiveProducts Active</small>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.TotalProducts</h3>
-                        <p class="stat-label">Products</p>
-                        <small class="text-muted">@Model.ActiveProducts Active</small>
-                    </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-info">
-                        <i class="bi bi-currency-dollar"></i>
+                <a asp-controller="Admin" asp-action="Financial" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-info">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.TotalRevenue.ToString("N0") @Model.Currency</h3>
+                            <p class="stat-label">Total Revenue</p>
+                            <small class="text-muted">@Model.MonthlyRevenue.ToString("N0") This Month</small>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.TotalRevenue.ToString("N0") @Model.Currency</h3>
-                        <p class="stat-label">Total Revenue</p>
-                        <small class="text-muted">@Model.MonthlyRevenue.ToString("N0") This Month</small>
-                    </div>
-                </div>
+                </a>
             </div>
         </div>
 
         <!-- Quick Stats Row 2 -->
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-success">
-                        <i class="bi bi-check-circle"></i>
+                <a asp-controller="Admin" asp-action="Orders" asp-route-status="delivered" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-success">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.CompletedOrders</h3>
+                            <p class="stat-label">Completed Orders</p>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.CompletedOrders</h3>
-                        <p class="stat-label">Completed Orders</p>
-                    </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-danger">
-                        <i class="bi bi-exclamation-triangle"></i>
+                <a asp-controller="AdminProduct" asp-action="Index" asp-route-stock="outofstock" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.OutOfStockProducts</h3>
+                            <p class="stat-label">Out of Stock</p>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.OutOfStockProducts</h3>
-                        <p class="stat-label">Out of Stock</p>
-                    </div>
-                </div>
+                </a>
             </div>
             <div class="col-md-3 mb-3">
                 <a asp-controller="AdminBlog" asp-action="Index" class="text-decoration-none">
@@ -142,15 +154,17 @@
                 </a>
             </div>
             <div class="col-md-3 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-secondary">
-                        <i class="bi bi-envelope"></i>
+                <a asp-controller="Admin" asp-action="Settings" asp-route-tab="newsletter" class="text-decoration-none">
+                    <div class="stat-card stat-card-clickable">
+                        <div class="stat-icon bg-secondary">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-value">@Model.NewsletterSubscribers</h3>
+                            <p class="stat-label">Newsletter Subs</p>
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value">@Model.NewsletterSubscribers</h3>
-                        <p class="stat-label">Newsletter Subs</p>
-                    </div>
-                </div>
+                </a>
             </div>
         </div>
 

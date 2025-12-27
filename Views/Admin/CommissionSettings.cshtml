@@ -125,6 +125,148 @@
             </div>
         }
 
+        <!-- Stripe Connect Account Card -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-stripe"></i> Stripe Connect Account (Developer Payouts)
+                        </h5>
+                        
+                        @if (Model.ConnectAccount != null)
+                        {
+                            @if (Model.ConnectAccount.Status == "Error")
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-octagon"></i>
+                                    <strong>Error:</strong> @Model.ConnectAccount.ErrorMessage
+                                    <br><small>Account ID: @Model.ConnectAccount.AccountId</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card bg-dark border-@(Model.ConnectAccount.PayoutsEnabled ? "success" : "warning")">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <div class="rounded-circle bg-@(Model.ConnectAccount.PayoutsEnabled ? "success" : "warning") p-3 me-3">
+                                                        <i class="bi bi-@(Model.ConnectAccount.PayoutsEnabled ? "check-circle" : "clock-history") fs-4 text-white"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h5 class="mb-0">@(Model.ConnectAccount.BusinessName ?? "Developer Account")</h5>
+                                                        <small class="text-muted">@Model.ConnectAccount.Email</small>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row text-center">
+                                                    <div class="col-4">
+                                                        <span class="badge bg-@(Model.ConnectAccount.PayoutsEnabled ? "success" : "secondary") fs-6">
+                                                            <i class="bi bi-@(Model.ConnectAccount.PayoutsEnabled ? "check" : "x")"></i>
+                                                            Payouts
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <span class="badge bg-@(Model.ConnectAccount.ChargesEnabled ? "success" : "secondary") fs-6">
+                                                            <i class="bi bi-@(Model.ConnectAccount.ChargesEnabled ? "check" : "x")"></i>
+                                                            Charges
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <span class="badge bg-@(Model.ConnectAccount.IsVerified ? "success" : "warning") fs-6">
+                                                            <i class="bi bi-@(Model.ConnectAccount.IsVerified ? "patch-check" : "hourglass-split")"></i>
+                                                            Verified
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <th><i class="bi bi-key"></i> Account ID</th>
+                                                    <td><code>@Model.ConnectAccount.AccountId</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="bi bi-globe"></i> Country</th>
+                                                    <td>@(Model.ConnectAccount.Country?.ToUpper() ?? "N/A")</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="bi bi-currency-exchange"></i> Currency</th>
+                                                    <td>@(Model.ConnectAccount.Currency ?? "N/A")</td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="bi bi-building"></i> Account Type</th>
+                                                    <td><span class="badge bg-info">@(Model.ConnectAccount.BusinessType ?? "Standard")</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <th><i class="bi bi-activity"></i> Status</th>
+                                                    <td>
+                                                        <span class="badge bg-@(Model.ConnectAccount.Status == "Active" ? "success" : Model.ConnectAccount.Status == "Pending Verification" ? "warning" : "secondary")">
+                                                            @Model.ConnectAccount.Status
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                @if (!Model.ConnectAccount.PayoutsEnabled)
+                                {
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <strong>Payouts Not Enabled:</strong> The developer needs to complete account verification in Stripe Dashboard before payouts can be processed.
+                                    </div>
+                                }
+                                
+                                <!-- Manual Payout Section -->
+                                @if (Model.ConnectAccount.PayoutsEnabled && Model.EarningsSummary?.PendingPayout > 0)
+                                {
+                                    <div class="card bg-gradient-success text-white mt-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1"><i class="bi bi-wallet2"></i> Pending Payout</h6>
+                                                    <h3 class="mb-0">@Model.EarningsSummary.PendingPayout.ToString("C")</h3>
+                                                    <small>Ready to transfer to developer</small>
+                                                </div>
+                                                <button type="button" class="btn btn-light btn-lg" onclick="processPayout()">
+                                                    <i class="bi bi-send"></i> Process Payout Now
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>No Connect Account Configured</strong>
+                                <p class="mb-2">To enable automatic developer payouts, add a Stripe Connect account ID to your configuration:</p>
+                                <code>"Stripe:ConnectedAccountId": "acct_XXXXXXXXXX"</code>
+                                <hr>
+                                <small>
+                                    <strong>How to get a Connect Account:</strong>
+                                    <ol class="mb-0 mt-2">
+                                        <li>Go to <a href="https://dashboard.stripe.com/connect/accounts" target="_blank">Stripe Dashboard → Connect → Accounts</a></li>
+                                        <li>Create a new Standard or Express account for the developer</li>
+                                        <li>Copy the account ID (starts with <code>acct_</code>)</li>
+                                        <li>Add it to <code>appsettings.json</code> or <code>appsettings.Development.json</code></li>
+                                    </ol>
+                                </small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Commission Settings Card -->
         <div class="row mb-4">
             <div class="col-md-8">
@@ -504,6 +646,40 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('An error occurred while unblocking the site.');
+            }
+        }
+
+        async function processPayout() {
+            if (!confirm('Are you sure you want to process the payout now? This will transfer all pending developer commissions to the connected Stripe account.')) {
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+
+            try {
+                const response = await fetch('/Admin/ProcessDeveloperPayout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Payout processed successfully!\n\nTransfer ID: ' + (result.payoutId || 'N/A') + '\nAmount: ' + (result.amount || 'N/A'));
+                    location.reload();
+                } else {
+                    alert('Payout failed: ' + result.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing the payout.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         }
     </script>

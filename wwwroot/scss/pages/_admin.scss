@@ -15,9 +15,10 @@
         margin-bottom: 2rem;
         box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
         position: relative;
-        overflow: hidden;
+        overflow: hidden; // Clip the animated background to card bounds
 
-        &::before {
+        // Animated rotating background
+        &::after {
             content: '';
             position: absolute;
             top: -50%;
@@ -26,6 +27,8 @@
             height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
             animation: rotateBg 20s linear infinite;
+            z-index: 0;
+            pointer-events: none;
         }
 
         @keyframes rotateBg {
@@ -50,6 +53,30 @@
             opacity: 0.9;
             position: relative;
             z-index: 1;
+        }
+
+        // Ensure buttons and dropdowns are above the animated background
+        .btn, .dropdown {
+            position: relative;
+            z-index: 2;
+        }
+
+        // Style buttons on the gradient background for visibility
+        .btn-secondary, .btn-light {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            backdrop-filter: blur(4px);
+            
+            &:hover {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: rgba(255, 255, 255, 0.4);
+                color: #fff;
+            }
+        }
+
+        .dropdown-menu {
+            z-index: 1050;
         }
 
         @keyframes pulse {
