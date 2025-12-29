@@ -59,8 +59,8 @@
             margin-bottom: 1.5rem;
             box-shadow: 0 10px 30px rgba(16, 185, 129, 0.25);
             position: relative;
-            overflow: hidden; /* Clip bubbles and decorations */
         }
+        
 
         /* Animated floating bubbles */
         .financial-hero .bubble {
@@ -68,7 +68,7 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             pointer-events: none;
-            z-index: 0;
+            z-index: -1;
         }
 
         .financial-hero .bubble-1 {
@@ -150,7 +150,7 @@
         /* Ensure content stays above decorations */
         .financial-hero > * {
             position: relative;
-            z-index: 1;
+            z-index: 0;
         }
 
         /* Bubbles container should not affect z-index of content */
@@ -160,7 +160,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            z-index: 0;
+            z-index: -1;
             pointer-events: none;
         }
 
@@ -181,8 +181,9 @@
         .financial-hero .btn, 
         .financial-hero .dropdown {
             position: relative;
-            z-index: 2;
+            z-index: 200;
         }
+        
 
         .financial-hero .btn-light {
             background: rgba(255, 255, 255, 0.2);
@@ -924,10 +925,10 @@
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-display="static" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-database-fill-gear"></i> Demo
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="position: absolute; z-index: 1100;">
                         <li class="px-3 py-2">
                             <small class="text-muted fw-semibold text-uppercase">Demo Data Management</small>
                         </li>
