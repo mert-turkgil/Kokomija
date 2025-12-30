@@ -565,11 +565,11 @@ namespace Kokomija.Controllers
 
             // Calculate tax (23% VAT in Poland)
             decimal subtotalAfterDiscount = subtotal - totalDiscountAmount;
-            decimal taxAmount = (subtotalAfterDiscount + shippingCost) * 0.23m;
+           
 
             // Calculate total
-            decimal total = subtotalAfterDiscount + shippingCost + taxAmount;
-
+            decimal total = subtotalAfterDiscount + shippingCost;
+            decimal taxAmount = total * (0.23m / 1.23m); // VAT included in total
             // Get available coupons for user
             var availableCoupons = await GetAvailableCouponsForUser();
 
