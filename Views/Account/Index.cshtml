@@ -2,23 +2,23 @@
 @inject Kokomija.Services.ILocalizationService L
 
 @{
-    ViewData["Title"] = "My Account";
-    var isAdmin = User.IsInRole(role: "Admin") || User.IsInRole(role: "Root");
+    ViewData[index: "Title"] = "My Account";
+    bool isAdmin = User.IsInRole(role: "Admin") || User.IsInRole(role: "Root");
 }
 
 <div class="account-page container my-5">
-    @if (TempData["SuccessMessage"] != null)
+    @if (TempData[key: "SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+            @TempData[key: "SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
     
-    @if (TempData["ErrorMessage"] != null)
+    @if (TempData[key: "ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
+            @TempData[key: "ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -29,7 +29,7 @@
             @if (isAdmin)
             {
                 <a asp-controller="Admin" asp-action="Index" class="btn btn-primary mt-2">
-                    <i class="bi bi-shield-lock"></i> @L["Account_AdminPanel"]
+                    <i class="bi bi-shield-lock"></i> @L.GetString(key: "Account_AdminPanel",resourceName: "Account")
                 </a>
             }
         </div>
@@ -39,7 +39,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">@L["Account_TotalOrders"]</h5>
+                    <h5 class="card-title text-muted">@L.GetString(key: "Account_TotalOrders",resourceName: "Account")</h5>
                     <h2 class="display-4">@Model.TotalOrders</h2>
                 </div>
             </div>
@@ -47,7 +47,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">@L["Account_CompletedOrders"]</h5>
+                    <h5 class="card-title text-muted">@L.GetString(key: "Account_CompletedOrders",resourceName: "Account")</h5>
                     <h2 class="display-4">@Model.CompletedOrders</h2>
                 </div>
             </div>
@@ -55,7 +55,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">@L["Account_TotalSpent"]</h5>
+                    <h5 class="card-title text-muted">@L.GetString(key: "Account_TotalSpent",resourceName: "Account")</h5>
                     <h2 class="display-4">@Model.TotalSpent.ToString("C")</h2>
                 </div>
             </div>
@@ -63,7 +63,7 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title text-muted">@L["Account_WishlistItems"]</h5>
+                    <h5 class="card-title text-muted">@L.GetString(key: "Account_WishlistItems",resourceName: "Account")</h5>
                     <h2 class="display-4">@Model.WishlistCount</h2>
                 </div>
             </div>
@@ -72,21 +72,21 @@
 
     <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">@L["Account_Tab_Overview"]</button>
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">@L.GetString(key: "Account_Tab_Overview",resourceName: "Account")</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">@L["Account_Tab_Orders"]</button>
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">@L.GetString(key: "Account_Tab_Orders",resourceName: "Account")</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="wishlist-tab" data-bs-toggle="tab" data-bs-target="#wishlist" type="button" role="tab">
-                <i class="fas fa-heart me-1"></i>@L["Account_Tab_Wishlist"] <span class="badge bg-danger ms-1">@Model.WishlistCount</span>
+                <i class="fas fa-heart me-1"></i>@L.GetString(key: "Account_Tab_Wishlist",resourceName: "Account") <span class="badge bg-danger ms-1">@Model.WishlistCount</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">@L["Account_Tab_VIP"]</button>
+            <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">@L.GetString(key: "Account_Tab_VIP",resourceName: "Account")</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">@L["Account_Tab_Settings"]</button>
+            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">@L.GetString(key: "Account_Tab_Settings",resourceName: "Account")</button>
         </li>
     </ul>
 
@@ -96,8 +96,8 @@
                 <div class="col-lg-8">
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">@L["Account_RecentOrders"]</h5>
-                            <a href="#orders" data-bs-toggle="tab" class="btn btn-sm btn-outline-primary">@L["Account_ViewAll"]</a>
+                            <h5 class="mb-0">@L.GetString(key: "Account_RecentOrders",resourceName: "Account")</h5>
+                            <a href="#orders" data-bs-toggle="tab" class="btn btn-sm btn-outline-primary">@L.GetString(key: "Account_ViewAll",resourceName: "Account")</a>
                         </div>
                         <div class="card-body">
                             @if (Model.RecentOrders.Any())
@@ -106,24 +106,24 @@
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th>@L["Account_OrderNumber"]</th>
-                                                <th>@L["Account_Date"]</th>
-                                                <th>@L["Account_Items"]</th>
-                                                <th>@L["Account_Total"]</th>
-                                                <th>@L["Account_Currency"]</th>
-                                                <th>@L["Account_Status"]</th>
-                                                <th>@L["Account_SessionStatus"]</th>
+                                                <th>@L.GetString(key: "Account_OrderNumber",resourceName: "Account")</th>
+                                                <th>@L.GetString(key: "Account_Date",resourceName: "Account")</th>
+                                                <th>@L.GetString(key: "Account_Items",resourceName: "Account")</th>
+                                                <th>@L.GetString(key: "Account_Total",resourceName: "Account")</th>
+                                                <th>@L.GetString(key: "Account_Currency",resourceName: "Account")</th>
+                                                <th>@L.GetString(key: "Account_Status",resourceName: "Account")</th>
+                                                <th>@L.GetString(key: "Account_SessionStatus",resourceName: "Account")</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach (var order in Model.RecentOrders)
+                                            @foreach (Kokomija.Models.ViewModels.Account.OrderViewModel order in Model.RecentOrders)
                                             {
                                                 <tr>
                                                     <td>#@order.OrderNumber</td>
                                                     <td>@order.OrderDate.ToShortDateString()</td>
                                                     <td>@order.ItemCount</td>
-                                                    <td>@order.TotalAmount.ToString("N2")</td>
+                                                    <td>@order.TotalAmount.ToString(format: "N2")</td>
                                                     <td>
                                                         <span class="badge bg-secondary">
                                                             @L[$"Currency_{order.Currency.ToUpper()}"]
@@ -168,7 +168,7 @@
                 <div class="col-lg-4">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="mb-0">@L["Account_VIP_Status"]</h5>
+                            <h5 class="mb-0">@L.GetString(key: "Account_VIP_Status",resourceName: "Account")</h5>
                         </div>
                         <div class="card-body text-center">
                             @if (Model.VIPStatus.TierName == "None")
@@ -176,13 +176,13 @@
                                 <div class="mb-3">
                                     <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
                                 </div>
-                                <h5 class="text-muted">@L["Account_VIP_None"]</h5>
-                                <p class="text-muted">@L["Account_VIP_NotVIP_Message"]</p>
+                                <h5 class="text-muted">@L.GetString(key: "Account_VIP_None",resourceName: "Account")</h5>
+                                <p class="text-muted">@L.GetString(key: "Account_VIP_NotVIP_Message",resourceName: "Account")</p>
                                 <div class="alert alert-info mb-3">
-                                    <small>@L["Account_VIP_SpendToUnlock"].Replace("{0}", Model.VIPStatus.NextTierThreshold.ToString("C"))</small>
+                                    <small>@L.GetString(key: "Account_VIP_SpendToUnlock",resourceName: "Account").Replace("{0}", Model.VIPStatus.NextTierThreshold.ToString("C"))</small>
                                 </div>
                                 <a asp-controller="Product" asp-action="Index" class="btn btn-primary w-100">
-                                    <i class="bi bi-cart me-2"></i>@L["Account_VIP_ShopNow"]
+                                    <i class="bi bi-cart me-2"></i>@L.GetString(key: "Account_VIP_ShopNow",resourceName: "Account")
                                 </a>
                             }
                             else
@@ -200,7 +200,7 @@
                                             @Model.VIPStatus.ProgressPercentage%
                                         </div>
                                     </div>
-                                    <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") @L["Account_VIP_NextTier"]</small>
+                                    <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") @L.GetString(key: "Account_VIP_NextTier",resourceName: "Account")</small>
                                 }
                                 else
                                 {
@@ -209,7 +209,7 @@
                                         <strong>Maximum VIP Tier!</strong>
                                     </div>
                                 }
-                                <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">@L["Account_VIP_ViewBenefits"]</a>
+                                <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">@L.GetString(key: "Account_VIP_ViewBenefits",resourceName: "Account")</a>
                             }
                         </div>
                     </div>
@@ -252,23 +252,23 @@
                                             @order.TotalAmount.ToString("N2")
                                             <small class="text-muted">@L[$"Currency_{order.Currency.ToUpper()}"]</small>
                                         </h4>
-                                        <small class="text-muted">@order.ItemCount @L["Account_Order_Items"]</small>
+                                        <small class="text-muted">@order.ItemCount @L.GetString(key: "Account_Order_Items",resourceName: "Account")</small>
                                     </div>
                                 </div>
                                 <div class="btn-group" role="group">
                                     <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye me-1"></i>@L["View_Details"]
+                                        <i class="bi bi-eye me-1"></i>@L.GetString(key: "View_Details",resourceName: "Account")
                                     </a>
                                     @if (order.CanCancel)
                                     {
                                         <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(@order.Id)">
-                                            <i class="bi bi-x-circle me-1"></i>@L["Account_CancelOrder"]
+                                            <i class="bi bi-x-circle me-1"></i>@L.GetString(key: "Account_CancelOrder",resourceName: "Account")
                                         </button>
                                     }
                                     @if (order.CanReturn)
                                     {
                                         <a asp-action="ReturnRequest" asp-route-orderId="@order.Id" class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-arrow-return-left me-1"></i>@L["Account_RequestReturn"]
+                                            <i class="bi bi-arrow-return-left me-1"></i>@L.GetString(key: "Account_RequestReturn",resourceName: "Account")
                                         </a>
                                     }
                                 </div>
@@ -279,8 +279,8 @@
                     {
                         <div class="text-center py-5">
                             <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
-                            <p class="text-muted mt-3">@L["Account_NoOrders"]</p>
-                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">@L["Account_StartShopping"]</a>
+                            <p class="text-muted mt-3">@L.GetString(key: "Account_NoOrders",resourceName: "Account")</p>
+                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">@L.GetString(key: "Account_StartShopping",resourceName: "Account")</a>
                         </div>
                     }
                 </div>
@@ -292,10 +292,10 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-heart text-danger me-2"></i>
-                        @L["Account_Wishlist_Title"]
+                        @L.GetString(key: "Account_Wishlist_Title",resourceName: "Account")
                     </h5>
                     <a asp-controller="Wishlist" asp-action="Index" class="btn btn-sm btn-primary">
-                        @L["Account_ViewFullWishlist"]
+                        @L.GetString(key: "Account_ViewFullWishlist",resourceName: "Account")
                     </a>
                 </div>
                 <div class="card-body">
@@ -313,11 +313,11 @@
         <div class="tab-pane fade" id="vip" role="tabpanel">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">@L["Account_VIP_YourBenefits"]</h5>
+                    <h5 class="mb-0">@L.GetString(key: "Account_VIP_YourBenefits",resourceName: "Account")</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        @foreach (var benefit in Model.VIPStatus.Benefits)
+                        @foreach (Kokomija.Models.ViewModels.Account.VIPBenefitViewModel benefit in Model.VIPStatus.Benefits)
                         {
                             <div class="col-md-6 mb-3">
                                 <div class="card h-100 @(benefit.IsUnlocked ? "border-success" : "")">
@@ -329,7 +329,7 @@
                                                 <p class="small text-muted mb-0">@benefit.Description</p>
                                                 @if (!benefit.IsUnlocked)
                                                 {
-                                                    <small class="text-warning">@L["Account_VIP_Locked"]</small>
+                                                    <small class="text-warning">@L.GetString(key: "Account_VIP_Locked",resourceName: "Account")</small>
                                                 }
                                             </div>
                                         </div>
@@ -343,17 +343,17 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">@L["Account_VIP_TierComparison"]</h5>
+                    <h5 class="mb-0">@L.GetString(key: "Account_VIP_TierComparison",resourceName: "Account")</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>@L["Account_VIP_Tier"]</th>
-                                    <th>@L["Account_VIP_Requirement"]</th>
-                                    <th>@L["Account_VIP_Discount"]</th>
-                                    <th>@L["Account_VIP_Benefits"]</th>
+                                    <th>@L.GetString(key: "Account_VIP_Tier",resourceName: "Account")</th>
+                                    <th>@L.GetString(key: "Account_VIP_Requirement",resourceName: "Account")</th>
+                                    <th>@L.GetString(key: "Account_VIP_Discount",resourceName: "Account")</th>
+                                    <th>@L.GetString(key: "Account_VIP_Benefits",resourceName: "Account")</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -391,49 +391,49 @@
         <div class="tab-pane fade" id="settings" role="tabpanel">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">@L["Account_AccountSettings"]</h5>
+                    <h5 class="mb-0">@L.GetString(key: "Account_AccountSettings",resourceName: "Account")</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" asp-action="UpdateProfile">
                         @Html.AntiForgeryToken()
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="FirstName" class="form-label">@L["Account_Settings_FirstName"]</label>
+                                <label for="FirstName" class="form-label">@L.GetString(key: "Account_Settings_FirstName",resourceName: "Account")</label>
                                 <input type="text" class="form-control" id="FirstName" name="FirstName" value="@Model.FirstName" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="LastName" class="form-label">@L["Account_Settings_LastName"]</label>
+                                <label for="LastName" class="form-label">@L.GetString(key: "Account_Settings_LastName",resourceName: "Account")</label>
                                 <input type="text" class="form-control" id="LastName" name="LastName" value="@Model.LastName" required>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="PhoneNumber" class="form-label">@L["Phone"]</label>
+                            <label for="PhoneNumber" class="form-label">@L.GetString(key: "Phone",resourceName: "Account")</label>
                             <input type="tel" class="form-control" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber">
                         </div>
                         <div class="mb-3">
-                            <label for="email" class="form-label">@L["Account_Settings_Email"]</label>
+                            <label for="email" class="form-label">@L.GetString(key: "Account_Settings_Email",resourceName: "Account")</label>
                             <input type="email" class="form-control" id="email" value="@Model.Email" disabled>
-                            <small class="text-muted">@L["Account_Settings_EmailNote"]</small>
+                            <small class="text-muted">@L.GetString(key: "Account_Settings_EmailNote",resourceName: "Account")</small>
                         </div>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save me-2"></i>@L["Account_Settings_SaveChanges"]
+                            <i class="bi bi-save me-2"></i>@L.GetString(key: "Account_Settings_SaveChanges",resourceName: "Account")</button>
                         </button>
                     </form>
                     
                     <hr class="my-4">
                     
-                    <h6>@L["Account_Settings_Password"]</h6>
+                    <h6>@L.GetString(key: "Account_Settings_Password",resourceName: "Account")</h6>
                     <p class="text-muted">Update your password to keep your account secure.</p>
                     <a asp-action="ChangePassword" class="btn btn-outline-secondary">
-                        <i class="bi bi-key me-2"></i>@L["Account_Settings_ChangePassword"]
+                        <i class="bi bi-key me-2"></i>@L.GetString(key: "Account_Settings_ChangePassword",resourceName: "Account")
                     </a>
                     
                     <hr class="my-4">
                     
-                    <h6 class="text-danger">@L["Account_Settings_DeleteAccount"]</h6>
-                    <p class="text-muted">@L["Account_Settings_DeleteAccountWarning"]</p>
+                    <h6 class="text-danger">@L.GetString(key: "Account_Settings_DeleteAccount",resourceName: "Account")</h6>
+                    <p class="text-muted">@L.GetString(key: "Account_Settings_DeleteAccountWarning",resourceName: "Account")</p>
                     <button type="button" class="btn btn-danger" onclick="confirmDeleteAccount()">
-                        <i class="bi bi-trash me-2"></i>@L["Account_Settings_DeleteAccount"]
+                        <i class="bi bi-trash me-2"></i>@L.GetString(key: "Account_Settings_DeleteAccount",resourceName: "Account")
                     </button>
                 </div>
             </div>
@@ -470,7 +470,7 @@
                                             <small class="text-muted">${new Date(item.addedAt).toLocaleDateString()}</small>
                                             <div class="btn-group w-100 mt-2">
                                                 <a href="/Product/Details/${item.productId}" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-eye"></i> @L["View"]
+                                                    <i class="fas fa-eye"></i> @L.GetString(key: "View", resourceName: "Account")
                                                 </a>
                                                 <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(${item.productId})">
                                                     <i class="fas fa-trash"></i>

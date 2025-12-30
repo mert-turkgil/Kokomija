@@ -17,5 +17,208 @@
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  
+  <data name="Account_AdminPanel" xml:space="preserve">
+    <value>Panel Administratora</value>
+  </data>
+  <data name="Account_TotalOrders" xml:space="preserve">
+    <value>Wszystkie Zamówienia</value>
+  </data>
+  <data name="Account_CompletedOrders" xml:space="preserve">
+    <value>Zrealizowane</value>
+  </data>
+  <data name="Account_Welcome" xml:space="preserve">
+    <value>Witaj</value>
+  </data>
+  <data name="Account_Admin" xml:space="preserve">
+    <value>Administrator</value>
+  </data>
+  <data name="Account_TotalSpent" xml:space="preserve">
+    <value>Łącznie Wydane</value>
+  </data>
+  <data name="Account_WishlistItems" xml:space="preserve">
+    <value>Lista Życzeń</value>
+  </data>
+  <data name="Account_Tab_Overview" xml:space="preserve">
+    <value>Przegląd</value>
+  </data>
+  <data name="Account_Tab_Orders" xml:space="preserve">
+    <value>Zamówienia</value>
+  </data>
+  <data name="Account_Tab_Wishlist" xml:space="preserve">
+    <value>Lista Życzeń</value>
+  </data>
+  <data name="Account_Tab_VIP" xml:space="preserve">
+    <value>Status VIP</value>
+  </data>
+  <data name="Account_Tab_Settings" xml:space="preserve">
+    <value>Ustawienia</value>
+  </data>
+  <data name="Account_VIP_Status" xml:space="preserve">
+    <value>Status VIP</value>
+  </data>
+  <data name="Account_VIP_Progress" xml:space="preserve">
+    <value>Postęp do Następnego Poziomu</value>
+  </data>
+  <data name="Account_VIP_NextTier" xml:space="preserve">
+    <value>do następnego poziomu</value>
+  </data>
+  <data name="Account_VIP_YourBenefits" xml:space="preserve">
+    <value>Twoje Korzyści VIP</value>
+  </data>
+  <data name="Account_VIP_Discount" xml:space="preserve">
+    <value>Rabat</value>
+  </data>
+  <data name="Account_VIP_FreeShipping" xml:space="preserve">
+    <value>Darmowa Dostawa</value>
+  </data>
+  <data name="Account_VIP_EarlyAccess" xml:space="preserve">
+    <value>Wczesny Dostęp do Nowych Produktów</value>
+  </data>
+  <data name="Account_VIP_BirthdayGift" xml:space="preserve">
+    <value>Prezent Urodzinowy</value>
+  </data>
+  <data name="Account_VIP_ExclusiveOffers" xml:space="preserve">
+    <value>Ekskluzywne Oferty</value>
+  </data>
+  <data name="Account_VIP_TierComparison" xml:space="preserve">
+    <value>Porównanie Poziomów VIP</value>
+  </data>
+  <data name="Account_VIP_Tier" xml:space="preserve">
+    <value>Poziom</value>
+  </data>
+  <data name="Account_VIP_Requirement" xml:space="preserve">
+    <value>Wymaganie</value>
+  </data>
+  <data name="Account_VIP_Benefits" xml:space="preserve">
+    <value>Korzyści</value>
+  </data>
+  <data name="Account_VIP_Locked" xml:space="preserve">
+    <value>Zablokowany</value>
+  </data>
+  <data name="Account_VIP_ViewBenefits" xml:space="preserve">
+    <value>Zobacz Korzyści</value>
+  </data>
+  <data name="Account_RecentOrders" xml:space="preserve">
+    <value>Ostatnie Zamówienia</value>
+  </data>
+  <data name="Account_ViewAll" xml:space="preserve">
+    <value>Zobacz Wszystkie</value>
+  </data>
+  <data name="Account_OrderNumber" xml:space="preserve">
+    <value>Zamówienie #</value>
+  </data>
+  <data name="Account_Date" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="Account_Items" xml:space="preserve">
+    <value>Produkty</value>
+  </data>
+  <data name="Account_Total" xml:space="preserve">
+    <value>Suma</value>
+  </data>
+  <data name="Account_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Account_NoOrders" xml:space="preserve">
+    <value>Brak zamówień.</value>
+  </data>
+  <data name="Account_StartShopping" xml:space="preserve">
+    <value>Zacznij robić zakupy!</value>
+  </data>
+  <data name="Account_CancelOrder" xml:space="preserve">
+    <value>Anuluj Zamówienie</value>
+  </data>
+  <data name="Account_RequestReturn" xml:space="preserve">
+    <value>Złóż Zwrot</value>
+  </data>
+  <data name="Account_AccountSettings" xml:space="preserve">
+    <value>Ustawienia Konta</value>
+  </data>
+  <data name="Account_FirstName" xml:space="preserve">
+    <value>Imię</value>
+  </data>
+  <data name="Account_LastName" xml:space="preserve">
+    <value>Nazwisko</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Account_ContactSupport" xml:space="preserve">
+    <value>Skontaktuj się z pomocą techniczną, aby zmienić e-mail</value>
+  </data>
+  <data name="Account_SaveChanges" xml:space="preserve">
+    <value>Zapisz Zmiany</value>
+  </data>
+  <data name="Account_Password" xml:space="preserve">
+    <value>Hasło</value>
+  </data>
+  <data name="Account_ChangePassword" xml:space="preserve">
+    <value>Zmień Hasło</value>
+  </data>
+  <data name="Account_VIP_None" xml:space="preserve">
+    <value>Brak statusu VIP</value>
+  </data>
+  <data name="Account_VIP_ShopNow" xml:space="preserve">
+    <value>Zrób zakupy teraz</value>
+  </data>
+  <data name="Account_VIP_NotVIP_Message" xml:space="preserve">
+    <value>Nie masz jeszcze statusu VIP. Zacznij robić zakupy, aby odblokować ekskluzywne korzyści!</value>
+  </data>
+  <data name="Account_VIP_SpendToUnlock" xml:space="preserve">
+    <value>Zacznij robić zakupy, aby odblokować ekskluzywne korzyści! 0 - 500 PLN</value>
+  </data>
+  <data name="Account_ViewFullWishlist" xml:space="preserve">
+    <value>Zobacz pełną listę życzeń</value>
+  </data>
+  <data name="Account_Settings_DeleteAccount" xml:space="preserve">
+    <value>Usuń konto</value>
+  </data>
+  <data name="Account_Settings_DeleteAccountWarning" xml:space="preserve">
+    <value>Ta akcja jest nieodwracalna i spowoduje usunięcie wszystkich Twoich danych.</value>
+  </data>
+  <data name="Account_ChangePassword_Title" xml:space="preserve">
+    <value>Zmień Hasło</value>
+  </data>
+      <data name="Account_ChangePassword_CurrentPassword" xml:space="preserve">
+    <value>Aktualne Hasło</value>
+  </data>
+      <data name="Account_ChangePassword_NewPassword" xml:space="preserve">
+    <value>Nowe Hasło</value>
+  </data>
+  <data name="Account_ChangePassword_ConfirmPassword" xml:space="preserve">
+    <value>Potwierdź Nowe Hasło</value>
+  </data>
+  <data name="Account_ChangePassword_Submit" xml:space="preserve">
+    <value>Zmień Hasło</value>
+  </data>
+  <data name="Wishlist_Empty" xml:space="preserve">
+    <value>Lista życzeń jest pusta</value>
+  </data>
+  <data name="Wishlist_StartShopping" xml:space="preserve">
+    <value>Zacznij robić zakupy!</value>
+  </data>
+  <data name="Wishlist_Confirm_Remove" xml:space="preserve">
+    <value>Czy na pewno chcesz usunąć ten produkt z listy życzeń?</value>
+  </data>
+  <data name="Account_Order_CancelError" xml:space="preserve">
+    <value>Wystąpił błąd podczas anulowania zamówienia</value>
+  </data>
+  <data name="Account_Delete_ConfirmMessage" xml:space="preserve">
+    <value>Czy na pewno chcesz usunąć konto? Tej operacji nie można cofnąć.</value>
+  </data>
+  <data name="Account_Delete_Success" xml:space="preserve">
+    <value>Konto zostało pomyślnie usunięte</value>
+  </data>
+  <data name="Account_Delete_Error" xml:space="preserve">
+    <value>Wystąpił błąd podczas usuwania konta</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Numer telefonu</value>
+  </data>
+  <data name="View" xml:space="preserve">
+    <value>Zobacz</value>
+  </data>
+  <data name="Account_Wishlist_Title" xml:space="preserve">
+    <value>Lista Życzeń</value>
+  </data>
 </root>

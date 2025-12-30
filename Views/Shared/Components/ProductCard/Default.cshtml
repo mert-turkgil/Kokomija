@@ -37,11 +37,11 @@
                 <div class="product-badges">
                     @if (Model.IsNew)
                     {
-                        <span class="badge badge-new">@L.GetString("New", "Product")</span>
+                        <span class="badge badge-new">@L.GetString("New", "Common")</span>
                     }
                     @if (Model.IsOnSale)
                     {
-                        <span class="badge badge-sale">@L.GetString("Sale", "Product")</span>
+                        <span class="badge badge-sale">@L.GetString("Sale", "Common")</span>
                     }
                 </div>
                 <div class="quick-actions">
@@ -131,7 +131,7 @@
                 @if (Model.HasStock)
                 {
                     <button type="button" class="btn btn-primary w-100 add-to-cart-btn" data-product-id="@Model.Id" disabled>
-                        <i class="fas fa-shopping-cart me-2"></i>@L.GetString("AddToCart", "Product")
+                        <i class="fas fa-shopping-cart me-2"></i>@L.GetString(key: "AddToCart", resourceName: "Common")
                     </button>
                 }
                 else

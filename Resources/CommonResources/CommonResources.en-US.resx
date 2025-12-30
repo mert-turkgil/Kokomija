@@ -180,4 +180,7 @@
   <data name="SavePreferences" xml:space="preserve">
     <value>Save Preferences</value>
   </data>
+  <data name="AddToCart" xml:space="preserve">
+    <value>Add to Cart</value>
+  </data>
 </root>

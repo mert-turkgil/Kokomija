@@ -66,4 +66,5 @@
   
   <!-- Cookie Consent -->
   <data name="SavePreferences" xml:space="preserve"><value>Zapisz Preferencje</value></data>
+  <data name="AddToCart" xml:space="preserve"><value>Dodaj do koszyka</value></data>
 </root>
