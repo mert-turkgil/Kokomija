@@ -57,7 +57,7 @@ namespace Kokomija.Middleware
                 "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +
-                "form-action 'self'; " +
+                "form-action 'self' https: " + // Allow form submission to any HTTPS origin
                 "frame-ancestors 'self';";
 
             context.Response.Headers.Append("Content-Security-Policy", cspPolicy);

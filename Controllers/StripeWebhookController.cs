@@ -122,7 +122,7 @@ namespace Kokomija.Controllers
             _logger.LogInformation($"Checkout session completed: {session.Id}");
 
             // Find order by session ID
-            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripeCheckoutSessionId == session.Id);
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.StripeCheckoutSessionId == session.Id);
             var order = orders.FirstOrDefault();
 
             if (order != null)
@@ -181,6 +181,18 @@ namespace Kokomija.Controllers
                         // Update VIP role
                         await UpdateUserVIPRoleAsync(userManager, user, newTier);
                         
+                        // Clear user's cart (in case they didn't return to success page)
+                        try
+                        {
+                            await _unitOfWork.Carts.ClearCartAsync(user.Id);
+                            await _unitOfWork.SaveChangesAsync();
+                            _logger.LogInformation($"Cart cleared for user {user.Email} via webhook");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, $"Could not clear cart for user {user.Email}");
+                        }
+                        
                         _logger.LogInformation($"Updated user {user.Email} total spent to {user.TotalSpent:C}, VIP tier: {user.VipTier}");
                     }
                 }
@@ -201,7 +213,7 @@ namespace Kokomija.Controllers
 
             _logger.LogInformation($"Async payment succeeded for session: {session.Id}");
 
-            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripeCheckoutSessionId == session.Id);
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.StripeCheckoutSessionId == session.Id);
             var order = orders.FirstOrDefault();
 
             if (order != null)
@@ -220,7 +232,7 @@ namespace Kokomija.Controllers
 
             _logger.LogWarning($"Async payment failed for session: {session.Id}");
 
-            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripeCheckoutSessionId == session.Id);
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.StripeCheckoutSessionId == session.Id);
             var order = orders.FirstOrDefault();
 
             if (order != null)
@@ -238,7 +250,7 @@ namespace Kokomija.Controllers
 
             _logger.LogInformation($"Payment intent succeeded: {paymentIntent.Id}");
 
-            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripePaymentIntentId == paymentIntent.Id);
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.StripePaymentIntentId == paymentIntent.Id);
             var order = orders.FirstOrDefault();
 
             if (order != null)
@@ -263,7 +275,7 @@ namespace Kokomija.Controllers
 
             _logger.LogWarning($"Payment intent failed: {paymentIntent.Id}");
 
-            var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripePaymentIntentId == paymentIntent.Id);
+            var orders = await _unitOfWork.Orders.FindAsync(o => o.StripePaymentIntentId == paymentIntent.Id);
             var order = orders.FirstOrDefault();
 
             if (order != null)
@@ -290,30 +302,47 @@ namespace Kokomija.Controllers
             // Find order by payment intent
             if (!string.IsNullOrEmpty(charge.PaymentIntentId))
             {
-                var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripePaymentIntentId == charge.PaymentIntentId);
+                var orders = await _unitOfWork.Orders.FindAsync(o => o.StripePaymentIntentId == charge.PaymentIntentId);
                 var order = orders.FirstOrDefault();
 
                 if (order != null)
                 {
-                    // Update order status
+                    // Get refund details from Stripe
+                    var refundAmount = (decimal)(charge.AmountRefunded / 100.0);
+                    string? refundId = null;
+                    string? refundReason = null;
+                    
+                    // Try to get the actual refund ID
+                    if (charge.Refunds?.Data?.Any() == true)
+                    {
+                        var latestRefund = charge.Refunds.Data.OrderByDescending(r => r.Created).First();
+                        refundId = latestRefund.Id;
+                        refundReason = latestRefund.Reason;
+                    }
+                    
+                    // Update order status and refund info
                     order.PaymentStatus = "refunded";
                     order.OrderStatus = "cancelled";
+                    order.StripeRefundId = refundId ?? charge.Id;
+                    order.RefundedAmount = refundAmount;
+                    order.RefundedAt = DateTime.UtcNow;
+                    order.RefundReason = refundReason ?? "stripe_refund";
 
                     // Check if there's a return request associated
-                    var returnRequests = await _unitOfWork.ReturnRequests.GetAllAsync(r => r.OrderId == order.Id);
+                    var returnRequests = await _unitOfWork.ReturnRequests.FindAsync(r => r.OrderId == order.Id);
                     var returnRequest = returnRequests.FirstOrDefault(r => r.Status == Entity.ReturnRequestStatus.Approved);
 
                     if (returnRequest != null && string.IsNullOrEmpty(returnRequest.StripeRefundId))
                     {
                         // Update return request with refund info
-                        returnRequest.StripeRefundId = charge.Id;
-                        returnRequest.RefundedAmount = (decimal)(charge.AmountRefunded / 100.0);
+                        returnRequest.StripeRefundId = refundId ?? charge.Id;
+                        returnRequest.RefundedAmount = refundAmount;
                         returnRequest.RefundedAt = DateTime.UtcNow;
                         returnRequest.Status = Entity.ReturnRequestStatus.Completed;
                     }
 
                     await _unitOfWork.SaveChangesAsync();
-                    _logger.LogInformation($"Order {order.OrderNumber} marked as refunded");
+                    _logger.LogInformation($"Order {order.OrderNumber} marked as refunded. RefundId: {order.StripeRefundId}, Amount: {refundAmount}");
                 }
             }
         }
@@ -328,7 +357,7 @@ namespace Kokomija.Controllers
             // Find order by payment intent
             if (!string.IsNullOrEmpty(charge.PaymentIntentId))
             {
-                var orders = await _unitOfWork.Orders.GetAllAsync(o => o.StripePaymentIntentId == charge.PaymentIntentId);
+                var orders = await _unitOfWork.Orders.FindAsync(o => o.StripePaymentIntentId == charge.PaymentIntentId);
                 var order = orders.FirstOrDefault();
 
                 if (order != null)

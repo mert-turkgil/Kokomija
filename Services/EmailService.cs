@@ -32,6 +32,10 @@ namespace Kokomija.Services
         Task SendPasswordResetAsync(string email, string resetUrl);
         Task SendPayoutFailureNotificationAsync(string adminEmail, string payoutId, string errorMessage);
         Task SendPayoutSuccessNotificationAsync(string adminEmail, string payoutId, decimal amount);
+        
+        // Newsletter emails
+        Task SendNewsletterConfirmationAsync(string email, string confirmationUrl);
+        Task SendNewsletterWelcomeAsync(string email);
     }
 
     /// <summary>
@@ -629,6 +633,124 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending payout success notification for {PayoutId}", payoutId);
+            }
+        }
+
+        public async Task SendNewsletterConfirmationAsync(string email, string confirmationUrl)
+        {
+            try
+            {
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                var subject = "📬 Potwierdź subskrypcję newslettera Kokomija | Confirm your Newsletter Subscription";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;'>
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;'>
+                            <img src='{baseUrl}/img/logo_white.png' alt='Kokomija' style='height: 50px; margin-bottom: 15px;' />
+                            <h1 style='color: white; margin: 0; font-size: 24px;'>Welcome to Kokomija Newsletter!</h1>
+                        </div>
+                        
+                        <div style='padding: 30px;'>
+                            <p style='font-size: 16px; color: #334155; line-height: 1.6;'>
+                                Thank you for subscribing to our newsletter! 
+                                Click the button below to confirm your subscription and start receiving exclusive updates, promotions, and new arrivals.
+                            </p>
+                            
+                            <p style='font-size: 16px; color: #334155; line-height: 1.6;'>
+                                Dziękujemy za subskrypcję naszego newslettera! 
+                                Kliknij poniższy przycisk, aby potwierdzić subskrypcję i zacząć otrzymywać ekskluzywne aktualizacje, promocje i nowości.
+                            </p>
+                            
+                            <div style='text-align: center; margin: 30px 0;'>
+                                <a href='{confirmationUrl}' style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;'>
+                                    ✉️ Confirm Subscription / Potwierdź Subskrypcję
+                                </a>
+                            </div>
+                            
+                            <p style='font-size: 14px; color: #64748b; line-height: 1.6;'>
+                                If you didn't request this subscription, please ignore this email.<br/>
+                                Jeśli nie prosiłeś o tę subskrypcję, zignoruj tę wiadomość.
+                            </p>
+                            
+                            <hr style='border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;' />
+                            
+                            <p style='font-size: 12px; color: #94a3b8; text-align: center;'>
+                                This link will expire in 24 hours. | Ten link wygaśnie za 24 godziny.
+                            </p>
+                        </div>
+                        
+                        <div style='background-color: #f8fafc; padding: 20px; text-align: center;'>
+                            <p style='font-size: 12px; color: #64748b; margin: 0;'>
+                                © {DateTime.Now.Year} Kokomija. All rights reserved.
+                            </p>
+                        </div>
+                    </div>";
+
+                await SendEmailAsync(email, subject, body, true);
+                _logger.LogInformation("Newsletter confirmation email sent to {Email}", email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending newsletter confirmation email to {Email}", email);
+            }
+        }
+
+        public async Task SendNewsletterWelcomeAsync(string email)
+        {
+            try
+            {
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                var subject = "🎉 Witamy w newsletterze Kokomija! | Welcome to Kokomija Newsletter!";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;'>
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;'>
+                            <img src='{baseUrl}/img/logo_white.png' alt='Kokomija' style='height: 50px; margin-bottom: 15px;' />
+                            <h1 style='color: white; margin: 0; font-size: 24px;'>🎉 Subscription Confirmed!</h1>
+                        </div>
+                        
+                        <div style='padding: 30px;'>
+                            <p style='font-size: 16px; color: #334155; line-height: 1.6;'>
+                                Your subscription has been confirmed! You will now receive:
+                            </p>
+                            
+                            <ul style='font-size: 16px; color: #334155; line-height: 1.8;'>
+                                <li>🆕 New product announcements</li>
+                                <li>💰 Exclusive discounts and promotions</li>
+                                <li>✨ Early access to sales</li>
+                                <li>📚 Fashion tips and trends</li>
+                            </ul>
+                            
+                            <p style='font-size: 16px; color: #334155; line-height: 1.6;'>
+                                Twoja subskrypcja została potwierdzona! Od teraz będziesz otrzymywać:
+                            </p>
+                            
+                            <ul style='font-size: 16px; color: #334155; line-height: 1.8;'>
+                                <li>🆕 Informacje o nowych produktach</li>
+                                <li>💰 Ekskluzywne rabaty i promocje</li>
+                                <li>✨ Wcześniejszy dostęp do wyprzedaży</li>
+                                <li>📚 Porady modowe i trendy</li>
+                            </ul>
+                            
+                            <div style='text-align: center; margin: 30px 0;'>
+                                <a href='{baseUrl}/Product' style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;'>
+                                    🛍️ Start Shopping / Zacznij Zakupy
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div style='background-color: #f8fafc; padding: 20px; text-align: center;'>
+                            <p style='font-size: 12px; color: #64748b; margin: 0;'>
+                                © {DateTime.Now.Year} Kokomija. All rights reserved.<br/>
+                                <a href='{baseUrl}/Newsletter/Unsubscribe' style='color: #64748b;'>Unsubscribe / Wypisz się</a>
+                            </p>
+                        </div>
+                    </div>";
+
+                await SendEmailAsync(email, subject, body, true);
+                _logger.LogInformation("Newsletter welcome email sent to {Email}", email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending newsletter welcome email to {Email}", email);
             }
         }
 

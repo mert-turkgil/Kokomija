@@ -5,8 +5,10 @@ using Kokomija.Data.Providers;
 using Kokomija.Entity;
 using Kokomija.Middleware;
 using Kokomija.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,9 +66,13 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         googleOptions.CallbackPath = "/signin-google";
         googleOptions.SaveTokens = true;
         
-        // Request email and profile scopes
+        // Request email, profile and birthday scopes
         googleOptions.Scope.Add("email");
         googleOptions.Scope.Add("profile");
+        googleOptions.Scope.Add("https://www.googleapis.com/auth/user.birthday.read");
+        
+        // Map birthday claim
+        googleOptions.ClaimActions.MapJsonKey("urn:google:birthday", "birthday");
     });
 }
 
@@ -82,14 +88,19 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
         facebookOptions.CallbackPath = "/signin-facebook";
         facebookOptions.SaveTokens = true;
         
-        // Request email and public_profile permissions
+        // Request email, public_profile and birthday permissions
         facebookOptions.Scope.Add("email");
         facebookOptions.Scope.Add("public_profile");
+        facebookOptions.Scope.Add("user_birthday");
         
         // Map fields
         facebookOptions.Fields.Add("name");
         facebookOptions.Fields.Add("email");
         facebookOptions.Fields.Add("picture");
+        facebookOptions.Fields.Add("birthday");
+        
+        // Map birthday claim
+        facebookOptions.ClaimActions.MapJsonKey(ClaimTypes.DateOfBirth, "birthday");
     });
 }
 
@@ -119,6 +130,16 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
     });
 }
 
+// Configure External Authentication Cookie (required for OAuth state preservation)
+builder.Services.ConfigureExternalCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 // Configure Cookie settings
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -128,7 +149,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // Use SameAsRequest for development (HTTP), Always for production (HTTPS)
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
     
     // Handle authentication timeout gracefully
@@ -247,7 +271,10 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // GDPR: Session cookies are essential
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // Use SameAsRequest for development (HTTP), Always for production (HTTPS)
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
@@ -289,9 +316,6 @@ using (var scope = app.Services.CreateScope())
         // Seed demo financial data (only in development, can be removed via admin panel)
         if (builder.Environment.IsDevelopment())
         {
-            logger.LogInformation("Seeding financial demo data...");
-            await FinancialDataSeeder.SeedFinancialDataAsync(services);
-            logger.LogInformation("Financial demo data seeding completed.");
         }
     }
     catch (Exception ex)
@@ -311,9 +335,8 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 
 // Serve static files (needed for runtime-uploaded images like blog images)
 app.UseStaticFiles();

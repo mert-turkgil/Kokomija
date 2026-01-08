@@ -11,5 +11,7 @@ namespace Kokomija.Data.Abstract
         Task<decimal> CalculateDiscountAsync(Coupon coupon, decimal orderAmount);
         Task IncrementUsageAsync(int couponId);
         Task<int> GetUserUsageCountAsync(int couponId, string userId);
+        Task<IEnumerable<Coupon>> GetAllWithRelationsAsync();
+        Task<Coupon?> GetByIdWithRelationsAsync(int id);
     }
 }

@@ -206,26 +206,104 @@
                             </div>
                         }
 
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Shipping:</span>
-                            <strong>@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C", plnCulture) : "FREE")</strong>
+                        @* Shipping Options Section *@
+                        <div class="shipping-options-section mb-3">
+                            <h6 class="mb-2">
+                                <i class="bi bi-truck me-2"></i>@L["Shipping_Method"]
+                            </h6>
+                            
+                            @if (Model.IsFreeShippingVip)
+                            {
+                                <div class="alert alert-success py-2 mb-2">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>
+                                    @L["Shipping_FreeVip"]
+                                </div>
+                            }
+                            else if (Model.HasFreeShipping)
+                            {
+                                <div class="alert alert-success py-2 mb-2">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    @L["Shipping_FreeThreshold"]
+                                </div>
+                            }
+                            
+                            <div class="shipping-options">
+                                @foreach (var option in Model.ShippingOptions)
+                                {
+                                    <div class="shipping-option @(option.IsSelected ? "selected" : "")" 
+                                         data-shipping-id="@option.Id"
+                                         data-cost="@option.Cost">
+                                        <div class="form-check">
+                                            <input class="form-check-input shipping-radio" 
+                                                   type="radio" 
+                                                   name="shippingOption" 
+                                                   id="shipping_@option.Id" 
+                                                   value="@option.Id"
+                                                   @(option.IsSelected ? "checked" : "")>
+                                            <label class="form-check-label w-100" for="shipping_@option.Id">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>@option.Name</strong>
+                                                        @if (!string.IsNullOrEmpty(option.ProviderName))
+                                                        {
+                                                            <small class="text-muted d-block">@option.ProviderName</small>
+                                                        }
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar-event me-1"></i>
+                                                            @option.DeliveryEstimate @L["Business_Days"]
+                                                            @if (option.EstimatedDeliveryDate.HasValue)
+                                                            {
+                                                                <span class="text-primary ms-1">
+                                                                    (@L["Arrives_By"] @option.EstimatedDeliveryDate.Value.ToString("MMM d"))
+                                                                </span>
+                                                            }
+                                                        </small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        @if (option.IsFree)
+                                                        {
+                                                            <span class="badge bg-success">@L["Free"]</span>
+                                                            @if (option.OriginalCost > 0)
+                                                            {
+                                                                <small class="text-decoration-line-through text-muted d-block">
+                                                                    @option.OriginalCost.ToString("C", plnCulture)
+                                                                </small>
+                                                            }
+                                                        }
+                                                        else if (option.Cost < option.OriginalCost)
+                                                        {
+                                                            <strong>@option.Cost.ToString("C", plnCulture)</strong>
+                                                            <small class="text-decoration-line-through text-muted d-block">
+                                                                @option.OriginalCost.ToString("C", plnCulture)
+                                                            </small>
+                                                        }
+                                                        else
+                                                        {
+                                                            <strong>@option.Cost.ToString("C", plnCulture)</strong>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
                         </div>
 
                         @if (!Model.HasFreeShipping && Model.RemainingForFreeShipping > 0)
                         {
                             <div class="free-shipping-progress mb-3">
-                                <small class="text-muted">Add @Model.RemainingForFreeShipping.ToString("C", plnCulture) more for free shipping</small>
+                                <small class="text-muted">@L["Cart_FreeShipping_Add"] @Model.RemainingForFreeShipping.ToString("C", plnCulture) @L["Cart_FreeShipping_More"]</small>
                                 <div class="progress mt-1" style="height: 5px;">
                                     <div class="progress-bar bg-success" role="progressbar" style="width: @((int)(((Model.FreeShippingThreshold - Model.RemainingForFreeShipping) / Model.FreeShippingThreshold) * 100))%"></div>
                                 </div>
                             </div>
                         }
-                        else if (Model.HasFreeShipping)
-                        {
-                            <div class="alert alert-success py-2 mb-3">
-                                <i class="bi bi-truck"></i> You've qualified for free shipping!
-                            </div>
-                        }
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>@L["Shipping"]:</span>
+                            <strong id="shippingCostDisplay">@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C", plnCulture) : L["Free"].ToString())</strong>
+                        </div>
 
                         <div class="d-flex justify-content-between mb-2">
                             <span>Tax (23%):<br /><small class="text-muted">(Included in total)</small></span>
@@ -236,7 +314,7 @@
 
                         <div class="d-flex justify-content-between mb-3">
                             <h5>Total:</h5>
-                            <h5>@Model.Total.ToString("C", plnCulture)</h5>
+                            <h5 id="totalDisplay">@Model.Total.ToString("C", plnCulture)</h5>
                         </div>
 
                         <button type="button" id="proceedToCheckout" class="btn btn-primary w-100 mb-2">
@@ -417,6 +495,42 @@
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);
+                    }
+                });
+            });
+
+            // Shipping option change
+            $('.shipping-radio').on('change', function() {
+                const shippingOption = $(this).val();
+                const $container = $(this).closest('.shipping-options');
+                
+                // Update visual selection
+                $container.find('.shipping-option').removeClass('selected');
+                $(this).closest('.shipping-option').addClass('selected');
+                
+                // Update via AJAX
+                $.ajax({
+                    url: '/Cart/api/update-shipping',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ shippingOption: shippingOption }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Update displayed values
+                            const formattedShipping = response.shippingCost === 0 
+                                ? '@L["Free"]' 
+                                : new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(response.shippingCost);
+                            $('#shippingCostDisplay').text(formattedShipping);
+                            
+                            const formattedTotal = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(response.total);
+                            $('#totalDisplay').text(formattedTotal);
+                        } else {
+                            alert(response.message || 'Failed to update shipping');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error:', xhr);
+                        alert('An error occurred while updating shipping');
                     }
                 });
             });

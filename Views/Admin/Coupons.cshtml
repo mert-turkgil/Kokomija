@@ -1,0 +1,1105 @@
+@model Kokomija.Models.ViewModels.Admin.CouponManagementViewModel
+@{
+    ViewData["Title"] = "Coupon Management";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h1>
+                                <i class="bi bi-ticket-perforated"></i>
+                                Coupon Management
+                            </h1>
+                            <p class="mb-0">Create and manage discount coupons, birthday rewards, and promotional codes. <strong class="text-success">All coupons sync automatically with Stripe.</strong></p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="button" class="btn btn-outline-primary" onclick="showBulkGenerateModal()">
+                                <i class="bi bi-collection"></i> Bulk Generate
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="showCreateCouponModal()">
+                                <i class="bi bi-plus-lg"></i> Create Coupon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-primary">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalCoupons</h6>
+                        <small>Total Coupons</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.ActiveCoupons</h6>
+                        <small>Active</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-danger">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.ExpiredCoupons</h6>
+                        <small>Expired</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-info">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalDiscountsGiven.ToString("N0") @Model.Currency</h6>
+                        <small>Total Discounts Given</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coupon Type Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="?type=birthday" class="text-decoration-none">
+                    <div class="stat-card-small stat-card-clickable">
+                        <div class="stat-icon-small bg-pink">
+                            <i class="bi bi-gift"></i>
+                        </div>
+                        <div>
+                            <h6>@Model.BirthdayCoupons</h6>
+                            <small>Birthday Coupons</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="?type=new_user" class="text-decoration-none">
+                    <div class="stat-card-small stat-card-clickable">
+                        <div class="stat-icon-small bg-teal">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <div>
+                            <h6>@Model.NewUserCoupons</h6>
+                            <small>New User Coupons</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="?type=category" class="text-decoration-none">
+                    <div class="stat-card-small stat-card-clickable">
+                        <div class="stat-icon-small bg-purple">
+                            <i class="bi bi-tags"></i>
+                        </div>
+                        <div>
+                            <h6>@Model.CategoryCoupons</h6>
+                            <small>Category Coupons</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <a href="?type=vip" class="text-decoration-none">
+                    <div class="stat-card-small stat-card-clickable">
+                        <div class="stat-icon-small bg-gold">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <div>
+                            <h6>@Model.VipCoupons</h6>
+                            <small>VIP Coupons</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="filterForm" class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" id="searchInput" name="search" placeholder="Code or description..." value="@Context.Request.Query["search"]">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Type</label>
+                                <select class="form-select" id="typeFilter" name="type">
+                                    <option value="all">All Types</option>
+                                    @foreach (var type in Model.CouponTypes)
+                                    {
+                                        <option value="@type.Value" selected="@(Context.Request.Query["type"] == type.Value)">@type.Text</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="statusFilter" name="status">
+                                    <option value="">All Statuses</option>
+                                    <option value="active" selected="@(Context.Request.Query["status"] == "active")">Active</option>
+                                    <option value="inactive" selected="@(Context.Request.Query["status"] == "inactive")">Inactive</option>
+                                    <option value="expired" selected="@(Context.Request.Query["status"] == "expired")">Expired</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Filter
+                                </button>
+                                <a href="@Url.Action("Coupons")" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coupons Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list"></i> All Coupons (@Model.Coupons.Count)
+                            </h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="couponsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="120">Code</th>
+                                        <th>Description</th>
+                                        <th width="100">Type</th>
+                                        <th width="120">Discount</th>
+                                        <th width="100">Usage</th>
+                                        <th width="120">Valid Until</th>
+                                        <th width="80">Stripe</th>
+                                        <th width="80">Status</th>
+                                        <th width="180">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.Coupons.Any())
+                                    {
+                                        @foreach (var coupon in Model.Coupons)
+                                        {
+                                            <tr id="coupon-row-@coupon.Id">
+                                                <td>
+                                                    <code class="fw-bold">@coupon.Code</code>
+                                                </td>
+                                                <td>
+                                                    <span>@(coupon.Description ?? "-")</span>
+                                                    @{
+                                                        var restrictions = GetCouponRestrictionsSummary(coupon);
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(restrictions))
+                                                    {
+                                                        <br><small class="text-muted"><i class="bi bi-info-circle"></i> @restrictions</small>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(coupon.CategoryName))
+                                                    {
+                                                        <br><small class="text-muted"><i class="bi bi-tag"></i> @coupon.CategoryName</small>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(coupon.VipTierRequired))
+                                                    {
+                                                        <br><small class="text-warning"><i class="bi bi-star"></i> @coupon.VipTierRequired+ only</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-@GetCouponTypeBadgeColor(coupon.CouponType)">
+                                                        @GetCouponTypeDisplayName(coupon.CouponType)
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (coupon.DiscountType == "percentage")
+                                                    {
+                                                        <span class="fw-bold text-success">@coupon.DiscountValue%</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="fw-bold text-success">@coupon.DiscountValue.ToString("N2") PLN</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @coupon.UsageCount / @(coupon.UsageLimit?.ToString() ?? "∞")
+                                                </td>
+                                                <td>
+                                                    @if (coupon.ValidUntil.HasValue)
+                                                    {
+                                                        <small class="@(coupon.IsExpired ? "text-danger" : "")">
+                                                            @coupon.ValidUntil.Value.ToString("MMM dd, yyyy")
+                                                        </small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">No expiry</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.HasStripeSync)
+                                                    {
+                                                        <span class="badge bg-success" title="Synced with Stripe"><i class="bi bi-check-lg"></i></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-primary" onclick="syncWithStripe(@coupon.Id)" title="Sync with Stripe">
+                                                            <i class="bi bi-arrow-repeat"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (coupon.IsExpired)
+                                                    {
+                                                        <span class="badge bg-danger">Expired</span>
+                                                    }
+                                                    else if (coupon.IsActive)
+                                                    {
+                                                        <span class="badge bg-success">Active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Inactive</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a asp-action="CouponDetails" asp-route-id="@coupon.Id" class="btn btn-outline-info" title="View Details">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-outline-primary" onclick="editCoupon(@coupon.Id)" title="Edit">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-@(coupon.IsActive ? "warning" : "success")" onclick="toggleCoupon(@coupon.Id)" title="@(coupon.IsActive ? "Deactivate" : "Activate")">
+                                                            <i class="bi bi-@(coupon.IsActive ? "pause" : "play")-circle"></i>
+                                                        </button>
+                                                        @if (coupon.UsageCount == 0)
+                                                        {
+                                                            <button type="button" class="btn btn-outline-danger" onclick="deleteCoupon(@coupon.Id)" title="Delete">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="9" class="text-center py-5">
+                                                <i class="bi bi-ticket-perforated display-4 text-muted"></i>
+                                                <p class="text-muted mt-3">No coupons found. Create your first coupon!</p>
+                                                <button type="button" class="btn btn-primary" onclick="showCreateCouponModal()">
+                                                    <i class="bi bi-plus-lg"></i> Create Coupon
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Coupon Modal -->
+<div class="modal fade" id="couponModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="couponModalTitle">Create Coupon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Stripe Info Alert (shown when editing synced coupon) -->
+                <div id="stripeInfoAlert" class="alert alert-info d-none mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-stripe"></i> Stripe Integration (Live Data)</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="d-block"><strong>Stripe Coupon ID:</strong></small>
+                            <code id="displayStripeCouponId" class="small">-</code>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="d-block"><strong>Stripe Promotion Code ID:</strong></small>
+                            <code id="displayStripePromotionCodeId" class="small">-</code>
+                        </div>
+                    </div>
+                    <div id="stripeStatusDetails" class="mt-2">
+                        <!-- Live Stripe status will be populated here -->
+                    </div>
+                    <hr>
+                    <small class="text-muted"><i class="bi bi-info-circle"></i> Data fetched live from Stripe API. Changes will be synced automatically when you save.</small>
+                </div>
+
+                <!-- Usage Restrictions Summary (shown when editing) -->
+                <div id="usageRestrictionsSummary" class="alert alert-warning d-none mb-4">
+                    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Usage Restrictions</h6>
+                    <p id="restrictionsSummaryText" class="mb-0"></p>
+                </div>
+
+                <form id="couponForm">
+                    <input type="hidden" id="couponId" />
+                    <input type="hidden" id="stripeCouponId" />
+                    <input type="hidden" id="stripePromotionCodeId" />
+                    
+                    <div class="row">
+                        <!-- Basic Info -->
+                        <div class="col-md-4 mb-3">
+                            <label for="couponCode" class="form-label">Coupon Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control text-uppercase" id="couponCode" required maxlength="50" placeholder="e.g., WELCOME10">
+                            <div class="form-text">Unique code customers will enter at checkout</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="couponType" class="form-label">Coupon Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="couponType" required>
+                                @foreach (var type in Model.CouponTypes)
+                                {
+                                    <option value="@type.Value">@type.Text</option>
+                                }
+                            </select>
+                            <div class="form-text" id="couponTypeHelpText">Select the purpose of this coupon</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="usageLimitPerUser" class="form-label">Per User Limit</label>
+                            <input type="number" class="form-control" id="usageLimitPerUser" min="1" placeholder="Unlimited">
+                            <div class="form-text">How many times each user can use this</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="couponDescription" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="couponDescription" maxlength="200" placeholder="e.g., 10% off for new users - one time only">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="discountType" class="form-label">Discount Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="discountType" required>
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed_amount">Fixed Amount (PLN)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="discountValue" class="form-label">Discount Value <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="discountValue" required min="0.01" step="0.01" placeholder="e.g., 10">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="usageLimit" class="form-label">Total Usage Limit</label>
+                            <input type="number" class="form-control" id="usageLimit" min="1" placeholder="Unlimited">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="minimumOrderAmount" class="form-label">Minimum Order Amount (PLN)</label>
+                            <input type="number" class="form-control" id="minimumOrderAmount" min="0" step="0.01" placeholder="No minimum">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="maximumDiscountAmount" class="form-label">Maximum Discount Amount (PLN)</label>
+                            <input type="number" class="form-control" id="maximumDiscountAmount" min="0" step="0.01" placeholder="No maximum">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="validFrom" class="form-label">Valid From</label>
+                            <input type="datetime-local" class="form-control" id="validFrom">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="validUntil" class="form-label">Valid Until</label>
+                            <input type="datetime-local" class="form-control" id="validUntil">
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="text-muted mb-3"><i class="bi bi-filter"></i> Restrictions</h6>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="categoryId" class="form-label">Category Restriction</label>
+                            <select class="form-select" id="categoryId">
+                                <option value="">All Categories</option>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.Value">@category.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="productId" class="form-label">Product Restriction</label>
+                            <select class="form-select" id="productId" style="width: 100%;">
+                                <option value="">All Products</option>
+                                @foreach (var product in Model.Products)
+                                {
+                                    <option value="@product.Value">@product.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vipTierRequired" class="form-label">VIP Tier Required</label>
+                            <select class="form-select" id="vipTierRequired">
+                                @foreach (var tier in Model.VipTiers)
+                                {
+                                    <option value="@tier.Value">@tier.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="isActive" checked>
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Birthday-specific fields -->
+                    <div id="birthdayFields" class="d-none">
+                        <hr>
+                        <h6 class="text-muted mb-3"><i class="bi bi-gift"></i> Birthday Settings</h6>
+                        <div class="alert alert-info small mb-3">
+                            <i class="bi bi-info-circle"></i> Birthday coupons are automatically sent to users around their birthday.
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="daysBeforeBirthday" class="form-label">Days Before Birthday</label>
+                                <input type="number" class="form-control" id="daysBeforeBirthday" min="0" max="30" value="7">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="daysAfterBirthday" class="form-label">Days After Birthday</label>
+                                <input type="number" class="form-control" id="daysAfterBirthday" min="0" max="30" value="7">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- New user-specific fields -->
+                    <div id="newUserFields" class="d-none">
+                        <hr>
+                        <h6 class="text-muted mb-3"><i class="bi bi-person-plus"></i> New User Settings</h6>
+                        <div class="alert alert-info small mb-3">
+                            <i class="bi bi-info-circle"></i> New user coupons are only valid for recently registered accounts. <strong>Set "Per User Limit" to 1 for one-time use.</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accountAgeDays" class="form-label">Account Age (Days)</label>
+                            <input type="number" class="form-control" id="accountAgeDays" min="1" value="30">
+                            <div class="form-text">Only users with accounts younger than this will be eligible</div>
+                        </div>
+                    </div>
+
+                    <!-- First Purchase specific -->
+                    <div id="firstPurchaseFields" class="d-none">
+                        <hr>
+                        <div class="alert alert-info small mb-3">
+                            <i class="bi bi-info-circle"></i> First purchase coupons are only valid for customers who haven't made a purchase yet. <strong>Automatically limited to 1 use per user.</strong>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted me-auto"><i class="bi bi-stripe"></i> Will sync with Stripe automatically</small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCoupon()">
+                    <i class="bi bi-check-lg"></i> Save Coupon
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Generate Modal -->
+<div class="modal fade" id="bulkGenerateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-collection"></i> Bulk Generate Coupons</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkGenerateForm">
+                    <div class="mb-3">
+                        <label for="bulkCount" class="form-label">Number of Coupons <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="bulkCount" required min="1" max="10000" value="100">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="bulkPrefix" class="form-label">Code Prefix <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control text-uppercase" id="bulkPrefix" required maxlength="20" value="PROMO">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="bulkCodeLength" class="form-label">Code Length <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="bulkCodeLength" required min="4" max="20" value="8">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="bulkDiscountType" class="form-label">Discount Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="bulkDiscountType" required>
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed_amount">Fixed Amount (PLN)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="bulkDiscountValue" class="form-label">Discount Value <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="bulkDiscountValue" required min="0.01" step="0.01" value="10">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="bulkValidFrom" class="form-label">Valid From</label>
+                            <input type="datetime-local" class="form-control" id="bulkValidFrom">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="bulkValidUntil" class="form-label">Valid Until</label>
+                            <input type="datetime-local" class="form-control" id="bulkValidUntil">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulkUsageLimit" class="form-label">Usage Limit Per Code</label>
+                        <input type="number" class="form-control" id="bulkUsageLimit" min="1" value="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulkCategoryId" class="form-label">Category Restriction</label>
+                        <select class="form-select" id="bulkCategoryId">
+                            <option value="">All Categories</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Value">@category.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="bi bi-stripe"></i> All generated coupons will be automatically synced with Stripe.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="generateBulkCoupons()">
+                    <i class="bi bi-lightning"></i> Generate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" />
+    <style>
+        .stat-card-small {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card-clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .stat-icon-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: white;
+        }
+        .stat-card-small h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        .stat-card-small small {
+            color: #6c757d;
+        }
+        .bg-pink { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .bg-teal { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .bg-purple { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .bg-gold { background: linear-gradient(135deg, #f5af19, #f12711); }
+        
+        /* DataTables customization */
+        .dataTables_filter input {
+            border-radius: 6px;
+        }
+        .dataTables_length select {
+            border-radius: 6px;
+        }
+        
+        /* Select2 style for product dropdown */
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script>
+        let couponModal, bulkGenerateModal;
+        let isEditing = false;
+        let couponsTable;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            couponModal = new bootstrap.Modal(document.getElementById('couponModal'));
+            bulkGenerateModal = new bootstrap.Modal(document.getElementById('bulkGenerateModal'));
+
+            // Initialize DataTable for coupons
+            couponsTable = $('#couponsTable').DataTable({
+                pageLength: 25,
+                order: [[8, 'desc']], // Sort by created date
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ coupons",
+                    info: "Showing _START_ to _END_ of _TOTAL_ coupons",
+                    emptyTable: "No coupons found"
+                },
+                columnDefs: [
+                    { orderable: false, targets: [8] } // Actions column
+                ]
+            });
+
+            // Initialize Select2 for product dropdown (searchable with DataTable-like functionality)
+            $('#productId').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search and select a product...',
+                allowClear: true,
+                dropdownParent: $('#couponModal'),
+                width: '100%'
+            });
+
+            // Toggle coupon type fields based on selection
+            document.getElementById('couponType').addEventListener('change', function() {
+                const type = this.value;
+                document.getElementById('birthdayFields').classList.toggle('d-none', type !== 'birthday');
+                document.getElementById('newUserFields').classList.toggle('d-none', type !== 'new_user');
+                document.getElementById('firstPurchaseFields').classList.toggle('d-none', type !== 'first_purchase');
+                
+                // Update help text based on type
+                updateCouponTypeHelpText(type);
+                
+                // Auto-set per user limit for first_purchase and new_user
+                if (type === 'first_purchase') {
+                    document.getElementById('usageLimitPerUser').value = 1;
+                }
+            });
+        });
+
+        function updateCouponTypeHelpText(type) {
+            const helpTexts = {
+                'general': 'A general purpose coupon with no special restrictions',
+                'birthday': 'Automatically sent to users around their birthday',
+                'new_user': 'Only valid for newly registered users (set per user limit to 1 for one-time use)',
+                'vip': 'Only available to VIP members',
+                'category': 'Restricted to specific product categories',
+                'product': 'Restricted to specific products',
+                'first_purchase': 'Only valid for first-time customers (automatically one-time use)'
+            };
+            document.getElementById('couponTypeHelpText').textContent = helpTexts[type] || 'Select the purpose of this coupon';
+        }
+
+        function showCreateCouponModal() {
+            isEditing = false;
+            document.getElementById('couponModalTitle').textContent = 'Create Coupon';
+            document.getElementById('couponForm').reset();
+            document.getElementById('couponId').value = '';
+            document.getElementById('stripeCouponId').value = '';
+            document.getElementById('stripePromotionCodeId').value = '';
+            document.getElementById('couponCode').disabled = false;
+            document.getElementById('birthdayFields').classList.add('d-none');
+            document.getElementById('newUserFields').classList.add('d-none');
+            document.getElementById('firstPurchaseFields').classList.add('d-none');
+            document.getElementById('stripeInfoAlert').classList.add('d-none');
+            document.getElementById('usageRestrictionsSummary').classList.add('d-none');
+            document.getElementById('isActive').checked = true;
+            
+            // Reset Select2
+            $('#productId').val('').trigger('change');
+            
+            updateCouponTypeHelpText('general');
+            couponModal.show();
+        }
+
+        function showBulkGenerateModal() {
+            document.getElementById('bulkGenerateForm').reset();
+            bulkGenerateModal.show();
+        }
+
+        async function editCoupon(id) {
+            try {
+                const response = await fetch(`/Admin/GetCoupon?id=${id}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    isEditing = true;
+                    const c = result.coupon;
+                    document.getElementById('couponModalTitle').textContent = `Edit Coupon: ${c.code}`;
+                    document.getElementById('couponId').value = c.id;
+                    document.getElementById('couponCode').value = c.code;
+                    document.getElementById('couponCode').disabled = true;
+                    document.getElementById('couponType').value = c.couponType || 'general';
+                    document.getElementById('couponDescription').value = c.description || '';
+                    document.getElementById('discountType').value = c.discountType;
+                    document.getElementById('discountValue').value = c.discountValue;
+                    document.getElementById('minimumOrderAmount').value = c.minimumOrderAmount || '';
+                    document.getElementById('maximumDiscountAmount').value = c.maximumDiscountAmount || '';
+                    document.getElementById('usageLimit').value = c.usageLimit || '';
+                    document.getElementById('usageLimitPerUser').value = c.usageLimitPerUser || '';
+                    document.getElementById('validFrom').value = c.validFrom || '';
+                    document.getElementById('validUntil').value = c.validUntil || '';
+                    document.getElementById('categoryId').value = c.categoryId || '';
+                    document.getElementById('vipTierRequired').value = c.vipTierRequired || '';
+                    document.getElementById('isActive').checked = c.isActive;
+                    
+                    // Set product with Select2
+                    $('#productId').val(c.productId || '').trigger('change');
+                    
+                    // Store Stripe IDs
+                    document.getElementById('stripeCouponId').value = c.stripeCouponId || '';
+                    document.getElementById('stripePromotionCodeId').value = c.stripePromotionCodeId || '';
+                    
+                    // Show Stripe info if synced
+                    if (c.stripeCouponId) {
+                        document.getElementById('stripeInfoAlert').classList.remove('d-none');
+                        document.getElementById('displayStripeCouponId').textContent = c.stripeCouponId;
+                        document.getElementById('displayStripePromotionCodeId').textContent = c.stripePromotionCodeId || '-';
+                        
+                        // Display live Stripe data
+                        let stripeStatusHtml = '';
+                        if (c.stripeTimesRedeemed !== null) {
+                            stripeStatusHtml += `<br><small><i class="bi bi-ticket"></i> Stripe Redemptions: <strong>${c.stripeTimesRedeemed}</strong></small>`;
+                        }
+                        if (c.stripeIsValid !== null) {
+                            const validBadge = c.stripeIsValid 
+                                ? '<span class="badge bg-success">Valid</span>' 
+                                : '<span class="badge bg-danger">Invalid</span>';
+                            stripeStatusHtml += `<br><small><i class="bi bi-shield-check"></i> Stripe Status: ${validBadge}</small>`;
+                        }
+                        if (c.stripeRedeemBy) {
+                            stripeStatusHtml += `<br><small><i class="bi bi-calendar-x"></i> Stripe Expiry: ${c.stripeRedeemBy}</small>`;
+                        }
+                        if (c.stripePromotionActive !== null) {
+                            const activeBadge = c.stripePromotionActive 
+                                ? '<span class="badge bg-success">Active</span>' 
+                                : '<span class="badge bg-secondary">Inactive</span>';
+                            stripeStatusHtml += `<br><small><i class="bi bi-toggle-on"></i> Promo Code: ${activeBadge}</small>`;
+                        }
+                        if (c.stripeMinimumAmount !== null) {
+                            stripeStatusHtml += `<br><small><i class="bi bi-cash"></i> Min Order (Stripe): ${c.stripeMinimumAmount.toFixed(2)} PLN</small>`;
+                        }
+                        
+                        document.getElementById('stripeStatusDetails').innerHTML = stripeStatusHtml;
+                    } else {
+                        document.getElementById('stripeInfoAlert').classList.add('d-none');
+                        document.getElementById('stripeStatusDetails').innerHTML = '';
+                    }
+                    
+                    // Show usage restrictions summary
+                    const restrictionsSummary = buildRestrictionsSummary(c);
+                    if (restrictionsSummary) {
+                        document.getElementById('usageRestrictionsSummary').classList.remove('d-none');
+                        document.getElementById('restrictionsSummaryText').innerHTML = restrictionsSummary;
+                    } else {
+                        document.getElementById('usageRestrictionsSummary').classList.add('d-none');
+                    }
+                    
+                    // Show/hide type-specific fields
+                    document.getElementById('birthdayFields').classList.toggle('d-none', c.couponType !== 'birthday');
+                    document.getElementById('newUserFields').classList.toggle('d-none', c.couponType !== 'new_user');
+                    document.getElementById('firstPurchaseFields').classList.toggle('d-none', c.couponType !== 'first_purchase');
+                    
+                    if (c.daysBeforeBirthday) document.getElementById('daysBeforeBirthday').value = c.daysBeforeBirthday;
+                    if (c.daysAfterBirthday) document.getElementById('daysAfterBirthday').value = c.daysAfterBirthday;
+                    if (c.accountAgeDays) document.getElementById('accountAgeDays').value = c.accountAgeDays;
+                    
+                    updateCouponTypeHelpText(c.couponType || 'general');
+                    couponModal.show();
+                } else {
+                    showToast('Error', result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to load coupon data', 'danger');
+            }
+        }
+
+        function buildRestrictionsSummary(coupon) {
+            const parts = [];
+            
+            if (coupon.couponType === 'new_user') {
+                parts.push(`<strong>New Users Only</strong> (accounts less than ${coupon.accountAgeDays || 30} days old)`);
+            }
+            if (coupon.couponType === 'birthday') {
+                parts.push(`<strong>Birthday Coupon</strong> (valid ${coupon.daysBeforeBirthday || 7} days before to ${coupon.daysAfterBirthday || 7} days after birthday)`);
+            }
+            if (coupon.couponType === 'first_purchase') {
+                parts.push('<strong>First Purchase Only</strong> - customers with no previous orders');
+            }
+            if (coupon.usageLimitPerUser === 1) {
+                parts.push('<i class="bi bi-1-circle"></i> <strong>One-time use per customer</strong>');
+            } else if (coupon.usageLimitPerUser) {
+                parts.push(`<i class="bi bi-repeat"></i> Max ${coupon.usageLimitPerUser} uses per customer`);
+            }
+            if (coupon.usageLimit) {
+                parts.push(`<i class="bi bi-people"></i> Total limit: ${coupon.usageLimit} uses (${coupon.usageCount || 0} used)`);
+            }
+            if (coupon.vipTierRequired) {
+                parts.push(`<i class="bi bi-star"></i> VIP ${coupon.vipTierRequired}+ members only`);
+            }
+            
+            return parts.length > 0 ? parts.join('<br>') : null;
+        }
+
+        async function saveCoupon() {
+            const id = document.getElementById('couponId').value;
+            const couponType = document.getElementById('couponType').value;
+            
+            const data = {
+                code: document.getElementById('couponCode').value,
+                description: document.getElementById('couponDescription').value || null,
+                discountType: document.getElementById('discountType').value,
+                discountValue: parseFloat(document.getElementById('discountValue').value),
+                couponType: couponType,
+                minimumOrderAmount: parseFloat(document.getElementById('minimumOrderAmount').value) || null,
+                maximumDiscountAmount: parseFloat(document.getElementById('maximumDiscountAmount').value) || null,
+                usageLimit: parseInt(document.getElementById('usageLimit').value) || null,
+                usageLimitPerUser: parseInt(document.getElementById('usageLimitPerUser').value) || null,
+                validFrom: document.getElementById('validFrom').value || null,
+                validUntil: document.getElementById('validUntil').value || null,
+                categoryId: parseInt(document.getElementById('categoryId').value) || null,
+                productId: parseInt(document.getElementById('productId').value) || null,
+                vipTierRequired: document.getElementById('vipTierRequired').value || null,
+                isActive: document.getElementById('isActive').checked,
+                syncWithStripe: true // Always sync with Stripe
+            };
+
+            if (couponType === 'birthday') {
+                data.daysBeforeBirthday = parseInt(document.getElementById('daysBeforeBirthday').value) || 7;
+                data.daysAfterBirthday = parseInt(document.getElementById('daysAfterBirthday').value) || 7;
+            }
+            if (couponType === 'new_user') {
+                data.accountAgeDays = parseInt(document.getElementById('accountAgeDays').value) || 30;
+            }
+            if (couponType === 'first_purchase') {
+                data.usageLimitPerUser = 1; // Force 1 for first purchase
+            }
+
+            try {
+                const url = isEditing ? `/Admin/UpdateCoupon?id=${id}` : '/Admin/CreateCoupon';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Success', result.message, 'success');
+                    couponModal.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error', result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to save coupon', 'danger');
+            }
+        }
+
+        async function toggleCoupon(id) {
+            try {
+                const response = await fetch(`/Admin/ToggleCoupon?id=${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Success', result.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error', result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to toggle coupon', 'danger');
+            }
+        }
+
+        async function deleteCoupon(id) {
+            if (!confirm('Are you sure you want to delete this coupon? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/Admin/DeleteCoupon?id=${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Success', result.message, 'success');
+                    document.getElementById(`coupon-row-${id}`)?.remove();
+                } else {
+                    showToast('Error', result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to delete coupon', 'danger');
+            }
+        }
+
+        async function syncWithStripe(id) {
+            try {
+                const response = await fetch(`/Admin/SyncCouponWithStripe?id=${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Success', result.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Error', result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to sync with Stripe', 'danger');
+            }
+        }
+
+        async function generateBulkCoupons() {
+            const data = {
+                count: parseInt(document.getElementById('bulkCount').value),
+                prefix: document.getElementById('bulkPrefix').value,
+                codeLength: parseInt(document.getElementById('bulkCodeLength').value),
+                discountType: document.getElementById('bulkDiscountType').value,
+                discountValue: parseFloat(document.getElementById('bulkDiscountValue').value),
+                validFrom: document.getElementById('bulkValidFrom').value || null,
+                validUntil: document.getElementById('bulkValidUntil').value || null,
+                usageLimitPerCode: parseInt(document.getElementById('bulkUsageLimit').value) || 1,
+                categoryId: parseInt(document.getElementById('bulkCategoryId').value) || null,
+                syncWithStripe: true // Always sync
+            };
+
+            try {
+                const response = await fetch('/Admin/GenerateBulkCoupons', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Success', result.message, 'success');
+                    bulkGenerateModal.hide();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('Error', result.message, 'danger');
+                }
+            } catch (error) {
+                showToast('Error', 'Failed to generate coupons', 'danger');
+            }
+        }
+
+        function showToast(title, message, type) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: type === 'success' ? 'success' : 'error',
+                    title: title,
+                    text: message,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert(`${title}: ${message}`);
+            }
+        }
+    </script>
+}
+
+@functions {
+    string GetCouponTypeBadgeColor(string type) => type switch
+    {
+        "birthday" => "pink",
+        "new_user" => "info",
+        "vip" => "warning",
+        "category" => "purple",
+        "product" => "secondary",
+        "first_purchase" => "success",
+        _ => "primary"
+    };
+    
+    string GetCouponTypeDisplayName(string type) => type switch
+    {
+        "birthday" => "Birthday",
+        "new_user" => "New User",
+        "vip" => "VIP",
+        "category" => "Category",
+        "product" => "Product",
+        "first_purchase" => "First Purchase",
+        _ => "General"
+    };
+
+    string GetCouponRestrictionsSummary(Kokomija.Models.ViewModels.Admin.CouponListItemDto coupon)
+    {
+        var parts = new List<string>();
+        
+        if (coupon.CouponType == "new_user")
+        {
+            parts.Add("New users only");
+        }
+        if (coupon.CouponType == "first_purchase")
+        {
+            parts.Add("First purchase only");
+        }
+        if (coupon.CouponType == "birthday")
+        {
+            parts.Add("Birthday reward");
+        }
+        if (coupon.UsageLimitPerUser == 1)
+        {
+            parts.Add("1× per user");
+        }
+        else if (coupon.UsageLimitPerUser.HasValue)
+        {
+            parts.Add($"{coupon.UsageLimitPerUser}× per user");
+        }
+        
+        return string.Join(" • ", parts);
+    }
+}

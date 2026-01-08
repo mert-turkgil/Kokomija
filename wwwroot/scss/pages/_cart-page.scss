@@ -974,3 +974,108 @@
         }
     }
 }
+
+// ===== Shipping Options Section =====
+.shipping-options-section {
+    .shipping-option {
+        cursor: pointer;
+        border: 2px solid var(--bs-border-color);
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        background: var(--bs-body-bg);
+
+        [data-bs-theme="dark"] & {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        &:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+
+            [data-bs-theme="dark"] & {
+                border-color: #8b9aed;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+            }
+        }
+
+        &.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+
+            [data-bs-theme="dark"] & {
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+                border-color: #8b9aed;
+            }
+
+            .form-check-input {
+                background-color: #667eea;
+                border-color: #667eea;
+            }
+        }
+
+        .shipping-info {
+            flex: 1;
+
+            .shipping-name {
+                font-weight: 700;
+                color: var(--bs-heading-color);
+                margin-bottom: 0.25rem;
+
+                i {
+                    color: #667eea;
+                }
+            }
+
+            .shipping-estimate {
+                font-size: 0.85rem;
+                color: var(--bs-secondary-color);
+            }
+        }
+
+        .shipping-price {
+            text-align: right;
+
+            .price-value {
+                font-weight: 700;
+                font-size: 1.1rem;
+                color: var(--bs-heading-color);
+
+                &.text-success {
+                    color: #10b981 !important;
+                }
+            }
+
+            .original-price {
+                color: var(--bs-secondary-color);
+            }
+        }
+    }
+
+    .vip-shipping-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #1a1a2e;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        margin-left: 0.5rem;
+    }
+}
+
+.shipping-note {
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.08));
+    border-left: 3px solid #10b981;
+    border-radius: 8px;
+
+    [data-bs-theme="dark"] & {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.12));
+    }
+}

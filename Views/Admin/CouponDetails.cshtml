@@ -1,0 +1,478 @@
+@model Kokomija.Models.ViewModels.Admin.CouponDetailsViewModel
+@{
+    ViewData["Title"] = $"Coupon: {Model.Code}";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h1>
+                                <i class="bi bi-ticket-perforated"></i>
+                                Coupon: <code>@Model.Code</code>
+                            </h1>
+                            <p class="mb-0">@(Model.Description ?? "No description")</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a asp-action="Coupons" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Coupons
+                            </a>
+                            @if (!Model.IsExpired && Model.UsageCount == 0)
+                            {
+                                <button type="button" class="btn btn-outline-danger" onclick="deleteCoupon(@Model.Id)">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small @GetStatusColor(Model.Status)">
+                        <i class="bi @GetStatusIcon(Model.Status)"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.Status</h6>
+                        <small>Current Status</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-success">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <div>
+                        <h6>
+                            @if (Model.DiscountType == "percentage")
+                            {
+                                @($"{Model.DiscountValue}%")
+                            }
+                            else
+                            {
+                                @($"{Model.DiscountValue:N2} PLN")
+                            }
+                        </h6>
+                        <small>Discount Value</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-info">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.UsageCount / @(Model.UsageLimit?.ToString() ?? "∞")</h6>
+                        <small>Times Used</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="stat-card-small">
+                    <div class="stat-icon-small bg-warning">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <h6>@Model.TotalDiscountAmount.ToString("N2") PLN</h6>
+                        <small>Total Discounts Given</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Coupon Details -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Coupon Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <th width="40%">Code</th>
+                                    <td><code class="fs-5">@Model.Code</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Type</th>
+                                    <td>
+                                        <span class="badge bg-@GetCouponTypeBadgeColor(Model.CouponType)">
+                                            @GetCouponTypeDisplayName(Model.CouponType)
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Discount</th>
+                                    <td>
+                                        @if (Model.DiscountType == "percentage")
+                                        {
+                                            <span class="text-success fw-bold">@Model.DiscountValue% off</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success fw-bold">@Model.DiscountValue.ToString("N2") PLN off</span>
+                                        }
+                                    </td>
+                                </tr>
+                                @if (Model.MinimumOrderAmount.HasValue)
+                                {
+                                    <tr>
+                                        <th>Minimum Order</th>
+                                        <td>@Model.MinimumOrderAmount.Value.ToString("N2") PLN</td>
+                                    </tr>
+                                }
+                                @if (Model.MaximumDiscountAmount.HasValue)
+                                {
+                                    <tr>
+                                        <th>Maximum Discount</th>
+                                        <td>@Model.MaximumDiscountAmount.Value.ToString("N2") PLN</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <th>Usage Limit</th>
+                                    <td>@(Model.UsageLimit?.ToString() ?? "Unlimited")</td>
+                                </tr>
+                                @if (Model.UsageLimitPerUser.HasValue)
+                                {
+                                    <tr>
+                                        <th>Per User Limit</th>
+                                        <td>@Model.UsageLimitPerUser.Value times</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validity & Restrictions -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Validity & Restrictions</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <th width="40%">Valid From</th>
+                                    <td>
+                                        @if (Model.ValidFrom.HasValue)
+                                        {
+                                            @Model.ValidFrom.Value.ToString("MMM dd, yyyy HH:mm")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Immediately</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Valid Until</th>
+                                    <td>
+                                        @if (Model.ValidUntil.HasValue)
+                                        {
+                                            <span class="@(Model.IsExpired ? "text-danger" : "")">
+                                                @Model.ValidUntil.Value.ToString("MMM dd, yyyy HH:mm")
+                                                @if (Model.IsExpired)
+                                                {
+                                                    <span class="badge bg-danger ms-2">Expired</span>
+                                                }
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No expiry</span>
+                                        }
+                                    </td>
+                                </tr>
+                                @if (!string.IsNullOrEmpty(Model.CategoryName))
+                                {
+                                    <tr>
+                                        <th>Category</th>
+                                        <td><span class="badge bg-secondary">@Model.CategoryName</span></td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.ProductName))
+                                {
+                                    <tr>
+                                        <th>Product</th>
+                                        <td><span class="badge bg-secondary">@Model.ProductName</span></td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.VipTierRequired))
+                                {
+                                    <tr>
+                                        <th>VIP Required</th>
+                                        <td><span class="badge bg-warning text-dark">@Model.VipTierRequired+</span></td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.UserEmail))
+                                {
+                                    <tr>
+                                        <th>User Specific</th>
+                                        <td>@Model.UserEmail</td>
+                                    </tr>
+                                }
+                                @if (Model.CouponType == "birthday")
+                                {
+                                    <tr>
+                                        <th>Birthday Window</th>
+                                        <td>@(Model.DaysBeforeBirthday ?? 7) days before to @(Model.DaysAfterBirthday ?? 7) days after</td>
+                                    </tr>
+                                }
+                                @if (Model.CouponType == "new_user" && Model.AccountAgeDays.HasValue)
+                                {
+                                    <tr>
+                                        <th>Account Age</th>
+                                        <td>Within @Model.AccountAgeDays days of registration</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stripe Integration -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-stripe"></i> Stripe Integration</h5>
+                        @if (string.IsNullOrEmpty(Model.StripeCouponId))
+                        {
+                            <button class="btn btn-sm btn-primary" onclick="syncWithStripe(@Model.Id)">
+                                <i class="bi bi-arrow-repeat"></i> Sync Now
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(Model.StripeCouponId))
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Stripe Coupon ID:</strong></p>
+                                    <code>@Model.StripeCouponId</code>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Stripe Promotion Code ID:</strong></p>
+                                    <code>@(Model.StripePromotionCodeId ?? "Not set")</code>
+                                </div>
+                            </div>
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="bi bi-check-circle"></i> This coupon is synced with Stripe and can be used in Stripe Checkout.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-0">
+                                <i class="bi bi-exclamation-triangle"></i> This coupon is not synced with Stripe. Click "Sync Now" to enable it in Stripe Checkout.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage History -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Usage History</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.RecentUsages.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Order</th>
+                                            <th>User</th>
+                                            <th>Discount Amount</th>
+                                            <th>Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var usage in Model.RecentUsages)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <a asp-action="OrderDetails" asp-route-id="@usage.OrderId" class="text-decoration-none">
+                                                        #@usage.OrderNumber
+                                                    </a>
+                                                </td>
+                                                <td>@(usage.UserEmail ?? "Guest")</td>
+                                                <td class="text-success fw-bold">-@usage.DiscountAmount.ToString("N2") PLN</td>
+                                                <td>@usage.UsedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                                <td>
+                                                    <a asp-action="OrderDetails" asp-route-id="@usage.OrderId" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye"></i> View Order
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-inbox display-4 text-muted"></i>
+                                <p class="text-muted mt-3">This coupon hasn't been used yet.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row text-muted small">
+                            <div class="col-md-4">
+                                <i class="bi bi-calendar-plus"></i> Created: @Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            </div>
+                            <div class="col-md-4">
+                                <i class="bi bi-calendar-check"></i> Updated: @(Model.UpdatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "Never")
+                            </div>
+                            <div class="col-md-4">
+                                <i class="bi bi-hash"></i> ID: @Model.Id
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .stat-card-small {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .stat-icon-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: white;
+        }
+        .stat-card-small h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .stat-card-small small {
+            color: #6c757d;
+        }
+        .bg-pink { background: linear-gradient(135deg, #f093fb, #f5576c); }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        async function deleteCoupon(id) {
+            if (!confirm('Are you sure you want to delete this coupon? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/Admin/DeleteCoupon?id=${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Coupon deleted successfully');
+                    window.location.href = '/Admin/Coupons';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Failed to delete coupon');
+            }
+        }
+
+        async function syncWithStripe(id) {
+            try {
+                const response = await fetch(`/Admin/SyncCouponWithStripe?id=${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Coupon synced with Stripe successfully');
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Failed to sync with Stripe');
+            }
+        }
+    </script>
+}
+
+@functions {
+    string GetStatusColor(string status) => status switch
+    {
+        "Active" => "bg-success",
+        "Inactive" => "bg-secondary",
+        "Expired" => "bg-danger",
+        "Fully Used" => "bg-warning",
+        _ => "bg-secondary"
+    };
+    
+    string GetStatusIcon(string status) => status switch
+    {
+        "Active" => "bi-check-circle-fill",
+        "Inactive" => "bi-pause-circle-fill",
+        "Expired" => "bi-x-circle-fill",
+        "Fully Used" => "bi-exclamation-circle-fill",
+        _ => "bi-question-circle-fill"
+    };
+    
+    string GetCouponTypeBadgeColor(string type) => type switch
+    {
+        "birthday" => "pink",
+        "new_user" => "info",
+        "vip" => "warning",
+        "category" => "purple",
+        "product" => "secondary",
+        "first_purchase" => "success",
+        _ => "primary"
+    };
+    
+    string GetCouponTypeDisplayName(string type) => type switch
+    {
+        "birthday" => "Birthday",
+        "new_user" => "New User",
+        "vip" => "VIP",
+        "category" => "Category",
+        "product" => "Product",
+        "first_purchase" => "First Purchase",
+        _ => "General"
+    };
+}

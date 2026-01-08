@@ -128,6 +128,18 @@ namespace Kokomija.Entity
         /// Indicates if this is demo/test data (for Financial Dashboard testing)
         /// </summary>
         public bool IsDemoOrder { get; set; } = false;
+        
+        // Refund tracking
+        [MaxLength(100)]
+        public string? StripeRefundId { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal RefundedAmount { get; set; } = 0;
+        
+        public DateTime? RefundedAt { get; set; }
+        
+        [MaxLength(500)]
+        public string? RefundReason { get; set; }
 
         // Navigation properties
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

@@ -447,6 +447,12 @@ public class AdminController : Controller
             ShippedAt = orderEntity.ShippedAt,
             DeliveredAt = orderEntity.DeliveredAt,
             
+            // Refund Information
+            StripeRefundId = orderEntity.StripeRefundId,
+            RefundedAmount = orderEntity.RefundedAmount,
+            RefundedAt = orderEntity.RefundedAt,
+            RefundReason = orderEntity.RefundReason,
+            
             // Financial
             SubtotalAmount = orderEntity.SubtotalAmount,
             TaxAmount = orderEntity.TaxAmount,
@@ -596,6 +602,96 @@ public class AdminController : Controller
         await _unitOfWork.SaveChangesAsync();
         
         return Json(new { success = true, message = "Order status updated successfully" });
+    }
+
+    /// <summary>
+    /// POST: Refund order via Stripe
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> RefundOrder([FromBody] RefundOrderDto dto)
+    {
+        if (!ModelState.IsValid)
+            return Json(new { success = false, message = "Invalid data" });
+        
+        var orders = await _unitOfWork.Orders.FindAsync(o => o.Id == dto.OrderId);
+        var order = orders.FirstOrDefault();
+        
+        if (order == null)
+            return Json(new { success = false, message = "Order not found" });
+        
+        if (order.PaymentStatus == "refunded")
+            return Json(new { success = false, message = "Order has already been refunded" });
+        
+        if (string.IsNullOrEmpty(order.StripePaymentIntentId) || order.StripePaymentIntentId.StartsWith("demo"))
+            return Json(new { success = false, message = "Cannot refund demo/test orders" });
+        
+        try
+        {
+            // Calculate refund amount (full or partial)
+            var refundAmount = dto.Amount ?? order.TotalAmount;
+            var refundAmountCents = (long)(refundAmount * 100);
+            
+            // Create Stripe refund
+            var refundService = new Stripe.RefundService();
+            var refundOptions = new Stripe.RefundCreateOptions
+            {
+                PaymentIntent = order.StripePaymentIntentId,
+                Amount = refundAmountCents,
+                Reason = dto.Reason switch
+                {
+                    "duplicate" => Stripe.RefundReasons.Duplicate,
+                    "fraudulent" => Stripe.RefundReasons.Fraudulent,
+                    _ => Stripe.RefundReasons.RequestedByCustomer
+                },
+                Metadata = new Dictionary<string, string>
+                {
+                    { "order_id", order.Id.ToString() },
+                    { "order_number", order.OrderNumber },
+                    { "admin_note", dto.AdminNote ?? "" }
+                }
+            };
+            
+            var refund = await refundService.CreateAsync(refundOptions);
+            
+            if (refund.Status == "succeeded" || refund.Status == "pending")
+            {
+                // Update order with refund info
+                order.PaymentStatus = "refunded";
+                order.OrderStatus = "cancelled";
+                order.StripeRefundId = refund.Id;
+                order.RefundedAmount = refundAmount;
+                order.RefundedAt = DateTime.UtcNow;
+                order.RefundReason = dto.Reason ?? "requested_by_customer";
+                
+                _unitOfWork.Orders.Update(order);
+                await _unitOfWork.SaveChangesAsync();
+                
+                _logger.LogInformation("Order {OrderNumber} refunded successfully. Stripe Refund ID: {RefundId}", 
+                    order.OrderNumber, refund.Id);
+                
+                return Json(new { 
+                    success = true, 
+                    message = $"Order refunded successfully. Refund ID: {refund.Id}",
+                    refundId = refund.Id,
+                    refundStatus = refund.Status,
+                    refundAmount = refundAmount
+                });
+            }
+            else
+            {
+                return Json(new { success = false, message = $"Refund failed with status: {refund.Status}" });
+            }
+        }
+        catch (Stripe.StripeException ex)
+        {
+            _logger.LogError(ex, "Stripe refund failed for order {OrderId}", dto.OrderId);
+            return Json(new { success = false, message = $"Stripe error: {ex.Message}" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error refunding order {OrderId}", dto.OrderId);
+            return Json(new { success = false, message = "An error occurred while processing the refund" });
+        }
     }
 
     /// <summary>
@@ -2457,6 +2553,733 @@ public class AdminController : Controller
     {
         var result = await _shippingService.ToggleRateStatusAsync(id);
         return Json(new { success = result.Success, message = result.Message });
+    }
+
+    // POST: /Admin/TestCarrierConnection
+    [HttpPost]
+    public async Task<IActionResult> TestCarrierConnection(int id)
+    {
+        try
+        {
+            var provider = await _unitOfWork.Repository<ShippingProvider>().GetByIdAsync(id);
+            if (provider == null)
+            {
+                return Json(new { success = false, message = "Shipping provider not found." });
+            }
+
+            if (string.IsNullOrEmpty(provider.ApiKey) || string.IsNullOrEmpty(provider.ApiSecret))
+            {
+                return Json(new { success = false, message = "API credentials are not configured for this provider." });
+            }
+
+            var status = await _carrierApiService.CheckCarrierStatusAsync(provider.Code);
+            
+            if (status.IsConnected)
+            {
+                return Json(new { 
+                    success = true, 
+                    message = $"Successfully connected to {provider.Name} API. Last successful call: {status.LastSuccessfulCall?.ToString("g") ?? "N/A"}" 
+                });
+            }
+            else
+            {
+                return Json(new { 
+                    success = false, 
+                    message = status.ErrorMessage ?? $"Failed to connect to {provider.Name} API. Please verify your credentials." 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error testing carrier connection for provider ID {ProviderId}", id);
+            return Json(new { success = false, message = $"Connection test failed: {ex.Message}" });
+        }
+    }
+
+    #endregion
+
+    #region Coupon Management
+
+    /// <summary>
+    /// GET: Coupon Management page - displays all coupons with filters and statistics
+    /// </summary>
+    public async Task<IActionResult> Coupons(string? type = null, string? status = null, string? search = null)
+    {
+        try
+        {
+            var allCoupons = await _unitOfWork.Coupons.GetAllWithRelationsAsync();
+            var categories = await _unitOfWork.Categories.GetAllAsync();
+            var products = await _unitOfWork.Products.GetAllAsync();
+
+            // Apply filters
+            var filteredCoupons = allCoupons.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(type) && type != "all")
+            {
+                filteredCoupons = filteredCoupons.Where(c => c.CouponType == type);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                filteredCoupons = status switch
+                {
+                    "active" => filteredCoupons.Where(c => c.IsActive && !c.IsExpired && !c.IsFullyUsed),
+                    "inactive" => filteredCoupons.Where(c => !c.IsActive),
+                    "expired" => filteredCoupons.Where(c => c.IsExpired),
+                    _ => filteredCoupons
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.ToLower();
+                filteredCoupons = filteredCoupons.Where(c => 
+                    c.Code.ToLower().Contains(search) ||
+                    (c.Description != null && c.Description.ToLower().Contains(search)));
+            }
+
+            // Calculate statistics
+            var couponUsages = await _unitOfWork.Repository<CouponUsage>().GetAllAsync();
+            var totalDiscountsGiven = couponUsages.Sum(u => u.DiscountAmount);
+
+            var viewModel = new Models.ViewModels.Admin.CouponManagementViewModel
+            {
+                TotalCoupons = allCoupons.Count(),
+                ActiveCoupons = allCoupons.Count(c => c.IsActive && !c.IsExpired && !c.IsFullyUsed),
+                ExpiredCoupons = allCoupons.Count(c => c.IsExpired),
+                BirthdayCoupons = allCoupons.Count(c => c.CouponType == "birthday"),
+                NewUserCoupons = allCoupons.Count(c => c.CouponType == "new_user"),
+                CategoryCoupons = allCoupons.Count(c => c.CouponType == "category" || c.CategoryId.HasValue),
+                VipCoupons = allCoupons.Count(c => c.CouponType == "vip" || !string.IsNullOrEmpty(c.VipTierRequired)),
+                TotalDiscountsGiven = totalDiscountsGiven,
+
+                Coupons = filteredCoupons.OrderByDescending(c => c.CreatedAt).Select(c => new Models.ViewModels.Admin.CouponListItemDto
+                {
+                    Id = c.Id,
+                    Code = c.Code ?? string.Empty,
+                    Description = c.Description,
+                    DiscountType = c.DiscountType ?? "percentage",
+                    DiscountValue = c.DiscountValue,
+                    CouponType = c.CouponType ?? "general",
+                    CategoryName = c.Category != null ? c.Category.Name : null,
+                    ProductName = c.Product != null ? c.Product.Name : null,
+                    VipTierRequired = c.VipTierRequired,
+                    UsageLimit = c.UsageLimit,
+                    UsageLimitPerUser = c.UsageLimitPerUser,
+                    UsageCount = c.UsageCount,
+                    ValidFrom = c.ValidFrom,
+                    ValidUntil = c.ValidUntil,
+                    IsActive = c.IsActive,
+                    HasStripeSync = !string.IsNullOrEmpty(c.StripeCouponId),
+                    StripeCouponId = c.StripeCouponId,
+                    StripePromotionCodeId = c.StripePromotionCodeId,
+                    CreatedAt = c.CreatedAt
+                }).ToList(),
+
+                Categories = categories.Where(c => c.IsActive).Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name
+                }).ToList(),
+
+                Products = products.Where(p => p.IsActive).Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                }).ToList(),
+
+                VipTiers = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+                {
+                    new() { Value = "", Text = "No Requirement" },
+                    new() { Value = "Bronze", Text = "Bronze" },
+                    new() { Value = "Silver", Text = "Silver" },
+                    new() { Value = "Gold", Text = "Gold" },
+                    new() { Value = "Platinum", Text = "Platinum" }
+                },
+
+                CouponTypes = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+                {
+                    new() { Value = "general", Text = "General" },
+                    new() { Value = "birthday", Text = "Birthday" },
+                    new() { Value = "new_user", Text = "New User" },
+                    new() { Value = "vip", Text = "VIP Exclusive" },
+                    new() { Value = "category", Text = "Category Specific" },
+                    new() { Value = "product", Text = "Product Specific" },
+                    new() { Value = "first_purchase", Text = "First Purchase" }
+                }
+            };
+
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading coupon management page");
+            TempData["Error"] = "Failed to load coupons. Please try again.";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    /// <summary>
+    /// GET: Coupon Details page
+    /// </summary>
+    public async Task<IActionResult> CouponDetails(int id)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdWithRelationsAsync(id);
+            if (coupon == null)
+            {
+                TempData["Error"] = "Coupon not found.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            var viewModel = new Models.ViewModels.Admin.CouponDetailsViewModel
+            {
+                Id = coupon.Id,
+                Code = coupon.Code,
+                Description = coupon.Description,
+                DiscountType = coupon.DiscountType,
+                DiscountValue = coupon.DiscountValue,
+                CouponType = coupon.CouponType,
+                MinimumOrderAmount = coupon.MinimumOrderAmount,
+                MaximumDiscountAmount = coupon.MaximumDiscountAmount,
+                UsageLimit = coupon.UsageLimit,
+                UsageCount = coupon.UsageCount,
+                UsageLimitPerUser = coupon.UsageLimitPerUser,
+                ValidFrom = coupon.ValidFrom,
+                ValidUntil = coupon.ValidUntil,
+                IsActive = coupon.IsActive,
+                StripeCouponId = coupon.StripeCouponId,
+                StripePromotionCodeId = coupon.StripePromotionCodeId,
+                CreatedAt = coupon.CreatedAt,
+                UpdatedAt = coupon.UpdatedAt,
+                UserEmail = coupon.User?.Email,
+                CategoryName = coupon.Category?.Name,
+                ProductName = coupon.Product?.Name,
+                VipTierRequired = coupon.VipTierRequired,
+                DaysBeforeBirthday = coupon.DaysBeforeBirthday,
+                DaysAfterBirthday = coupon.DaysAfterBirthday,
+                AccountAgeDays = coupon.AccountAgeDays,
+                TotalDiscountAmount = coupon.CouponUsages?.Sum(u => u.DiscountAmount) ?? 0,
+                RecentUsages = coupon.CouponUsages?.OrderByDescending(u => u.UsedAt).Take(20).Select(u => new Models.ViewModels.Admin.CouponUsageDto
+                {
+                    Id = u.Id,
+                    OrderId = u.OrderId,
+                    OrderNumber = u.Order?.OrderNumber ?? "Unknown",
+                    UserEmail = u.User?.Email,
+                    DiscountAmount = u.DiscountAmount,
+                    UsedAt = u.UsedAt
+                }).ToList() ?? new List<Models.ViewModels.Admin.CouponUsageDto>()
+            };
+
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading coupon details for ID {CouponId}", id);
+            TempData["Error"] = "Failed to load coupon details. Please try again.";
+            return RedirectToAction(nameof(Coupons));
+        }
+    }
+
+    /// <summary>
+    /// POST: Create a new coupon
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreateCoupon([FromBody] Models.ViewModels.Admin.CreateCouponDto dto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return Json(new { success = false, message = string.Join(", ", errors) });
+            }
+
+            // Check if code already exists
+            var existingCoupons = await _unitOfWork.Coupons.GetAllAsync();
+            if (existingCoupons.Any(c => c.Code.ToUpper() == dto.Code.ToUpper()))
+            {
+                return Json(new { success = false, message = "A coupon with this code already exists." });
+            }
+
+            var coupon = new Coupon
+            {
+                Code = dto.Code.ToUpper(),
+                Description = dto.Description,
+                DiscountType = dto.DiscountType,
+                DiscountValue = dto.DiscountValue,
+                CouponType = dto.CouponType,
+                MinimumOrderAmount = dto.MinimumOrderAmount,
+                MaximumDiscountAmount = dto.MaximumDiscountAmount,
+                UsageLimit = dto.UsageLimit,
+                UsageLimitPerUser = dto.UsageLimitPerUser,
+                ValidFrom = dto.ValidFrom,
+                ValidUntil = dto.ValidUntil,
+                IsActive = dto.IsActive,
+                UserId = dto.UserId,
+                CategoryId = dto.CategoryId,
+                ProductId = dto.ProductId,
+                VipTierRequired = dto.VipTierRequired,
+                DaysBeforeBirthday = dto.DaysBeforeBirthday,
+                DaysAfterBirthday = dto.DaysAfterBirthday,
+                AccountAgeDays = dto.AccountAgeDays,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Always sync with Stripe
+            try
+            {
+                var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
+                coupon.StripeCouponId = stripeCoupon.Id;
+
+                // Use the new method with restrictions for promotion codes
+                var promotionCode = await _stripeService.CreateStripePromotionCodeWithRestrictionsAsync(
+                    stripeCouponId: stripeCoupon.Id, 
+                    code: coupon.Code,
+                    maxRedemptions: coupon.UsageLimit, // Total max redemptions
+                    maxRedemptionsPerCustomer: coupon.UsageLimitPerUser, // Per customer limit (e.g., 1 for one-time)
+                    expiresAt: coupon.ValidUntil,
+                    minimumAmount: coupon.MinimumOrderAmount
+                );
+                coupon.StripePromotionCodeId = promotionCode.Id;
+                
+                _logger.LogInformation("Coupon {Code} synced with Stripe: CouponId={StripeCouponId}, PromotionCodeId={StripePromotionCodeId}", 
+                    coupon.Code, coupon.StripeCouponId, coupon.StripePromotionCodeId);
+            }
+            catch (Exception stripeEx)
+            {
+                _logger.LogWarning(stripeEx, "Failed to sync coupon {Code} with Stripe, continuing without sync", coupon.Code);
+            }
+
+            await _unitOfWork.Repository<Coupon>().AddAsync(coupon);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Created coupon {Code} by admin", coupon.Code);
+
+            return Json(new { success = true, message = "Coupon created successfully.", couponId = coupon.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating coupon");
+            return Json(new { success = false, message = "Failed to create coupon. Please try again." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Update an existing coupon
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateCoupon(int id, [FromBody] Models.ViewModels.Admin.UpdateCouponDto dto)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                return Json(new { success = false, message = "Coupon not found." });
+            }
+
+            coupon.Description = dto.Description;
+            coupon.MinimumOrderAmount = dto.MinimumOrderAmount;
+            coupon.MaximumDiscountAmount = dto.MaximumDiscountAmount;
+            coupon.UsageLimit = dto.UsageLimit;
+            coupon.UsageLimitPerUser = dto.UsageLimitPerUser;
+            coupon.ValidUntil = dto.ValidUntil;
+            coupon.IsActive = dto.IsActive;
+            coupon.CategoryId = dto.CategoryId;
+            coupon.ProductId = dto.ProductId;
+            coupon.VipTierRequired = dto.VipTierRequired;
+            coupon.UpdatedAt = DateTime.UtcNow;
+
+            // Sync with Stripe - create if not exists, update if exists
+            if (string.IsNullOrEmpty(coupon.StripeCouponId))
+            {
+                // Create new Stripe coupon and promotion code
+                try
+                {
+                    var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
+                    coupon.StripeCouponId = stripeCoupon.Id;
+
+                    var promotionCode = await _stripeService.CreateStripePromotionCodeAsync(stripeCoupon.Id, coupon.Code);
+                    coupon.StripePromotionCodeId = promotionCode.Id;
+                    
+                    _logger.LogInformation("Coupon {Code} synced with Stripe during update: CouponId={StripeCouponId}", 
+                        coupon.Code, coupon.StripeCouponId);
+                }
+                catch (Exception stripeEx)
+                {
+                    _logger.LogWarning(stripeEx, "Failed to sync coupon {Code} with Stripe during update", coupon.Code);
+                }
+            }
+            else
+            {
+                // Update existing Stripe promotion code status
+                try
+                {
+                    await _stripeService.UpdateStripePromotionCodeAsync(coupon.StripePromotionCodeId!, dto.IsActive);
+                    _logger.LogInformation("Updated Stripe promotion code status for coupon {Code} to {IsActive}", 
+                        coupon.Code, dto.IsActive);
+                }
+                catch (Exception stripeEx)
+                {
+                    _logger.LogWarning(stripeEx, "Failed to update Stripe promotion code status for coupon {Code}", coupon.Code);
+                }
+            }
+
+            _unitOfWork.Repository<Coupon>().Update(coupon);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Updated coupon {Code} by admin", coupon.Code);
+
+            return Json(new { 
+                success = true, 
+                message = "Coupon updated successfully and synced with Stripe.",
+                stripeCouponId = coupon.StripeCouponId,
+                stripePromotionCodeId = coupon.StripePromotionCodeId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating coupon ID {CouponId}", id);
+            return Json(new { success = false, message = "Failed to update coupon. Please try again." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Toggle coupon active status
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> ToggleCoupon(int id)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                return Json(new { success = false, message = "Coupon not found." });
+            }
+
+            coupon.IsActive = !coupon.IsActive;
+            coupon.UpdatedAt = DateTime.UtcNow;
+
+            // Update Stripe if synced
+            if (!string.IsNullOrEmpty(coupon.StripePromotionCodeId))
+            {
+                try
+                {
+                    await _stripeService.UpdateStripePromotionCodeAsync(coupon.StripePromotionCodeId, coupon.IsActive);
+                }
+                catch (Exception stripeEx)
+                {
+                    _logger.LogWarning(stripeEx, "Failed to toggle Stripe promotion code status");
+                }
+            }
+
+            _unitOfWork.Repository<Coupon>().Update(coupon);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"Coupon {(coupon.IsActive ? "activated" : "deactivated")} successfully.", isActive = coupon.IsActive });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling coupon ID {CouponId}", id);
+            return Json(new { success = false, message = "Failed to toggle coupon. Please try again." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Delete a coupon
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> DeleteCoupon(int id)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                return Json(new { success = false, message = "Coupon not found." });
+            }
+
+            // Check if coupon has been used
+            if (coupon.UsageCount > 0)
+            {
+                return Json(new { success = false, message = "Cannot delete a coupon that has been used. Deactivate it instead." });
+            }
+
+            // Delete from Stripe if synced
+            if (!string.IsNullOrEmpty(coupon.StripeCouponId))
+            {
+                try
+                {
+                    await _stripeService.DeleteStripeCouponAsync(coupon.StripeCouponId);
+                }
+                catch (Exception stripeEx)
+                {
+                    _logger.LogWarning(stripeEx, "Failed to delete Stripe coupon");
+                }
+            }
+
+            _unitOfWork.Repository<Coupon>().Remove(coupon);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Deleted coupon {Code} by admin", coupon.Code);
+
+            return Json(new { success = true, message = "Coupon deleted successfully." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting coupon ID {CouponId}", id);
+            return Json(new { success = false, message = "Failed to delete coupon. Please try again." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Generate bulk coupons
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> GenerateBulkCoupons([FromBody] Models.ViewModels.Admin.BulkCouponGenerationDto dto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                var validationErrors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return Json(new { success = false, message = string.Join(", ", validationErrors) });
+            }
+
+            var generatedCodes = new List<string>();
+            var errors = new List<string>();
+            var random = new Random();
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+            var campaignId = Guid.NewGuid().ToString("N")[..8].ToUpper();
+            var existingCodes = (await _unitOfWork.Coupons.GetAllAsync()).Select(c => c.Code.ToUpper()).ToHashSet();
+
+            for (int i = 0; i < dto.Count; i++)
+            {
+                string code;
+                int attempts = 0;
+                do
+                {
+                    var randomPart = new string(Enumerable.Repeat(chars, dto.CodeLength)
+                        .Select(s => s[random.Next(s.Length)]).ToArray());
+                    code = $"{dto.Prefix}{randomPart}".ToUpper();
+                    attempts++;
+                } while (existingCodes.Contains(code) && attempts < 100);
+
+                if (attempts >= 100)
+                {
+                    errors.Add($"Could not generate unique code for coupon {i + 1}");
+                    continue;
+                }
+
+                var coupon = new Coupon
+                {
+                    Code = code,
+                    Description = $"Bulk generated coupon - Campaign {campaignId}",
+                    DiscountType = dto.DiscountType,
+                    DiscountValue = dto.DiscountValue,
+                    CouponType = "general",
+                    ValidFrom = dto.ValidFrom,
+                    ValidUntil = dto.ValidUntil,
+                    UsageLimit = dto.UsageLimitPerCode,
+                    UsageLimitPerUser = 1,
+                    CategoryId = dto.CategoryId,
+                    IsActive = true,
+                    IsAutoGenerated = true,
+                    CampaignId = campaignId,
+                    CampaignName = $"Bulk Generation {DateTime.UtcNow:yyyy-MM-dd}",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                // Sync with Stripe if requested
+                if (dto.SyncWithStripe)
+                {
+                    try
+                    {
+                        var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
+                        coupon.StripeCouponId = stripeCoupon.Id;
+
+                        var promotionCode = await _stripeService.CreateStripePromotionCodeAsync(stripeCoupon.Id, coupon.Code);
+                        coupon.StripePromotionCodeId = promotionCode.Id;
+                    }
+                    catch (Exception stripeEx)
+                    {
+                        _logger.LogWarning(stripeEx, "Failed to sync bulk coupon {Code} with Stripe", code);
+                    }
+                }
+
+                await _unitOfWork.Repository<Coupon>().AddAsync(coupon);
+                existingCodes.Add(code);
+                generatedCodes.Add(code);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Generated {Count} bulk coupons for campaign {CampaignId}", generatedCodes.Count, campaignId);
+
+            return Json(new
+            {
+                success = true,
+                message = $"Successfully generated {generatedCodes.Count} coupons.",
+                generatedCount = generatedCodes.Count,
+                failedCount = dto.Count - generatedCodes.Count,
+                campaignId,
+                codes = generatedCodes.Take(50).ToList(), // Return first 50 for display
+                errors
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating bulk coupons");
+            return Json(new { success = false, message = "Failed to generate coupons. Please try again." });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get coupon data for editing (includes live Stripe data)
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetCoupon(int id)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                return Json(new { success = false, message = "Coupon not found." });
+            }
+
+            // Fetch live Stripe data if synced
+            int? stripeTimesRedeemed = null;
+            bool? stripeIsValid = null;
+            DateTime? stripeRedeemBy = null;
+            bool? stripePromotionActive = null;
+            decimal? stripeMinimumAmount = null;
+
+            if (!string.IsNullOrEmpty(coupon.StripeCouponId))
+            {
+                try
+                {
+                    var stripeInfo = await _stripeService.GetStripeCouponInfoAsync(coupon.StripeCouponId);
+                    if (stripeInfo.HasValue)
+                    {
+                        stripeTimesRedeemed = stripeInfo.Value.TimesRedeemed;
+                        stripeIsValid = stripeInfo.Value.Valid;
+                        if (stripeInfo.Value.RedeemBy.HasValue)
+                        {
+                            stripeRedeemBy = DateTimeOffset.FromUnixTimeSeconds(stripeInfo.Value.RedeemBy.Value).DateTime;
+                        }
+                    }
+                }
+                catch (Exception stripeEx)
+                {
+                    _logger.LogWarning(stripeEx, "Failed to fetch Stripe coupon data for {CouponId}", id);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(coupon.StripePromotionCodeId))
+            {
+                try
+                {
+                    var promoCode = await _stripeService.GetStripePromotionCodeAsync(coupon.StripePromotionCodeId);
+                    if (promoCode != null)
+                    {
+                        stripePromotionActive = promoCode.Active;
+                        if (promoCode.Restrictions?.MinimumAmount != null)
+                        {
+                            stripeMinimumAmount = promoCode.Restrictions.MinimumAmount / 100m;
+                        }
+                    }
+                }
+                catch (Exception stripeEx)
+                {
+                    _logger.LogWarning(stripeEx, "Failed to fetch Stripe promotion code data for {CouponId}", id);
+                }
+            }
+
+            return Json(new
+            {
+                success = true,
+                coupon = new
+                {
+                    coupon.Id,
+                    coupon.Code,
+                    coupon.Description,
+                    coupon.DiscountType,
+                    coupon.DiscountValue,
+                    coupon.CouponType,
+                    coupon.MinimumOrderAmount,
+                    coupon.MaximumDiscountAmount,
+                    coupon.UsageLimit,
+                    coupon.UsageLimitPerUser,
+                    coupon.UsageCount,
+                    ValidFrom = coupon.ValidFrom?.ToString("yyyy-MM-ddTHH:mm"),
+                    ValidUntil = coupon.ValidUntil?.ToString("yyyy-MM-ddTHH:mm"),
+                    coupon.IsActive,
+                    coupon.CategoryId,
+                    coupon.ProductId,
+                    coupon.VipTierRequired,
+                    coupon.DaysBeforeBirthday,
+                    coupon.DaysAfterBirthday,
+                    coupon.AccountAgeDays,
+                    coupon.StripeCouponId,
+                    coupon.StripePromotionCodeId,
+                    HasStripeSync = !string.IsNullOrEmpty(coupon.StripeCouponId),
+                    // Live Stripe data
+                    StripeTimesRedeemed = stripeTimesRedeemed,
+                    StripeIsValid = stripeIsValid,
+                    StripeRedeemBy = stripeRedeemBy?.ToString("yyyy-MM-dd HH:mm"),
+                    StripePromotionActive = stripePromotionActive,
+                    StripeMinimumAmount = stripeMinimumAmount
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting coupon ID {CouponId}", id);
+            return Json(new { success = false, message = "Failed to get coupon data." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Sync coupon with Stripe
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> SyncCouponWithStripe(int id)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                return Json(new { success = false, message = "Coupon not found." });
+            }
+
+            if (!string.IsNullOrEmpty(coupon.StripeCouponId))
+            {
+                return Json(new { success = false, message = "Coupon is already synced with Stripe." });
+            }
+
+            var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
+            coupon.StripeCouponId = stripeCoupon.Id;
+
+            var promotionCode = await _stripeService.CreateStripePromotionCodeAsync(stripeCoupon.Id, coupon.Code);
+            coupon.StripePromotionCodeId = promotionCode.Id;
+            coupon.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.Repository<Coupon>().Update(coupon);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Coupon synced with Stripe successfully." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error syncing coupon ID {CouponId} with Stripe", id);
+            return Json(new { success = false, message = $"Failed to sync with Stripe: {ex.Message}" });
+        }
     }
 
     #endregion

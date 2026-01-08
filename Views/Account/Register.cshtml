@@ -4,7 +4,32 @@
 @{
     ViewData["Title"] = "Register";
 }
-
+@section Styles{
+    <style>
+        .google-login-button:hover {
+            background-color: #4285F4;
+            color: white;
+        }
+    .google-icon {
+        font-size: 18px;
+        margin-bottom: 1px;}
+   .google-login-button {
+        border-radius: 20px;
+        box-sizing: border-box;
+        padding: 10px 15px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px,
+                rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+                "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+        font-size: 11px;
+        gap: 5px;
+        }
+    </style>
+}
 <div class="auth-page">
     <div class="container">
         <div class="row justify-content-center">
@@ -23,8 +48,18 @@
                         <p class="text-muted">@L["Auth_JoinMessage"]</p>
                     </div>
 
+                    <!-- Alert Messages -->
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
                     <!-- Register Form -->
-                    <form asp-action="Register" asp-controller="Account" method="post" class="auth-form">
+                    <form asp-action="Register" asp-controller="Account" method="post" class="auth-form" id="registerForm">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="ReturnUrl" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
@@ -105,23 +140,38 @@
                             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                         </div>
 
-                        <!-- Terms & Conditions -->
-                        <div class="form-check mb-3">
-                            <input asp-for="AgreeToTerms" class="form-check-input" />
-                            <label asp-for="AgreeToTerms" class="form-check-label">
+                        <!-- Terms & Conditions - Fixed checkbox binding -->
+                        <div class="form-check custom-checkbox mb-3">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="AgreeToTerms" 
+                                   name="AgreeToTerms" 
+                                   value="true"
+                                   @(Model.AgreeToTerms ? "checked" : "") />
+                            <label class="form-check-label" for="AgreeToTerms">
                                 @L["Auth_AgreeToTerms"] 
-                                <a href="#" target="_blank">@L["Auth_TermsAndConditions"]</a> @L["Auth_And"] 
-                                <a href="#" target="_blank">@L["Auth_PrivacyPolicy"]</a>
+                                <a href="/Privacy" target="_blank" class="link-primary">@L["Auth_TermsAndConditions"]</a> @L["Auth_And"] 
+                                <a href="/Privacy" target="_blank" class="link-primary">@L["Auth_PrivacyPolicy"]</a>
+                                <span class="text-danger">*</span>
                             </label>
-                            <span asp-validation-for="AgreeToTerms" class="text-danger d-block"></span>
+                            <span asp-validation-for="AgreeToTerms" class="text-danger small d-block"></span>
                         </div>
 
-                        <!-- Newsletter Subscription -->
-                        <div class="form-check mb-4">
-                            <input asp-for="SubscribeToNewsletter" class="form-check-input" />
-                            <label asp-for="SubscribeToNewsletter" class="form-check-label">
+                        <!-- Newsletter Subscription - Fixed checkbox binding -->
+                        <div class="form-check custom-checkbox mb-4">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="SubscribeToNewsletter" 
+                                   name="SubscribeToNewsletter" 
+                                   value="true"
+                                   @(Model.SubscribeToNewsletter ? "checked" : "") />
+                            <label class="form-check-label" for="SubscribeToNewsletter">
+                                <i class="bi bi-envelope-heart me-1 text-primary"></i>
                                 @L["Auth_SubscribeNewsletter"]
                             </label>
+                            <small class="d-block text-muted mt-1 ps-4">
+                                <i class="bi bi-gift me-1"></i>Get exclusive deals and early access to new products!
+                            </small>
                         </div>
 
                         <!-- Submit Button -->
@@ -136,8 +186,10 @@
                             <span>@L["Auth_OrSignUpWith"]</span>
                         </div>
                         <div class="social-buttons">
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                                <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100">
+                            <!-- Google Sign-Up -->
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="mb-2" target="_blank">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100 google-login-button">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
                                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
@@ -147,7 +199,10 @@
                                     <span>@L["Auth_ContinueWithGoogle"]</span>
                                 </button>
                             </form>
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                            
+                            <!-- Facebook Sign-Up -->
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" target="_blank">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100">
                                     <i class="bi bi-facebook" style="font-size: 20px;"></i>
                                     <span>@L["Auth_ContinueWithFacebook"]</span>
@@ -213,5 +268,73 @@
                 icon.classList.add('bi-eye');
             }
         }
+        
+        // Client-side validation for terms checkbox
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const termsCheckbox = document.getElementById('AgreeToTerms');
+            if (!termsCheckbox.checked) {
+                e.preventDefault();
+                const validationSpan = termsCheckbox.parentElement.querySelector('.text-danger');
+                if (validationSpan) {
+                    validationSpan.textContent = 'You must agree to the terms and conditions';
+                }
+                termsCheckbox.focus();
+                
+                // Scroll to the checkbox
+                termsCheckbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+        });
     </script>
 }
+
+<style>
+    /* Custom checkbox styling for dark theme compatibility */
+    .custom-checkbox .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.15rem;
+        border: 2px solid var(--bs-border-color);
+        background-color: var(--bs-body-bg);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .custom-checkbox .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    .custom-checkbox .form-check-input:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .custom-checkbox .form-check-label {
+        padding-left: 0.5rem;
+        color: var(--bs-body-color);
+        cursor: pointer;
+    }
+    
+    [data-bs-theme="dark"] .custom-checkbox .form-check-input {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    [data-bs-theme="dark"] .custom-checkbox .form-check-input:checked {
+        background-color: var(--bs-primary);
+        border-color: var(--bs-primary);
+    }
+    
+    [data-bs-theme="dark"] .custom-checkbox .form-check-label {
+        color: var(--bs-body-color);
+    }
+    
+    [data-bs-theme="dark"] .custom-checkbox .form-check-label a {
+        color: #7da2ff;
+    }
+    
+    [data-bs-theme="dark"] .custom-checkbox .form-check-label a:hover {
+        color: #9bb8ff;
+    }
+</style>

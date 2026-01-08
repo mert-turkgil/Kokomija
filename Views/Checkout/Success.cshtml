@@ -1,84 +1,274 @@
+@model Kokomija.Models.ViewModels.Checkout.CheckoutSuccessViewModel
 @inject Kokomija.Services.ILocalizationService L
 
 @{
     ViewData["Title"] = L["Checkout_Success_Title"];
 }
 
-<div class="checkout-success-page">
+<div class="checkout-result-page checkout-success-page">
     <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="success-card text-center">
-                    <div class="success-icon mb-4">
-                        <i class="bi bi-check-circle-fill"></i>
+            <div class="col-lg-10">
+                <div class="result-card success-card">
+                    <!-- Success Header -->
+                    <div class="result-header text-center mb-5">
+                        <div class="result-icon success-icon mb-4">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h1 class="mb-3">@L["Checkout_Success_Title"]</h1>
+                        <p class="lead text-muted">@L["Checkout_Success_Message"]</p>
                     </div>
 
-                    <h1 class="mb-3">@L["Checkout_Success_Title"]</h1>
-                    <p class="lead mb-4">@L["Checkout_Success_Message"]</p>
+                    <div class="row">
+                        <!-- Order Summary Column -->
+                        <div class="col-lg-7">
+                            <!-- Order Info Card -->
+                            <div class="order-info-card mb-4">
+                                <div class="order-header">
+                                    <div class="order-number-section">
+                                        <small class="text-muted">@L["Order_Number"]</small>
+                                        <h3 class="order-number mb-0">@Model.OrderNumber</h3>
+                                    </div>
+                                    <div class="order-status-badges">
+                                        @{
+                                            var paymentBadgeClass = Model.PaymentStatus?.ToLower() switch {
+                                                "paid" => "success",
+                                                "pending" => "warning",
+                                                "failed" => "danger",
+                                                "refunded" => "info",
+                                                _ => "success"
+                                            };
+                                            var paymentIcon = Model.PaymentStatus?.ToLower() switch {
+                                                "paid" => "check-circle",
+                                                "pending" => "clock",
+                                                "failed" => "x-circle",
+                                                "refunded" => "arrow-counterclockwise",
+                                                _ => "check-circle"
+                                            };
+                                            var orderBadgeClass = Model.OrderStatus?.ToLower() switch {
+                                                "pending" => "warning",
+                                                "processing" => "info",
+                                                "shipped" => "primary",
+                                                "delivered" => "success",
+                                                "cancelled" => "danger",
+                                                _ => "info"
+                                            };
+                                            var orderIcon = Model.OrderStatus?.ToLower() switch {
+                                                "pending" => "hourglass-split",
+                                                "processing" => "gear",
+                                                "shipped" => "truck",
+                                                "delivered" => "house-check",
+                                                "cancelled" => "x-circle",
+                                                _ => "gear"
+                                            };
+                                        }
+                                        <span class="badge bg-@paymentBadgeClass">
+                                            <i class="bi bi-@paymentIcon me-1"></i> @L["Payment_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.PaymentStatus ?? "Paid")]
+                                        </span>
+                                        <span class="badge bg-@orderBadgeClass">
+                                            <i class="bi bi-@orderIcon me-1"></i> @L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.OrderStatus ?? "Processing")]
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
 
-                    @if (ViewBag.OrderNumber != null)
-                    {
-                        <div class="order-details mb-4">
-                            <h4>@L["Checkout_OrderNumber"]:</h4>
-                            <div class="order-number">@ViewBag.OrderNumber</div>
-                            
-                            <h5 class="mt-3">@L["Cart_Total"]:</h5>
-                            <div class="order-total">@ViewBag.OrderTotal PLN</div>
+                            <!-- Order Items -->
+                            <div class="order-items-card mb-4">
+                                <h5 class="card-title mb-3">
+                                    <i class="bi bi-bag-check me-2"></i>@L["Order_Items"]
+                                </h5>
+                                <div class="order-items-list">
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <div class="order-item">
+                                            <div class="item-image">
+                                                @if (!string.IsNullOrEmpty(item.ProductImage))
+                                                {
+                                                    <img src="@item.ProductImage" 
+                                                         alt="@item.ProductName"
+                                                         onerror="this.onerror=null; this.src='/img/logo_black.png'; this.classList.add('logo-fallback');">
+                                                }
+                                                else
+                                                {
+                                                    <img src="/img/logo_black.png" alt="Kokomija" class="logo-fallback">
+                                                }
+                                            </div>
+                                            <div class="item-details">
+                                                <h6 class="item-name">@item.ProductName</h6>
+                                                <div class="item-variants">
+                                                    @if (!string.IsNullOrEmpty(item.Color))
+                                                    {
+                                                        <span><i class="bi bi-palette"></i> @item.Color</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(item.Size))
+                                                    {
+                                                        <span><i class="bi bi-rulers"></i> @item.Size</span>
+                                                    }
+                                                    @if (item.PackSize > 1)
+                                                    {
+                                                        <span><i class="bi bi-box-seam"></i> @item.PackSize @L["Product_Piece"]</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="item-quantity">
+                                                <span>x@item.Quantity</span>
+                                            </div>
+                                            <div class="item-price">
+                                                <strong>@item.FormattedTotalPrice</strong>
+                                                <small class="text-muted d-block">@item.FormattedUnitPrice @L["Each"]</small>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Shipping Address -->
+                            @if (!string.IsNullOrEmpty(Model.FormattedShippingAddress))
+                            {
+                                <div class="shipping-address-card mb-4">
+                                    <h5 class="card-title mb-3">
+                                        <i class="bi bi-geo-alt me-2"></i>@L["Shipping_Address"]
+                                    </h5>
+                                    <address class="mb-0">
+                                        @if (!string.IsNullOrEmpty(Model.CustomerName))
+                                        {
+                                            <strong>@Model.CustomerName</strong><br>
+                                        }
+                                        @Model.FormattedShippingAddress
+                                    </address>
+                                </div>
+                            }
                         </div>
 
-                        <div class="alert alert-info">
-                            <i class="bi bi-envelope"></i>
-                            @L["Checkout_EmailConfirmation"]
-                        </div>
-                    }
+                        <!-- Payment Summary Column -->
+                        <div class="col-lg-5">
+                            <!-- Payment Summary Card -->
+                            <div class="payment-summary-card mb-4">
+                                <h5 class="card-title mb-4">
+                                    <i class="bi bi-receipt me-2"></i>@L["Order_Summary"]
+                                </h5>
+                                
+                                <div class="summary-rows">
+                                    <div class="summary-row">
+                                        <span>@L["Subtotal"]</span>
+                                        <span>@Model.FormattedSubtotal</span>
+                                    </div>
+                                    
+                                    @if (Model.DiscountAmount > 0)
+                                    {
+                                        <div class="summary-row discount">
+                                            <span>
+                                                <i class="bi bi-tag me-1"></i>@L["Discount"]
+                                                @if (Model.VipDiscount > 0)
+                                                {
+                                                    <small class="badge bg-warning text-dark ms-1">VIP @Model.VipDiscount%</small>
+                                                }
+                                            </span>
+                                            <span class="text-success">@Model.FormattedDiscount</span>
+                                        </div>
+                                    }
+                                    
+                                    <div class="summary-row">
+                                        <span>@L["Shipping"]</span>
+                                        <span>@Model.FormattedShipping</span>
+                                    </div>
+                                    
+                                    @if (Model.TaxAmount > 0)
+                                    {
+                                        <div class="summary-row">
+                                            <span>@L["Tax"] (VAT)</span>
+                                            <span>@Model.FormattedTax</span>
+                                        </div>
+                                    }
+                                    
+                                    <div class="summary-row total">
+                                        <span><strong>@L["Cart_Total"]</strong></span>
+                                        <span class="total-amount"><strong>@Model.FormattedTotal</strong></span>
+                                    </div>
+                                </div>
 
-                    <div class="action-buttons mt-4">
-                        <a asp-controller="Account" asp-action="Index" class="btn btn-primary btn-lg me-2">
-                            <i class="bi bi-person-circle"></i>
-                            @L["Account_MyAccount"]
-                        </a>
-                        <a href="/" class="btn btn-outline-secondary btn-lg">
-                            <i class="bi bi-house"></i>
-                            @L["Nav_Home"]
-                        </a>
+                                <!-- Payment Method -->
+                                @if (!string.IsNullOrEmpty(Model.PaymentMethod) && !string.IsNullOrEmpty(Model.Last4))
+                                {
+                                    <div class="payment-method-info mt-4 pt-3 border-top">
+                                        <small class="text-muted d-block mb-1">@L["Payment_Method"]</small>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-credit-card me-2"></i>
+                                            <span class="text-capitalize">@Model.PaymentMethod</span>
+                                            <span class="ms-2">•••• @Model.Last4</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Email Confirmation -->
+                            <div class="email-confirmation-card mb-4">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-envelope-check text-success me-3 fs-4"></i>
+                                    <div>
+                                        <h6 class="mb-1">@L["Checkout_EmailConfirmation_Title"]</h6>
+                                        <p class="text-muted mb-0 small">
+                                            @L["Checkout_EmailConfirmation"]
+                                            <strong>@Model.CustomerEmail</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="action-buttons d-grid gap-2">
+                                <a asp-controller="Account" asp-action="OrderDetails" asp-route-id="@Model.OrderId" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-eye me-2"></i>@L["View_Order_Details"]
+                                </a>
+                                <a asp-controller="Account" asp-action="Orders" class="btn btn-outline-secondary">
+                                    <i class="bi bi-bag-check me-2"></i>@L["Account_Orders"]
+                                </a>
+                                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary">
+                                    <i class="bi bi-shop me-2"></i>@L["Continue_Shopping"]
+                                </a>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="timeline mt-5">
-                        <h5>@L["Checkout_WhatNext"]</h5>
-                        <div class="timeline-item">
-                            <div class="timeline-icon">
-                                <i class="bi bi-check-circle"></i>
+                    <!-- Order Timeline -->
+                    <div class="order-timeline mt-5">
+                        <h5 class="text-center mb-4">@L["Checkout_WhatNext"]</h5>
+                        <div class="timeline">
+                            <div class="timeline-item completed">
+                                <div class="timeline-icon">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>@L["Checkout_Step_OrderPlaced"]</strong>
+                                    <p class="mb-0 text-muted small">@L["Checkout_Step_OrderPlaced_Desc"]</p>
+                                </div>
                             </div>
-                            <div class="timeline-content">
-                                <strong>@L["Checkout_Step_OrderPlaced"]</strong>
-                                <p>@L["Checkout_Step_OrderPlaced_Desc"]</p>
+                            <div class="timeline-item active">
+                                <div class="timeline-icon">
+                                    <i class="bi bi-box-seam"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>@L["Checkout_Step_Processing"]</strong>
+                                    <p class="mb-0 text-muted small">@L["Checkout_Step_Processing_Desc"]</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-icon">
-                                <i class="bi bi-box-seam"></i>
+                            <div class="timeline-item">
+                                <div class="timeline-icon">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>@L["Checkout_Step_Shipping"]</strong>
+                                    <p class="mb-0 text-muted small">@L["Checkout_Step_Shipping_Desc"]</p>
+                                </div>
                             </div>
-                            <div class="timeline-content">
-                                <strong>@L["Checkout_Step_Processing"]</strong>
-                                <p>@L["Checkout_Step_Processing_Desc"]</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-icon">
-                                <i class="bi bi-truck"></i>
-                            </div>
-                            <div class="timeline-content">
-                                <strong>@L["Checkout_Step_Shipping"]</strong>
-                                <p>@L["Checkout_Step_Shipping_Desc"]</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-icon">
-                                <i class="bi bi-house-door"></i>
-                            </div>
-                            <div class="timeline-content">
-                                <strong>@L["Checkout_Step_Delivery"]</strong>
-                                <p>@L["Checkout_Step_Delivery_Desc"]</p>
+                            <div class="timeline-item">
+                                <div class="timeline-icon">
+                                    <i class="bi bi-house-door"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <strong>@L["Checkout_Step_Delivery"]</strong>
+                                    <p class="mb-0 text-muted small">@L["Checkout_Step_Delivery_Desc"]</p>
+                                </div>
                             </div>
                         </div>
                     </div>

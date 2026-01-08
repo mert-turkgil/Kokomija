@@ -3,131 +3,329 @@
 
 @{
     ViewData["Title"] = L["Account_Order_Details"] + " #" + Model.OrderNumber;
+    var plnCulture = new System.Globalization.CultureInfo("pl-PL");
+    
+    var paymentBadgeClass = Model.PaymentStatus?.ToLower() switch {
+        "paid" => "success",
+        "pending" => "warning",
+        "failed" => "danger",
+        "refunded" => "secondary",
+        _ => "secondary"
+    };
+    var paymentIcon = Model.PaymentStatus?.ToLower() switch {
+        "paid" => "check-circle-fill",
+        "pending" => "clock",
+        "failed" => "x-circle-fill",
+        "refunded" => "arrow-counterclockwise",
+        _ => "question-circle"
+    };
+    var orderBadgeClass = Model.OrderStatus?.ToLower() switch {
+        "pending" => "warning",
+        "processing" => "info",
+        "shipped" => "primary",
+        "delivered" => "success",
+        "cancelled" => "danger",
+        _ => "secondary"
+    };
+    var orderIcon = Model.OrderStatus?.ToLower() switch {
+        "pending" => "hourglass-split",
+        "processing" => "gear-fill",
+        "shipped" => "truck",
+        "delivered" => "house-check-fill",
+        "cancelled" => "x-circle-fill",
+        _ => "question-circle"
+    };
 }
 
-<div class="container my-5">
-    <div class="row mb-4">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
+<div class="order-details-page">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="page-header mb-5">
+            <nav aria-label="breadcrumb" class="mb-3">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Home"]</a></li>
-                    <li class="breadcrumb-item"><a asp-action="Index">@L["Account_MyAccount"]</a></li>
-                    <li class="breadcrumb-item active">@L["Account_Order_Details"] #@Model.OrderNumber</li>
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Index">@L["Account_Dashboard"]</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Orders">@L["Orders_Title"]</a></li>
+                    <li class="breadcrumb-item active">#@Model.OrderNumber</li>
                 </ol>
             </nav>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">@L["Order_Items"]</h5>
-                    <span class="badge bg-@(Model.OrderStatus == "Completed" || Model.OrderStatus == "Delivered" ? "success" : Model.OrderStatus == "Cancelled" ? "danger" : "warning")">
-                        @Model.OrderStatus
-                    </span>
+            
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h1 class="page-title mb-2">
+                        <i class="bi bi-receipt me-2"></i>@L["Order"] #@Model.OrderNumber
+                    </h1>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-@orderBadgeClass badge-pill">
+                            <i class="bi bi-@orderIcon me-1"></i>@L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.OrderStatus ?? "")]
+                        </span>
+                        <span class="badge bg-@paymentBadgeClass badge-pill">
+                            <i class="bi bi-@paymentIcon me-1"></i>@L["Payment_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.PaymentStatus ?? "")]
+                        </span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    @foreach (var item in Model.Items)
-                    {
-                        <div class="row mb-3 pb-3 border-bottom">
-                            <div class="col-md-2">
-                                @if (!string.IsNullOrEmpty(item.ProductImage))
-                                {
-                                    <img src="@item.ProductImage" 
-                                         alt="@item.ProductName" 
-                                         class="img-fluid rounded" 
-                                         onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
-                                }
-                                else
-                                {
-                                    <img src="@Url.Content("~/img/logo_black.png")" 
-                                         alt="Kokomija" 
-                                         class="img-fluid rounded logo-fallback" />
-                                }
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="mb-1">@item.ProductName</h6>
-                                @if (!string.IsNullOrEmpty(item.ColorName))
-                                {
-                                    <small class="text-muted">@L["Color"]: @item.ColorName</small><br />
-                                }
-                                @if (!string.IsNullOrEmpty(item.SizeName))
-                                {
-                                    <small class="text-muted">@L["Size"]: @item.SizeName</small>
-                                }
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <p class="mb-0"><strong>x@item.Quantity</strong></p>
-                            </div>
-                            <div class="col-md-2 text-end">
-                                <p class="mb-0"><strong>@item.TotalPrice.ToString("C")</strong></p>
-                                <small class="text-muted">@item.UnitPrice.ToString("C") @L["Each"]</small>
-                            </div>
+                <a asp-controller="Account" asp-action="Orders" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>@L["Back_To_Orders"]
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column - Order Items & Timeline -->
+            <div class="col-lg-8">
+                <!-- Order Progress Timeline -->
+                <div class="timeline-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>@L["Order_Timeline"]</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="order-timeline">
+                            @{
+                                var steps = new[] { "pending", "processing", "shipped", "delivered" };
+                                var currentStepIndex = Array.IndexOf(steps, Model.OrderStatus?.ToLower());
+                                if (currentStepIndex == -1 && Model.OrderStatus?.ToLower() == "cancelled") currentStepIndex = -2;
+                            }
+                            @foreach (var (step, index) in steps.Select((s, i) => (s, i)))
+                            {
+                                var isCompleted = index < currentStepIndex;
+                                var isActive = index == currentStepIndex;
+                                var isCancelled = Model.OrderStatus?.ToLower() == "cancelled" && index == 0;
+                                
+                                <div class="timeline-step @(isCompleted ? "completed" : "") @(isActive ? "active" : "") @(isCancelled ? "cancelled" : "")">
+                                    <div class="step-icon">
+                                        @if (isCompleted)
+                                        {
+                                            <i class="bi bi-check-lg"></i>
+                                        }
+                                        else if (isCancelled)
+                                        {
+                                            <i class="bi bi-x-lg"></i>
+                                        }
+                                        else
+                                        {
+                                            @switch(step)
+                                            {
+                                                case "pending":
+                                                    <i class="bi bi-hourglass-split"></i>
+                                                    break;
+                                                case "processing":
+                                                    <i class="bi bi-gear-fill"></i>
+                                                    break;
+                                                case "shipped":
+                                                    <i class="bi bi-truck"></i>
+                                                    break;
+                                                case "delivered":
+                                                    <i class="bi bi-house-check-fill"></i>
+                                                    break;
+                                            }
+                                        }
+                                    </div>
+                                    <div class="step-content">
+                                        <span class="step-title">@L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(step)]</span>
+                                        @if (step == "pending")
+                                        {
+                                            <span class="step-date">@Model.OrderDate.ToString("dd MMM yyyy, HH:mm")</span>
+                                        }
+                                        else if (step == "shipped" && Model.ShippedAt.HasValue)
+                                        {
+                                            <span class="step-date">@Model.ShippedAt.Value.ToString("dd MMM yyyy, HH:mm")</span>
+                                        }
+                                        else if (step == "delivered" && Model.DeliveredAt.HasValue)
+                                        {
+                                            <span class="step-date">@Model.DeliveredAt.Value.ToString("dd MMM yyyy, HH:mm")</span>
+                                        }
+                                    </div>
+                                    @if (index < steps.Length - 1)
+                                    {
+                                        <div class="step-connector @(isCompleted ? "completed" : "")"></div>
+                                    }
+                                </div>
+                            }
                         </div>
-                    }
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">@L["Order_Status"]</h5>
-                </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-6">@L["Order_Number"]:</dt>
-                        <dd class="col-sm-6">#@Model.OrderNumber</dd>
-
-                        <dt class="col-sm-6">@L["Order_Date"]:</dt>
-                        <dd class="col-sm-6">@Model.OrderDate.ToString("MMMM dd, yyyy")</dd>
-
-                        <dt class="col-sm-6">@L["Order_Status"]:</dt>
-                        <dd class="col-sm-6">
-                            <span class="badge bg-@(Model.OrderStatus == "Completed" || Model.OrderStatus == "Delivered" ? "success" : Model.OrderStatus == "Cancelled" ? "danger" : "warning")">
-                                @Model.OrderStatus
-                            </span>
-                        </dd>
-
-                        <dt class="col-sm-6">@L["Payment_Status"]:</dt>
-                        <dd class="col-sm-6">
-                            <span class="badge bg-@(Model.PaymentStatus == "Paid" ? "success" : Model.PaymentStatus == "Failed" ? "danger" : "warning")">
-                                @Model.PaymentStatus
-                            </span>
-                        </dd>
-                    </dl>
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">@L["Order_Total"]</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>@L["Subtotal"]:</span>
-                        <strong>@Model.TotalAmount.ToString("C")</strong>
+                <!-- Order Items -->
+                <div class="items-card">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="bi bi-bag me-2"></i>@L["Order_Items"] (@Model.ItemCount)</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="order-items-list">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="order-detail-item">
+                                    <div class="item-image">
+                                        @if (!string.IsNullOrEmpty(item.ProductImage))
+                                        {
+                                            <img src="@Url.Content($"~/img/ProductImage/{item.ProductImage}")" 
+                                                 alt="@item.ProductName"
+                                                 onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/img/logo_black.png")" 
+                                                 alt="Kokomija" 
+                                                 class="logo-fallback">
+                                        }
+                                    </div>
+                                    <div class="item-info">
+                                        <h6 class="item-name">@item.ProductName</h6>
+                                        <div class="item-variants">
+                                            @if (!string.IsNullOrEmpty(item.ColorName))
+                                            {
+                                                <span><i class="bi bi-palette"></i> @item.ColorName</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(item.SizeName))
+                                            {
+                                                <span><i class="bi bi-rulers"></i> @item.SizeName</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="item-quantity">
+                                        <span class="qty-badge">x@item.Quantity</span>
+                                    </div>
+                                    <div class="item-price">
+                                        <strong>@item.TotalPrice.ToString("C", plnCulture)</strong>
+                                        <small>@item.UnitPrice.ToString("C", plnCulture) @L["Each"]</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="d-grid gap-2">
-                @if (Model.CanCancel)
-                {
-                    <button type="button" class="btn btn-outline-danger" onclick="cancelOrder(@Model.Id)">
-                        <i class="bi bi-x-circle me-2"></i>@L["Account_CancelOrder"]
-                    </button>
-                }
-                @if (Model.CanReturn)
-                {
-                    <a asp-action="ReturnRequest" asp-route-orderId="@Model.Id" class="btn btn-outline-warning">
-                        <i class="bi bi-arrow-return-left me-2"></i>@L["Account_RequestReturn"]
-                    </a>
-                }
-                <a asp-action="Index" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>@L["Back_To_Account"]
-                </a>
+            <!-- Right Column - Summary & Info -->
+            <div class="col-lg-4">
+                <!-- Order Summary -->
+                <div class="summary-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="bi bi-calculator me-2"></i>@L["Order_Summary"]</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="summary-row">
+                            <span>@L["Subtotal"]</span>
+                            <span>@Model.SubtotalAmount.ToString("C", plnCulture)</span>
+                        </div>
+                        @if (Model.DiscountAmount > 0)
+                        {
+                            <div class="summary-row discount">
+                                <span>
+                                    <i class="bi bi-tag-fill me-1"></i>@L["Discount"]
+                                    @if (!string.IsNullOrEmpty(Model.CouponCode))
+                                    {
+                                        <span class="coupon-badge">@Model.CouponCode</span>
+                                    }
+                                </span>
+                                <span class="text-success">-@Model.DiscountAmount.ToString("C", plnCulture)</span>
+                            </div>
+                        }
+                        <div class="summary-row">
+                            <span>
+                                <i class="bi bi-truck me-1"></i>@L["Shipping"]
+                                @if (!string.IsNullOrEmpty(Model.ShippingMethod))
+                                {
+                                    <small class="text-muted">(@Model.ShippingMethod)</small>
+                                }
+                            </span>
+                            <span>@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C", plnCulture) : L["Free"])</span>
+                        </div>
+                        @if (Model.TaxAmount > 0)
+                        {
+                            <div class="summary-row">
+                                <span>@L["Tax"] (VAT)</span>
+                                <span>@Model.TaxAmount.ToString("C", plnCulture)</span>
+                            </div>
+                        }
+                        <div class="summary-row total">
+                            <span>@L["Cart_Total"]</span>
+                            <span>@Model.TotalAmount.ToString("C", plnCulture)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Information -->
+                <div class="info-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>@L["Shipping_Address"]</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        @if (!string.IsNullOrEmpty(Model.ShippingAddress))
+                        {
+                            <p class="mb-1">@Model.ShippingAddress</p>
+                            <p class="mb-1">@Model.ShippingPostalCode @Model.ShippingCity</p>
+                            <p class="mb-0">@Model.ShippingCountry</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">@L["No_Shipping_Info"]</p>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(Model.TrackingNumber))
+                        {
+                            <hr class="my-3">
+                            <div class="tracking-info">
+                                <strong><i class="bi bi-box-seam me-2"></i>@L["Tracking_Number"]</strong>
+                                <span class="tracking-code">@Model.TrackingNumber</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="info-card mb-4">
+                    <div class="card-header-custom">
+                        <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>@L["Payment_Details"]</h5>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="payment-info-row">
+                            <span>@L["Payment_Method"]</span>
+                            <span>@(Model.PaymentMethod ?? "Stripe")</span>
+                        </div>
+                        @if (Model.PaidAt.HasValue)
+                        {
+                            <div class="payment-info-row">
+                                <span>@L["Paid_On"]</span>
+                                <span>@Model.PaidAt.Value.ToString("dd MMM yyyy, HH:mm")</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.CustomerEmail))
+                        {
+                            <div class="payment-info-row">
+                                <span>@L["Email"]</span>
+                                <span>@Model.CustomerEmail</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="actions-card">
+                    <div class="d-grid gap-2">
+                        @if (Model.CanCancel)
+                        {
+                            <button type="button" class="btn btn-danger" onclick="cancelOrder(@Model.Id)">
+                                <i class="bi bi-x-circle me-2"></i>@L["Cancel_Order"]
+                            </button>
+                        }
+                        @if (Model.CanReturn)
+                        {
+                            <a asp-action="ReturnRequest" asp-route-orderId="@Model.Id" class="btn btn-warning">
+                                <i class="bi bi-arrow-return-left me-2"></i>@L["Request_Refund"]
+                            </a>
+                        }
+                        @if (Model.PaymentStatus?.ToLower() == "paid")
+                        {
+                            <a asp-action="DownloadInvoice" asp-route-id="@Model.Id" class="btn btn-outline-secondary" target="_blank">
+                                <i class="bi bi-file-earmark-pdf me-2"></i>@L["Download_Invoice"]
+                            </a>
+                        }
+                        <a asp-action="Orders" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-2"></i>@L["Back_To_Orders"]
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -136,29 +334,40 @@
 @section Scripts {
     <script>
         function cancelOrder(orderId) {
-            if (!confirm('@L["Confirm_Cancel_Order"]')) {
-                return;
-            }
-
-            fetch('/Account/CancelOrder', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: 'id=' + orderId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.message || '@L["Error_Cancelling_Order"]');
+            Swal.fire({
+                title: '@L["Confirm_Cancel_Order_Title"]',
+                text: '@L["Confirm_Cancel_Order"]',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '@L["Yes_Cancel"]',
+                cancelButtonText: '@L["No_Keep"]'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/Account/CancelOrder/${orderId}`,
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: '@L["Order_Cancelled"]',
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => location.reload());
+                            } else {
+                                Swal.fire('@L["Error"]', response.message || '@L["Error_Cancelling_Order"]', 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('@L["Error"]', '@L["Error_Cancelling_Order"]', 'error');
+                        }
+                    });
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('@L["Error_Cancelling_Order"]');
             });
         }
     </script>

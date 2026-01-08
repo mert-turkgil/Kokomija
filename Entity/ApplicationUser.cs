@@ -18,6 +18,9 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string? DefaultPaymentMethodId { get; set; }
 
+        // Birthday for special coupons
+        public DateTime? Birthday { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? LastLoginAt { get; set; }

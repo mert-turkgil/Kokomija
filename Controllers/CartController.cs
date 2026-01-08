@@ -16,19 +16,22 @@ namespace Kokomija.Controllers
         private readonly ILogger<CartController> _logger;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
+        private readonly IShippingService _shippingService;
 
         public CartController(
             IUnitOfWork unitOfWork,
             ILocalizationService localizationService,
             ILogger<CartController> logger,
             UserManager<ApplicationUser> userManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IShippingService shippingService)
         {
             _unitOfWork = unitOfWork;
             _localizationService = localizationService;
             _logger = logger;
             _userManager = userManager;
             _configuration = configuration;
+            _shippingService = shippingService;
         }
 
         #region View Actions
@@ -351,7 +354,8 @@ namespace Kokomija.Controllers
 
                 if (coupon.ValidUntil.HasValue && coupon.ValidUntil.Value < DateTime.UtcNow)
                 {
-                    return Json(new { success = false, message = _localizationService["Cart_Coupon_Expired"] });
+                    var expiredDate = coupon.ValidUntil.Value.ToString("dd/MM/yyyy");
+                    return Json(new { success = false, message = $"{_localizationService["Cart_Coupon_Expired"]} ({expiredDate})" });
                 }
 
                 if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
@@ -368,8 +372,17 @@ namespace Kokomija.Controllers
                     return Json(new { success = false, message = _localizationService["Cart_Coupon_AlreadyUsed"] });
                 }
 
-                // Apply coupon - recalculate cart with discount
+                // Check minimum order amount
                 var cartItems = await _unitOfWork.Carts.GetByUserIdAsync(userId);
+                decimal subtotal = cartItems.Sum(c => c.Product.Price * c.Quantity);
+
+                if (coupon.MinimumOrderAmount.HasValue && subtotal < coupon.MinimumOrderAmount.Value)
+                {
+                    var minimumAmount = coupon.MinimumOrderAmount.Value.ToString("C", new System.Globalization.CultureInfo("pl-PL"));
+                    return Json(new { success = false, message = $"{_localizationService["Cart_Coupon_MinimumAmount"]} {minimumAmount}" });
+                }
+
+                // Apply coupon - recalculate cart with discount
                 var updatedViewModel = await BuildCartViewModel(cartItems, coupon);
 
                 // Store coupon in session
@@ -556,12 +569,126 @@ namespace Kokomija.Controllers
             // Total discount (VIP + Coupon)
             decimal totalDiscountAmount = vipDiscountAmount + couponDiscountAmount;
 
-            // Calculate shipping
-            const decimal freeShippingThreshold = 200.00m; // PLN
-            const decimal standardShippingCost = 15.00m; // PLN
-            decimal shippingCost = subtotal >= freeShippingThreshold ? 0 : standardShippingCost;
-            bool hasFreeShipping = subtotal >= freeShippingThreshold;
+            // Get dynamic shipping rates from database
+            var availableRates = await _shippingService.GetAvailableRatesForOrderAsync("PL", subtotal);
+            
+            // Determine free shipping threshold from rates (use highest threshold)
+            decimal freeShippingThreshold = availableRates
+                .Where(r => r.FreeShippingThreshold.HasValue)
+                .Select(r => r.FreeShippingThreshold!.Value)
+                .DefaultIfEmpty(200.00m)
+                .Max();
+            
+            // Check if user qualifies for free shipping via VIP status
+            bool isFreeShippingVip = vipTier is "Silver" or "Gold" or "Platinum";
+            bool hasFreeShippingByThreshold = subtotal >= freeShippingThreshold;
+            bool hasFreeShipping = isFreeShippingVip || hasFreeShippingByThreshold;
+            
             decimal remainingForFreeShipping = hasFreeShipping ? 0 : freeShippingThreshold - subtotal;
+            
+            // Get selected shipping option from session (default to first rate or "standard")
+            var selectedShippingOption = HttpContext.Session.GetString("SelectedShippingOption") ?? 
+                (availableRates.Any() ? availableRates.First().Id.ToString() : "standard");
+            
+            // Build shipping options from database rates
+            var shippingOptions = new List<ShippingOptionModel>();
+            
+            if (availableRates.Any())
+            {
+                foreach (var rate in availableRates)
+                {
+                    // Calculate cost based on free shipping eligibility
+                    decimal originalCost = rate.Rate;
+                    decimal actualCost = originalCost;
+                    bool isFree = false;
+                    
+                    // Check if this rate qualifies for free shipping
+                    if (rate.FreeShippingThreshold.HasValue && subtotal >= rate.FreeShippingThreshold.Value)
+                    {
+                        actualCost = 0;
+                        isFree = true;
+                    }
+                    else if (hasFreeShipping && rate.Zone?.ToLower().Contains("standard") == true)
+                    {
+                        // VIP free shipping applies to standard rates
+                        actualCost = 0;
+                        isFree = true;
+                    }
+                    else if (hasFreeShipping && rate.Zone?.ToLower().Contains("express") == true)
+                    {
+                        // VIP gets discounted express (e.g., 50% off)
+                        actualCost = originalCost * 0.5m;
+                    }
+                    
+                    // Calculate estimated delivery date (business days)
+                    var maxDays = rate.EstimatedDaysMax > 0 ? rate.EstimatedDaysMax : 5;
+                    var minDays = rate.EstimatedDaysMin > 0 ? rate.EstimatedDaysMin : 3;
+                    var estimatedDeliveryDate = AddBusinessDays(DateTime.UtcNow, maxDays);
+                    
+                    shippingOptions.Add(new ShippingOptionModel
+                    {
+                        Id = rate.Id.ToString(),
+                        Name = rate.Zone ?? rate.ProviderName,
+                        ProviderName = rate.ProviderName,
+                        Description = $"{rate.ProviderName}",
+                        OriginalCost = originalCost,
+                        Cost = actualCost,
+                        DeliveryEstimate = minDays == maxDays 
+                            ? $"{minDays}" 
+                            : $"{minDays}-{maxDays}",
+                        MinDays = minDays,
+                        MaxDays = maxDays,
+                        EstimatedDeliveryDate = estimatedDeliveryDate,
+                        IsFree = isFree,
+                        IsSelected = selectedShippingOption == rate.Id.ToString()
+                    });
+                }
+            }
+            else
+            {
+                // Fallback to default shipping options if no rates configured
+                shippingOptions.Add(new ShippingOptionModel
+                {
+                    Id = "standard",
+                    Name = _localizationService["Shipping_Standard"],
+                    ProviderName = "Standard Shipping",
+                    Description = _localizationService["Shipping_Standard_Desc"],
+                    OriginalCost = 15.00m,
+                    Cost = hasFreeShipping ? 0 : 15.00m,
+                    DeliveryEstimate = "3-7",
+                    MinDays = 3,
+                    MaxDays = 7,
+                    EstimatedDeliveryDate = AddBusinessDays(DateTime.UtcNow, 7),
+                    IsFree = hasFreeShipping,
+                    IsSelected = selectedShippingOption == "standard"
+                });
+                shippingOptions.Add(new ShippingOptionModel
+                {
+                    Id = "express",
+                    Name = _localizationService["Shipping_Express"],
+                    ProviderName = "Express Shipping",
+                    Description = _localizationService["Shipping_Express_Desc"],
+                    OriginalCost = 29.99m,
+                    Cost = hasFreeShipping ? 14.99m : 29.99m,
+                    DeliveryEstimate = "1-2",
+                    MinDays = 1,
+                    MaxDays = 2,
+                    EstimatedDeliveryDate = AddBusinessDays(DateTime.UtcNow, 2),
+                    IsFree = false,
+                    IsSelected = selectedShippingOption == "express"
+                });
+            }
+            
+            // Ensure at least one option is selected
+            if (!shippingOptions.Any(o => o.IsSelected) && shippingOptions.Any())
+            {
+                shippingOptions.First().IsSelected = true;
+            }
+            
+            // Get shipping cost based on selected option
+            var selectedOption = shippingOptions.FirstOrDefault(o => o.IsSelected) ?? shippingOptions.First();
+            decimal shippingCost = selectedOption.Cost;
+            decimal originalShippingCost = selectedOption.OriginalCost;
 
             // Calculate tax (23% VAT in Poland)
             decimal subtotalAfterDiscount = subtotal - totalDiscountAmount;
@@ -578,6 +705,7 @@ namespace Kokomija.Controllers
                 Items = items,
                 Subtotal = subtotal,
                 ShippingCost = shippingCost,
+                OriginalShippingCost = originalShippingCost,
                 DiscountAmount = totalDiscountAmount,
                 VipDiscountAmount = vipDiscountAmount,
                 CouponDiscountAmount = couponDiscountAmount,
@@ -588,10 +716,74 @@ namespace Kokomija.Controllers
                 VipTier = vipTier,
                 VipDiscountPercentage = vipDiscountPercentage,
                 HasFreeShipping = hasFreeShipping,
+                IsFreeShippingVip = isFreeShippingVip,
                 FreeShippingThreshold = freeShippingThreshold,
                 RemainingForFreeShipping = remainingForFreeShipping,
-                AvailableCoupons = availableCoupons
+                AvailableCoupons = availableCoupons,
+                SelectedShippingOption = selectedShippingOption,
+                ShippingOptions = shippingOptions
             };
+        }
+
+        [Authorize]
+        [HttpPost("api/update-shipping")]
+        public async Task<IActionResult> UpdateShipping([FromBody] UpdateShippingRequest request)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Unauthorized" });
+            }
+
+            try
+            {
+                // Validate shipping option - accept database rate IDs or fallback "standard"/"express"
+                if (string.IsNullOrWhiteSpace(request.ShippingOption))
+                {
+                    return Json(new { success = false, message = "Invalid shipping option" });
+                }
+                
+                // Try to parse as database ID, otherwise accept standard/express for fallback
+                bool isValidOption = int.TryParse(request.ShippingOption, out int rateId) || 
+                                     request.ShippingOption == "standard" || 
+                                     request.ShippingOption == "express";
+                
+                if (!isValidOption)
+                {
+                    return Json(new { success = false, message = "Invalid shipping option" });
+                }
+
+                // Store in session
+                HttpContext.Session.SetString("SelectedShippingOption", request.ShippingOption);
+
+                // Recalculate cart
+                var cartItems = await _unitOfWork.Carts.GetByUserIdAsync(userId);
+                
+                Coupon? appliedCoupon = null;
+                var couponCode = HttpContext.Session.GetString("AppliedCouponCode");
+                if (!string.IsNullOrEmpty(couponCode))
+                {
+                    appliedCoupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
+                }
+                
+                var updatedViewModel = await BuildCartViewModel(cartItems, appliedCoupon);
+
+                return Json(new
+                {
+                    success = true,
+                    shippingCost = updatedViewModel.ShippingCost,
+                    originalShippingCost = updatedViewModel.OriginalShippingCost,
+                    total = updatedViewModel.Total,
+                    taxAmount = updatedViewModel.TaxAmount,
+                    hasFreeShipping = updatedViewModel.HasFreeShipping,
+                    selectedOption = request.ShippingOption
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating shipping option");
+                return Json(new { success = false, message = "An error occurred" });
+            }
         }
 
         private async Task<IEnumerable<string>> GetAvailableCouponsForUser()
@@ -604,6 +796,26 @@ namespace Kokomija.Controllers
                 .ToList();
 
             return couponCodes;
+        }
+        
+        /// <summary>
+        /// Adds business days to a date, skipping weekends
+        /// </summary>
+        private DateTime AddBusinessDays(DateTime startDate, int businessDays)
+        {
+            var currentDate = startDate;
+            var daysAdded = 0;
+
+            while (daysAdded < businessDays)
+            {
+                currentDate = currentDate.AddDays(1);
+                if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
+                {
+                    daysAdded++;
+                }
+            }
+
+            return currentDate;
         }
 
         #endregion
@@ -645,6 +857,11 @@ namespace Kokomija.Controllers
         public int? ColorId { get; set; }
         public int? SizeId { get; set; }
         public int Quantity { get; set; }
+    }
+
+    public class UpdateShippingRequest
+    {
+        public string ShippingOption { get; set; } = "standard";
     }
 
     #endregion

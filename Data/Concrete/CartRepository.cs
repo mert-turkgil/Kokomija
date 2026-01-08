@@ -53,6 +53,6 @@ public class CartRepository : Repository<Cart>, ICartRepository
             .ToListAsync();
         
         _context.Carts.RemoveRange(cartItems);
-        await _context.SaveChangesAsync();
+        // Don't save here - let the caller handle it
     }
 }

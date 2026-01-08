@@ -451,11 +451,60 @@
                         </button>
                     }
                     
+                    @if (Model.PaymentStatus == "paid" && !Model.IsDemoOrder)
+                    {
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#refundModal">
+                            <i class="bi bi-arrow-counterclockwise"></i> Refund Order
+                        </button>
+                    }
+                    
                     <a href="mailto:@Model.CustomerEmail" class="btn btn-secondary btn-sm">
                         <i class="bi bi-envelope"></i> Email Customer
                     </a>
                 </div>
             </div>
+            
+            <!-- Refund Information (if refunded) -->
+            @if (Model.PaymentStatus == "refunded")
+            {
+                <div class="order-detail-card border-danger">
+                    <h5 class="mb-3 text-danger">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Refund Information
+                    </h5>
+                    
+                    @if (!string.IsNullOrEmpty(Model.StripeRefundId))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Refund ID</span>
+                            <span class="info-value">
+                                <small><code>@Model.StripeRefundId</code></small>
+                            </span>
+                        </div>
+                    }
+                    @if (Model.RefundedAmount.HasValue)
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Refunded Amount</span>
+                            <span class="info-value text-danger">@Model.RefundedAmount.Value.ToString("N2") @Model.Currency</span>
+                        </div>
+                    }
+                    @if (Model.RefundedAt.HasValue)
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Refunded At</span>
+                            <span class="info-value">@Model.RefundedAt.Value.ToString("MMM dd, yyyy HH:mm")</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.RefundReason))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Reason</span>
+                            <span class="info-value">@Model.RefundReason</span>
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -588,6 +637,84 @@
     </div>
 </div>
 
+<!-- Refund Order Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-arrow-counterclockwise"></i> Refund Order
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action will refund the payment via Stripe and cannot be undone.
+                </div>
+                
+                <form id="refundForm">
+                    <input type="hidden" name="orderId" value="@Model.Id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Order Total</label>
+                        <div class="form-control-plaintext fs-5 fw-bold">@Model.TotalAmount.ToString("N2") @Model.Currency</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Refund Type</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="refundType" id="fullRefund" value="full" checked onchange="togglePartialAmount()">
+                            <label class="form-check-label" for="fullRefund">
+                                Full Refund (@Model.TotalAmount.ToString("N2") @Model.Currency)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="refundType" id="partialRefund" value="partial" onchange="togglePartialAmount()">
+                            <label class="form-check-label" for="partialRefund">
+                                Partial Refund
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="partialAmountContainer" style="display: none;">
+                        <label class="form-label">Refund Amount</label>
+                        <div class="input-group">
+                            <input type="number" name="amount" id="refundAmount" class="form-control" step="0.01" min="0.01" max="@Model.TotalAmount" placeholder="Enter amount">
+                            <span class="input-group-text">@Model.Currency</span>
+                        </div>
+                        <small class="text-muted">Maximum: @Model.TotalAmount.ToString("N2") @Model.Currency</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Refund Reason</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="requested_by_customer">Customer Request</option>
+                            <option value="duplicate">Duplicate Payment</option>
+                            <option value="fraudulent">Fraudulent Transaction</option>
+                            <option value="product_not_received">Product Not Received</option>
+                            <option value="product_damaged">Product Damaged</option>
+                            <option value="wrong_item">Wrong Item Sent</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Admin Notes (Optional)</label>
+                        <textarea name="adminNote" class="form-control" rows="2" placeholder="Internal notes about this refund..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="processRefund()" id="refundBtn">
+                    <i class="bi bi-arrow-counterclockwise"></i> Process Refund
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // Load shipping providers on page load
@@ -690,6 +817,86 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while adding the tracking event');
+            });
+        }
+        
+        function togglePartialAmount() {
+            const partialRadio = document.getElementById('partialRefund');
+            const container = document.getElementById('partialAmountContainer');
+            const amountInput = document.getElementById('refundAmount');
+            
+            if (partialRadio.checked) {
+                container.style.display = 'block';
+                amountInput.required = true;
+            } else {
+                container.style.display = 'none';
+                amountInput.required = false;
+                amountInput.value = '';
+            }
+        }
+        
+        function processRefund() {
+            const form = document.getElementById('refundForm');
+            const formData = new FormData(form);
+            const refundBtn = document.getElementById('refundBtn');
+            
+            const refundType = formData.get('refundType');
+            const amount = refundType === 'partial' ? parseFloat(formData.get('amount')) : null;
+            
+            // Validation for partial refund
+            if (refundType === 'partial') {
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid refund amount');
+                    return;
+                }
+                const maxAmount = @Model.TotalAmount;
+                if (amount > maxAmount) {
+                    alert('Refund amount cannot exceed the order total');
+                    return;
+                }
+            }
+            
+            // Confirm the refund
+            const confirmMessage = refundType === 'partial' 
+                ? `Are you sure you want to refund ${amount.toFixed(2)} @Model.Currency?` 
+                : `Are you sure you want to fully refund @Model.TotalAmount.ToString("N2") @Model.Currency?`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Disable button and show loading state
+            refundBtn.disabled = true;
+            refundBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+            
+            fetch('@Url.Action("RefundOrder", "Admin")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: parseInt(formData.get('orderId')),
+                    amount: amount,
+                    reason: formData.get('reason'),
+                    adminNote: formData.get('adminNote')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                    refundBtn.disabled = false;
+                    refundBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Process Refund';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing the refund');
+                refundBtn.disabled = false;
+                refundBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Process Refund';
             });
         }
     </script>

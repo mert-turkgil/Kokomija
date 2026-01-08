@@ -29,4 +29,29 @@
   <data name="UpdateCart" xml:space="preserve"><value>Update Cart</value></data>
   <data name="Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="ItemsInCart" xml:space="preserve"><value>items in cart</value></data>
+  
+  <!-- Shipping -->
+  <data name="Shipping" xml:space="preserve"><value>Shipping</value></data>
+  <data name="Shipping_Method" xml:space="preserve"><value>Shipping Method</value></data>
+  <data name="Shipping_Standard" xml:space="preserve"><value>Standard Shipping</value></data>
+  <data name="Shipping_Standard_Desc" xml:space="preserve"><value>Reliable delivery within 3-7 business days</value></data>
+  <data name="Shipping_Express" xml:space="preserve"><value>Express Shipping</value></data>
+  <data name="Shipping_Express_Desc" xml:space="preserve"><value>Fast delivery within 1-2 business days</value></data>
+  <data name="Shipping_FreeVip" xml:space="preserve"><value>Free standard shipping for VIP members!</value></data>
+  <data name="Shipping_FreeThreshold" xml:space="preserve"><value>You qualify for free standard shipping!</value></data>
+  <data name="Business_Days" xml:space="preserve"><value>business days</value></data>
+  <data name="Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Arrives_By" xml:space="preserve"><value>Arrives by</value></data>
+  <data name="Cart_Title" xml:space="preserve"><value>Shopping Cart</value></data>
+  <data name="Cart_FreeShipping_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="Cart_FreeShipping_More" xml:space="preserve"><value>more for free shipping</value></data>
+  
+  <!-- Coupon Messages -->
+  <data name="Cart_Coupon_Invalid" xml:space="preserve"><value>This coupon code is invalid</value></data>
+  <data name="Cart_Coupon_Inactive" xml:space="preserve"><value>This coupon is not active</value></data>
+  <data name="Cart_Coupon_Expired" xml:space="preserve"><value>This coupon has expired</value></data>
+  <data name="Cart_Coupon_LimitReached" xml:space="preserve"><value>This coupon has reached its usage limit</value></data>
+  <data name="Cart_Coupon_AlreadyUsed" xml:space="preserve"><value>You have already used this coupon the maximum number of times</value></data>
+  <data name="Cart_Coupon_MinimumAmount" xml:space="preserve"><value>This coupon requires a minimum order of</value></data>
+  <data name="Cart_Coupon_Applied" xml:space="preserve"><value>Coupon applied successfully!</value></data>
 </root>

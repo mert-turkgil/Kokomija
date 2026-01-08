@@ -1471,4 +1471,247 @@
   <data name="Admin_Blog_ErrorDelete" xml:space="preserve">
     <value>Błąd podczas usuwania wpisu bloga. Spróbuj ponownie.</value>
   </data>
+  <!-- Checkout Success/Failure -->
+  <data name="Checkout_Success_Title" xml:space="preserve">
+    <value>Zamówienie Potwierdzone!</value>
+  </data>
+  <data name="Checkout_Success_Message" xml:space="preserve">
+    <value>Dziękujemy za zakup. Twoje zamówienie zostało pomyślnie złożone.</value>
+  </data>
+  <data name="Checkout_Failure_Title" xml:space="preserve">
+    <value>Problem z Płatnością</value>
+  </data>
+  <data name="Checkout_Cancelled" xml:space="preserve">
+    <value>Twoja płatność została anulowana. Produkty w koszyku zostały zachowane.</value>
+  </data>
+  <data name="Checkout_Cancelled_Title" xml:space="preserve">
+    <value>Płatność Anulowana</value>
+  </data>
+  <data name="Checkout_Cancelled_Explanation" xml:space="preserve">
+    <value>Anulowałeś proces płatności. Nie martw się - produkty w Twoim koszyku zostały zachowane i czekają na Ciebie, gdy będziesz gotowy dokończyć zakup.</value>
+  </data>
+  <data name="Checkout_Failed_Title" xml:space="preserve">
+    <value>Płatność Nieudana</value>
+  </data>
+  <data name="Checkout_Expired_Title" xml:space="preserve">
+    <value>Sesja Wygasła</value>
+  </data>
+  <data name="Checkout_PaymentFailed" xml:space="preserve">
+    <value>Twoja płatność nie mogła zostać przetworzona. Spróbuj ponownie lub użyj innej metody płatności.</value>
+  </data>
+  <data name="Checkout_PaymentFailed_Explanation" xml:space="preserve">
+    <value>Twoja płatność została odrzucona. Może to być spowodowane niewystarczającymi środkami, niepoprawnymi danymi karty lub odrzuceniem transakcji przez bank. Sprawdź dane płatności i spróbuj ponownie.</value>
+  </data>
+  <data name="Checkout_PaymentPending" xml:space="preserve">
+    <value>Twoja płatność jest nadal przetwarzana. Sprawdź ponownie później.</value>
+  </data>
+  <data name="Checkout_SessionExpired" xml:space="preserve">
+    <value>Twoja sesja płatności wygasła. Rozpocznij nową płatność.</value>
+  </data>
+  <data name="Checkout_Expired_Explanation" xml:space="preserve">
+    <value>Twoja sesja płatności wygasła z powodu braku aktywności. Dla Twojego bezpieczeństwa sesje wygasają po pewnym czasie. Wróć do koszyka aby rozpocząć nową płatność.</value>
+  </data>
+  <data name="Checkout_ProcessingError" xml:space="preserve">
+    <value>Wystąpił błąd podczas przetwarzania zamówienia. Spróbuj ponownie.</value>
+  </data>
+  <data name="Checkout_Error_Explanation" xml:space="preserve">
+    <value>Coś poszło nie tak podczas przetwarzania Twojego zamówienia. Jeśli zostałeś obciążony, skontaktuj się z naszym zespołem wsparcia, a pomożemy rozwiązać problem.</value>
+  </data>
+  <data name="Checkout_InvalidSession" xml:space="preserve">
+    <value>Nieprawidłowa sesja płatności. Spróbuj ponownie.</value>
+  </data>
+  <data name="Checkout_SessionNotFound" xml:space="preserve">
+    <value>Nie znaleziono sesji płatności. Rozpocznij nową płatność.</value>
+  </data>
+  <data name="Checkout_OrderAlreadyProcessed" xml:space="preserve">
+    <value>Twoje zamówienie zostało już przetworzone. Sprawdź szczegóły na stronie zamówień.</value>
+  </data>
+  <data name="Checkout_TryAgain" xml:space="preserve">
+    <value>Spróbuj Ponownie</value>
+  </data>
+  <data name="Checkout_NeedHelp" xml:space="preserve">
+    <value>Potrzebujesz Pomocy?</value>
+  </data>
+  <data name="Checkout_PaymentAttempted" xml:space="preserve">
+    <value>Próba Zapłaty</value>
+  </data>
+  <data name="Checkout_EmailConfirmation_Title" xml:space="preserve">
+    <value>Email Potwierdzający Wysłany</value>
+  </data>
+  <data name="Checkout_EmailConfirmation" xml:space="preserve">
+    <value>Email potwierdzający został wysłany na adres</value>
+  </data>
+  <data name="Checkout_OrderNumber" xml:space="preserve">
+    <value>Numer Zamówienia</value>
+  </data>
+  <data name="Checkout_WhatNext" xml:space="preserve">
+    <value>Co Dalej?</value>
+  </data>
+  <data name="Checkout_Step_OrderPlaced" xml:space="preserve">
+    <value>Zamówienie Złożone</value>
+  </data>
+  <data name="Checkout_Step_OrderPlaced_Desc" xml:space="preserve">
+    <value>Twoje zamówienie zostało przyjęte i potwierdzone</value>
+  </data>
+  <data name="Checkout_Step_Processing" xml:space="preserve">
+    <value>Przetwarzanie</value>
+  </data>
+  <data name="Checkout_Step_Processing_Desc" xml:space="preserve">
+    <value>Przygotowujemy Twoje produkty do wysyłki</value>
+  </data>
+  <data name="Checkout_Step_Shipping" xml:space="preserve">
+    <value>Wysyłka</value>
+  </data>
+  <data name="Checkout_Step_Shipping_Desc" xml:space="preserve">
+    <value>Twoje zamówienie jest w drodze do Ciebie</value>
+  </data>
+  <data name="Checkout_Step_Delivery" xml:space="preserve">
+    <value>Dostawa</value>
+  </data>
+  <data name="Checkout_Step_Delivery_Desc" xml:space="preserve">
+    <value>Paczka dostarczona pod Twój adres</value>
+  </data>
+  <!-- Order Summary -->
+  <data name="Order_Summary" xml:space="preserve">
+    <value>Podsumowanie Zamówienia</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Suma Częściowa</value>
+  </data>
+  <data name="Shipping" xml:space="preserve">
+    <value>Wysyłka</value>
+  </data>
+  <data name="Shipping_Address" xml:space="preserve">
+    <value>Adres Dostawy</value>
+  </data>
+  <data name="Tax" xml:space="preserve">
+    <value>Podatek</value>
+  </data>
+  <data name="Discount" xml:space="preserve">
+    <value>Rabat</value>
+  </data>
+  <data name="Payment_Method" xml:space="preserve">
+    <value>Metoda Płatności</value>
+  </data>
+  <data name="View_Order_Details" xml:space="preserve">
+    <value>Zobacz Szczegóły Zamówienia</value>
+  </data>
+  <data name="Error_UserNotFound" xml:space="preserve">
+    <value>Nie znaleziono użytkownika. Zaloguj się ponownie.</value>
+  </data>
+  <!-- Shipping Options -->
+  <data name="Shipping_Method" xml:space="preserve">
+    <value>Metoda Dostawy</value>
+  </data>
+  <data name="Shipping_Standard" xml:space="preserve">
+    <value>Standardowa Dostawa</value>
+  </data>
+  <data name="Shipping_Standard_Desc" xml:space="preserve">
+    <value>Zwykła usługa dostawy</value>
+  </data>
+  <data name="Shipping_Express" xml:space="preserve">
+    <value>Dostawa Ekspresowa</value>
+  </data>
+  <data name="Shipping_Express_Desc" xml:space="preserve">
+    <value>Priorytetowa usługa dostawy</value>
+  </data>
+  <data name="Shipping_FreeVip" xml:space="preserve">
+    <value>Darmowa standardowa dostawa w ramach członkostwa VIP!</value>
+  </data>
+  <data name="Shipping_FreeThreshold" xml:space="preserve">
+    <value>Kwalifikujesz się do darmowej standardowej dostawy!</value>
+  </data>
+  <data name="Business_Days" xml:space="preserve">
+    <value>dni roboczych</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>GRATIS</value>
+  </data>
+  <data name="Cart_FreeShipping_Add" xml:space="preserve">
+    <value>Dodaj</value>
+  </data>
+  <data name="Cart_FreeShipping_More" xml:space="preserve">
+    <value>więcej do darmowej dostawy</value>
+  </data>
+  <!-- Orders Page -->
+  <data name="Orders_Subtitle" xml:space="preserve">
+    <value>Śledź i zarządzaj swoimi zamówieniami</value>
+  </data>
+  <data name="Orders_MoreItems" xml:space="preserve">
+    <value>+{0} więcej produktów</value>
+  </data>
+  <data name="Back_To_Orders" xml:space="preserve">
+    <value>Powrót do Zamówień</value>
+  </data>
+  <data name="Order_Timeline" xml:space="preserve">
+    <value>Oś Czasu Zamówienia</value>
+  </data>
+  <data name="Request_Refund" xml:space="preserve">
+    <value>Poproś o Zwrot</value>
+  </data>
+  <data name="Confirm_Cancel_Order_Title" xml:space="preserve">
+    <value>Anulować zamówienie?</value>
+  </data>
+  <data name="Yes_Cancel" xml:space="preserve">
+    <value>Tak, anuluj</value>
+  </data>
+  <data name="No_Keep" xml:space="preserve">
+    <value>Nie, zachowaj</value>
+  </data>
+  <data name="Order_Cancelled" xml:space="preserve">
+    <value>Zamówienie anulowane</value>
+  </data>
+  <data name="No_Shipping_Info" xml:space="preserve">
+    <value>Brak informacji o dostawie</value>
+  </data>
+  <data name="Tracking_Number" xml:space="preserve">
+    <value>Numer śledzenia</value>
+  </data>
+  <data name="Paid_On" xml:space="preserve">
+    <value>Zapłacono</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Zamówienie</value>
+  </data>
+  
+  <!-- Cart & Shipping -->
+  <data name="Cart_Title" xml:space="preserve">
+    <value>Koszyk</value>
+  </data>
+  <data name="Shipping" xml:space="preserve">
+    <value>Dostawa</value>
+  </data>
+  <data name="Shipping_Method" xml:space="preserve">
+    <value>Metoda dostawy</value>
+  </data>
+  <data name="Shipping_Standard" xml:space="preserve">
+    <value>Dostawa standardowa</value>
+  </data>
+  <data name="Shipping_Standard_Desc" xml:space="preserve">
+    <value>Niezawodna dostawa w ciągu 3-7 dni roboczych</value>
+  </data>
+  <data name="Shipping_Express" xml:space="preserve">
+    <value>Dostawa ekspresowa</value>
+  </data>
+  <data name="Shipping_Express_Desc" xml:space="preserve">
+    <value>Szybka dostawa w ciągu 1-2 dni roboczych</value>
+  </data>
+  <data name="Shipping_FreeVip" xml:space="preserve">
+    <value>Darmowa dostawa standardowa dla członków VIP!</value>
+  </data>
+  <data name="Shipping_FreeThreshold" xml:space="preserve">
+    <value>Kwalifikujesz się do darmowej dostawy standardowej!</value>
+  </data>
+  <data name="Business_Days" xml:space="preserve">
+    <value>dni roboczych</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>Gratis</value>
+  </data>
+  <data name="Cart_FreeShipping_Add" xml:space="preserve">
+    <value>Dodaj jeszcze</value>
+  </data>
+  <data name="Cart_FreeShipping_More" xml:space="preserve">
+    <value>do darmowej dostawy</value>
+  </data>
 </root>

@@ -109,5 +109,27 @@ namespace Kokomija.Data.Concrete
                 .Where(cu => cu.CouponId == couponId && cu.UserId == userId)
                 .CountAsync();
         }
+
+        public async Task<IEnumerable<Coupon>> GetAllWithRelationsAsync()
+        {
+            return await _dbSet
+                .Include(c => c.Category)
+                .Include(c => c.Product)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<Coupon?> GetByIdWithRelationsAsync(int id)
+        {
+            return await _dbSet
+                .Include(c => c.Category)
+                .Include(c => c.Product)
+                .Include(c => c.User)
+                .Include(c => c.CouponUsages)
+                    .ThenInclude(u => u.User)
+                .Include(c => c.CouponUsages)
+                    .ThenInclude(u => u.Order)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
     }
 }

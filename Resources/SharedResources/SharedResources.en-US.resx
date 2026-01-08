@@ -1806,4 +1806,246 @@
   <data name="Admin_Blog_ErrorDelete" xml:space="preserve">
     <value>Error deleting blog post. Please try again.</value>
   </data>
+  <!-- Checkout Success/Failure -->
+  <data name="Checkout_Success_Title" xml:space="preserve">
+    <value>Order Confirmed!</value>
+  </data>
+  <data name="Checkout_Success_Message" xml:space="preserve">
+    <value>Thank you for your purchase. Your order has been successfully placed.</value>
+  </data>
+  <data name="Checkout_Failure_Title" xml:space="preserve">
+    <value>Payment Issue</value>
+  </data>
+  <data name="Checkout_Cancelled" xml:space="preserve">
+    <value>Your checkout was cancelled. Your cart items are still saved.</value>
+  </data>
+  <data name="Checkout_Cancelled_Title" xml:space="preserve">
+    <value>Checkout Cancelled</value>
+  </data>
+  <data name="Checkout_Cancelled_Explanation" xml:space="preserve">
+    <value>You cancelled the checkout process. Don't worry - your cart items are still saved and ready for you to complete your purchase when you're ready.</value>
+  </data>
+  <data name="Checkout_Failed_Title" xml:space="preserve">
+    <value>Payment Failed</value>
+  </data>
+  <data name="Checkout_Expired_Title" xml:space="preserve">
+    <value>Session Expired</value>
+  </data>
+  <data name="Checkout_PaymentFailed" xml:space="preserve">
+    <value>Your payment could not be processed. Please try again or use a different payment method.</value>
+  </data>
+  <data name="Checkout_PaymentFailed_Explanation" xml:space="preserve">
+    <value>Your payment was declined. This may happen due to insufficient funds, incorrect card details, or your bank declining the transaction. Please check your payment details and try again.</value>
+  </data>
+  <data name="Checkout_PaymentPending" xml:space="preserve">
+    <value>Your payment is still being processed. Please check back later.</value>
+  </data>
+  <data name="Checkout_SessionExpired" xml:space="preserve">
+    <value>Your checkout session has expired. Please start a new checkout.</value>
+  </data>
+  <data name="Checkout_Expired_Explanation" xml:space="preserve">
+    <value>Your checkout session timed out due to inactivity. For your security, sessions expire after a period of time. Please return to your cart to start a new checkout.</value>
+  </data>
+  <data name="Checkout_ProcessingError" xml:space="preserve">
+    <value>An error occurred while processing your order. Please try again.</value>
+  </data>
+  <data name="Checkout_Error_Explanation" xml:space="preserve">
+    <value>Something went wrong while processing your order. If you were charged, please contact our support team and we'll help resolve the issue.</value>
+  </data>
+  <data name="Checkout_InvalidSession" xml:space="preserve">
+    <value>Invalid checkout session. Please try again.</value>
+  </data>
+  <data name="Checkout_SessionNotFound" xml:space="preserve">
+    <value>Checkout session not found. Please start a new checkout.</value>
+  </data>
+  <data name="Checkout_OrderAlreadyProcessed" xml:space="preserve">
+    <value>Your order has already been processed. Check your orders page for details.</value>
+  </data>
+  <data name="Checkout_TryAgain" xml:space="preserve">
+    <value>Try Again</value>
+  </data>
+  <data name="Checkout_NeedHelp" xml:space="preserve">
+    <value>Need Help?</value>
+  </data>
+  <data name="Checkout_PaymentAttempted" xml:space="preserve">
+    <value>Attempted Amount</value>
+  </data>
+  <data name="Checkout_EmailConfirmation_Title" xml:space="preserve">
+    <value>Confirmation Email Sent</value>
+  </data>
+  <data name="Checkout_EmailConfirmation" xml:space="preserve">
+    <value>A confirmation email has been sent to</value>
+  </data>
+  <data name="Checkout_OrderNumber" xml:space="preserve">
+    <value>Order Number</value>
+  </data>
+  <data name="Checkout_WhatNext" xml:space="preserve">
+    <value>What Happens Next?</value>
+  </data>
+  <data name="Checkout_Step_OrderPlaced" xml:space="preserve">
+    <value>Order Placed</value>
+  </data>
+  <data name="Checkout_Step_OrderPlaced_Desc" xml:space="preserve">
+    <value>Your order has been received and confirmed</value>
+  </data>
+  <data name="Checkout_Step_Processing" xml:space="preserve">
+    <value>Processing</value>
+  </data>
+  <data name="Checkout_Step_Processing_Desc" xml:space="preserve">
+    <value>We're preparing your items for shipment</value>
+  </data>
+  <data name="Checkout_Step_Shipping" xml:space="preserve">
+    <value>Shipping</value>
+  </data>
+  <data name="Checkout_Step_Shipping_Desc" xml:space="preserve">
+    <value>Your order is on its way to you</value>
+  </data>
+  <data name="Checkout_Step_Delivery" xml:space="preserve">
+    <value>Delivery</value>
+  </data>
+  <data name="Checkout_Step_Delivery_Desc" xml:space="preserve">
+    <value>Package delivered to your address</value>
+  </data>
+  <!-- Order Summary -->
+  <data name="Order_Summary" xml:space="preserve">
+    <value>Order Summary</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Subtotal</value>
+  </data>
+  <data name="Shipping" xml:space="preserve">
+    <value>Shipping</value>
+  </data>
+  <data name="Shipping_Address" xml:space="preserve">
+    <value>Shipping Address</value>
+  </data>
+  <data name="Tax" xml:space="preserve">
+    <value>Tax</value>
+  </data>
+  <data name="Discount" xml:space="preserve">
+    <value>Discount</value>
+  </data>
+  <data name="Payment_Method" xml:space="preserve">
+    <value>Payment Method</value>
+  </data>
+  <data name="View_Order_Details" xml:space="preserve">
+    <value>View Order Details</value>
+  </data>
+  <data name="Error_UserNotFound" xml:space="preserve">
+    <value>User not found. Please log in again.</value>
+  </data>
+  <!-- Shipping Options -->
+  <data name="Shipping_Method" xml:space="preserve">
+    <value>Shipping Method</value>
+  </data>
+  <data name="Shipping_Standard" xml:space="preserve">
+    <value>Standard Shipping</value>
+  </data>
+  <data name="Shipping_Standard_Desc" xml:space="preserve">
+    <value>Regular delivery service</value>
+  </data>
+  <data name="Shipping_Express" xml:space="preserve">
+    <value>Express Shipping</value>
+  </data>
+  <data name="Shipping_Express_Desc" xml:space="preserve">
+    <value>Priority delivery service</value>
+  </data>
+  <data name="Shipping_FreeVip" xml:space="preserve">
+    <value>Free standard shipping included with your VIP membership!</value>
+  </data>
+  <data name="Shipping_FreeThreshold" xml:space="preserve">
+    <value>You've qualified for free standard shipping!</value>
+  </data>
+  <data name="Business_Days" xml:space="preserve">
+    <value>business days</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>FREE</value>
+  </data>
+  <data name="Cart_FreeShipping_Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Cart_FreeShipping_More" xml:space="preserve">
+    <value>more for free shipping</value>
+  </data>
+  <data name="Orders_Subtitle" xml:space="preserve">
+    <value>Track your orders and manage returns</value>
+  </data>
+  <data name="Orders_MoreItems" xml:space="preserve">
+    <value>more items</value>
+  </data>
+  <data name="Back_To_Orders" xml:space="preserve">
+    <value>Back to Orders</value>
+  </data>
+  <data name="Order_Timeline" xml:space="preserve">
+    <value>Order Timeline</value>
+  </data>
+  <data name="Request_Refund" xml:space="preserve">
+    <value>Request Refund</value>
+  </data>
+  <data name="Confirm_Cancel_Order_Title" xml:space="preserve">
+    <value>Cancel Order?</value>
+  </data>
+  <data name="Yes_Cancel" xml:space="preserve">
+    <value>Yes, Cancel Order</value>
+  </data>
+  <data name="No_Keep" xml:space="preserve">
+    <value>No, Keep Order</value>
+  </data>
+  <data name="Order_Cancelled" xml:space="preserve">
+    <value>Order Cancelled</value>
+  </data>
+  <data name="No_Shipping_Info" xml:space="preserve">
+    <value>Shipping information not available</value>
+  </data>
+  <data name="Tracking_Number" xml:space="preserve">
+    <value>Tracking Number</value>
+  </data>
+  <data name="Paid_On" xml:space="preserve">
+    <value>Paid On</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  
+  <!-- Cart & Shipping -->
+  <data name="Cart_Title" xml:space="preserve">
+    <value>Shopping Cart</value>
+  </data>
+  <data name="Shipping" xml:space="preserve">
+    <value>Shipping</value>
+  </data>
+  <data name="Shipping_Method" xml:space="preserve">
+    <value>Shipping Method</value>
+  </data>
+  <data name="Shipping_Standard" xml:space="preserve">
+    <value>Standard Shipping</value>
+  </data>
+  <data name="Shipping_Standard_Desc" xml:space="preserve">
+    <value>Reliable delivery within 3-7 business days</value>
+  </data>
+  <data name="Shipping_Express" xml:space="preserve">
+    <value>Express Shipping</value>
+  </data>
+  <data name="Shipping_Express_Desc" xml:space="preserve">
+    <value>Fast delivery within 1-2 business days</value>
+  </data>
+  <data name="Shipping_FreeVip" xml:space="preserve">
+    <value>Free standard shipping for VIP members!</value>
+  </data>
+  <data name="Shipping_FreeThreshold" xml:space="preserve">
+    <value>You qualify for free standard shipping!</value>
+  </data>
+  <data name="Business_Days" xml:space="preserve">
+    <value>business days</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="Cart_FreeShipping_Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Cart_FreeShipping_More" xml:space="preserve">
+    <value>more for free shipping</value>
+  </data>
 </root>

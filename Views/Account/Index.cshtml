@@ -130,9 +130,18 @@
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning")">
-                                                            @order.OrderStatus
-                                                        </span>
+                                                        @if (order.PaymentStatus == "refunded")
+                                                        {
+                                                            <span class="badge bg-secondary">
+                                                                <i class="bi bi-arrow-counterclockwise me-1"></i>Refunded
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" || order.OrderStatus == "delivered" ? "success" : order.OrderStatus == "Cancelled" || order.OrderStatus == "cancelled" ? "danger" : "warning")">
+                                                                @order.OrderStatus
+                                                            </span>
+                                                        }
                                                     </td>
                                                     <td>
                                                         @if (!string.IsNullOrEmpty(order.SessionStatus))
@@ -230,9 +239,18 @@
                                         <h5>@L["Order_Number"] #@order.OrderNumber</h5>
                                         <p class="text-muted mb-1">@order.OrderDate.ToString("MMMM dd, yyyy")</p>
                                         <div class="mb-2">
-                                            <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" ? "success" : order.OrderStatus == "Cancelled" ? "danger" : "warning") me-1">
-                                                @order.OrderStatus
-                                            </span>
+                                            @if (order.PaymentStatus == "refunded")
+                                            {
+                                                <span class="badge bg-secondary me-1">
+                                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Refunded
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" || order.OrderStatus == "delivered" ? "success" : order.OrderStatus == "Cancelled" || order.OrderStatus == "cancelled" ? "danger" : "warning") me-1">
+                                                    @order.OrderStatus
+                                                </span>
+                                            }
                                             @if (!string.IsNullOrEmpty(order.SessionStatus))
                                             {
                                                 <span class="badge bg-@(order.SessionStatus == "complete" ? "success" : order.SessionStatus == "cancelled" ? "danger" : "secondary")">

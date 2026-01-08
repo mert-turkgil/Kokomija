@@ -2,6 +2,7 @@ using Kokomija.Data.Abstract;
 using Kokomija.Data;
 using Kokomija.Entity;
 using Kokomija.Models.ViewModels.Checkout;
+using Kokomija.Models.ViewModels;
 using Kokomija.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,6 +21,7 @@ namespace Kokomija.Controllers
         private readonly ILocalizationService _localizationService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<CheckoutController> _logger;
+        private readonly IShippingService _shippingService;
 
         private readonly Dictionary<string, string> _currencyMap = new Dictionary<string, string>
         {
@@ -38,7 +40,8 @@ namespace Kokomija.Controllers
             IStripeService stripeService,
             ILocalizationService localizationService,
             IConfiguration configuration,
-            ILogger<CheckoutController> logger)
+            ILogger<CheckoutController> logger,
+            IShippingService shippingService)
         {
             _unitOfWork = unitOfWork;
             _context = context;
@@ -47,6 +50,7 @@ namespace Kokomija.Controllers
             _localizationService = localizationService;
             _configuration = configuration;
             _logger = logger;
+            _shippingService = shippingService;
         }
 
         [HttpPost]
@@ -61,8 +65,10 @@ namespace Kokomija.Controllers
                     return Json(new { success = false, message = "User not found" });
                 }
 
-                // Get selected shipping option
-                var shippingOption = request?.ShippingOption ?? "standard";
+                // Get selected shipping option from session or request
+                var shippingOption = request?.ShippingOption 
+                    ?? HttpContext.Session.GetString("SelectedShippingOption") 
+                    ?? "standard";
 
                 // Get cart items
                 var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
@@ -196,18 +202,16 @@ namespace Kokomija.Controllers
                 var country = DetectCountry();
                 var currency = "pln"; // Always use PLN
                 
-                // Check if user qualifies for free shipping
+                // Calculate subtotal for shipping rate determination
                 var subtotalAfterDiscount = cartItems.Sum(c => _unitOfWork.Products.GetByIdAsync(c.ProductId).Result?.Price ?? 0) * (1 - (vipDiscountPercentage / 100));
-                var freeShippingThreshold = 100m;
-                var qualifiesForFreeShipping = subtotalAfterDiscount >= freeShippingThreshold;
                 
-                // Check VIP status for free shipping
+                // Get available shipping rates from database
+                var availableShippingRates = await _shippingService.GetAvailableRatesForOrderAsync(country, subtotalAfterDiscount);
+                
+                // Check if user is VIP for shipping discounts
                 var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
                 var totalSpent = orders.Sum(o => o.TotalAmount);
-                if (totalSpent >= 500)
-                {
-                    qualifiesForFreeShipping = true;
-                }
+                var isVipCustomer = totalSpent >= 500 || vipDiscountPercentage > 0;
 
                 // Create metadata
                 var metadata = new Dictionary<string, string>
@@ -237,6 +241,10 @@ namespace Kokomija.Controllers
                     SuccessUrl = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
                     CancelUrl = $"{domain}/Checkout/Cancel",
                     Metadata = metadata,
+                    PhoneNumberCollection = new SessionPhoneNumberCollectionOptions
+                    {
+                        Enabled = true
+                    },
                     ShippingAddressCollection = new SessionShippingAddressCollectionOptions
                     {
                         AllowedCountries = new List<string> { "PL", "DE", "FR", "IT", "ES", "NL", "BE", "AT" }
@@ -249,9 +257,54 @@ namespace Kokomija.Controllers
                 };
                 
                 // Add shipping options based on selection
-                if (shippingOption == "express")
+                if (availableShippingRates.Any())
                 {
-                    var expressCost = qualifiesForFreeShipping ? 500 : 1999; // 5 PLN or 19.99 PLN
+                    // Find the selected shipping rate from database
+                    // First try to match by ID (when user selected a database rate)
+                    ShippingRateDto? selectedRate = null;
+                    
+                    if (int.TryParse(shippingOption, out int rateId))
+                    {
+                        selectedRate = availableShippingRates.FirstOrDefault(r => r.Id == rateId);
+                    }
+                    
+                    // If not found by ID, try to match by type (express/standard)
+                    selectedRate ??= availableShippingRates.FirstOrDefault(r => 
+                        (shippingOption == "express" && (r.Zone?.Contains("Express", StringComparison.OrdinalIgnoreCase) == true || r.ProviderName.Contains("Express", StringComparison.OrdinalIgnoreCase))) ||
+                        (shippingOption == "standard" && r.Zone?.Contains("Standard", StringComparison.OrdinalIgnoreCase) == true));
+                    
+                    // Fallback to first available rate if not found
+                    selectedRate ??= availableShippingRates.First();
+                    
+                    // Determine if this is an express-type shipping
+                    bool isExpressShipping = selectedRate.Zone?.Contains("Express", StringComparison.OrdinalIgnoreCase) == true || 
+                                             selectedRate.ProviderName.Contains("Express", StringComparison.OrdinalIgnoreCase);
+                    
+                    // Determine if free shipping applies
+                    var qualifiesForFreeShipping = (selectedRate.FreeShippingThreshold.HasValue && subtotalAfterDiscount >= selectedRate.FreeShippingThreshold.Value) || isVipCustomer;
+                    
+                    // Calculate final shipping cost
+                    decimal shippingCost = selectedRate.Rate;
+                    string displayName = selectedRate.Zone ?? selectedRate.ProviderName;
+                    
+                    if (qualifiesForFreeShipping)
+                    {
+                        // VIP gets discounted express, free standard
+                        if (isExpressShipping)
+                        {
+                            shippingCost = Math.Round(shippingCost * 0.5m, 2); // 50% of express for VIP
+                            displayName = $"{displayName} (VIP Discount)";
+                        }
+                        else
+                        {
+                            shippingCost = 0;
+                            displayName = $"{displayName} (Free)";
+                        }
+                    }
+                    
+                    // Convert to grosze for Stripe
+                    var shippingCostInGrosze = (long)(shippingCost * 100);
+                    
                     options.ShippingOptions.Add(new SessionShippingOptionOptions
                     {
                         ShippingRateData = new SessionShippingOptionShippingRateDataOptions
@@ -259,55 +312,91 @@ namespace Kokomija.Controllers
                             Type = "fixed_amount",
                             FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
                             {
-                                Amount = expressCost,
+                                Amount = shippingCostInGrosze,
                                 Currency = "pln"
                             },
-                            DisplayName = qualifiesForFreeShipping ? "Express Shipping (Discounted)" : "Express Shipping",
+                            DisplayName = displayName,
                             DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
                             {
                                 Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
                                 {
                                     Unit = "business_day",
-                                    Value = 1
+                                    Value = selectedRate.EstimatedDaysMin > 0 ? selectedRate.EstimatedDaysMin : 3
                                 },
                                 Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
                                 {
                                     Unit = "business_day",
-                                    Value = 2
+                                    Value = selectedRate.EstimatedDaysMax > 0 ? selectedRate.EstimatedDaysMax : 7
                                 }
                             }
                         }
                     });
                 }
-                else // standard
+                else
                 {
-                    var standardCost = qualifiesForFreeShipping ? 0 : 999; // Free or 9.99 PLN
-                    options.ShippingOptions.Add(new SessionShippingOptionOptions
+                    // Fallback to hardcoded values if no rates configured in database
+                    var fallbackFreeShipping = subtotalAfterDiscount >= 100m || isVipCustomer;
+                    
+                    if (shippingOption == "express")
                     {
-                        ShippingRateData = new SessionShippingOptionShippingRateDataOptions
+                        var expressCost = fallbackFreeShipping ? 999 : 2999;
+                        options.ShippingOptions.Add(new SessionShippingOptionOptions
                         {
-                            Type = "fixed_amount",
-                            FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
+                            ShippingRateData = new SessionShippingOptionShippingRateDataOptions
                             {
-                                Amount = standardCost,
-                                Currency = "pln"
-                            },
-                            DisplayName = qualifiesForFreeShipping ? "Standard Shipping (Free)" : "Standard Shipping",
-                            DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
-                            {
-                                Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                Type = "fixed_amount",
+                                FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
                                 {
-                                    Unit = "business_day",
-                                    Value = 3
+                                    Amount = expressCost,
+                                    Currency = "pln"
                                 },
-                                Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                DisplayName = fallbackFreeShipping ? "Express Shipping (VIP Discount)" : "Express Shipping",
+                                DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
                                 {
-                                    Unit = "business_day",
-                                    Value = 7
+                                    Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                    {
+                                        Unit = "business_day",
+                                        Value = 1
+                                    },
+                                    Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                    {
+                                        Unit = "business_day",
+                                        Value = 2
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
+                    else
+                    {
+                        var standardCost = fallbackFreeShipping ? 0 : 1500;
+                        options.ShippingOptions.Add(new SessionShippingOptionOptions
+                        {
+                            ShippingRateData = new SessionShippingOptionShippingRateDataOptions
+                            {
+                                Type = "fixed_amount",
+                                FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
+                                {
+                                    Amount = standardCost,
+                                    Currency = "pln"
+                                },
+                                DisplayName = fallbackFreeShipping ? "Standard Shipping (Free)" : "Standard Shipping",
+                                DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
+                                {
+                                    Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                    {
+                                        Unit = "business_day",
+                                        Value = 3
+                                    },
+                                    Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                    {
+                                        Unit = "business_day",
+                                        Value = 7
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
                 
                 // Set customer or email (not both)
@@ -319,6 +408,12 @@ namespace Kokomija.Controllers
                 {
                     options.CustomerEmail = user.Email;
                 }
+                
+                // Set receipt email for automatic Stripe receipts
+                options.PaymentIntentData = new SessionPaymentIntentDataOptions
+                {
+                    ReceiptEmail = user.Email
+                };
                 
                 // Apply coupon discount if exists, otherwise allow promotion codes
                 if (!string.IsNullOrEmpty(couponCode))
@@ -355,162 +450,347 @@ namespace Kokomija.Controllers
         {
             if (string.IsNullOrEmpty(session_id))
             {
-                return RedirectToAction("Index", "Home");
+                TempData["Error"] = _localizationService["Checkout_InvalidSession"];
+                return RedirectToAction("Index", "Cart");
             }
 
             try
             {
-                // Retrieve the session
+                // Retrieve the session from Stripe
                 var session = await _stripeService.GetCheckoutSessionAsync(session_id);
-
-                if (session.PaymentStatus == "paid")
+                
+                if (session == null)
                 {
-                    var user = await _userManager.GetUserAsync(User);
-                    if (user != null)
+                    _logger.LogWarning("Checkout session not found: {SessionId}", session_id);
+                    TempData["Error"] = _localizationService["Checkout_SessionNotFound"];
+                    return RedirectToAction("Index", "Cart");
+                }
+
+                // Check if order already exists (created by webhook or previous visit)
+                var existingOrders = await _unitOfWork.Orders.FindAsync(o => o.StripeCheckoutSessionId == session_id);
+                var existingOrder = existingOrders.FirstOrDefault();
+                
+                if (existingOrder != null)
+                {
+                    // Order already processed, show success page with existing order
+                    return await BuildSuccessView(existingOrder, session);
+                }
+
+                // Payment must be successful
+                if (session.PaymentStatus != "paid")
+                {
+                    _logger.LogWarning("Checkout session {SessionId} not paid. Status: {Status}", session_id, session.PaymentStatus);
+                    return RedirectToAction("Failure", new { session_id, reason = "payment_pending" });
+                }
+
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found during checkout success for session: {SessionId}", session_id);
+                    TempData["Error"] = _localizationService["Error_UserNotFound"];
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Create order from cart
+                var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
+                
+                if (!cartItems.Any())
+                {
+                    _logger.LogInformation("Cart empty for session {SessionId}, order may have been processed already", session_id);
+                    // Try to find order by payment intent
+                    if (!string.IsNullOrEmpty(session.PaymentIntentId))
                     {
-                        // Create order from cart
-                        var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
-
-                        // Extract currency and country from session metadata
-                        var currency = session.Metadata?.ContainsKey("currency") == true ? session.Metadata["currency"] : "pln";
-                        var country = session.Metadata?.ContainsKey("country") == true ? session.Metadata["country"] : "PL";
-
-                        var order = new Order
+                        var ordersByPayment = await _unitOfWork.Orders.FindAsync(o => o.StripePaymentIntentId == session.PaymentIntentId);
+                        var orderByPayment = ordersByPayment.FirstOrDefault();
+                        if (orderByPayment != null)
                         {
-                            UserId = user.Id,
-                            OrderNumber = GenerateOrderNumber(),
-                            TotalAmount = (session.AmountTotal ?? 0) / 100m, // Convert from cents
-                            SubtotalAmount = (session.AmountSubtotal ?? 0) / 100m,
-                            TaxAmount = (session.TotalDetails?.AmountTax ?? 0) / 100m,
-                            ShippingCost = (session.TotalDetails?.AmountShipping ?? 0) / 100m,
-                            OrderStatus = "processing",
-                            PaymentStatus = "paid",
-                            Currency = currency,
-                            SessionStatus = "complete",
-                            CustomerCountry = country,
-                            CustomerEmail = user.Email ?? string.Empty,
-                            CustomerName = $"{user.FirstName} {user.LastName}",
-                            CustomerPhone = user.PhoneNumber,
-                            ShippingAddress = session.CustomerDetails?.Address?.Line1,
-                            ShippingCity = session.CustomerDetails?.Address?.City,
-                            ShippingState = session.CustomerDetails?.Address?.State,
-                            ShippingPostalCode = session.CustomerDetails?.Address?.PostalCode,
-                            ShippingCountry = session.CustomerDetails?.Address?.Country,
-                            StripePaymentIntentId = session.PaymentIntentId ?? string.Empty,
-                            StripeCheckoutSessionId = session.Id,
-                            PaidAt = DateTime.UtcNow,
-                            CreatedAt = DateTime.UtcNow
-                        };
-
-                        await _unitOfWork.Orders.AddAsync(order);
-                        await _unitOfWork.SaveChangesAsync();
-
-                        // Create order items
-                        foreach (var cartItem in cartItems)
-                        {
-                            var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
-                            if (product == null) continue;
-
-                            // Find variant
-                            var variants = await _unitOfWork.ProductVariants.GetAllAsync(v =>
-                                v.ProductId == cartItem.ProductId &&
-                                v.SizeId == cartItem.SizeId &&
-                                v.ColorId == cartItem.ColorId);
-                            var variant = variants.FirstOrDefault();
-                            
-                            if (variant == null) continue;
-
-                            var size = cartItem.SizeId.HasValue ? await _unitOfWork.Sizes.GetByIdAsync(cartItem.SizeId.Value) : null;
-                            var color = cartItem.ColorId.HasValue ? await _unitOfWork.Colors.GetByIdAsync(cartItem.ColorId.Value) : null;
-
-                            var orderItem = new OrderItem
-                            {
-                                OrderId = order.Id,
-                                ProductVariantId = variant.Id,
-                                ProductName = product.Name,
-                                Size = size?.Name,
-                                Color = color?.Name,
-                                Quantity = cartItem.Quantity,
-                                UnitPrice = variant.Price,
-                                TotalPrice = variant.Price * cartItem.Quantity,
-                                CreatedAt = DateTime.UtcNow
-                            };
-
-                            await _unitOfWork.Repository<OrderItem>().AddAsync(orderItem);
-
-                            // Decrease stock
-                            variant.StockQuantity -= cartItem.Quantity;
+                            return await BuildSuccessView(orderByPayment, session);
                         }
+                    }
+                    TempData["Success"] = _localizationService["Checkout_OrderAlreadyProcessed"];
+                    return RedirectToAction("Orders", "Account");
+                }
 
-                        // Clear cart
-                        await _unitOfWork.Carts.ClearCartAsync(user.Id);
+                // Extract metadata
+                var currency = session.Metadata?.GetValueOrDefault("currency") ?? "pln";
+                var country = session.Metadata?.GetValueOrDefault("country") ?? "PL";
+                var vipTier = session.Metadata?.GetValueOrDefault("vip_tier") ?? "None";
+                var couponCode = session.Metadata?.GetValueOrDefault("coupon_code");
 
-                        // Clear coupon session
-                        HttpContext.Session.Remove("AppliedCouponCode");
-
-                        await _unitOfWork.SaveChangesAsync();
-
-                        ViewBag.OrderNumber = order.OrderNumber;
-                        ViewBag.OrderTotal = order.TotalAmount;
+                // Calculate discount amount if coupon was applied
+                decimal discountAmount = 0;
+                int? couponId = null;
+                if (!string.IsNullOrEmpty(couponCode))
+                {
+                    var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
+                    if (coupon != null)
+                    {
+                        couponId = coupon.Id;
+                        discountAmount = (session.TotalDetails?.AmountDiscount ?? 0) / 100m;
                     }
                 }
 
-                ViewData["Title"] = _localizationService["Checkout_Success_Title"];
-                return View();
+                // Get commission settings for calculating commission
+                var commissionSettings = (await _unitOfWork.CommissionSettings.GetAllAsync()).FirstOrDefault();
+                var commissionRate = commissionSettings?.DeveloperCommissionRate ?? 1.5m;
+
+                // Create the order
+                var order = new Order
+                {
+                    UserId = user.Id,
+                    OrderNumber = GenerateOrderNumber(),
+                    TotalAmount = (session.AmountTotal ?? 0) / 100m,
+                    SubtotalAmount = (session.AmountSubtotal ?? 0) / 100m,
+                    TaxAmount = (session.TotalDetails?.AmountTax ?? 0) / 100m,
+                    ShippingCost = (session.TotalDetails?.AmountShipping ?? 0) / 100m,
+                    DiscountAmount = discountAmount,
+                    CouponId = couponId,
+                    CommissionRate = commissionRate / 100m,
+                    CommissionAmount = ((session.AmountTotal ?? 0) / 100m) * (commissionRate / 100m),
+                    OrderStatus = "processing",
+                    PaymentStatus = "paid",
+                    Currency = currency.ToUpper(),
+                    SessionStatus = "complete",
+                    CustomerCountry = country,
+                    CustomerEmail = user.Email ?? string.Empty,
+                    CustomerName = $"{user.FirstName} {user.LastName}".Trim(),
+                    CustomerPhone = user.PhoneNumber,
+                    ShippingAddress = session.CustomerDetails?.Address?.Line1,
+                    ShippingCity = session.CustomerDetails?.Address?.City,
+                    ShippingState = session.CustomerDetails?.Address?.State,
+                    ShippingPostalCode = session.CustomerDetails?.Address?.PostalCode,
+                    ShippingCountry = session.CustomerDetails?.Address?.Country,
+                    StripePaymentIntentId = session.PaymentIntentId ?? string.Empty,
+                    StripeCheckoutSessionId = session.Id,
+                    PaidAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _unitOfWork.Orders.AddAsync(order);
+                await _unitOfWork.SaveChangesAsync();
+
+                // Create order items
+                foreach (var cartItem in cartItems)
+                {
+                    var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
+                    if (product == null) continue;
+
+                    // Find variant
+                    var variants = await _unitOfWork.ProductVariants.FindAsync(v =>
+                        v.ProductId == cartItem.ProductId &&
+                        v.SizeId == cartItem.SizeId &&
+                        v.ColorId == cartItem.ColorId);
+                    var variant = variants.FirstOrDefault();
+                    
+                    if (variant == null) continue;
+
+                    var size = cartItem.SizeId.HasValue ? await _unitOfWork.Sizes.GetByIdAsync(cartItem.SizeId.Value) : null;
+                    var color = cartItem.ColorId.HasValue ? await _unitOfWork.Colors.GetByIdAsync(cartItem.ColorId.Value) : null;
+
+                    var orderItem = new OrderItem
+                    {
+                        OrderId = order.Id,
+                        ProductVariantId = variant.Id,
+                        ProductName = product.Name,
+                        Size = size?.Name,
+                        Color = color?.Name,
+                        Quantity = cartItem.Quantity,
+                        UnitPrice = variant.Price,
+                        TotalPrice = variant.Price * cartItem.Quantity,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _unitOfWork.Repository<OrderItem>().AddAsync(orderItem);
+
+                    // Decrease stock
+                    variant.StockQuantity -= cartItem.Quantity;
+                }
+
+                // Update user's total spent and VIP tier
+                user.TotalSpent += order.TotalAmount;
+                var newTier = CalculateVIPTier(user.TotalSpent);
+                if (user.VipTier != newTier)
+                {
+                    user.VipTier = newTier;
+                }
+                await _userManager.UpdateAsync(user);
+
+                // Clear cart
+                await _unitOfWork.Carts.ClearCartAsync(user.Id);
+
+                // Clear coupon session
+                HttpContext.Session.Remove("AppliedCouponCode");
+
+                await _unitOfWork.SaveChangesAsync();
+                
+                _logger.LogInformation("Order {OrderNumber} created successfully for user {UserId}", order.OrderNumber, user.Id);
+
+                return await BuildSuccessView(order, session);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing successful checkout");
-                return RedirectToAction("Index", "Home");
+                _logger.LogError(ex, "Error processing successful checkout for session {SessionId}", session_id);
+                TempData["Error"] = _localizationService["Checkout_ProcessingError"];
+                return RedirectToAction("Failure", new { session_id, reason = "processing_error" });
             }
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Cancel(string session_id)
+        /// <summary>
+        /// Builds the success view with order and payment details
+        /// </summary>
+        private async Task<IActionResult> BuildSuccessView(Order order, Stripe.Checkout.Session? session)
         {
-            // Track cancelled session
+            // Get order items with product details
+            var orderItems = await _unitOfWork.Repository<OrderItem>().FindAsync(oi => oi.OrderId == order.Id);
+            
+            var items = new List<Models.ViewModels.Checkout.CheckoutOrderItemViewModel>();
+            foreach (var item in orderItems)
+            {
+                var variant = await _unitOfWork.ProductVariants.GetByIdAsync(item.ProductVariantId);
+                var product = variant != null ? await _unitOfWork.Products.GetByIdAsync(variant.ProductId) : null;
+                var productImage = product?.Images?.FirstOrDefault()?.ImageUrl;
+                
+                items.Add(new Models.ViewModels.Checkout.CheckoutOrderItemViewModel
+                {
+                    ProductId = product?.Id ?? 0,
+                    ProductName = item.ProductName,
+                    ProductImage = productImage != null ? $"/img/ProductImage/{productImage}" : null,
+                    Size = item.Size,
+                    Color = item.Color,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    TotalPrice = item.TotalPrice,
+                    PackSize = product?.PackSize ?? 1
+                });
+            }
+
+            // Try to get payment method info from Stripe
+            string? paymentMethod = null;
+            string? last4 = null;
+            if (!string.IsNullOrEmpty(order.StripePaymentIntentId))
+            {
+                try
+                {
+                    var paymentIntentService = new Stripe.PaymentIntentService();
+                    var paymentIntent = await paymentIntentService.GetAsync(order.StripePaymentIntentId, new Stripe.PaymentIntentGetOptions
+                    {
+                        Expand = new List<string> { "payment_method" }
+                    });
+                    
+                    if (paymentIntent.PaymentMethod?.Card != null)
+                    {
+                        paymentMethod = paymentIntent.PaymentMethod.Card.Brand;
+                        last4 = paymentIntent.PaymentMethod.Card.Last4;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not retrieve payment method details for order {OrderNumber}", order.OrderNumber);
+                }
+            }
+
+            var viewModel = new Models.ViewModels.Checkout.CheckoutSuccessViewModel
+            {
+                OrderNumber = order.OrderNumber,
+                OrderId = order.Id,
+                OrderDate = order.CreatedAt,
+                SubtotalAmount = order.SubtotalAmount,
+                ShippingCost = order.ShippingCost,
+                TaxAmount = order.TaxAmount,
+                DiscountAmount = order.DiscountAmount,
+                TotalAmount = order.TotalAmount,
+                Currency = order.Currency,
+                PaymentStatus = order.PaymentStatus,
+                OrderStatus = order.OrderStatus,
+                CustomerEmail = order.CustomerEmail,
+                CustomerName = order.CustomerName,
+                ShippingAddress = order.ShippingAddress,
+                ShippingCity = order.ShippingCity,
+                ShippingState = order.ShippingState,
+                ShippingPostalCode = order.ShippingPostalCode,
+                ShippingCountry = order.ShippingCountry,
+                Items = items,
+                VipTier = session?.Metadata?.GetValueOrDefault("vip_tier"),
+                VipDiscount = decimal.TryParse(session?.Metadata?.GetValueOrDefault("vip_discount_percentage"), out var vipDisc) ? vipDisc : 0,
+                PaymentIntentId = order.StripePaymentIntentId,
+                PaymentMethod = paymentMethod,
+                Last4 = last4
+            };
+
+            ViewData["Title"] = _localizationService["Checkout_Success_Title"];
+            return View("Success", viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Failure(string? session_id, string? reason)
+        {
+            var viewModel = new Models.ViewModels.Checkout.CheckoutFailureViewModel
+            {
+                SessionId = session_id,
+                FailureReason = reason ?? "unknown",
+                CanRetry = true
+            };
+
+            // Get cart item count for retry button
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                var cartItems = await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id);
+                viewModel.CartItemCount = cartItems.Count();
+            }
+
+            // Try to get session details if available
             if (!string.IsNullOrEmpty(session_id))
             {
                 try
                 {
                     var session = await _stripeService.GetCheckoutSessionAsync(session_id);
-                    var user = await _userManager.GetUserAsync(User);
-                    
-                    if (user != null && session != null)
+                    if (session != null)
                     {
-                        var currency = session.Metadata?.ContainsKey("currency") == true ? session.Metadata["currency"] : "pln";
-                        var country = session.Metadata?.ContainsKey("country") == true ? session.Metadata["country"] : "PL";
-
-                        // Create order record for cancelled session
-                        var order = new Order
-                        {
-                            UserId = user.Id,
-                            OrderNumber = GenerateOrderNumber(),
-                            TotalAmount = (session.AmountTotal ?? 0) / 100m,
-                            SubtotalAmount = (session.AmountSubtotal ?? 0) / 100m,
-                            OrderStatus = "cancelled",
-                            PaymentStatus = "cancelled",
-                            Currency = currency,
-                            SessionStatus = "cancelled",
-                            CustomerCountry = country,
-                            CustomerEmail = user.Email ?? string.Empty,
-                            CustomerName = $"{user.FirstName} {user.LastName}",
-                            StripeCheckoutSessionId = session.Id,
-                            CreatedAt = DateTime.UtcNow
-                        };
-
-                        await _unitOfWork.Orders.AddAsync(order);
-                        await _unitOfWork.SaveChangesAsync();
+                        viewModel.AttemptedAmount = (session.AmountTotal ?? 0) / 100m;
+                        viewModel.Currency = session.Metadata?.GetValueOrDefault("currency")?.ToUpper() ?? "PLN";
+                        viewModel.WasPaymentAttempted = session.PaymentStatus != "unpaid";
+                        viewModel.AttemptedAt = DateTime.UtcNow;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error tracking cancelled session");
+                    _logger.LogWarning(ex, "Could not retrieve session details for failure page");
                 }
             }
 
-            TempData["Info"] = _localizationService["Checkout_Cancelled"];
-            return RedirectToAction("Index", "Cart");
+            // Set appropriate error message based on reason
+            viewModel.ErrorMessage = reason switch
+            {
+                "payment_failed" => _localizationService["Checkout_PaymentFailed"],
+                "payment_pending" => _localizationService["Checkout_PaymentPending"],
+                "expired" => _localizationService["Checkout_SessionExpired"],
+                "processing_error" => _localizationService["Checkout_ProcessingError"],
+                _ => _localizationService["Checkout_Cancelled"]
+            };
+
+            ViewData["Title"] = _localizationService["Checkout_Failure_Title"];
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Cancel(string? session_id)
+        {
+            _logger.LogInformation("Checkout cancelled for session: {SessionId}", session_id);
+            
+            // Don't create cancelled order records - just redirect to failure page
+            // The webhook will handle any necessary cleanup
+            
+            return RedirectToAction("Failure", new { session_id, reason = "cancelled" });
+        }
+
+        private string CalculateVIPTier(decimal totalSpent)
+        {
+            if (totalSpent >= 5000) return "Platinum";
+            if (totalSpent >= 1500) return "Gold";
+            if (totalSpent >= 500) return "Silver";
+            if (totalSpent > 0) return "Bronze";
+            return "None";
         }
 
         private string DetectCountry()

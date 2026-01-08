@@ -20,6 +20,7 @@ namespace Kokomija.Controllers
         private readonly ILogger<AccountController> _logger;
         private readonly IReturnRequestService _returnRequestService;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -28,7 +29,8 @@ namespace Kokomija.Controllers
             IUnitOfWork unitOfWork,
             ILogger<AccountController> logger,
             IReturnRequestService returnRequestService,
-            IEmailService emailService)
+            IEmailService emailService,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -37,6 +39,7 @@ namespace Kokomija.Controllers
             _logger = logger;
             _returnRequestService = returnRequestService;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         #region Login
@@ -200,14 +203,68 @@ namespace Kokomija.Controllers
                     // Continue with registration even if Stripe customer creation fails
                 }
 
-                // Send email confirmation (optional - implement if needed)
-                // var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                // await _emailService.SendEmailConfirmationAsync(user.Email, code);
+                // Handle newsletter subscription
+                if (model.SubscribeToNewsletter)
+                {
+                    try
+                    {
+                        var existingSubscription = await _unitOfWork.Repository<Kokomija.Entity.NewsletterSubscription>()
+                            .FirstOrDefaultAsync(ns => ns.Email == model.Email);
+                        
+                        if (existingSubscription == null)
+                        {
+                            var confirmationToken = Guid.NewGuid().ToString("N");
+                            var subscription = new Kokomija.Entity.NewsletterSubscription
+                            {
+                                Email = model.Email,
+                                IsActive = false, // Pending confirmation
+                                SubscribedAt = DateTime.UtcNow,
+                                UnsubscribeToken = Guid.NewGuid().ToString("N"),
+                                ConfirmationToken = confirmationToken,
+                                ConfirmationTokenExpiry = DateTime.UtcNow.AddHours(24),
+                                UserId = user.Id,
+                                Source = "Registration"
+                            };
+                            
+                            await _unitOfWork.Repository<Kokomija.Entity.NewsletterSubscription>().AddAsync(subscription);
+                            await _unitOfWork.SaveChangesAsync();
+                            
+                            // Send confirmation email
+                            var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                            var confirmationUrl = $"{baseUrl}/Newsletter/Confirm?token={confirmationToken}&email={Uri.EscapeDataString(model.Email)}";
+                            await _emailService.SendNewsletterConfirmationAsync(model.Email, confirmationUrl);
+                            
+                            _logger.LogInformation("Newsletter subscription created for user {Email}, confirmation email sent", model.Email);
+                        }
+                        else if (!existingSubscription.IsActive)
+                        {
+                            // Reactivate and send new confirmation
+                            existingSubscription.ConfirmationToken = Guid.NewGuid().ToString("N");
+                            existingSubscription.ConfirmationTokenExpiry = DateTime.UtcNow.AddHours(24);
+                            existingSubscription.UserId = user.Id;
+                            await _unitOfWork.SaveChangesAsync();
+                            
+                            var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                            var confirmationUrl = $"{baseUrl}/Newsletter/Confirm?token={existingSubscription.ConfirmationToken}&email={Uri.EscapeDataString(model.Email)}";
+                            await _emailService.SendNewsletterConfirmationAsync(model.Email, confirmationUrl);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to process newsletter subscription for user {Email}", model.Email);
+                        // Continue with registration even if newsletter subscription fails
+                    }
+                }
 
                 // Auto sign-in after registration
                 await _signInManager.SignInAsync(user, isPersistent: false);
 
                 TempData["SuccessMessage"] = "Account created successfully! Welcome to Kokomija.";
+                
+                if (model.SubscribeToNewsletter)
+                {
+                    TempData["SuccessMessage"] += " Please check your email to confirm your newsletter subscription.";
+                }
 
                 // Redirect to return URL or home
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
@@ -767,6 +824,10 @@ namespace Kokomija.Controllers
             {
                 return NotFound();
             }
+            
+            // Get shipment info if available
+            var shipment = await _unitOfWork.Repository<OrderShipment>()
+                .FirstOrDefaultAsync(s => s.OrderId == order.Id, s => s.ShippingRate);
 
             var orderViewModel = new Models.ViewModels.Account.OrderViewModel
             {
@@ -774,14 +835,41 @@ namespace Kokomija.Controllers
                 OrderNumber = order.OrderNumber,
                 OrderDate = order.CreatedAt,
                 TotalAmount = order.TotalAmount,
+                SubtotalAmount = order.SubtotalAmount,
+                ShippingCost = order.ShippingCost,
+                DiscountAmount = order.DiscountAmount,
+                TaxAmount = order.TaxAmount,
                 OrderStatus = order.OrderStatus,
                 PaymentStatus = order.PaymentStatus,
                 Currency = order.Currency,
                 SessionStatus = order.SessionStatus,
                 CustomerCountry = order.CustomerCountry,
                 ItemCount = order.OrderItems?.Count ?? 0,
-                CanCancel = order.OrderStatus == "Pending" || order.OrderStatus == "Processing",
-                CanReturn = order.OrderStatus == "Delivered" && order.DeliveredAt.HasValue && (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays <= 30,
+                CanCancel = order.OrderStatus == "pending" || order.OrderStatus == "processing",
+                CanReturn = order.OrderStatus == "delivered" && order.DeliveredAt.HasValue && (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays <= 30,
+                
+                // Shipping details
+                ShippingMethod = shipment?.ShippingRate?.Name,
+                TrackingNumber = shipment?.TrackingNumber,
+                ShippedAt = order.ShippedAt,
+                DeliveredAt = order.DeliveredAt,
+                
+                // Address details
+                ShippingAddress = order.ShippingAddress,
+                ShippingCity = order.ShippingCity,
+                ShippingPostalCode = order.ShippingPostalCode,
+                ShippingCountry = order.ShippingCountry,
+                CustomerEmail = order.CustomerEmail,
+                CustomerPhone = order.CustomerPhone,
+                
+                // Payment details
+                PaymentMethod = "Stripe",
+                StripePaymentIntentId = order.StripePaymentIntentId,
+                PaidAt = order.PaidAt,
+                
+                // Coupon
+                CouponCode = order.Coupon?.Code,
+                
                 Items = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
                 {
                     Id = oi.Id,
@@ -939,15 +1027,21 @@ namespace Kokomija.Controllers
         #endregion
 
         #region External Authentication (Google, Facebook, Apple)
-
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public IActionResult ExternalLogin(string provider, string? returnUrl = null)
         {
+            _logger.LogInformation("ExternalLogin called with provider: {Provider}, returnUrl: {ReturnUrl}", provider, returnUrl);
+            
             // Request a redirect to the external login provider
             var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { ReturnUrl = returnUrl });
+            _logger.LogInformation("Redirect URL: {RedirectUrl}", redirectUrl);
+            
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            _logger.LogInformation("Configured external authentication properties for {Provider}", provider);
+            _logger.LogInformation("About to return Challenge for provider: {Provider}", provider);
+            
             return Challenge(properties, provider);
         }
 
@@ -997,7 +1091,7 @@ namespace Kokomija.Controllers
             }
             else
             {
-                // If the user does not have an account, create one
+                // Get email from external provider
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
                 if (string.IsNullOrEmpty(email))
                 {
@@ -1006,17 +1100,137 @@ namespace Kokomija.Controllers
                     return RedirectToAction(nameof(Login));
                 }
 
+                // Check if a user with this email already exists
+                var existingUser = await _userManager.FindByEmailAsync(email);
+                
+                if (existingUser != null)
+                {
+                    // User exists - link the external login to the existing account
+                    var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
+                    
+                    if (addLoginResult.Succeeded)
+                    {
+                        _logger.LogInformation("Linked {Provider} login to existing account for {Email}", info.LoginProvider, email);
+                        
+                        // Update user info from external provider if missing
+                        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
+                        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
+                        var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+                        
+                        // Extract birthday from claims (different providers use different claim types)
+                        var birthdayClaim = info.Principal.FindFirstValue(ClaimTypes.DateOfBirth) 
+                            ?? info.Principal.FindFirstValue("urn:google:birthday")
+                            ?? info.Principal.FindFirstValue("birthday");
+                        
+                        bool needsUpdate = false;
+                        
+                        // Update birthday if not set and available from provider
+                        if (!existingUser.Birthday.HasValue && !string.IsNullOrEmpty(birthdayClaim))
+                        {
+                            if (DateTime.TryParse(birthdayClaim, out var birthday))
+                            {
+                                existingUser.Birthday = birthday;
+                                needsUpdate = true;
+                                _logger.LogInformation("Updated birthday for existing user from {Provider}", info.LoginProvider);
+                            }
+                        }
+                        
+                        // Update first name if empty
+                        if (string.IsNullOrEmpty(existingUser.FirstName) && !string.IsNullOrEmpty(firstName))
+                        {
+                            existingUser.FirstName = firstName;
+                            needsUpdate = true;
+                        }
+                        
+                        // Update last name if empty
+                        if (string.IsNullOrEmpty(existingUser.LastName) && !string.IsNullOrEmpty(lastName))
+                        {
+                            existingUser.LastName = lastName;
+                            needsUpdate = true;
+                        }
+                        
+                        // If first/last name still empty, try to split full name
+                        if (string.IsNullOrEmpty(existingUser.FirstName) && !string.IsNullOrEmpty(name))
+                        {
+                            var nameParts = name.Split(' ', 2);
+                            existingUser.FirstName = nameParts[0];
+                            existingUser.LastName = nameParts.Length > 1 ? nameParts[1] : "";
+                            needsUpdate = true;
+                        }
+                        
+                        // Mark email as confirmed (since external provider verified it)
+                        if (!existingUser.EmailConfirmed)
+                        {
+                            existingUser.EmailConfirmed = true;
+                            needsUpdate = true;
+                        }
+                        
+                        // Update last login time
+                        existingUser.LastLoginAt = DateTime.UtcNow;
+                        needsUpdate = true;
+                        
+                        if (needsUpdate)
+                        {
+                            await _userManager.UpdateAsync(existingUser);
+                        }
+                        
+                        // Sign in the user
+                        await _signInManager.SignInAsync(existingUser, isPersistent: false, info.LoginProvider);
+                        
+                        TempData["SuccessMessage"] = $"Your {info.LoginProvider} account has been linked successfully!";
+                        
+                        // Check if admin role
+                        var roles = await _userManager.GetRolesAsync(existingUser);
+                        if (roles.Contains("Admin"))
+                        {
+                            return RedirectToAction("Index", "Admin");
+                        }
+                        
+                        return LocalRedirect(returnUrl);
+                    }
+                    else
+                    {
+                        // External login might already be linked to another account
+                        _logger.LogWarning("Failed to link {Provider} to existing account: {Errors}", 
+                            info.LoginProvider, string.Join(", ", addLoginResult.Errors.Select(e => e.Description)));
+                        
+                        // If it's already linked, just sign them in
+                        if (addLoginResult.Errors.Any(e => e.Code == "LoginAlreadyAssociated"))
+                        {
+                            await _signInManager.SignInAsync(existingUser, isPersistent: false, info.LoginProvider);
+                            existingUser.LastLoginAt = DateTime.UtcNow;
+                            await _userManager.UpdateAsync(existingUser);
+                            return LocalRedirect(returnUrl);
+                        }
+                        
+                        TempData["ErrorMessage"] = "Failed to link your account. Please try again.";
+                        return RedirectToAction(nameof(Login));
+                    }
+                }
+
+                // No existing user - create a new account
                 // Extract user information from claims
-                var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
-                var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
-                var name = info.Principal.FindFirstValue(ClaimTypes.Name) ?? "";
+                var newFirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? "";
+                var newLastName = info.Principal.FindFirstValue(ClaimTypes.Surname) ?? "";
+                var newName = info.Principal.FindFirstValue(ClaimTypes.Name) ?? "";
+                
+                // Extract birthday from claims
+                var newBirthdayClaim = info.Principal.FindFirstValue(ClaimTypes.DateOfBirth) 
+                    ?? info.Principal.FindFirstValue("urn:google:birthday")
+                    ?? info.Principal.FindFirstValue("birthday");
+                DateTime? newBirthday = null;
+                if (!string.IsNullOrEmpty(newBirthdayClaim) && DateTime.TryParse(newBirthdayClaim, out var parsedBirthday))
+                {
+                    newBirthday = parsedBirthday;
+                    _logger.LogInformation("Extracted birthday from {Provider}: {Birthday}", info.LoginProvider, newBirthday);
+                }
 
                 // If first/last name not available, try to split the full name
-                if (string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(name))
+                if (string.IsNullOrEmpty(newFirstName) && !string.IsNullOrEmpty(newName))
                 {
-                    var nameParts = name.Split(' ', 2);
-                    firstName = nameParts[0];
-                    lastName = nameParts.Length > 1 ? nameParts[1] : "";
+                    var nameParts = newName.Split(' ', 2);
+                    newFirstName = nameParts[0];
+                    newLastName = nameParts.Length > 1 ? nameParts[1] : "";
                 }
 
                 var user = new ApplicationUser
@@ -1024,8 +1238,9 @@ namespace Kokomija.Controllers
                     UserName = email,
                     Email = email,
                     EmailConfirmed = true, // Email is confirmed by the external provider
-                    FirstName = firstName,
-                    LastName = lastName,
+                    FirstName = newFirstName,
+                    LastName = newLastName,
+                    Birthday = newBirthday,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -1059,6 +1274,8 @@ namespace Kokomija.Controllers
 
                         // Sign in the user
                         await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+
+                        TempData["SuccessMessage"] = $"Welcome! Your account has been created with {info.LoginProvider}.";
 
                         // Check if admin role
                         var roles = await _userManager.GetRolesAsync(user);

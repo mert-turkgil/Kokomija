@@ -11,6 +11,11 @@
     <Watch Include="Resources/**/*.resx" />
   </ItemGroup>
 
+  <!-- Include resource files in publish output -->
+  <ItemGroup>
+    <Content Include="Resources/**/*.resx" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />

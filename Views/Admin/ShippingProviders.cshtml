@@ -199,11 +199,44 @@
                         <div class="col-md-6 mb-3">
                             <label for="apiKey" class="form-label">API Key</label>
                             <input type="text" class="form-control" id="apiKey">
+                            <div class="form-text">Required for live tracking and rate calculation</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="apiSecret" class="form-label">API Secret</label>
                             <input type="password" class="form-control" id="apiSecret">
                         </div>
+                    </div>
+
+                    <!-- Quick Setup Presets -->
+                    <div class="mb-3">
+                        <label class="form-label d-block">Quick Setup Presets</label>
+                        <div class="btn-group flex-wrap" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadPreset('ups')">
+                                <img src="https://www.ups.com/assets/resources/images/UPS_logo.svg" alt="UPS" height="16" class="me-1" onerror="this.style.display='none'">
+                                UPS
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadPreset('dhl')">
+                                <i class="bi bi-box"></i> DHL
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadPreset('fedex')">
+                                <i class="bi bi-box"></i> FedEx
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadPreset('inpost')">
+                                <i class="bi bi-box"></i> InPost
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadPreset('dpd')">
+                                <i class="bi bi-box"></i> DPD
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- API Documentation Links -->
+                    <div id="apiDocsSection" class="alert alert-info d-none">
+                        <h6><i class="bi bi-info-circle"></i> API Setup Instructions</h6>
+                        <p id="apiDocsDescription" class="mb-2 small"></p>
+                        <a id="apiDocsLink" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> Open API Documentation
+                        </a>
                     </div>
 
                     <div class="mb-3 form-check" id="isActiveContainer" style="display: none;">
@@ -220,9 +253,122 @@
     </div>
 </div>
 
+<!-- Test Connection Modal -->
+<div class="modal fade" id="testConnectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plug"></i> Test API Connection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="testConnectionResult">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Testing...</span>
+                        </div>
+                        <p class="mt-3">Testing connection to carrier API...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .stat-card-small {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .stat-icon-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: white;
+        }
+        .stat-card-small h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+    </style>
+}
+
 @section Scripts {
     <script>
         let isEditMode = false;
+
+        // Carrier presets configuration
+        const carrierPresets = {
+            ups: {
+                name: 'UPS',
+                code: 'ups',
+                trackingUrlTemplate: 'https://www.ups.com/track?loc=en_PL&tracknum={trackingNumber}',
+                supportedCountries: '["PL", "DE", "FR", "GB", "US", "CA", "IT", "ES", "NL", "BE"]',
+                apiDocsUrl: 'https://developer.ups.com/catalog?loc=en_PL',
+                description: 'Get your UPS API credentials from the UPS Developer Portal. You\'ll need a Client ID and Client Secret for OAuth 2.0 authentication.'
+            },
+            dhl: {
+                name: 'DHL Express',
+                code: 'dhl',
+                trackingUrlTemplate: 'https://www.dhl.com/pl-en/home/tracking.html?tracking-id={trackingNumber}',
+                supportedCountries: '["PL", "DE", "FR", "GB", "US", "CA", "IT", "ES", "NL", "BE", "AT", "CH"]',
+                apiDocsUrl: 'https://developer.dhl.com/',
+                description: 'Register at DHL Developer Portal to get your API Key. DHL provides tracking, shipping, and rate calculation APIs.'
+            },
+            fedex: {
+                name: 'FedEx',
+                code: 'fedex',
+                trackingUrlTemplate: 'https://www.fedex.com/fedextrack/?trknbr={trackingNumber}',
+                supportedCountries: '["PL", "DE", "FR", "GB", "US", "CA", "IT", "ES"]',
+                apiDocsUrl: 'https://developer.fedex.com/',
+                description: 'Create a FedEx Developer account to obtain your API credentials. FedEx uses OAuth 2.0 for authentication.'
+            },
+            inpost: {
+                name: 'InPost',
+                code: 'inpost',
+                trackingUrlTemplate: 'https://inpost.pl/sledzenie-przesylek?number={trackingNumber}',
+                supportedCountries: '["PL"]',
+                apiDocsUrl: 'https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/overview',
+                description: 'Contact InPost business support to get API access. InPost Paczkomaty API provides parcel locker integration.'
+            },
+            dpd: {
+                name: 'DPD',
+                code: 'dpd',
+                trackingUrlTemplate: 'https://www.dpd.com.pl/tracking?shipmentId={trackingNumber}',
+                supportedCountries: '["PL", "DE", "FR", "GB", "IT", "ES", "NL", "BE", "AT", "CZ", "SK"]',
+                apiDocsUrl: 'https://www.dpd.com.pl/dla-firm/integracje',
+                description: 'DPD Poland provides API integration for business customers. Contact DPD to set up your API credentials.'
+            }
+        };
+
+        function loadPreset(carrier) {
+            const preset = carrierPresets[carrier];
+            if (!preset) return;
+
+            document.getElementById('providerName').value = preset.name;
+            document.getElementById('providerCode').value = preset.code;
+            document.getElementById('trackingUrlTemplate').value = preset.trackingUrlTemplate;
+            document.getElementById('supportedCountries').value = preset.supportedCountries;
+
+            // Show API documentation section
+            const docsSection = document.getElementById('apiDocsSection');
+            docsSection.classList.remove('d-none');
+            document.getElementById('apiDocsDescription').textContent = preset.description;
+            document.getElementById('apiDocsLink').href = preset.apiDocsUrl;
+        }
 
         function showCreateProviderModal() {
             isEditMode = false;
@@ -231,6 +377,7 @@
             document.getElementById('providerId').value = '';
             document.getElementById('providerCode').disabled = false;
             document.getElementById('isActiveContainer').style.display = 'none';
+            document.getElementById('apiDocsSection').classList.add('d-none');
             new bootstrap.Modal(document.getElementById('providerModal')).show();
         }
 
@@ -250,6 +397,16 @@
             document.getElementById('supportedCountries').value = providerData.supportedCountries || '';
             document.getElementById('isActiveContainer').style.display = 'block';
             document.getElementById('isActive').checked = providerData.isActive;
+            document.getElementById('apiDocsSection').classList.add('d-none');
+
+            // Check if we have a preset for this carrier
+            if (carrierPresets[providerData.code]) {
+                const preset = carrierPresets[providerData.code];
+                const docsSection = document.getElementById('apiDocsSection');
+                docsSection.classList.remove('d-none');
+                document.getElementById('apiDocsDescription').textContent = preset.description;
+                document.getElementById('apiDocsLink').href = preset.apiDocsUrl;
+            }
 
             new bootstrap.Modal(document.getElementById('providerModal')).show();
         }
@@ -330,13 +487,52 @@
             }
         }
 
+        async function testConnection(providerId) {
+            const testModal = new bootstrap.Modal(document.getElementById('testConnectionModal'));
+            testModal.show();
+
+            try {
+                const response = await fetch(`/Admin/TestCarrierConnection?id=${providerId}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                
+                const resultDiv = document.getElementById('testConnectionResult');
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6><i class="bi bi-check-circle-fill"></i> Connection Successful</h6>
+                            <p class="mb-0">${result.message}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-x-circle-fill"></i> Connection Failed</h6>
+                            <p class="mb-0">${result.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('testConnectionResult').innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6><i class="bi bi-x-circle-fill"></i> Error</h6>
+                        <p class="mb-0">Failed to test connection. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
         // Initialize DataTable
         $(document).ready(function() {
-            $('#providersTable').DataTable({
-                order: [[0, 'desc']],
-                pageLength: 25,
-                responsive: true
-            });
+            if ($.fn.DataTable) {
+                $('#providersTable').DataTable({
+                    order: [[0, 'desc']],
+                    pageLength: 25,
+                    responsive: true
+                });
+            }
         });
     </script>
 }

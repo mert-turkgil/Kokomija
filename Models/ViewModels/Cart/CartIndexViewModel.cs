@@ -18,6 +18,29 @@ namespace Kokomija.Models.ViewModels.Cart
         public decimal FreeShippingThreshold { get; set; }
         public decimal RemainingForFreeShipping { get; set; }
         public IEnumerable<string> AvailableCoupons { get; set; } = new List<string>();
+        
+        // Shipping Options
+        public string SelectedShippingOption { get; set; } = "standard";
+        public List<ShippingOptionModel> ShippingOptions { get; set; } = new();
+        public bool IsFreeShippingVip { get; set; } // VIP qualifies for free shipping
+        public decimal OriginalShippingCost { get; set; } // Cost before free shipping applied
+    }
+    
+    public class ShippingOptionModel
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? ProviderName { get; set; }
+        public string? ProviderLogo { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public decimal OriginalCost { get; set; }
+        public decimal Cost { get; set; } // After free shipping discount
+        public string DeliveryEstimate { get; set; } = string.Empty; // e.g., "3-5"
+        public int MinDays { get; set; }
+        public int MaxDays { get; set; }
+        public DateTime? EstimatedDeliveryDate { get; set; } // Calculated delivery date
+        public bool IsFree { get; set; }
+        public bool IsSelected { get; set; }
     }
     
     public class CartItemViewModel

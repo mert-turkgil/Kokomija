@@ -95,13 +95,10 @@
                             <span>@L["Auth_OrContinueWith"]</span>
                         </div>
                         
-                        @* Developer Note: OAuth buttons below require configuration in appsettings.json *@
-                        @* Add Authentication:Google:ClientId and Authentication:Google:ClientSecret *@
-                        @* Add Authentication:Facebook:AppId and Authentication:Facebook:AppSecret *@
-                        @* See Meta Developers Console screenshot for setup instructions *@
-                        
                         <div class="social-buttons">
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                            <!-- Google Sign-In -->
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="mb-2" target="_blank">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
                                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
@@ -112,27 +109,15 @@
                                     <span>@L["Auth_ContinueWithGoogle"]</span>
                                 </button>
                             </form>
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                            
+                            <!-- Facebook Sign-In -->
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" target="_blank">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100">
                                     <i class="bi bi-facebook" style="font-size: 20px;"></i>
                                     <span>@L["Auth_ContinueWithFacebook"]</span>
                                 </button>
                             </form>
-                            @* Apple Sign-In - Uncomment when credentials are configured
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                                <button type="submit" name="provider" value="Apple" class="btn-social btn-apple w-100">
-                                    <i class="bi bi-apple" style="font-size: 20px;"></i>
-                                    <span>Continue with Apple</span>
-                                </button>
-                            </form>
-                            *@
-                        </div>
-                        
-                        @* Helpful note for developers *@
-                        <div class="alert alert-info mt-3" role="alert" style="font-size: 0.85rem;">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Developer Note:</strong> To enable social login, configure OAuth credentials in <code>appsettings.json</code>. 
-                            See <a href="https://developers.facebook.com" target="_blank">Meta Developer Console</a> for Facebook setup.
                         </div>
                     </div>
 
@@ -161,6 +146,23 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // Debug: Log form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Login page loaded');
+            
+            // Find all forms with ExternalLogin action
+            const externalForms = document.querySelectorAll('form[action="/Account/ExternalLogin"]');
+            console.log('Found ' + externalForms.length + ' external login forms');
+            
+            externalForms.forEach((form, index) => {
+                console.log('Adding submit listener to form ' + index);
+                form.addEventListener('submit', function(e) {
+                    console.log('Form ' + index + ' is being submitted');
+                    console.log('Form data:', new FormData(this));
+                });
+            });
+        });
+
         function togglePassword(button) {
             const input = button.previousElementSibling;
             const icon = button.querySelector('i');

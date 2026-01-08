@@ -1,5 +1,6 @@
 using Kokomija.Entity;
 using Stripe;
+using Microsoft.Extensions.Logging;
 
 namespace Kokomija.Services
 {
@@ -17,8 +18,14 @@ namespace Kokomija.Services
         Task<Refund> CreateRefundAsync(string chargeId, long? amount = null);
         Task<Stripe.Coupon> CreateStripeCouponAsync(Entity.Coupon coupon);
         Task<PromotionCode> CreateStripePromotionCodeAsync(string stripeCouponId, string code);
+        Task<PromotionCode> CreateStripePromotionCodeWithRestrictionsAsync(string stripeCouponId, string code, int? maxRedemptions = null, int? maxRedemptionsPerCustomer = null, DateTime? expiresAt = null, decimal? minimumAmount = null);
         Task<PromotionCode> UpdateStripePromotionCodeAsync(string promotionCodeId, bool isActive);
         Task<Stripe.Coupon> GetStripeCouponAsync(string couponId);
+        Task<PromotionCode?> GetStripePromotionCodeAsync(string promotionCodeId);
+        Task<(int TimesRedeemed, bool Valid, long? RedeemBy)?> GetStripeCouponInfoAsync(string couponId);
+        Task<(int TimesRedeemed, bool IsActive)?> SyncCouponUsageFromStripeAsync(Entity.Coupon coupon);
+        Task<IEnumerable<Stripe.Coupon>> ListAllStripeCouponsAsync(int limit = 100);
+        Task<IEnumerable<PromotionCode>> ListAllStripePromotionCodesAsync(int limit = 100);
         Task<Stripe.Checkout.Session> CreateCheckoutSessionAsync(List<Stripe.Checkout.SessionLineItemOptions> lineItems, string successUrl, string cancelUrl, string? customerId = null, Dictionary<string, string>? metadata = null);
         Task<Stripe.Checkout.Session> GetCheckoutSessionAsync(string sessionId);
         Task<Stripe.PaymentMethod> GetPaymentMethodAsync(string paymentMethodId);
@@ -34,6 +41,7 @@ namespace Kokomija.Services
     public class StripeService : IStripeService
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<StripeService> _logger;
         private readonly CustomerService _customerService;
         private readonly ProductService _productService;
         private readonly PriceService _priceService;
@@ -44,9 +52,10 @@ namespace Kokomija.Services
         private readonly Stripe.Checkout.SessionService _checkoutSessionService;
         private readonly PaymentMethodService _paymentMethodService;
 
-        public StripeService(IConfiguration configuration)
+        public StripeService(IConfiguration configuration, ILogger<StripeService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
             _customerService = new CustomerService();
             _productService = new ProductService();
             _priceService = new PriceService();
@@ -199,29 +208,60 @@ namespace Kokomija.Services
         {
             var options = new CouponCreateOptions();
 
+            // Set discount type and value
             if (coupon.DiscountType == "percentage")
             {
                 options.PercentOff = coupon.DiscountValue;
             }
             else if (coupon.DiscountType == "fixed_amount")
             {
-                options.AmountOff = (long)(coupon.DiscountValue * 100); // Convert to cents
+                options.AmountOff = (long)(coupon.DiscountValue * 100); // Convert to cents/grosz
                 options.Currency = "pln";
             }
 
-            options.Name = coupon.Code;
-            options.Duration = "once"; // Can be 'once', 'repeating', or 'forever'
+            // Set name (description in Stripe)
+            options.Name = !string.IsNullOrEmpty(coupon.Description) ? coupon.Description : coupon.Code;
+            
+            // Coupon duration - Stripe requires this
+            // "once" = applies once per customer subscription
+            // "forever" = applies indefinitely 
+            // "repeating" = applies for specified number of months
+            options.Duration = "once";
 
-            if (coupon.MaximumDiscountAmount.HasValue)
+            // Set max redemptions (total usage limit across all customers)
+            if (coupon.UsageLimit.HasValue)
             {
-                options.MaxRedemptions = coupon.UsageLimit;
+                options.MaxRedemptions = coupon.UsageLimit.Value;
             }
 
+            // Set redemption deadline (valid until date)
+            if (coupon.ValidUntil.HasValue)
+            {
+                options.RedeemBy = coupon.ValidUntil.Value;
+            }
+
+            // Metadata for tracking
             options.Metadata = new Dictionary<string, string>
             {
                 { "coupon_id", coupon.Id.ToString() },
-                { "code", coupon.Code }
+                { "code", coupon.Code },
+                { "coupon_type", coupon.CouponType ?? "general" }
             };
+
+            if (!string.IsNullOrEmpty(coupon.VipTierRequired))
+            {
+                options.Metadata["vip_tier_required"] = coupon.VipTierRequired;
+            }
+
+            if (coupon.CategoryId.HasValue)
+            {
+                options.Metadata["category_id"] = coupon.CategoryId.Value.ToString();
+            }
+
+            if (coupon.ProductId.HasValue)
+            {
+                options.Metadata["product_id"] = coupon.ProductId.Value.ToString();
+            }
 
             return await _couponService.CreateAsync(options);
         }
@@ -234,6 +274,49 @@ namespace Kokomija.Services
                 Active = true
             };
             options.AddExtraParam("coupon", stripeCouponId);
+
+            return await _promotionCodeService.CreateAsync(options);
+        }
+
+        /// <summary>
+        /// Create promotion code with restrictions (usage limits per customer)
+        /// </summary>
+        public async Task<PromotionCode> CreateStripePromotionCodeWithRestrictionsAsync(
+            string stripeCouponId, 
+            string code, 
+            int? maxRedemptions = null,
+            int? maxRedemptionsPerCustomer = null,
+            DateTime? expiresAt = null,
+            decimal? minimumAmount = null)
+        {
+            var options = new PromotionCodeCreateOptions
+            {
+                Code = code,
+                Active = true
+            };
+            options.AddExtraParam("coupon", stripeCouponId);
+
+            // Per-customer usage limit (e.g., 1 for one-time use per customer)
+            if (maxRedemptionsPerCustomer.HasValue)
+            {
+                options.MaxRedemptions = maxRedemptionsPerCustomer.Value;
+            }
+
+            // Set expiration
+            if (expiresAt.HasValue)
+            {
+                options.ExpiresAt = expiresAt.Value;
+            }
+
+            // Minimum order restrictions
+            if (minimumAmount.HasValue)
+            {
+                options.Restrictions = new PromotionCodeRestrictionsOptions
+                {
+                    MinimumAmount = (long)(minimumAmount.Value * 100),
+                    MinimumAmountCurrency = "pln"
+                };
+            }
 
             return await _promotionCodeService.CreateAsync(options);
         }
@@ -332,7 +415,8 @@ namespace Kokomija.Services
             options.AddExpand("line_items");
             options.AddExpand("customer");
             options.AddExpand("payment_intent");
-            options.AddExpand("shipping_details");
+            options.AddExpand("shipping_cost");
+            options.AddExpand("total_details");
 
             return await _checkoutSessionService.GetAsync(sessionId, options);
         }
@@ -450,6 +534,92 @@ namespace Kokomija.Services
                 Active = false
             };
             await _productService.UpdateAsync(stripeProductId, options);
+        }
+
+        /// <summary>
+        /// Get promotion code details from Stripe API
+        /// </summary>
+        public async Task<PromotionCode?> GetStripePromotionCodeAsync(string promotionCodeId)
+        {
+            try
+            {
+                return await _promotionCodeService.GetAsync(promotionCodeId);
+            }
+            catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Get coupon info from Stripe (includes redemptions count)
+        /// </summary>
+        public async Task<(int TimesRedeemed, bool Valid, long? RedeemBy)?> GetStripeCouponInfoAsync(string couponId)
+        {
+            try
+            {
+                var stripeCoupon = await _couponService.GetAsync(couponId);
+                // Convert RedeemBy (DateTime?) to unix timestamp
+                long? redeemByTimestamp = stripeCoupon.RedeemBy.HasValue 
+                    ? new DateTimeOffset(stripeCoupon.RedeemBy.Value).ToUnixTimeSeconds() 
+                    : null;
+                return ((int)stripeCoupon.TimesRedeemed, stripeCoupon.Valid, redeemByTimestamp);
+            }
+            catch (StripeException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Sync coupon usage data from Stripe to local database
+        /// </summary>
+        public async Task<(int TimesRedeemed, bool IsActive)?> SyncCouponUsageFromStripeAsync(Entity.Coupon coupon)
+        {
+            if (string.IsNullOrEmpty(coupon.StripeCouponId))
+                return null;
+
+            try
+            {
+                var stripeCoupon = await _couponService.GetAsync(coupon.StripeCouponId);
+                
+                // Update local coupon with Stripe's redemption count
+                var timesRedeemed = (int)stripeCoupon.TimesRedeemed;
+                var isActive = stripeCoupon.Valid;
+
+                return (timesRedeemed, isActive);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogWarning(ex, "Failed to sync coupon {Code} usage from Stripe", coupon.Code);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// List all Stripe coupons (for admin dashboard sync)
+        /// </summary>
+        public async Task<IEnumerable<Stripe.Coupon>> ListAllStripeCouponsAsync(int limit = 100)
+        {
+            var options = new CouponListOptions
+            {
+                Limit = limit
+            };
+            var coupons = await _couponService.ListAsync(options);
+            return coupons.Data;
+        }
+
+        /// <summary>
+        /// List all Stripe promotion codes (for admin dashboard sync)  
+        /// </summary>
+        public async Task<IEnumerable<PromotionCode>> ListAllStripePromotionCodesAsync(int limit = 100)
+        {
+            var options = new PromotionCodeListOptions
+            {
+                Limit = limit
+            };
+            var promotionCodes = await _promotionCodeService.ListAsync(options);
+            return promotionCodes.Data;
         }
     }
 }

@@ -1,0 +1,133 @@
+@model Kokomija.Models.ViewModels.Checkout.CheckoutFailureViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = L["Checkout_Failure_Title"];
+}
+
+<div class="checkout-result-page checkout-failure-page">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="result-card failure-card text-center">
+                    <!-- Failure Icon -->
+                    <div class="result-icon failure-icon mb-4">
+                        @if (Model.FailureReason == "cancelled")
+                        {
+                            <i class="bi bi-x-circle"></i>
+                        }
+                        else if (Model.FailureReason == "expired")
+                        {
+                            <i class="bi bi-clock-history"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-exclamation-triangle"></i>
+                        }
+                    </div>
+
+                    <!-- Title and Message -->
+                    <h1 class="mb-3">
+                        @if (Model.FailureReason == "cancelled")
+                        {
+                            @L["Checkout_Cancelled_Title"]
+                        }
+                        else if (Model.FailureReason == "expired")
+                        {
+                            @L["Checkout_Expired_Title"]
+                        }
+                        else
+                        {
+                            @L["Checkout_Failed_Title"]
+                        }
+                    </h1>
+                    
+                    <p class="lead text-muted mb-4">@Model.ErrorMessage</p>
+
+                    <!-- Attempted Payment Info -->
+                    @if (Model.WasPaymentAttempted && Model.AttemptedAmount.HasValue)
+                    {
+                        <div class="payment-attempt-info mb-4">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-info-circle me-2"></i>
+                                @L["Checkout_PaymentAttempted"]: <strong>@Model.FormattedAmount</strong>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Reason Explanation -->
+                    <div class="failure-explanation mb-4">
+                        @if (Model.FailureReason == "cancelled")
+                        {
+                            <div class="explanation-box">
+                                <i class="bi bi-bag-x me-2"></i>
+                                @L["Checkout_Cancelled_Explanation"]
+                            </div>
+                        }
+                        else if (Model.FailureReason == "payment_failed")
+                        {
+                            <div class="explanation-box error">
+                                <i class="bi bi-credit-card me-2"></i>
+                                @L["Checkout_PaymentFailed_Explanation"]
+                            </div>
+                        }
+                        else if (Model.FailureReason == "expired")
+                        {
+                            <div class="explanation-box warning">
+                                <i class="bi bi-hourglass-bottom me-2"></i>
+                                @L["Checkout_Expired_Explanation"]
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="explanation-box error">
+                                <i class="bi bi-exclamation-circle me-2"></i>
+                                @L["Checkout_Error_Explanation"]
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons mt-4">
+                        @if (Model.CanRetry && Model.CartItemCount > 0)
+                        {
+                            <a asp-controller="Cart" asp-action="Index" class="btn btn-primary btn-lg me-2">
+                                <i class="bi bi-arrow-repeat me-2"></i>
+                                @L["Checkout_TryAgain"]
+                            </a>
+                        }
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-shop me-2"></i>
+                            @L["Continue_Shopping"]
+                        </a>
+                    </div>
+
+                    <!-- Help Section -->
+                    <div class="help-section mt-5">
+                        <h5 class="mb-3">@L["Checkout_NeedHelp"]</h5>
+                        <div class="help-options">
+                            <a asp-controller="Home" asp-action="FAQ" class="help-link">
+                                <i class="bi bi-question-circle"></i>
+                                <span>@L["Nav_FAQ"]</span>
+                            </a>
+                            <a asp-controller="Home" asp-action="Contact" class="help-link">
+                                <i class="bi bi-envelope"></i>
+                                <span>@L["Nav_Contact"]</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Session Info (for debugging, hidden in production) -->
+                    @if (!string.IsNullOrEmpty(Model.SessionId) && Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+                    {
+                        <div class="session-debug mt-4 p-3 bg-light rounded text-start">
+                            <small class="text-muted">
+                                <strong>Session ID:</strong> @Model.SessionId
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

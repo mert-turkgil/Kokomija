@@ -33,6 +33,10 @@ namespace Kokomija.Models.ViewModels.Account
         public string OrderNumber { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal SubtotalAmount { get; set; }
+        public decimal ShippingCost { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal TaxAmount { get; set; }
         public string OrderStatus { get; set; } = string.Empty;
         public string PaymentStatus { get; set; } = string.Empty;
         public string Currency { get; set; } = "pln";
@@ -41,6 +45,29 @@ namespace Kokomija.Models.ViewModels.Account
         public int ItemCount { get; set; }
         public bool CanCancel { get; set; }
         public bool CanReturn { get; set; }
+        
+        // Shipping details
+        public string? ShippingMethod { get; set; }
+        public string? TrackingNumber { get; set; }
+        public DateTime? ShippedAt { get; set; }
+        public DateTime? DeliveredAt { get; set; }
+        
+        // Billing details
+        public string? ShippingAddress { get; set; }
+        public string? ShippingCity { get; set; }
+        public string? ShippingPostalCode { get; set; }
+        public string? ShippingCountry { get; set; }
+        public string? CustomerEmail { get; set; }
+        public string? CustomerPhone { get; set; }
+        
+        // Payment details
+        public string? PaymentMethod { get; set; }
+        public string? StripePaymentIntentId { get; set; }
+        public DateTime? PaidAt { get; set; }
+        
+        // Coupon
+        public string? CouponCode { get; set; }
+        
         public IEnumerable<OrderItemViewModel> Items { get; set; } = new List<OrderItemViewModel>();
     }
     

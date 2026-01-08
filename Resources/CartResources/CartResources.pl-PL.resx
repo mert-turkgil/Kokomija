@@ -29,4 +29,29 @@
   <data name="UpdateCart" xml:space="preserve"><value>Aktualizuj koszyk</value></data>
   <data name="Remove" xml:space="preserve"><value>Usuń</value></data>
   <data name="ItemsInCart" xml:space="preserve"><value>produktów w koszyku</value></data>
+  
+  <!-- Shipping -->
+  <data name="Shipping" xml:space="preserve"><value>Dostawa</value></data>
+  <data name="Shipping_Method" xml:space="preserve"><value>Metoda dostawy</value></data>
+  <data name="Shipping_Standard" xml:space="preserve"><value>Dostawa standardowa</value></data>
+  <data name="Shipping_Standard_Desc" xml:space="preserve"><value>Niezawodna dostawa w ciągu 3-7 dni roboczych</value></data>
+  <data name="Shipping_Express" xml:space="preserve"><value>Dostawa ekspresowa</value></data>
+  <data name="Shipping_Express_Desc" xml:space="preserve"><value>Szybka dostawa w ciągu 1-2 dni roboczych</value></data>
+  <data name="Shipping_FreeVip" xml:space="preserve"><value>Darmowa dostawa standardowa dla członków VIP!</value></data>
+  <data name="Shipping_FreeThreshold" xml:space="preserve"><value>Kwalifikujesz się do darmowej dostawy standardowej!</value></data>
+  <data name="Business_Days" xml:space="preserve"><value>dni roboczych</value></data>
+  <data name="Free" xml:space="preserve"><value>Gratis</value></data>
+  <data name="Arrives_By" xml:space="preserve"><value>Dostawa do</value></data>
+  <data name="Cart_Title" xml:space="preserve"><value>Koszyk</value></data>
+  <data name="Cart_FreeShipping_Add" xml:space="preserve"><value>Dodaj jeszcze</value></data>
+  <data name="Cart_FreeShipping_More" xml:space="preserve"><value>do darmowej dostawy</value></data>
+  
+  <!-- Coupon Messages -->
+  <data name="Cart_Coupon_Invalid" xml:space="preserve"><value>Ten kod kuponu jest nieprawidłowy</value></data>
+  <data name="Cart_Coupon_Inactive" xml:space="preserve"><value>Ten kupon nie jest aktywny</value></data>
+  <data name="Cart_Coupon_Expired" xml:space="preserve"><value>Ten kupon wygasł</value></data>
+  <data name="Cart_Coupon_LimitReached" xml:space="preserve"><value>Ten kupon osiągnął limit użycia</value></data>
+  <data name="Cart_Coupon_AlreadyUsed" xml:space="preserve"><value>Już wykorzystałeś ten kupon maksymalną liczbę razy</value></data>
+  <data name="Cart_Coupon_MinimumAmount" xml:space="preserve"><value>Ten kupon wymaga minimalnego zamówienia w wysokości</value></data>
+  <data name="Cart_Coupon_Applied" xml:space="preserve"><value>Kupon został zastosowany pomyślnie!</value></data>
 </root>

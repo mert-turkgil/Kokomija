@@ -33,6 +33,17 @@ public class NewsletterSubscription
 
     [MaxLength(100)]
     public string? UnsubscribeToken { get; set; }
+    
+    // Email confirmation
+    [MaxLength(100)]
+    public string? ConfirmationToken { get; set; }
+    
+    public DateTime? ConfirmationTokenExpiry { get; set; }
+    
+    public DateTime? ConfirmedAt { get; set; }
+    
+    [MaxLength(50)]
+    public string? Source { get; set; } // "Registration", "Footer", "Popup", etc.
 
     // Navigation property
     public ApplicationUser? User { get; set; }

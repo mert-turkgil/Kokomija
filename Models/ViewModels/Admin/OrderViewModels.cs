@@ -99,6 +99,12 @@ namespace Kokomija.Models.ViewModels.Admin
         public DateTime? ShippedAt { get; set; }
         public DateTime? DeliveredAt { get; set; }
         
+        // Refund Information
+        public string? StripeRefundId { get; set; }
+        public decimal? RefundedAmount { get; set; }
+        public DateTime? RefundedAt { get; set; }
+        public string? RefundReason { get; set; }
+        
         // Financial Information
         public decimal SubtotalAmount { get; set; }
         public decimal TaxAmount { get; set; }
@@ -347,5 +353,32 @@ namespace Kokomija.Models.ViewModels.Admin
         
         [MaxLength(500)]
         public string? SpecialInstructions { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for refunding an order via Stripe
+    /// </summary>
+    public class RefundOrderDto
+    {
+        [Required]
+        public int OrderId { get; set; }
+        
+        /// <summary>
+        /// Amount to refund in currency units (e.g., PLN). If null, full refund is issued.
+        /// </summary>
+        [Range(0.01, 999999.99)]
+        public decimal? Amount { get; set; }
+        
+        /// <summary>
+        /// Reason for refund: "requested_by_customer", "duplicate", "fraudulent"
+        /// </summary>
+        [MaxLength(50)]
+        public string? Reason { get; set; } = "requested_by_customer";
+        
+        /// <summary>
+        /// Admin notes about the refund
+        /// </summary>
+        [MaxLength(500)]
+        public string? AdminNote { get; set; }
     }
 }
