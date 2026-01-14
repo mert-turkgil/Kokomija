@@ -1,7 +1,7 @@
 @model Kokomija.Models.ViewModels.Admin.FinancialDashboardViewModel
 @{
     ViewData["Title"] = "Financial Dashboard";
-    var totalDeductions = Model.Summary.TotalStripeFees + Model.Summary.TotalDeveloperCommission + Model.Summary.TotalTaxAmount + Model.Summary.TotalRefunds + Model.Summary.TotalDiscounts;
+    var totalDeductions = Model.Summary.TotalStripeFees + Model.Summary.TotalDeveloperCommission + Model.Summary.TotalTaxAmount + Model.Summary.TotalRefunds + Model.Summary.TotalDiscounts + Model.Summary.LostStripeFees;
 }
 
 @section Styles {
@@ -1183,6 +1183,19 @@
                             <div class="fee-desc">Processed</div>
                         </div>
                     </div>
+                    @if (Model.Summary.LostStripeFees > 0)
+                    {
+                    <div class="col-6 col-md-4">
+                        <div class="fee-card" style="background: #fef3c7;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="bi bi-exclamation-triangle fee-icon text-warning"></i>
+                                <span class="fee-title">Lost Fees</span>
+                            </div>
+                            <div class="fee-value text-warning">@Model.Summary.LostStripeFees.ToString("N2")</div>
+                            <div class="fee-desc">Stripe fees from refunds</div>
+                        </div>
+                    </div>
+                    }
                     <div class="col-6 col-md-4">
                         <div class="fee-card" style="background: #f3e8ff;">
                             <div class="d-flex align-items-center gap-2 mb-1">

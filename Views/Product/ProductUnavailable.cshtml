@@ -1,0 +1,131 @@
+@inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
+
+@{
+    ViewData["Title"] = L["Product_Unavailable_Title"];
+    var productName = ViewData["ProductName"] as string ?? L["This_Product"];
+    var alternativeProducts = ViewData["AlternativeProducts"] as List<Kokomija.Entity.Product>;
+    var currentCulture = ViewData["CurrentCulture"] as string ?? "en";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Product Unavailable Message -->
+            <div class="product-unavailable text-center mb-5">
+                <div class="unavailable-icon mb-4">
+                    <i class="fas fa-box-open fa-5x text-warning"></i>
+                </div>
+                
+                <h1 class="display-5 fw-bold mb-3">@L["Product_Unavailable_Title"]</h1>
+                <p class="lead text-muted mb-2">
+                    <strong>@productName</strong>
+                </p>
+                <p class="text-muted mb-4">@L["Product_Unavailable_Message"]</p>
+                
+                <!-- Newsletter signup for product availability -->
+                <div class="notify-form mb-5" style="max-width: 500px; margin: 0 auto;">
+                    <h6 class="mb-3">@L["Product_Notify_When_Available"]</h6>
+                    <form asp-controller="Newsletter" asp-action="Subscribe" method="post" class="d-flex gap-2">
+                        <input type="hidden" name="productNotification" value="@productName" />
+                        <input type="email" 
+                               name="email" 
+                               class="form-control" 
+                               placeholder="@L["Your_Email"]"
+                               required
+                               aria-label="@L["Email_For_Notification"]">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-bell"></i> @L["Notify_Me"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Alternative Products -->
+            @if (alternativeProducts != null && alternativeProducts.Any())
+            {
+                <div class="alternative-products">
+                    <h4 class="text-center mb-4">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>@L["Product_Alternatives_Title"]
+                    </h4>
+                    
+                    <div class="row g-4">
+                        @foreach (var product in alternativeProducts.Take(4))
+                        {
+                            var translation = product.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(currentCulture));
+                            var displayName = translation?.Name ?? product.Name;
+                            var slug = translation?.Slug ?? product.Slug ?? product.Id.ToString();
+                            var primaryImage = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+                            var imageUrl = primaryImage != null 
+                                ? Url.Content($"~/img/ProductImage/{primaryImage.ImageUrl}") 
+                                : Url.Content("~/img/logo_black.png");
+                            
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card h-100 product-card">
+                                    <a href="@LocalizedUrl.GetProductUrl(slug)" class="text-decoration-none">
+                                        <img src="@imageUrl" 
+                                             class="card-img-top" 
+                                             alt="@displayName"
+                                             loading="lazy"
+                                             onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")';">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-dark">@displayName</h6>
+                                            <p class="card-text text-primary fw-bold">
+                                                @product.Price.ToString("N2") zł
+                                                @if (product.PackSize > 1)
+                                                {
+                                                    <small class="text-muted">(@((product.Price / product.PackSize).ToString("N2")) zł/@L["Piece"])</small>
+                                                }
+                                            </p>
+                                            @if (product.Variants?.Any(v => v.StockQuantity > 0) == true)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>@L["In_Stock"]
+                                                </span>
+                                            }
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            
+            <!-- Helpful Links -->
+            <div class="helpful-links text-center mt-5">
+                <div class="d-flex flex-wrap justify-content-center gap-3">
+                    <a href="@LocalizedUrl.GetProductsUrl()" class="btn btn-outline-primary">
+                        <i class="fas fa-shopping-bag me-2"></i>@L["Browse_All_Products"]
+                    </a>
+                    <a href="@LocalizedUrl.GetHomeUrl()" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>@L["Return_Home"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .product-unavailable {
+            padding: 2rem 0;
+        }
+        .unavailable-icon {
+            opacity: 0.7;
+        }
+        .product-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eee;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .product-card img {
+            height: 200px;
+            object-fit: cover;
+        }
+    </style>
+}

@@ -1743,3 +1743,47 @@
   }
 }
 
+// ============================================
+// PRODUCT SHARE BUTTONS
+// ============================================
+
+.product-share {
+  .share-title {
+    font-weight: 600;
+    color: $dark-gray;
+    font-size: 0.95rem;
+    
+    i {
+      color: $primary;
+    }
+  }
+  
+  .share-buttons {
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      transition: all 0.3s ease;
+      
+      i {
+        font-size: 1.1rem;
+      }
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+}
+
+// Dark mode support
+[data-bs-theme="dark"] {
+  .product-share {
+    .share-title {
+      color: $light;
+    }
+  }
+}
+

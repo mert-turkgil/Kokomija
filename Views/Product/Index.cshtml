@@ -122,6 +122,33 @@
                         </div>
                     </div>
 
+                    <!-- Discount/Sale Filter -->
+                    <div class="filter-section">
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-percent me-2"></i>@L["Products_Discounts"]
+                            </h6>
+                        </div>
+                        <div class="filter-options">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showDiscountsOnly" name="discount">
+                                <label class="form-check-label" for="showDiscountsOnly">
+                                    <i class="bi bi-gift me-1 text-danger"></i>
+                                    @L["Products_ShowDiscountsOnly"]
+                                </label>
+                            </div>
+                            @if (User.Identity?.IsAuthenticated != true)
+                            {
+                                <div class="discount-hint mt-2 p-2 bg-light rounded">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        @L["Products_WelcomeDiscountHint"] <strong>WELCOME10</strong>
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
                     <!-- Sort Options -->
                     <div class="filter-section">
                         <div class="filter-section-header mb-3">
@@ -135,6 +162,7 @@
                             <option value="price-desc">@L["Products_Sort_PriceDesc"]</option>
                             <option value="name-asc">@L["Products_Sort_NameAsc"]</option>
                             <option value="name-desc">@L["Products_Sort_NameDesc"]</option>
+                            <option value="discount">@L["Products_Sort_Discount"]</option>
                         </select>
                     </div>
                 </div>
@@ -181,7 +209,8 @@
                 sizes: [],
                 minPrice: null,
                 maxPrice: null,
-                sortBy: 'newest'
+                sortBy: 'newest',
+                showDiscountsOnly: false
             };
 
             // Load filter options
@@ -238,6 +267,7 @@
                 filterState.minPrice = parseFloat($('#minPrice').val()) || 0;
                 filterState.maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
                 filterState.sortBy = $('#sortBy').val();
+                filterState.showDiscountsOnly = $('#showDiscountsOnly').prop('checked');
 
                 let $products = $('#productsGrid > div');
                 let visibleCount = 0;
@@ -247,6 +277,7 @@
                     const $product = $(this);
                     const productCategory = parseInt($product.data('category'));
                     const productPrice = parseFloat($product.data('price'));
+                    const hasDiscount = $product.find('.price-with-discount, .discount-badge, .badge-sale').length > 0;
                     
                     let showProduct = true;
 
@@ -257,6 +288,11 @@
 
                     // Filter by price
                     if (productPrice < filterState.minPrice || productPrice > filterState.maxPrice) {
+                        showProduct = false;
+                    }
+                    
+                    // Filter by discount - for non-authenticated users, all products have WELCOME10
+                    if (filterState.showDiscountsOnly && !hasDiscount) {
                         showProduct = false;
                     }
 
@@ -336,7 +372,7 @@
             }
 
             // Event listeners (excluding category - handled by attachCategoryHandlers)
-            $(document).on('change', 'input[name="color"], #sortBy', triggerFilter);
+            $(document).on('change', 'input[name="color"], #sortBy, #showDiscountsOnly', triggerFilter);
             $('#applyPriceFilter').click(applyFilters);
             $('#minPrice, #maxPrice').on('keyup', function(e) {
                 if (e.keyCode === 13) { // Enter key
@@ -356,6 +392,7 @@
                 $('.size-btn').removeClass('active');
                 $('#minPrice, #maxPrice').val('');
                 $('#sortBy').val('newest');
+                $('#showDiscountsOnly').prop('checked', false);
                 
                 filterState.categories = [];
                 filterState.colors = [];
@@ -363,6 +400,7 @@
                 filterState.minPrice = null;
                 filterState.maxPrice = null;
                 filterState.sortBy = 'newest';
+                filterState.showDiscountsOnly = false;
 
                 $('#productsGrid > div').fadeIn(300);
                 $('.products-count').html('<strong>' + $('#productsGrid > div').length + '</strong> @L["Products_ItemsFound_Plural"]');

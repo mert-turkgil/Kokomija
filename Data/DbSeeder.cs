@@ -644,6 +644,7 @@ namespace Kokomija.Data
                 { 
                     Id = 1, 
                     Name = "Majtki damskie bawełniane wysokie - 5 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-5-pak",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
                     Price = 49.75m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
@@ -661,6 +662,7 @@ namespace Kokomija.Data
                 { 
                     Id = 2, 
                     Name = "Majtki damskie bawełniane wysokie - 6 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-6-pak",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
                     Price = 59.70m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
@@ -678,6 +680,7 @@ namespace Kokomija.Data
                 { 
                     Id = 3, 
                     Name = "Majtki damskie bawełniane wysokie - 8 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-8-pak",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
                     Price = 79.60m,
                     StripeProductId = string.Empty, // Will be created by StripeProductSeeder
@@ -697,45 +700,51 @@ namespace Kokomija.Data
             var images = new List<ProductImage>();
             int imageId = 1;
 
-            // Women's Briefs 5-Pack - Product ID 1
-            for (int imageNum = 1; imageNum <= 8; imageNum++)
+            // Women's Briefs 5-Pack - Product ID 1 (2 images)
+            for (int imageNum = 1; imageNum <= 2; imageNum++)
             {
                 images.Add(new ProductImage
                 {
                     Id = imageId++,
                     ProductId = 1,
                     ImageUrl = $"products/briefs-5pack/image-{imageNum}.jpg",
-                    AltText = $"Majtki damskie bawełniane 5-pak - zdjęcie {imageNum}",
+                    AltText = imageNum == 1 
+                        ? "Majtki damskie bawełniane wysokie 5-pak - widok z przodu" 
+                        : "Majtki damskie bawełniane wysokie 5-pak - szczegóły produktu",
                     IsPrimary = imageNum == 1,
                     DisplayOrder = imageNum,
                     CreatedAt = DateTime.UtcNow
                 });
             }
 
-            // Women's Briefs 6-Pack - Product ID 2
-            for (int imageNum = 1; imageNum <= 8; imageNum++)
+            // Women's Briefs 6-Pack - Product ID 2 (2 images)
+            for (int imageNum = 1; imageNum <= 2; imageNum++)
             {
                 images.Add(new ProductImage
                 {
                     Id = imageId++,
                     ProductId = 2,
                     ImageUrl = $"products/briefs-6pack/image-{imageNum}.jpg",
-                    AltText = $"Majtki damskie bawełniane 6-pak - zdjęcie {imageNum}",
+                    AltText = imageNum == 1 
+                        ? "Majtki damskie bawełniane wysokie 6-pak - widok z przodu" 
+                        : "Majtki damskie bawełniane wysokie 6-pak - szczegóły produktu",
                     IsPrimary = imageNum == 1,
                     DisplayOrder = imageNum,
                     CreatedAt = DateTime.UtcNow
                 });
             }
 
-            // Women's Briefs 8-Pack - Product ID 3
-            for (int imageNum = 1; imageNum <= 8; imageNum++)
+            // Women's Briefs 8-Pack - Product ID 3 (2 images)
+            for (int imageNum = 1; imageNum <= 2; imageNum++)
             {
                 images.Add(new ProductImage
                 {
                     Id = imageId++,
                     ProductId = 3,
                     ImageUrl = $"products/briefs-8pack/image-{imageNum}.jpg",
-                    AltText = $"Majtki damskie bawełniane 8-pak - zdjęcie {imageNum}",
+                    AltText = imageNum == 1 
+                        ? "Majtki damskie bawełniane wysokie 8-pak - widok z przodu, najlepsza wartość" 
+                        : "Majtki damskie bawełniane wysokie 8-pak - szczegóły produktu, oszczędności",
                     IsPrimary = imageNum == 1,
                     DisplayOrder = imageNum,
                     CreatedAt = DateTime.UtcNow
@@ -743,6 +752,86 @@ namespace Kokomija.Data
             }
 
             modelBuilder.Entity<ProductImage>().HasData(images);
+        }
+
+        public static void SeedProductTranslations(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ProductTranslation>().HasData(
+                // Product 1: Women's Cotton Briefs 5-Pack - Polish (default)
+                new ProductTranslation
+                {
+                    Id = 1,
+                    ProductId = 1,
+                    CultureCode = "pl-PL",
+                    Name = "Majtki damskie bawełniane wysokie - 5 pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Slug = "majtki-damskie-bawelniane-wysokie-5-pak",
+                    MetaDescription = "Kup majtki damskie bawełniane wysokie 5 sztuk w zestawie. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.",
+                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, 5-pak, Kokomija"
+                },
+                // Product 1: Women's Cotton Briefs 5-Pack - English
+                new ProductTranslation
+                {
+                    Id = 2,
+                    ProductId = 1,
+                    CultureCode = "en-US",
+                    Name = "Women's High-Waist Cotton Briefs - 5 Pack",
+                    Description = "High quality women's cotton briefs in a set of 5. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.",
+                    Slug = "womens-cotton-briefs-5-pack",
+                    MetaDescription = "Buy women's high-waist cotton briefs 5-pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.",
+                    MetaKeywords = "women's briefs, cotton underwear, high-waist briefs, 5-pack, Kokomija"
+                },
+                
+                // Product 2: Women's Cotton Briefs 6-Pack - Polish
+                new ProductTranslation
+                {
+                    Id = 3,
+                    ProductId = 2,
+                    CultureCode = "pl-PL",
+                    Name = "Majtki damskie bawełniane wysokie - 6 pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Slug = "majtki-damskie-bawelniane-wysokie-6-pak",
+                    MetaDescription = "Kup majtki damskie bawełniane wysokie 6 sztuk w zestawie. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Oszczędź kupując więcej!",
+                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, 6-pak, zestaw, Kokomija"
+                },
+                // Product 2: Women's Cotton Briefs 6-Pack - English
+                new ProductTranslation
+                {
+                    Id = 4,
+                    ProductId = 2,
+                    CultureCode = "en-US",
+                    Name = "Women's High-Waist Cotton Briefs - 6 Pack",
+                    Description = "High quality women's cotton briefs in a set of 6. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.",
+                    Slug = "womens-cotton-briefs-6-pack",
+                    MetaDescription = "Buy women's high-waist cotton briefs 6-pack. Comfortable, breathable and durable underwear. Save more when buying more!",
+                    MetaKeywords = "women's briefs, cotton underwear, high-waist briefs, 6-pack, value pack, Kokomija"
+                },
+                
+                // Product 3: Women's Cotton Briefs 8-Pack - Polish
+                new ProductTranslation
+                {
+                    Id = 5,
+                    ProductId = 3,
+                    CultureCode = "pl-PL",
+                    Name = "Majtki damskie bawełniane wysokie - 8 pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
+                    Slug = "majtki-damskie-bawelniane-wysokie-8-pak",
+                    MetaDescription = "Kup majtki damskie bawełniane wysokie 8 sztuk w zestawie - NAJLEPSZA WARTOŚĆ! Wygodne, przewiewne i trwałe. Dostawa w Polsce. Największe oszczędności!",
+                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, 8-pak, najlepsza wartość, oszczędności, Kokomija"
+                },
+                // Product 3: Women's Cotton Briefs 8-Pack - English
+                new ProductTranslation
+                {
+                    Id = 6,
+                    ProductId = 3,
+                    CultureCode = "en-US",
+                    Name = "Women's High-Waist Cotton Briefs - 8 Pack",
+                    Description = "High quality women's cotton briefs in a set of 8. Comfortable, breathable and durable. Best value choice! Available in various colors and sizes.",
+                    Slug = "womens-cotton-briefs-8-pack",
+                    MetaDescription = "Buy women's high-waist cotton briefs 8-pack - BEST VALUE! Comfortable, breathable and durable underwear. Maximum savings!",
+                    MetaKeywords = "women's briefs, cotton underwear, high-waist briefs, 8-pack, best value, savings, Kokomija"
+                }
+            );
         }
 
         public static void SeedProductVariants(this ModelBuilder modelBuilder)

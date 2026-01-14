@@ -85,12 +85,29 @@ namespace Kokomija.Controllers
             }
         }
 
-        // GET: /Blog/Post/{slug}
+        // GET: /Blog/Post/{slug} - Localized blog post URLs
         [Route("Blog/Post/{slug}")]
-        public async Task<IActionResult> Details(string slug)
+        [Route("{culture}/blog/{slug}")]
+        [Route("{culture}/artykul/{slug}")]
+        [Route("{culture}/makale/{slug}")]
+        public async Task<IActionResult> Details(string slug, string? culture = null)
         {
             try
             {
+                // Set culture if provided
+                if (!string.IsNullOrEmpty(culture))
+                {
+                    var cultureCode = culture switch
+                    {
+                        "pl" => "pl-PL",
+                        "tr" => "tr-TR",
+                        _ => "en-US"
+                    };
+                    var cultureInfo = new CultureInfo(cultureCode);
+                    CultureInfo.CurrentCulture = cultureInfo;
+                    CultureInfo.CurrentUICulture = cultureInfo;
+                }
+
                 var blog = await _unitOfWork.Blogs.GetBySlugAsync(slug);
                 
                 if (blog == null)
@@ -114,6 +131,16 @@ namespace Kokomija.Controllers
                 // Get related posts
                 var relatedPosts = await _unitOfWork.Blogs.GetRelatedBlogsAsync(blog.Id, 3);
 
+                // Generate localized canonical URL
+                var currentCultureShort = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+                var blogPathSegment = currentCultureShort switch
+                {
+                    "pl" => "artykul",
+                    "tr" => "makale",
+                    _ => "blog"
+                };
+                var canonicalUrl = $"{Request.Scheme}://{Request.Host}/{currentCultureShort}/{blogPathSegment}/{translation.Slug}";
+
                 var viewModel = new BlogDetailsViewModel
                 {
                     Id = blog.Id,
@@ -133,7 +160,7 @@ namespace Kokomija.Controllers
                     RelatedProduct = blog.Product,
                     MetaDescription = translation.MetaDescription ?? translation.Excerpt ?? "",
                     MetaKeywords = translation.MetaKeywords ?? "",
-                    CanonicalUrl = Url.Action("Details", "Blog", new { slug = translation.Slug }, Request.Scheme) ?? ""
+                    CanonicalUrl = canonicalUrl
                 };
 
                 return View(viewModel);

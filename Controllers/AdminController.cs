@@ -606,6 +606,8 @@ public class AdminController : Controller
 
     /// <summary>
     /// POST: Refund order via Stripe
+    /// Note: Stripe does NOT refund their processing fee when you refund a payment.
+    /// This method processes the refund asynchronously and updates all related financial records.
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> RefundOrder([FromBody] RefundOrderDto dto)
@@ -631,7 +633,12 @@ public class AdminController : Controller
             var refundAmount = dto.Amount ?? order.TotalAmount;
             var refundAmountCents = (long)(refundAmount * 100);
             
-            // Create Stripe refund
+            // Get the original Stripe fees for this order (Stripe does NOT refund these)
+            var adminCommissions = await _unitOfWork.Repository<AdminCommission>()
+                .FindAsync(ac => ac.OrderId == order.Id);
+            var originalStripeFees = adminCommissions.Sum(ac => ac.TotalStripeFees);
+            
+            // Create Stripe refund asynchronously
             var refundService = new Stripe.RefundService();
             var refundOptions = new Stripe.RefundCreateOptions
             {
@@ -647,7 +654,8 @@ public class AdminController : Controller
                 {
                     { "order_id", order.Id.ToString() },
                     { "order_number", order.OrderNumber },
-                    { "admin_note", dto.AdminNote ?? "" }
+                    { "admin_note", dto.AdminNote ?? "" },
+                    { "original_stripe_fees", originalStripeFees.ToString("F2") }
                 }
             };
             
@@ -664,17 +672,40 @@ public class AdminController : Controller
                 order.RefundReason = dto.Reason ?? "requested_by_customer";
                 
                 _unitOfWork.Orders.Update(order);
+                
+                // Mark AdminCommission records as cancelled
+                foreach (var commission in adminCommissions)
+                {
+                    commission.Status = "refunded";
+                    commission.Notes = $"Refunded on {DateTime.UtcNow:yyyy-MM-dd HH:mm}. Stripe Refund ID: {refund.Id}. " +
+                                       $"Note: Stripe fee of {commission.TotalStripeFees:N2} {commission.Currency} was NOT refunded by Stripe.";
+                    _unitOfWork.Repository<AdminCommission>().Update(commission);
+                }
+                
+                // Mark DeveloperEarnings as cancelled (if any)
+                var developerEarnings = await _unitOfWork.Repository<DeveloperEarnings>()
+                    .FindAsync(de => de.OrderId == order.Id);
+                foreach (var earning in developerEarnings)
+                {
+                    earning.PayoutStatus = PayoutStatus.Cancelled;
+                    _unitOfWork.Repository<DeveloperEarnings>().Update(earning);
+                }
+                
                 await _unitOfWork.SaveChangesAsync();
                 
-                _logger.LogInformation("Order {OrderNumber} refunded successfully. Stripe Refund ID: {RefundId}", 
-                    order.OrderNumber, refund.Id);
+                _logger.LogInformation(
+                    "Order {OrderNumber} refunded successfully. Stripe Refund ID: {RefundId}. " +
+                    "Lost Stripe fees: {StripeFees} (Stripe does not refund processing fees)", 
+                    order.OrderNumber, refund.Id, originalStripeFees);
                 
                 return Json(new { 
                     success = true, 
-                    message = $"Order refunded successfully. Refund ID: {refund.Id}",
+                    message = $"Order refunded successfully. Refund ID: {refund.Id}. " +
+                              $"Note: Stripe processing fee of {originalStripeFees:N2} PLN was not recovered (Stripe policy).",
                     refundId = refund.Id,
                     refundStatus = refund.Status,
-                    refundAmount = refundAmount
+                    refundAmount = refundAmount,
+                    lostStripeFees = originalStripeFees
                 });
             }
             else
@@ -3835,9 +3866,9 @@ public class AdminController : Controller
             var previousGross = previousOrders.Sum(o => o.TotalAmount);
             summary.GrossRevenueGrowth = previousGross > 0 ? ((summary.GrossRevenue - previousGross) / previousGross) * 100 : 0;
 
-            // Deductions - Get from AdminCommission records
+            // Deductions - Get from AdminCommission records (exclude refunded)
             var adminCommissions = await _unitOfWork.Repository<AdminCommission>()
-                .FindAsync(ac => orders.Select(o => o.Id).Contains(ac.OrderId));
+                .FindAsync(ac => orders.Select(o => o.Id).Contains(ac.OrderId) && ac.Status != "refunded");
             var commissionsList = adminCommissions.ToList();
 
             summary.TotalStripeFees = commissionsList.Sum(c => c.TotalStripeFees);
@@ -3845,19 +3876,25 @@ public class AdminController : Controller
             summary.TotalTaxAmount = orders.Sum(o => o.TaxAmount);
             summary.TotalDiscounts = orders.Sum(o => o.DiscountAmount);
 
-            // Developer earnings
+            // Developer earnings (exclude cancelled/refunded)
             var developerEarnings = await _unitOfWork.Repository<DeveloperEarnings>()
-                .FindAsync(de => orders.Select(o => o.Id).Contains(de.OrderId));
+                .FindAsync(de => orders.Select(o => o.Id).Contains(de.OrderId) && de.PayoutStatus != PayoutStatus.Cancelled);
             var devEarningsList = developerEarnings.ToList();
             
             summary.TotalDeveloperCommission = devEarningsList.Sum(de => de.DeveloperCommission);
             summary.TotalPaidToDeveloper = devEarningsList.Where(de => de.PayoutStatus == PayoutStatus.Processed).Sum(de => de.DeveloperCommission);
             summary.PendingDeveloperPayout = devEarningsList.Where(de => de.PayoutStatus == PayoutStatus.Pending).Sum(de => de.DeveloperCommission);
 
-            // Refunds
+            // Refunds - Calculate total refunded amount AND lost Stripe fees
             var refundedOrders = await _unitOfWork.Repository<Order>()
                 .FindAsync(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate && o.PaymentStatus == "refunded");
-            summary.TotalRefunds = refundedOrders.Sum(o => o.TotalAmount);
+            var refundedOrdersList = refundedOrders.ToList();
+            summary.TotalRefunds = refundedOrdersList.Sum(o => o.RefundedAmount > 0 ? o.RefundedAmount : o.TotalAmount);
+            
+            // Get lost Stripe fees from refunded orders (Stripe doesn't refund processing fees)
+            var refundedCommissions = await _unitOfWork.Repository<AdminCommission>()
+                .FindAsync(ac => refundedOrdersList.Select(o => o.Id).Contains(ac.OrderId) && ac.Status == "refunded");
+            summary.LostStripeFees = refundedCommissions.Sum(ac => ac.TotalStripeFees);
 
             // Shipping calculations
             summary.TotalShippingCollected = orders.Sum(o => o.ShippingCost);

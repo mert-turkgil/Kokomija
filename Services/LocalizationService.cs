@@ -70,6 +70,22 @@ namespace Kokomija.Services
         {
             try
             {
+                // Get current culture
+                var currentCulture = _httpContextAccessor.HttpContext?.Features
+                    .Get<IRequestCultureFeature>()?.RequestCulture.Culture.Name 
+                    ?? CultureInfo.CurrentCulture.Name;
+
+                // Try to get from ResourceService first (file-based with hot reload)
+                var resourceValue = _resourceService.GetString(key, resourceName, new CultureInfo(currentCulture));
+                
+                // Check if value was found (not null and not empty)
+                // Note: value CAN equal key if that's the intended translation (e.g., "Copy" -> "Copy")
+                if (!string.IsNullOrEmpty(resourceValue))
+                {
+                    return resourceValue;
+                }
+
+                // Fall back to standard localizer
                 var localizedString = GetKey(key, resourceName);
                 
                 if (localizedString.ResourceNotFound)

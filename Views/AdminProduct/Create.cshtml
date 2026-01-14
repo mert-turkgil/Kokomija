@@ -866,5 +866,29 @@
                 colorList.appendChild(badge);
             });
         }
+
+        // === Translation Tab URL Sync ===
+        // Update URL when switching translation tabs for direct linking
+        document.querySelectorAll('#translationTabs .nav-link').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                const tabId = e.target.getAttribute('id').replace('-tab', '');
+                const url = new URL(window.location);
+                url.searchParams.set('lang', tabId);
+                window.history.pushState({}, '', url);
+            });
+        });
+
+        // Restore tab from URL on page load
+        (function() {
+            const url = new URL(window.location);
+            const lang = url.searchParams.get('lang');
+            if (lang) {
+                const tabEl = document.querySelector(`#${lang}-tab`);
+                if (tabEl) {
+                    const tab = new bootstrap.Tab(tabEl);
+                    tab.show();
+                }
+            }
+        })();
     </script>
 }

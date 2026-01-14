@@ -11,6 +11,7 @@ namespace Kokomija.Data.Abstract
         ISizeRepository Sizes { get; }
         IProductVariantRepository ProductVariants { get; }
         IOrderRepository Orders { get; }
+        IRepository<OrderItem> OrderItems { get; }
         IUserRepository Users { get; }
         ICouponRepository Coupons { get; }
         IRepository<SiteSetting> SiteSettings { get; }

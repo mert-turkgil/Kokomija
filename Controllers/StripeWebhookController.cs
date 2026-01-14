@@ -199,6 +199,9 @@ namespace Kokomija.Controllers
 
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation($"Order {order.OrderNumber} marked as paid");
+                
+                // Reduce stock quantities for ordered items
+                await ReduceStockForOrderAsync(order.Id);
             }
             else
             {
@@ -523,6 +526,45 @@ namespace Kokomija.Controllers
             if (totalSpent >= 500) return "Silver";
             if (totalSpent > 0) return "Bronze";
             return "None";
+        }
+
+        /// <summary>
+        /// Reduces stock quantity for all items in an order after successful payment
+        /// </summary>
+        private async Task ReduceStockForOrderAsync(int orderId)
+        {
+            try
+            {
+                var orderItems = await _unitOfWork.OrderItems.FindAsync(oi => oi.OrderId == orderId);
+                
+                foreach (var item in orderItems)
+                {
+                    var variant = await _unitOfWork.ProductVariants.GetByIdAsync(item.ProductVariantId);
+                    if (variant != null)
+                    {
+                        var previousStock = variant.StockQuantity;
+                        variant.StockQuantity = Math.Max(0, variant.StockQuantity - item.Quantity);
+                        variant.UpdatedAt = DateTime.UtcNow;
+                        
+                        _logger.LogInformation(
+                            "Stock reduced for variant {VariantId}: {PreviousStock} -> {NewStock} (Order: {OrderId}, Quantity: {Quantity})",
+                            item.ProductVariantId, previousStock, variant.StockQuantity, orderId, item.Quantity);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Variant {VariantId} not found when reducing stock for order {OrderId}", 
+                            item.ProductVariantId, orderId);
+                    }
+                }
+                
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("Stock successfully reduced for order {OrderId}", orderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reducing stock for order {OrderId}", orderId);
+                // Don't throw - stock reduction failure shouldn't fail the entire webhook
+            }
         }
 
         private async Task UpdateUserVIPRoleAsync(UserManager<Entity.ApplicationUser> userManager, Entity.ApplicationUser user, string tierName)

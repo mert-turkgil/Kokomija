@@ -774,7 +774,7 @@ namespace Kokomija.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Cancel(string? session_id)
+        public IActionResult Cancel(string? session_id)
         {
             _logger.LogInformation("Checkout cancelled for session: {SessionId}", session_id);
             

@@ -55,6 +55,11 @@ namespace Kokomija.Models.ViewModels.Admin
         public decimal TotalRefunds { get; set; }
         public decimal TotalDiscounts { get; set; }
         
+        /// <summary>
+        /// Stripe fees lost due to refunds (Stripe doesn't refund their processing fees)
+        /// </summary>
+        public decimal LostStripeFees { get; set; }
+        
         // Shipping
         public decimal TotalShippingCollected { get; set; } // What customer paid
         public decimal TotalShippingCost { get; set; } // Actual cost to us

@@ -1,10 +1,325 @@
 @model Kokomija.Entity.Product
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
+@inject Kokomija.Data.Abstract.IUnitOfWork UnitOfWork
+@using System.Globalization
+@using System.Text.Json
 
 @{
     var relatedProducts = ViewBag.RelatedProducts as List<Kokomija.Entity.Product> ?? new List<Kokomija.Entity.Product>();
-    var productName = Model.Name;
-    var productDescription = Model.Description;
+    var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    
+    // Get translation for current culture if available
+    var translation = ViewData["CurrentTranslation"] as Kokomija.Entity.ProductTranslation 
+        ?? Model.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(currentCulture));
+    
+    // Use translated values or fallback to default
+    var productName = translation?.Name ?? Model.Name;
+    var productDescription = translation?.Description ?? Model.Description;
+    var metaDescription = translation?.MetaDescription ?? (productDescription.Length > 160 ? productDescription.Substring(0, 157) + "..." : productDescription);
+    var metaKeywords = translation?.MetaKeywords ?? "";
+    var productSlug = translation?.Slug ?? Model.Slug ?? Model.Id.ToString();
+    
+    // Calculate pricing for structured data
+    var pricePerPiece = Model.PackSize > 1 ? Model.Price / Model.PackSize : Model.Price;
+    var hasDiscount = Model.Price > 60; // Best value indicator
+    var primaryImage = Model.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+    var primaryImageUrl = primaryImage != null 
+        ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/ProductImage/{primaryImage.ImageUrl}"
+        : $"{Context.Request.Scheme}://{Context.Request.Host}/img/logo_black.png";
+    
+    // WELCOME10 discount for non-authenticated users (10% off first order)
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var welcomeDiscountPercent = 10m;
+    var welcomeDiscountedPrice = Model.Price * (1 - welcomeDiscountPercent / 100);
+    var welcomeDiscountedPricePerPiece = Model.PackSize > 1 ? welcomeDiscountedPrice / Model.PackSize : welcomeDiscountedPrice;
+    var showWelcomeDiscount = !isAuthenticated; // Show discount for non-logged-in users
+    
+    // For SEO structured data, always show the discount price (WELCOME10 available for new users)
+    var seoPrice = showWelcomeDiscount ? welcomeDiscountedPrice : Model.Price;
+    var seoHighPrice = Model.Price;
+    var seoLowPrice = welcomeDiscountedPrice;
+    
+    // SEO: Set ViewData for layout
+    ViewData["Title"] = productName + " | Kokomija";
+    ViewData["MetaDescription"] = metaDescription;
+    ViewData["MetaKeywords"] = metaKeywords;
+    ViewData["OgTitle"] = productName;
+    ViewData["OgDescription"] = metaDescription;
+    ViewData["OgImage"] = primaryImageUrl;
+    ViewData["OgType"] = "product";
+    
+    // Build canonical URL for sharing
+    var canonicalUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{LocalizedUrl.GetProductUrl(productSlug)}";
+    ViewData["CanonicalUrl"] = canonicalUrl;
+    
+    // Calculate average rating - show real data only, 0 when no reviews
+    var visibleReviews = Model.Reviews?.Where(r => r.IsVisible).ToList() ?? new List<Kokomija.Entity.ProductReview>();
+    var reviewCount = visibleReviews.Count;
+    var averageRating = reviewCount > 0 ? visibleReviews.Average(r => r.Rating) : 0m;
+    
+    // Availability
+    var inStock = Model.Variants?.Any(v => v.StockQuantity > 0) ?? true;
+    var availability = inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+}
+
+@section Styles {
+    <style>
+        /* Product page specific SEO-friendly styles */
+        .product-schema-hidden { display: none; }
+        
+        /* Welcome discount container */
+        .welcome-discount-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        /* Welcome discount badge styles */
+        .welcome-discount-badge {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+        }
+        
+        /* Promo code box */
+        .promo-code-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bs-light);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px dashed var(--bs-border-color);
+            width: fit-content;
+        }
+        
+        .use-code-text {
+            font-size: 0.8rem;
+            color: var(--bs-secondary);
+        }
+        
+        .promo-code {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .copy-code-btn {
+            background: none;
+            border: none;
+            color: var(--bs-primary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-code-btn:hover {
+            background: var(--bs-primary);
+            color: white;
+        }
+        
+        .copy-code-btn.copied {
+            background: var(--bs-success);
+            color: white;
+        }
+        
+        [data-bs-theme="dark"] .promo-code-box {
+            background: var(--bs-dark);
+            border-color: var(--bs-border-color);
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: var(--bs-secondary);
+            font-size: 0.9em;
+            margin-left: 0.5rem;
+        }
+        
+        .discount-price {
+            color: #ee5a24;
+            font-weight: 700;
+        }
+    </style>
+}
+
+@section Meta {
+    @* SEO Meta Tags *@
+    <meta name="description" content="@metaDescription" />
+    @if (!string.IsNullOrEmpty(metaKeywords))
+    {
+        <meta name="keywords" content="@metaKeywords" />
+    }
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="@ViewData["CanonicalUrl"]" />
+    
+    @* Open Graph Tags *@
+    <meta property="og:title" content="@productName" />
+    <meta property="og:description" content="@metaDescription" />
+    <meta property="og:type" content="product" />
+    <meta property="og:url" content="@ViewData["CanonicalUrl"]" />
+    <meta property="og:image" content="@primaryImageUrl" />
+    <meta property="og:site_name" content="Kokomija" />
+    <meta property="og:locale" content="@(currentCulture == "pl" ? "pl_PL" : currentCulture == "tr" ? "tr_TR" : "en_US")" />
+    <meta property="product:price:amount" content="@Model.Price.ToString("F2", CultureInfo.InvariantCulture)" />
+    <meta property="product:price:currency" content="PLN" />
+    <meta property="product:availability" content="@(inStock ? "in stock" : "out of stock")" />
+    
+    @* Twitter Card Tags *@
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@productName" />
+    <meta name="twitter:description" content="@metaDescription" />
+    <meta name="twitter:image" content="@primaryImageUrl" />
+    
+    @* Alternate language URLs for SEO *@
+    @if (Model.Translations != null)
+    {
+        foreach (var trans in Model.Translations.Where(t => !string.IsNullOrEmpty(t.Slug)))
+        {
+            var langCode = trans.CultureCode.Split('-')[0];
+            var hrefLang = trans.CultureCode.ToLower();
+            var altUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/{langCode}/{(langCode == "pl" ? "produkt" : langCode == "tr" ? "urun" : "product")}/{trans.Slug}";
+            <link rel="alternate" hreflang="@hrefLang" href="@altUrl" />
+        }
+        <link rel="alternate" hreflang="x-default" href="@ViewData["CanonicalUrl"]" />
+    }
+    
+    @* JSON-LD Structured Data for Product *@
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "Product",
+        "name": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(productName))",
+        "description": "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(productDescription))",
+        "image": [
+            @foreach (var img in Model.Images?.OrderBy(i => i.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.ProductImage>())
+            {
+                var imgUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/img/ProductImage/{img.ImageUrl}";
+                @Html.Raw($"\"{imgUrl}\"")
+                if (img != Model.Images?.OrderBy(i => i.DisplayOrder).LastOrDefault())
+                {
+                    @Html.Raw(",")
+                }
+            }
+        ],
+        "sku": "@(Model.Variants?.FirstOrDefault()?.SKU ?? $"PROD-{Model.Id}")",
+        "brand": {
+            "@@type": "Brand",
+            "name": "Kokomija"
+        },
+        "category": "@(Model.Category?.Name ?? "Underwear")",
+        "offers": {
+            "@@type": "AggregateOffer",
+            "url": "@ViewData["CanonicalUrl"]",
+            "priceCurrency": "PLN",
+            "lowPrice": "@seoLowPrice.ToString("F2", CultureInfo.InvariantCulture)",
+            "highPrice": "@seoHighPrice.ToString("F2", CultureInfo.InvariantCulture)",
+            "offerCount": "2",
+            "priceValidUntil": "@DateTime.UtcNow.AddMonths(6).ToString("yyyy-MM-dd")",
+            "availability": "@availability",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+                "@@type": "Organization",
+                "name": "Kokomija"
+            },
+            "shippingDetails": {
+                "@@type": "OfferShippingDetails",
+                "shippingRate": {
+                    "@@type": "MonetaryAmount",
+                    "value": "15.00",
+                    "currency": "PLN"
+                },
+                "deliveryTime": {
+                    "@@type": "ShippingDeliveryTime",
+                    "handlingTime": {
+                        "@@type": "QuantitativeValue",
+                        "minValue": 1,
+                        "maxValue": 2,
+                        "unitCode": "DAY"
+                    },
+                    "transitTime": {
+                        "@@type": "QuantitativeValue",
+                        "minValue": 2,
+                        "maxValue": 5,
+                        "unitCode": "DAY"
+                    }
+                },
+                "shippingDestination": {
+                    "@@type": "DefinedRegion",
+                    "addressCountry": "PL"
+                }
+            }
+        }
+        @if (reviewCount > 0)
+        {
+            @Html.Raw($@",
+        ""aggregateRating"": {{
+            ""@@type"": ""AggregateRating"",
+            ""ratingValue"": ""{averageRating:F1}"",
+            ""reviewCount"": ""{reviewCount}"",
+            ""bestRating"": ""5"",
+            ""worstRating"": ""1""
+        }}")
+        }
+    }
+    </script>
+    
+    @* BreadcrumbList Structured Data *@
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@@type": "ListItem",
+                "position": 1,
+                "name": "@L["Home"]",
+                "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}{LocalizedUrl.GetHomeUrl()}")"
+            },
+            {
+                "@@type": "ListItem",
+                "position": 2,
+                "name": "@L["Products"]",
+                "item": "@($"{Context.Request.Scheme}://{Context.Request.Host}{LocalizedUrl.GetProductsUrl()}")"
+            }
+            @if (Model.Category != null)
+            {
+                @Html.Raw($@",
+            {{
+                ""@@type"": ""ListItem"",
+                ""position"": 3,
+                ""name"": ""{(!string.IsNullOrEmpty(Model.Category.NameKey) ? L[Model.Category.NameKey] : Model.Category.Name)}"",
+                ""item"": ""{Context.Request.Scheme}://{Context.Request.Host}/Product/Category/{Model.Category.Slug}""
+            }},
+            {{
+                ""@@type"": ""ListItem"",
+                ""position"": 4,
+                ""name"": ""{System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(productName)}""
+            }}")
+            }
+            else
+            {
+                @Html.Raw($@",
+            {{
+                ""@@type"": ""ListItem"",
+                ""position"": 3,
+                ""name"": ""{System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(productName)}""
+            }}")
+            }
+        ]
+    }
+    </script>
 }
 
 <div class="product-detail-page">
@@ -31,7 +346,7 @@
         <div class="row g-5">
             <!-- Image Gallery Section -->
             <div class="col-lg-7">
-                <div class="product-gallery" id="productGallery">
+                <div class="product-gallery" id="productGallery" itemscope itemtype="https://schema.org/ImageGallery">
                     @if (Model.Images != null && Model.Images.Any())
                     {
                         var imageCount = Model.Images.Count();
@@ -42,12 +357,16 @@
                             <!-- Single Large Image -->
                             var singleImage = orderedImages.First();
                             var imgUrl = Url.Content($"~/img/ProductImage/{singleImage.ImageUrl}");
+                            var seoAltText = !string.IsNullOrEmpty(singleImage.AltText) ? singleImage.AltText : $"{productName} - Kokomija";
                             
                             <div class="single-image-container">
                                 <img src="@imgUrl" 
-                                     alt="@productName" 
+                                     alt="@seoAltText" 
+                                     title="@productName"
                                      class="single-product-image" 
                                      id="viewerImage"
+                                     itemprop="image"
+                                     loading="eager"
                                      onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');" />
                                 <div class="image-click-hint">
                                     <i class="fas fa-search-plus"></i> @L.GetString("ClickToEnlarge", "Product")
@@ -59,11 +378,13 @@
                             <!-- Multiple Images with Thumbnails and Navigation -->
                             var mainImage = orderedImages.First();
                             var mainImageUrl = Url.Content($"~/img/ProductImage/{mainImage.ImageUrl}");
+                            var mainAltText = !string.IsNullOrEmpty(mainImage.AltText) ? mainImage.AltText : $"{productName} - główne zdjęcie - Kokomija";
                             
                             <div class="main-image-container">
                                 <div class="image-zoom-wrapper">
                                     <img src="@mainImageUrl" 
-                                         alt="@productName" 
+                                         alt="@mainAltText"
+                                         title="@productName" 
                                          class="main-product-image" 
                                          id="mainImage"
                                          data-index="0"
@@ -93,12 +414,16 @@
                                 {
                                     var image = orderedImages[i];
                                     var imgUrl = Url.Content($"~/img/ProductImage/{image.ImageUrl}");
+                                    var thumbAltText = !string.IsNullOrEmpty(image.AltText) ? image.AltText : $"{productName} - zdjęcie {i + 1}";
                                     
                                     <div class="thumbnail-item @(i == 0 ? "active" : "")" 
                                          data-index="@i"
-                                         data-image="@imgUrl">
+                                         data-image="@imgUrl"
+                                         data-alt="@thumbAltText">
                                         <img src="@imgUrl" 
-                                             alt="@productName" 
+                                             alt="@thumbAltText"
+                                             title="@productName - @(i + 1)" 
+                                             loading="lazy"
                                              onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.parentElement.classList.add('logo-fallback');" />
                                     </div>
                                 }
@@ -156,34 +481,95 @@
 
             <!-- Product Info Section -->
             <div class="col-lg-5">
-                <div class="product-info">
+                <article class="product-info" itemscope itemtype="https://schema.org/Product">
+                    <!-- Hidden schema data -->
+                    <meta itemprop="name" content="@productName" />
+                    <meta itemprop="description" content="@productDescription" />
+                    <link itemprop="url" href="@ViewData["CanonicalUrl"]" />
+                    
                     <!-- Product Title -->
                     <h1 class="product-title">@productName</h1>
 
                     <!-- Rating and Reviews -->
-                    <div class="product-rating">
-                        <div class="stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
+                    <div class="product-rating" itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
+                        <meta itemprop="ratingValue" content="@averageRating.ToString("F1", CultureInfo.InvariantCulture)" />
+                        <meta itemprop="reviewCount" content="@reviewCount" />
+                        <meta itemprop="bestRating" content="5" />
+                        <meta itemprop="worstRating" content="1" />
+                        <div class="stars" aria-label="@L.GetString("Rating", "Product"): @averageRating.ToString("F1") @L.GetString("OutOf", "Product") 5">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Floor(averageRating))
+                                {
+                                    <i class="fas fa-star" aria-hidden="true"></i>
+                                }
+                                else if (i - averageRating < 1 && i - averageRating > 0)
+                                {
+                                    <i class="fas fa-star-half-alt" aria-hidden="true"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star" aria-hidden="true"></i>
+                                }
+                            }
                         </div>
-                        <span class="rating-text">4.89 <span class="review-count">(56 @L.GetString("Reviews", "Product"))</span></span>
+                        <span class="rating-text">@averageRating.ToString("F2") <span class="review-count">(@reviewCount @L.GetString("Reviews", "Product"))</span></span>
                     </div>
 
-                    <!-- Price -->
-                    <div class="product-price-section">
+                    <!-- Price with Schema.org markup -->
+                    <div class="product-price-section" itemprop="offers" itemscope itemtype="https://schema.org/AggregateOffer">
+                        <meta itemprop="priceCurrency" content="PLN" />
+                        <meta itemprop="lowPrice" content="@seoLowPrice.ToString("F2", CultureInfo.InvariantCulture)" />
+                        <meta itemprop="highPrice" content="@seoHighPrice.ToString("F2", CultureInfo.InvariantCulture)" />
+                        <link itemprop="url" href="@ViewData["CanonicalUrl"]" />
+                        <meta itemprop="availability" content="@availability" />
+                        <meta itemprop="priceValidUntil" content="@DateTime.UtcNow.AddMonths(6).ToString("yyyy-MM-dd")" />
+                        
                         <div class="price-display">
-                            @if (Model.PackSize > 1)
+                            @if (showWelcomeDiscount)
                             {
-                                var pricePerPiece = Model.Price / Model.PackSize;
-                                <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
-                                <span class="price-per-piece">(@pricePerPiece.ToString("N2") zł / @L.GetString("Piece", "Product"))</span>
+                                @* Show discounted price for non-authenticated users *@
+                                @if (Model.PackSize > 1)
+                                {
+                                    <span class="current-price discount-price" id="productPrice">
+                                        @welcomeDiscountedPrice.ToString("N2") zł
+                                    </span>
+                                    <span class="original-price">@Model.Price.ToString("N2") zł</span>
+                                    <span class="price-per-piece">(@welcomeDiscountedPricePerPiece.ToString("N2") zł / @L.GetString("Piece", "Product"))</span>
+                                }
+                                else
+                                {
+                                    <span class="current-price discount-price" id="productPrice">@welcomeDiscountedPrice.ToString("N2") zł</span>
+                                    <span class="original-price">@Model.Price.ToString("N2") zł</span>
+                                }
+                                <div class="welcome-discount-container mt-2">
+                                    <div class="welcome-discount-badge">
+                                        <i class="fas fa-gift me-1"></i>
+                                        <span>@L.GetString("WelcomeDiscount", "Product")</span>
+                                    </div>
+                                    <div class="promo-code-box mt-2">
+                                        <span class="use-code-text">@L.GetString("UseCode", "Product"):</span>
+                                        <code class="promo-code">WELCOME10</code>
+                                        <button type="button" class="copy-code-btn" onclick="copyPromoCode('WELCOME10')" title="@L["Product_CopyLink"]">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             }
                             else
                             {
-                                <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
+                                @* Show regular price for authenticated users *@
+                                @if (Model.PackSize > 1)
+                                {
+                                    <span class="current-price" id="productPrice" itemprop="priceSpecification" itemscope itemtype="https://schema.org/PriceSpecification">
+                                        <span itemprop="price">@Model.Price.ToString("N2")</span> <span itemprop="priceCurrency">zł</span>
+                                    </span>
+                                    <span class="price-per-piece">(@pricePerPiece.ToString("N2") zł / @L.GetString("Piece", "Product"))</span>
+                                }
+                                else
+                                {
+                                    <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
+                                }
                             }
                         </div>
                         @if (Model.Price > 60)
@@ -221,7 +607,10 @@
                                     var perPiecePrice = pack.Price / packSize;
                                     var isBestValue = packSize == allPackOptions.Max(p => p.PackSize);
                                     
-                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@pack.Id" 
+                                    var packTranslation = pack.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(currentCulture));
+                                    var packSlug = packTranslation?.Slug ?? pack.Slug ?? pack.Id.ToString();
+                                    
+                                    <a asp-controller="Product" asp-action="DetailsBySlug" asp-route-culture="@currentCulture" asp-route-slug="@packSlug" 
                                        class="pack-option @(isCurrentProduct ? "active" : "") @(isBestValue ? "best-value" : "")">
                                         @if (isBestValue)
                                         {
@@ -302,7 +691,7 @@
                     </div>
 
                     <!-- Product Description -->
-                    <div class="product-description">
+                    <div class="product-description" itemprop="description">
                         <h5 class="description-title">@L["Product_Description"]</h5>
                         <p>@productDescription</p>
                     </div>
@@ -313,7 +702,7 @@
                         <ul class="specs-list">
                             <li>
                                 <span class="spec-label">@L["Product_Material"]:</span>
-                                <span class="spec-value">@L["Product_Material_Cotton"]</span>
+                                <span class="spec-value" itemprop="material">@L["Product_Material_Cotton"]</span>
                             </li>
                             <li>
                                 <span class="spec-label">@L["Product_Care"]:</span>
@@ -321,11 +710,13 @@
                             </li>
                             <li>
                                 <span class="spec-label">@L["Product_Brand"]:</span>
-                                <span class="spec-value">Kokomija</span>
+                                <span class="spec-value" itemprop="brand" itemscope itemtype="https://schema.org/Brand">
+                                    <span itemprop="name">Kokomija</span>
+                                </span>
                             </li>
                             <li>
                                 <span class="spec-label">SKU:</span>
-                                <span class="spec-value" id="productSKU">-</span>
+                                <span class="spec-value" id="productSKU" itemprop="sku">@(Model.Variants?.FirstOrDefault()?.SKU ?? $"PROD-{Model.Id}")</span>
                             </li>
                         </ul>
                     </div>
@@ -341,7 +732,46 @@
                             <span>@L["Product_Certified"]</span>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Share Buttons -->
+                    <div class="product-share mt-4 pt-4 border-top">
+                        <h6 class="share-title mb-3">
+                            <i class="fas fa-share-alt me-2"></i>@L["Product_Share"]
+                        </h6>
+                        <div class="share-buttons d-flex gap-2 flex-wrap">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(canonicalUrl)" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="btn btn-sm btn-outline-primary share-btn"
+                               title="@L["Product_ShareFacebook"]">
+                                <i class="bi bi-facebook"></i>
+                                <span class="d-none d-md-inline ms-1">Facebook</span>
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(canonicalUrl)&text=@Uri.EscapeDataString(productName)" 
+                               target="_blank"
+                               rel="noopener noreferrer" 
+                               class="btn btn-sm btn-outline-info share-btn"
+                               title="@L["Product_ShareTwitter"]">
+                                <i class="bi bi-twitter"></i>
+                                <span class="d-none d-md-inline ms-1">Twitter</span>
+                            </a>
+                            <a href="https://pinterest.com/pin/create/button/?url=@Uri.EscapeDataString(canonicalUrl)&media=@Uri.EscapeDataString(primaryImageUrl)&description=@Uri.EscapeDataString(productName)" 
+                               target="_blank"
+                               rel="noopener noreferrer" 
+                               class="btn btn-sm btn-outline-danger share-btn"
+                               title="@L["Product_SharePinterest"]">
+                                <i class="bi bi-pinterest"></i>
+                                <span class="d-none d-md-inline ms-1">Pinterest</span>
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary share-btn" 
+                                    onclick="copyProductLink()"
+                                    title="@L["Product_CopyLink"]">
+                                <i class="bi bi-link-45deg"></i>
+                                <span class="d-none d-md-inline ms-1">@L["Product_CopyLink"]</span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
             </div>
         </div>
     </div>
@@ -351,7 +781,7 @@
 <div class="container my-5">
     <div class="reviews-section">
         <div class="reviews-header">
-            <h2>@L.GetString("Title", "Review")</h2>
+            <h2>@L["Review_Title"]</h2>
             @if (Model.Reviews?.Any() == true)
             {
                 <div class="rating-summary">
@@ -374,7 +804,7 @@
                                 }
                             }
                         </div>
-                        <span class="review-count">@L.GetString("BasedOn", "Review") @Model.ReviewCount @L.GetString("Reviews", "Review")</span>
+                        <span class="review-count">@L["Review_BasedOn"] @Model.ReviewCount @L["Review_Reviews"]</span>
                     </div>
                 </div>
             }
@@ -397,7 +827,7 @@
                                     @if (review.IsVerifiedPurchase)
                                     {
                                         <span class="verified-badge">
-                                            <i class="fas fa-check-circle"></i> @L.GetString("VerifiedPurchase", "Review")
+                                            <i class="fas fa-check-circle"></i> @L["Review_VerifiedPurchase"]
                                         </span>
                                     }
                                 </div>
@@ -426,7 +856,7 @@
                             <div class="admin-reply">
                                 <div class="admin-reply-header">
                                     <i class="fas fa-reply"></i>
-                                    <strong>@L.GetString("AdminReply", "Review")</strong>
+                                    <strong>@L["Review_AdminReply"]</strong>
                                     @if (review.AdminReplyAt.HasValue)
                                     {
                                         <span class="reply-date">@review.AdminReplyAt.Value.ToString("dd MMM yyyy")</span>
@@ -444,8 +874,8 @@
             {
                 <div class="no-reviews">
                     <i class="fas fa-comment-slash"></i>
-                    <h3>@L.GetString("NoReviews", "Review")</h3>
-                    <p>@L.GetString("NoReviews_Message", "Review")</p>
+                    <h3>@L["Review_NoReviews"]</h3>
+                    <p>@L["Review_NoReviews_Message"]</p>
                 </div>
             }
         </div>
@@ -454,14 +884,14 @@
         @if (User.Identity?.IsAuthenticated == true)
         {
             <div class="write-review-section">
-                <h3>@L.GetString("WriteReview", "Review")</h3>
+                <h3>@L["Review_WriteReview"]</h3>
                 <p class="text-muted mb-3">
-                    <i class="fas fa-info-circle"></i> @L.GetString("PurchaseRequired", "Review")
+                    <i class="fas fa-info-circle"></i> @L["Review_PurchaseRequired"]
                 </p>
                 <form id="reviewForm">
                     @Html.AntiForgeryToken()
                     <div class="form-group">
-                        <label>@L.GetString("YourRating", "Review")</label>
+                        <label>@L["Review_YourRating"]</label>
                         <div class="star-rating-input">
                             @for (int i = 5; i >= 1; i--)
                             {
@@ -471,11 +901,11 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="reviewComment">@L.GetString("YourComment", "Review")</label>
+                        <label for="reviewComment">@L["Review_YourComment"]</label>
                         <textarea id="reviewComment" name="comment" class="form-control" rows="4" 
-                                  placeholder="@L.GetString("CommentPlaceholder", "Review")" required></textarea>
+                                  placeholder="@L["Review_CommentPlaceholder"]" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">@L.GetString("Submit", "Review")</button>
+                    <button type="submit" class="btn btn-primary">@L["Review_Submit"]</button>
                 </form>
             </div>
         }
@@ -483,7 +913,7 @@
         {
             <div class="login-prompt">
                 <i class="fas fa-sign-in-alt"></i>
-                <p>@L.GetString("LoginRequired", "Review")</p>
+                <p>@L["Review_LoginRequired"]</p>
                 <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary">@L["Account_Login"]</a>
             </div>
         }
@@ -666,6 +1096,46 @@
                 }
             });
         };
+
+        // Copy product link to clipboard
+        function copyProductLink() {
+            var url = '@Html.Raw(canonicalUrl)';
+            navigator.clipboard.writeText(url).then(function() {
+                // Show success feedback
+                var btn = document.querySelector('.share-btn[onclick="copyProductLink()"]');
+                var originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check2"></i> <span class="d-none d-md-inline ms-1">@L["Product_LinkCopied"].Replace("!", "")</span>';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-success');
+                setTimeout(function() {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-secondary');
+                }, 2000);
+            }, function() {
+                // Fallback for older browsers
+                var tempInput = document.createElement('input');
+                tempInput.value = url;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                alert('@L["Product_LinkCopied"]');
+            });
+        }
+
+        // Copy promo code to clipboard
+        function copyPromoCode(code) {
+            navigator.clipboard.writeText(code).then(function() {
+                var btn = document.querySelector('.copy-code-btn');
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="bi bi-check2"></i>';
+                setTimeout(function() {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="bi bi-clipboard"></i>';
+                }, 2000);
+            });
+        }
     </script>
 }
 

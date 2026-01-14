@@ -73,6 +73,13 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         
         // Map birthday claim
         googleOptions.ClaimActions.MapJsonKey("urn:google:birthday", "birthday");
+        
+        // Force account selection even if user is already logged in (for logout support)
+        googleOptions.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            context.Response.Redirect(context.RedirectUri + "&prompt=select_account");
+            return Task.CompletedTask;
+        };
     });
 }
 
@@ -101,6 +108,13 @@ if (!string.IsNullOrEmpty(facebookAppId) && !string.IsNullOrEmpty(facebookAppSec
         
         // Map birthday claim
         facebookOptions.ClaimActions.MapJsonKey(ClaimTypes.DateOfBirth, "birthday");
+        
+        // Force re-authentication even if user is already logged in (for logout support)
+        facebookOptions.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            context.Response.Redirect(context.RedirectUri + "&auth_type=reauthenticate");
+            return Task.CompletedTask;
+        };
     });
 }
 
@@ -175,7 +189,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Configure Localization
 var supportedCultures = builder.Configuration.GetSection("Localization:SupportedCultures").Get<string[]>() 
     ?? new[] { "pl-PL", "en-US" };
-var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "pl-PL";
+var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "en-US";
 
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -186,9 +200,14 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.FallBackToParentCultures = true;
     options.FallBackToParentUICultures = true;
     
-    // Accept language from: Query string, Cookie, Accept-Language header
-    options.RequestCultureProviders.Insert(0, new Microsoft.AspNetCore.Localization.QueryStringRequestCultureProvider());
-    options.RequestCultureProviders.Insert(1, new Microsoft.AspNetCore.Localization.CookieRequestCultureProvider());
+    // Clear default providers and add in order of priority:
+    // 1. Query string (?culture=pl-PL)
+    // 2. Cookie (user's saved preference)
+    // 3. Geo/Language detection (Polish for Poland, English for others)
+    options.RequestCultureProviders.Clear();
+    options.RequestCultureProviders.Add(new Microsoft.AspNetCore.Localization.QueryStringRequestCultureProvider());
+    options.RequestCultureProviders.Add(new Microsoft.AspNetCore.Localization.CookieRequestCultureProvider());
+    options.RequestCultureProviders.Add(new Kokomija.Services.GeoLocationCultureProvider());
 });
 
 // Register Unit of Work (provides all repositories)
@@ -222,6 +241,9 @@ builder.Services.AddScoped<ITaxService, Kokomija.Services.TaxService>();
 
 // Register Wishlist Notification Service
 builder.Services.AddScoped<IWishlistNotificationService, WishlistNotificationService>();
+
+// Register Localized URL Service
+builder.Services.AddScoped<ILocalizedUrlService, LocalizedUrlService>();
 
 // Add background services
 builder.Services.AddHostedService<Kokomija.BackgroundServices.WishlistNotificationWorker>();
@@ -354,6 +376,9 @@ app.UseMiddleware<SiteClosureMiddleware>();
 var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>();
 app.UseRequestLocalization(localizationOptions.Value);
 
+// Add localized URL redirection (redirects / to /en/home or /pl/strona-glowna based on culture)
+app.UseLocalizedUrls();
+
 // Add session before routing
 app.UseSession();
 
@@ -364,6 +389,71 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
+// SEO-friendly localized routes for key pages
+// Polish routes
+app.MapControllerRoute(
+    name: "pl-home",
+    pattern: "pl/strona-glowna",
+    defaults: new { controller = "Home", action = "Index", culture = "pl" });
+
+app.MapControllerRoute(
+    name: "pl-login",
+    pattern: "pl/logowanie",
+    defaults: new { controller = "Account", action = "Login", culture = "pl" });
+
+app.MapControllerRoute(
+    name: "pl-register",
+    pattern: "pl/rejestracja",
+    defaults: new { controller = "Account", action = "Register", culture = "pl" });
+
+app.MapControllerRoute(
+    name: "pl-products",
+    pattern: "pl/produkty/{id?}",
+    defaults: new { controller = "Product", action = "Index", culture = "pl" });
+
+// English routes
+app.MapControllerRoute(
+    name: "en-home",
+    pattern: "en/home",
+    defaults: new { controller = "Home", action = "Index", culture = "en" });
+
+app.MapControllerRoute(
+    name: "en-login",
+    pattern: "en/login",
+    defaults: new { controller = "Account", action = "Login", culture = "en" });
+
+app.MapControllerRoute(
+    name: "en-register",
+    pattern: "en/sign-up",
+    defaults: new { controller = "Account", action = "Register", culture = "en" });
+
+app.MapControllerRoute(
+    name: "en-products",
+    pattern: "en/products/{id?}",
+    defaults: new { controller = "Product", action = "Index", culture = "en" });
+
+// Turkish routes
+app.MapControllerRoute(
+    name: "tr-home",
+    pattern: "tr/anasayfa",
+    defaults: new { controller = "Home", action = "Index", culture = "tr" });
+
+app.MapControllerRoute(
+    name: "tr-login",
+    pattern: "tr/giris",
+    defaults: new { controller = "Account", action = "Login", culture = "tr" });
+
+app.MapControllerRoute(
+    name: "tr-register",
+    pattern: "tr/kayit-ol",
+    defaults: new { controller = "Account", action = "Register", culture = "tr" });
+
+app.MapControllerRoute(
+    name: "tr-products",
+    pattern: "tr/urunler/{id?}",
+    defaults: new { controller = "Product", action = "Index", culture = "tr" });
+
+// Default route (fallback)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

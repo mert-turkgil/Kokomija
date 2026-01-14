@@ -1,0 +1,68 @@
+@inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
+
+@{
+    ViewData["Title"] = L["Product_NotFound_Title"];
+    var searchQuery = Context.Request.Query["q"].FirstOrDefault() ?? "";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <!-- SEO: 404 response is handled by controller -->
+            <div class="product-not-found">
+                <div class="not-found-icon mb-4">
+                    <i class="fas fa-search fa-5x text-muted"></i>
+                </div>
+                
+                <h1 class="display-4 fw-bold mb-3">@L["Product_NotFound_Title"]</h1>
+                <p class="lead text-muted mb-4">@L["Product_NotFound_Message"]</p>
+                
+                <!-- Search Form -->
+                <div class="search-box mb-5">
+                    <form asp-controller="Product" asp-action="Search" method="get" class="d-flex justify-content-center">
+                        <div class="input-group" style="max-width: 500px;">
+                            <input type="text" 
+                                   name="q" 
+                                   class="form-control form-control-lg" 
+                                   placeholder="@L["Product_Search_Placeholder"]"
+                                   value="@searchQuery"
+                                   aria-label="@L["Product_Search"]">
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Helpful Links -->
+                <div class="helpful-links">
+                    <h5 class="mb-3">@L["Product_NotFound_TryThese"]</h5>
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="@LocalizedUrl.GetProductsUrl()" class="btn btn-outline-primary">
+                            <i class="fas fa-shopping-bag me-2"></i>@L["Browse_All_Products"]
+                        </a>
+                        <a href="@LocalizedUrl.GetHomeUrl()" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>@L["Return_Home"]
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .product-not-found {
+            padding: 3rem 0;
+        }
+        .not-found-icon {
+            opacity: 0.5;
+        }
+        .search-box .form-control:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+        }
+    </style>
+}

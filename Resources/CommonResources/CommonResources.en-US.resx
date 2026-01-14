@@ -183,4 +183,21 @@
   <data name="AddToCart" xml:space="preserve">
     <value>Add to Cart</value>
   </data>
+  <!-- Site Meta -->
+  <data name="Site_MetaDescription" xml:space="preserve">
+    <value>Kokomija - Premium quality underwear and clothing. Shop comfortable, stylish underwear with free shipping on orders over 200 PLN. New customers get 10% off with code WELCOME10.</value>
+  </data>
+  <!-- Products Page -->
+  <data name="Products_Discounts" xml:space="preserve">
+    <value>Discounts</value>
+  </data>
+  <data name="Products_ShowDiscountsOnly" xml:space="preserve">
+    <value>Show only discounted products</value>
+  </data>
+  <data name="Products_WelcomeDiscountHint" xml:space="preserve">
+    <value>New customers get 10% off with code</value>
+  </data>
+  <data name="Products_Sort_Discount" xml:space="preserve">
+    <value>Best Discounts</value>
+  </data>
 </root>

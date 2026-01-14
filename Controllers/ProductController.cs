@@ -1,5 +1,6 @@
 using Kokomija.Data.Abstract;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace Kokomija.Controllers
 {
@@ -39,6 +40,109 @@ namespace Kokomija.Controllers
             }
         }
 
+        // GET: /pl/produkt/nazwa-produktu or /en/product/product-name
+        // SEO-friendly product URL by localized slug
+        [Route("{culture}/produkt/{slug}")]
+        [Route("{culture}/product/{slug}")]
+        [Route("{culture}/urun/{slug}")]
+        public async Task<IActionResult> DetailsBySlug(string culture, string slug)
+        {
+            try
+            {
+                // Set culture from URL
+                var cultureInfo = new CultureInfo(culture == "pl" ? "pl-PL" : culture == "tr" ? "tr-TR" : "en-US");
+                CultureInfo.CurrentCulture = cultureInfo;
+                CultureInfo.CurrentUICulture = cultureInfo;
+                Thread.CurrentThread.CurrentCulture = cultureInfo;
+                Thread.CurrentThread.CurrentUICulture = cultureInfo;
+
+                // Get product by slug (searches all language slugs)
+                var product = await _unitOfWork.Products.GetProductBySlugAsync(slug, culture);
+
+                // Handle product not found
+                if (product == null)
+                {
+                    _logger.LogWarning("Product not found for slug: {Slug}, culture: {Culture}", slug, culture);
+                    return View("ProductNotFound");
+                }
+
+                // Get the correct translation for this culture
+                var translation = product.Translations.FirstOrDefault(t => t.CultureCode.StartsWith(culture));
+                
+                // Canonical URL redirect: if the slug doesn't match the current culture's slug, redirect
+                if (translation != null && !string.IsNullOrEmpty(translation.Slug))
+                {
+                    var normalizedInputSlug = NormalizeSlugForComparison(slug);
+                    var normalizedTranslationSlug = translation.Slug.ToLowerInvariant();
+                    
+                    if (normalizedInputSlug != normalizedTranslationSlug)
+                    {
+                        // Redirect to the canonical URL with the correct slug for this culture
+                        var routeName = culture == "pl" ? "produkt" : culture == "tr" ? "urun" : "product";
+                        var canonicalUrl = $"/{culture}/{routeName}/{translation.Slug}";
+                        _logger.LogInformation("Redirecting from {OldSlug} to canonical URL: {CanonicalUrl}", slug, canonicalUrl);
+                        return RedirectPermanent(canonicalUrl);
+                    }
+                }
+
+                // Handle inactive/archived/deleted products
+                if (!product.IsActive)
+                {
+                    _logger.LogInformation("Product is inactive: {Slug}, culture: {Culture}", slug, culture);
+                    
+                    // Check if there are similar active products in the same group
+                    if (product.ProductGroupId.HasValue)
+                    {
+                        var alternativeProducts = await _unitOfWork.Products.FindAsync(p => 
+                            p.ProductGroupId == product.ProductGroupId && 
+                            p.IsActive && 
+                            p.Id != product.Id);
+                        
+                        if (alternativeProducts.Any())
+                        {
+                            ViewData["AlternativeProducts"] = alternativeProducts.ToList();
+                        }
+                    }
+                    
+                    // Check if there are similar products in the same category
+                    else if (product.CategoryId.HasValue)
+                    {
+                        var categoryProducts = await _unitOfWork.Products.GetProductsByCategoryAsync(product.CategoryId.Value);
+                        var alternatives = categoryProducts.Where(p => p.Id != product.Id && p.IsActive).Take(4).ToList();
+                        if (alternatives.Any())
+                        {
+                            ViewData["AlternativeProducts"] = alternatives;
+                        }
+                    }
+
+                    ViewData["ProductName"] = product.Name;
+                    ViewData["CurrentCulture"] = culture;
+                    return View("ProductUnavailable");
+                }
+
+                // Check stock availability
+                var hasStock = product.Variants?.Any(v => v.StockQuantity > 0) ?? true;
+                ViewData["HasStock"] = hasStock;
+
+                // Load related products
+                await LoadRelatedProducts(product);
+
+                // Set page metadata from translation or fallback to product
+                ViewData["Title"] = translation?.Name ?? product.Name;
+                ViewData["Description"] = translation?.MetaDescription ?? translation?.Description ?? product.Description;
+                ViewData["Keywords"] = translation?.MetaKeywords;
+                ViewData["CurrentCulture"] = culture;
+                ViewData["CurrentTranslation"] = translation;
+
+                return View("Details", product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving product details for slug: {Slug}, culture: {Culture}", slug, culture);
+                return View("Error");
+            }
+        }
+
         // GET: Product/Details/5
         public async Task<IActionResult> Details(int id)
         {
@@ -49,7 +153,38 @@ namespace Kokomija.Controllers
 
                 if (product == null)
                 {
-                    return NotFound();
+                    return View("ProductNotFound");
+                }
+
+                // Check if product is unavailable (inactive/archived)
+                if (!product.IsActive)
+                {
+                    // Find alternative products from same group or category
+                    List<Kokomija.Entity.Product> alternatives = new List<Kokomija.Entity.Product>();
+                    
+                    if (product.ProductGroupId.HasValue)
+                    {
+                        // Get active products from same group
+                        alternatives = (await _unitOfWork.Products.FindAsync(p => 
+                            p.ProductGroupId == product.ProductGroupId && 
+                            p.IsActive && 
+                            p.Id != id))
+                            .Take(4)
+                            .ToList();
+                    }
+                    
+                    // If no group alternatives, try same category
+                    if (!alternatives.Any() && product.CategoryId.HasValue)
+                    {
+                        alternatives = (await _unitOfWork.Products.GetProductsByCategoryAsync(product.CategoryId.Value))
+                            .Where(p => p.IsActive && p.Id != id)
+                            .Take(4)
+                            .ToList();
+                    }
+                    
+                    ViewBag.ProductName = product.Name;
+                    ViewBag.AlternativeProducts = alternatives;
+                    return View("ProductUnavailable");
                 }
 
                 // If product is part of a group, load reviews for ALL products in the group
@@ -187,14 +322,25 @@ namespace Kokomija.Controllers
         }
 
         // Example: Get available colors for filtering (AJAX endpoint)
+        // Returns only colors that are actually used by active products
         [HttpGet]
         public async Task<IActionResult> GetColors()
         {
             try
             {
+                // Get distinct color IDs from active product variants
+                var usedColorIds = (await _unitOfWork.Repository<Entity.ProductVariant>()
+                    .FindAsync(v => v.ColorId.HasValue && v.IsActive, v => v.Product))
+                    .Where(v => v.Product.IsActive)
+                    .Select(v => v.ColorId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                // Get only the colors that are actually used
                 var colors = await _unitOfWork.Colors.GetActiveColorsAsync();
+                var usedColors = colors.Where(c => usedColorIds.Contains(c.Id)).ToList();
                 
-                var result = colors.Select(c => new
+                var result = usedColors.Select(c => new
                 {
                     id = c.Id,
                     name = c.Name,
@@ -231,14 +377,25 @@ namespace Kokomija.Controllers
         }
 
         // Example: Get available sizes for filtering (AJAX endpoint)
+        // Returns only sizes that are actually used by active products
         [HttpGet]
         public async Task<IActionResult> GetSizes()
         {
             try
             {
+                // Get distinct size IDs from active product variants
+                var usedSizeIds = (await _unitOfWork.Repository<Entity.ProductVariant>()
+                    .FindAsync(v => v.SizeId.HasValue && v.IsActive, v => v.Product))
+                    .Where(v => v.Product.IsActive)
+                    .Select(v => v.SizeId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                // Get only the sizes that are actually used
                 var sizes = await _unitOfWork.Sizes.GetActiveSizesAsync();
+                var usedSizes = sizes.Where(s => usedSizeIds.Contains(s.Id)).ToList();
                 
-                var result = sizes.Select(s => new
+                var result = usedSizes.Select(s => new
                 {
                     id = s.Id,
                     name = s.Name,
@@ -340,6 +497,116 @@ namespace Kokomija.Controllers
                 _logger.LogError(ex, "Error retrieving categories");
                 return BadRequest();
             }
+        }
+
+        // Helper method to load related products for a product
+        private async Task LoadRelatedProducts(Kokomija.Entity.Product product)
+        {
+            List<Kokomija.Entity.Product> relatedProducts;
+            
+            // If product is part of a group, load reviews for ALL products in the group
+            if (product.ProductGroupId.HasValue)
+            {
+                var groupProductIds = (await _unitOfWork.Products.FindAsync(p => 
+                    p.ProductGroupId == product.ProductGroupId && p.IsActive))
+                    .Select(p => p.Id)
+                    .ToList();
+                
+                // Get all reviews for all products in the group
+                var allGroupReviews = new List<Kokomija.Entity.ProductReview>();
+                foreach (var productId in groupProductIds)
+                {
+                    var reviews = await _unitOfWork.ProductReviews.GetProductReviewsAsync(productId, false);
+                    allGroupReviews.AddRange(reviews);
+                }
+                
+                // Replace product reviews with combined group reviews
+                product.Reviews = allGroupReviews.OrderByDescending(r => r.CreatedAt).ToList();
+
+                // Get all products in the same group (different pack sizes)
+                relatedProducts = (await _unitOfWork.Products.FindAsync(p => 
+                    p.ProductGroupId == product.ProductGroupId && 
+                    p.Id != product.Id && 
+                    p.IsActive))
+                    .OrderBy(p => p.PackSize)
+                    .ToList();
+            }
+            else if (product.CategoryId.HasValue)
+            {
+                // Fallback: Get products from same category
+                var categoryProducts = await _unitOfWork.Products.GetProductsByCategoryAsync(product.CategoryId.Value);
+                relatedProducts = categoryProducts.Where(p => p.Id != product.Id && p.IsActive).ToList();
+            }
+            else
+            {
+                relatedProducts = new List<Kokomija.Entity.Product>();
+            }
+
+            ViewBag.RelatedProducts = relatedProducts;
+        }
+
+        // Helper method to generate localized product URL
+        public static string GetLocalizedProductUrl(Kokomija.Entity.Product product, string culture)
+        {
+            // Find translation for the culture
+            var translation = product.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(culture));
+            var slug = translation?.Slug ?? product.Slug ?? product.Id.ToString();
+
+            // Get the localized path segment
+            var productPath = culture switch
+            {
+                "pl" => "produkt",
+                "tr" => "urun",
+                _ => "product"
+            };
+
+            return $"/{culture}/{productPath}/{slug}";
+        }
+        
+        /// <summary>
+        /// Normalizes a slug for comparison - converts Polish characters to ASCII and handles multiple dashes
+        /// </summary>
+        private static string NormalizeSlugForComparison(string slug)
+        {
+            if (string.IsNullOrEmpty(slug))
+                return slug;
+            
+            // URL decode first
+            slug = System.Net.WebUtility.UrlDecode(slug);
+            
+            // Convert to lowercase
+            slug = slug.ToLowerInvariant();
+            
+            // Polish character mappings
+            var polishMappings = new Dictionary<char, char>
+            {
+                {'ą', 'a'}, {'ć', 'c'}, {'ę', 'e'}, {'ł', 'l'}, {'ń', 'n'},
+                {'ó', 'o'}, {'ś', 's'}, {'ź', 'z'}, {'ż', 'z'},
+                {'Ą', 'a'}, {'Ć', 'c'}, {'Ę', 'e'}, {'Ł', 'l'}, {'Ń', 'n'},
+                {'Ó', 'o'}, {'Ś', 's'}, {'Ź', 'z'}, {'Ż', 'z'}
+            };
+            
+            var result = new System.Text.StringBuilder();
+            foreach (var c in slug)
+            {
+                if (polishMappings.TryGetValue(c, out var replacement))
+                    result.Append(replacement);
+                else
+                    result.Append(c);
+            }
+            
+            slug = result.ToString();
+            
+            // Replace multiple consecutive dashes with single dash
+            while (slug.Contains("--"))
+            {
+                slug = slug.Replace("--", "-");
+            }
+            
+            // Trim dashes from start and end
+            slug = slug.Trim('-');
+            
+            return slug;
         }
     }
 }

@@ -225,6 +225,24 @@
   <data name="Product_Certified" xml:space="preserve">
     <value>Certified Quality</value>
   </data>
+  <data name="Product_Share" xml:space="preserve">
+    <value>Share this product</value>
+  </data>
+  <data name="Product_ShareFacebook" xml:space="preserve">
+    <value>Share on Facebook</value>
+  </data>
+  <data name="Product_ShareTwitter" xml:space="preserve">
+    <value>Share on Twitter</value>
+  </data>
+  <data name="Product_SharePinterest" xml:space="preserve">
+    <value>Share on Pinterest</value>
+  </data>
+  <data name="Product_CopyLink" xml:space="preserve">
+    <value>Copy link</value>
+  </data>
+  <data name="Product_LinkCopied" xml:space="preserve">
+    <value>Link copied to clipboard!</value>
+  </data>
   <data name="Product_Adding" xml:space="preserve">
     <value>Adding...</value>
   </data>
@@ -239,6 +257,12 @@
   </data>
   <data name="Next_Image" xml:space="preserve">
     <value>Next Image</value>
+  </data>
+  <data name="Product_WelcomeDiscount" xml:space="preserve">
+    <value>10% off for new customers</value>
+  </data>
+  <data name="Product_UseCode" xml:space="preserve">
+    <value>Use code</value>
   </data>
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
@@ -2007,45 +2031,98 @@
   <data name="Order" xml:space="preserve">
     <value>Order</value>
   </data>
-  
-  <!-- Cart & Shipping -->
-  <data name="Cart_Title" xml:space="preserve">
-    <value>Shopping Cart</value>
+  <!-- Product Not Found Page -->
+  <data name="Product_NotFound_Title" xml:space="preserve">
+    <value>Product Not Found</value>
   </data>
-  <data name="Shipping" xml:space="preserve">
-    <value>Shipping</value>
+  <data name="Product_NotFound_Description" xml:space="preserve">
+    <value>The product you're looking for doesn't exist or may have been removed.</value>
   </data>
-  <data name="Shipping_Method" xml:space="preserve">
-    <value>Shipping Method</value>
+  <data name="Product_Search_Placeholder" xml:space="preserve">
+    <value>Search for products...</value>
   </data>
-  <data name="Shipping_Standard" xml:space="preserve">
-    <value>Standard Shipping</value>
+  <data name="Product_Search_Button" xml:space="preserve">
+    <value>Search</value>
   </data>
-  <data name="Shipping_Standard_Desc" xml:space="preserve">
-    <value>Reliable delivery within 3-7 business days</value>
+  <data name="Product_Browse_All" xml:space="preserve">
+    <value>Browse All Products</value>
   </data>
-  <data name="Shipping_Express" xml:space="preserve">
-    <value>Express Shipping</value>
+  <data name="Return_Home" xml:space="preserve">
+    <value>Return to Home</value>
   </data>
-  <data name="Shipping_Express_Desc" xml:space="preserve">
-    <value>Fast delivery within 1-2 business days</value>
+  <!-- Product Unavailable Page -->
+  <data name="Product_Unavailable_Title" xml:space="preserve">
+    <value>Product Currently Unavailable</value>
   </data>
-  <data name="Shipping_FreeVip" xml:space="preserve">
-    <value>Free standard shipping for VIP members!</value>
+  <data name="Product_Unavailable_Description" xml:space="preserve">
+    <value>This product is currently unavailable, but we have similar options you might like!</value>
   </data>
-  <data name="Shipping_FreeThreshold" xml:space="preserve">
-    <value>You qualify for free standard shipping!</value>
+  <data name="Product_Notify_Description" xml:space="preserve">
+    <value>Get notified when this product becomes available again:</value>
   </data>
-  <data name="Business_Days" xml:space="preserve">
-    <value>business days</value>
+  <data name="Product_Notify_Button" xml:space="preserve">
+    <value>Notify Me</value>
   </data>
-  <data name="Free" xml:space="preserve">
-    <value>Free</value>
+  <data name="Product_Alternatives" xml:space="preserve">
+    <value>You Might Also Like</value>
   </data>
-  <data name="Cart_FreeShipping_Add" xml:space="preserve">
-    <value>Add</value>
+  <!-- Carousel/SEO -->
+  <data name="Carousel_Banner" xml:space="preserve">
+    <value>Featured Promotions</value>
   </data>
-  <data name="Cart_FreeShipping_More" xml:space="preserve">
-    <value>more for free shipping</value>
+  <data name="Carousel_Description" xml:space="preserve">
+    <value>Discover our latest collections and exclusive offers</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="Homepage_Carousel" xml:space="preserve">
+    <value>Homepage Featured Content</value>
+  </data>
+  <!-- Carousel Accessibility -->
+  <data name="Skip_Carousel" xml:space="preserve">
+    <value>Skip carousel</value>
+  </data>
+  <data name="Next_Slide" xml:space="preserve">
+    <value>Next slide</value>
+  </data>
+  <data name="Previous_Slide" xml:space="preserve">
+    <value>Previous slide</value>
+  </data>
+  <data name="Carousel_Pagination" xml:space="preserve">
+    <value>Carousel pagination</value>
+  </data>
+  <!-- Product Not Found -->
+  <data name="Product_NotFound_Message" xml:space="preserve">
+    <value>The product you're looking for doesn't exist or may have been removed.</value>
+  </data>
+  <data name="Product_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Product_NotFound_TryThese" xml:space="preserve">
+    <value>You might want to try these</value>
+  </data>
+  <data name="Browse_All_Products" xml:space="preserve">
+    <value>Browse All Products</value>
+  </data>
+  <!-- Product Unavailable -->
+  <data name="Product_Unavailable_Message" xml:space="preserve">
+    <value>This product is currently unavailable, but we have similar options you might like!</value>
+  </data>
+  <data name="Product_Notify_When_Available" xml:space="preserve">
+    <value>Notify me when available</value>
+  </data>
+  <data name="This_Product" xml:space="preserve">
+    <value>This product</value>
+  </data>
+  <!-- Login -->
+  <data name="Login_Success" xml:space="preserve">
+    <value>Login successful!</value>
+  </data>
+  <data name="Login_Success_Message" xml:space="preserve">
+    <value>You have been successfully logged in. This window will close automatically...</value>
+  </data>
+  <data name="Login_Loading" xml:space="preserve">
+    <value>Completing login...</value>
   </data>
 </root>

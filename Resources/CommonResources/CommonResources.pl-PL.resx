@@ -67,4 +67,13 @@
   <!-- Cookie Consent -->
   <data name="SavePreferences" xml:space="preserve"><value>Zapisz Preferencje</value></data>
   <data name="AddToCart" xml:space="preserve"><value>Dodaj do koszyka</value></data>
+  
+  <!-- Site Meta -->
+  <data name="Site_MetaDescription" xml:space="preserve"><value>Kokomija - Bielizna i odzież najwyższej jakości. Kupuj wygodną, stylową bieliznę z darmową wysyłką przy zamówieniach powyżej 200 PLN. Nowi klienci otrzymują 10% rabatu z kodem WELCOME10.</value></data>
+  
+  <!-- Products Page -->
+  <data name="Products_Discounts" xml:space="preserve"><value>Rabaty</value></data>
+  <data name="Products_ShowDiscountsOnly" xml:space="preserve"><value>Pokaż tylko produkty z rabatem</value></data>
+  <data name="Products_WelcomeDiscountHint" xml:space="preserve"><value>Nowi klienci otrzymują 10% rabatu z kodem</value></data>
+  <data name="Products_Sort_Discount" xml:space="preserve"><value>Najlepsze rabaty</value></data>
 </root>

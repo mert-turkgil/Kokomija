@@ -330,6 +330,24 @@
   <data name="Product_Certified" xml:space="preserve">
     <value>Certyfikowana Jakość</value>
   </data>
+  <data name="Product_Share" xml:space="preserve">
+    <value>Udostępnij produkt</value>
+  </data>
+  <data name="Product_ShareFacebook" xml:space="preserve">
+    <value>Udostępnij na Facebooku</value>
+  </data>
+  <data name="Product_ShareTwitter" xml:space="preserve">
+    <value>Udostępnij na Twitterze</value>
+  </data>
+  <data name="Product_SharePinterest" xml:space="preserve">
+    <value>Udostępnij na Pintereście</value>
+  </data>
+  <data name="Product_CopyLink" xml:space="preserve">
+    <value>Kopiuj link</value>
+  </data>
+  <data name="Product_LinkCopied" xml:space="preserve">
+    <value>Link skopiowany do schowka!</value>
+  </data>
   <data name="Product_Adding" xml:space="preserve">
     <value>Dodawanie...</value>
   </data>
@@ -344,6 +362,12 @@
   </data>
   <data name="Next_Image" xml:space="preserve">
     <value>Następny obraz</value>
+  </data>
+  <data name="Product_WelcomeDiscount" xml:space="preserve">
+    <value>10% rabatu dla nowych klientów</value>
+  </data>
+  <data name="Product_UseCode" xml:space="preserve">
+    <value>Użyj kodu</value>
   </data>
   <!-- Categories -->
   <data name="Category_Men" xml:space="preserve">
@@ -1673,45 +1697,414 @@
   <data name="Order" xml:space="preserve">
     <value>Zamówienie</value>
   </data>
-  
-  <!-- Cart & Shipping -->
-  <data name="Cart_Title" xml:space="preserve">
-    <value>Koszyk</value>
+  <!-- Product Not Found Page -->
+  <data name="Product_NotFound_Title" xml:space="preserve">
+    <value>Produkt nie został znaleziony</value>
   </data>
-  <data name="Shipping" xml:space="preserve">
-    <value>Dostawa</value>
+  <data name="Product_NotFound_Description" xml:space="preserve">
+    <value>Produkt, którego szukasz, nie istnieje lub mógł zostać usunięty.</value>
   </data>
-  <data name="Shipping_Method" xml:space="preserve">
-    <value>Metoda dostawy</value>
+  <data name="Product_Search_Placeholder" xml:space="preserve">
+    <value>Szukaj produktów...</value>
   </data>
-  <data name="Shipping_Standard" xml:space="preserve">
-    <value>Dostawa standardowa</value>
+  <data name="Product_Search_Button" xml:space="preserve">
+    <value>Szukaj</value>
   </data>
-  <data name="Shipping_Standard_Desc" xml:space="preserve">
-    <value>Niezawodna dostawa w ciągu 3-7 dni roboczych</value>
+  <data name="Product_Browse_All" xml:space="preserve">
+    <value>Przeglądaj wszystkie produkty</value>
   </data>
-  <data name="Shipping_Express" xml:space="preserve">
-    <value>Dostawa ekspresowa</value>
+  <data name="Return_Home" xml:space="preserve">
+    <value>Wróć na stronę główną</value>
   </data>
-  <data name="Shipping_Express_Desc" xml:space="preserve">
-    <value>Szybka dostawa w ciągu 1-2 dni roboczych</value>
+  <!-- Product Unavailable Page -->
+  <data name="Product_Unavailable_Title" xml:space="preserve">
+    <value>Produkt aktualnie niedostępny</value>
   </data>
-  <data name="Shipping_FreeVip" xml:space="preserve">
-    <value>Darmowa dostawa standardowa dla członków VIP!</value>
+  <data name="Product_Unavailable_Description" xml:space="preserve">
+    <value>Ten produkt jest obecnie niedostępny, ale mamy podobne opcje, które mogą Ci się spodobać!</value>
   </data>
-  <data name="Shipping_FreeThreshold" xml:space="preserve">
-    <value>Kwalifikujesz się do darmowej dostawy standardowej!</value>
+  <data name="Product_Notify_Description" xml:space="preserve">
+    <value>Otrzymaj powiadomienie, gdy produkt będzie ponownie dostępny:</value>
   </data>
-  <data name="Business_Days" xml:space="preserve">
-    <value>dni roboczych</value>
+  <data name="Product_Notify_Button" xml:space="preserve">
+    <value>Powiadom mnie</value>
   </data>
-  <data name="Free" xml:space="preserve">
-    <value>Gratis</value>
+  <data name="Product_Alternatives" xml:space="preserve">
+    <value>Może Ci się spodobać</value>
   </data>
-  <data name="Cart_FreeShipping_Add" xml:space="preserve">
-    <value>Dodaj jeszcze</value>
+  <!-- Carousel/SEO -->
+  <data name="Carousel_Banner" xml:space="preserve">
+    <value>Wyróżnione promocje</value>
   </data>
-  <data name="Cart_FreeShipping_More" xml:space="preserve">
-    <value>do darmowej dostawy</value>
+  <data name="Carousel_Description" xml:space="preserve">
+    <value>Odkryj nasze najnowsze kolekcje i ekskluzywne oferty</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>z</value>
+  </data>
+  <data name="Homepage_Carousel" xml:space="preserve">
+    <value>Wyróżniona treść strony głównej</value>
+  </data>
+  <!-- Carousel Accessibility -->
+  <data name="Skip_Carousel" xml:space="preserve">
+    <value>Pomiń karuzele</value>
+  </data>
+  <data name="Next_Slide" xml:space="preserve">
+    <value>Następny slajd</value>
+  </data>
+  <data name="Previous_Slide" xml:space="preserve">
+    <value>Poprzedni slajd</value>
+  </data>
+  <data name="Carousel_Pagination" xml:space="preserve">
+    <value>Paginacja karuzeli</value>
+  </data>
+  <!-- Product Not Found -->
+  <data name="Product_NotFound_Message" xml:space="preserve">
+    <value>Produkt, którego szukasz, nie istnieje lub mógł zostać usunięty.</value>
+  </data>
+  <data name="Product_Search" xml:space="preserve">
+    <value>Szukaj</value>
+  </data>
+  <data name="Product_NotFound_TryThese" xml:space="preserve">
+    <value>Może spróbujesz tych</value>
+  </data>
+  <data name="Browse_All_Products" xml:space="preserve">
+    <value>Przeglądaj wszystkie produkty</value>
+  </data>
+  <!-- Product Unavailable -->
+  <data name="Product_Unavailable_Message" xml:space="preserve">
+    <value>Ten produkt jest obecnie niedostępny, ale mamy podobne opcje, które mogą Ci się spodobać!</value>
+  </data>
+  <data name="Product_Notify_When_Available" xml:space="preserve">
+    <value>Powiadom mnie gdy będzie dostępny</value>
+  </data>
+  <data name="This_Product" xml:space="preserve">
+    <value>Ten produkt</value>
+  </data>
+  <!-- Login -->
+  <data name="Login_Success" xml:space="preserve">
+    <value>Logowanie pomyślne!</value>
+  </data>
+  <data name="Login_Success_Message" xml:space="preserve">
+    <value>Zostałeś pomyślnie zalogowany. To okno zamknie się automatycznie...</value>
+  </data>
+  <data name="Login_Loading" xml:space="preserve">
+    <value>Kończenie logowania...</value>
+  </data>
+  <!-- Privacy Policy Page -->
+  <data name="Privacy_MetaTitle" xml:space="preserve">
+    <value>Polityka Prywatności - Kokomija</value>
+  </data>
+  <data name="Privacy_MetaDescription" xml:space="preserve">
+    <value>Dowiedz się, jak Kokomija chroni Twoją prywatność i dane. Informacje o płatnościach Stripe, bezpieczeństwie Cloudflare, zarządzaniu kontem i korzyściach lojalnościowych.</value>
+  </data>
+  <data name="Privacy_MetaKeywords" xml:space="preserve">
+    <value>polityka prywatności, ochrona danych, RODO, Stripe, Cloudflare, bezpieczeństwo, zarządzanie kontem</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Polityka Prywatności</value>
+  </data>
+  <data name="Privacy_Subtitle" xml:space="preserve">
+    <value>Twoja prywatność jest dla nas ważna. Ta polityka wyjaśnia, jak zbieramy, używamy i chronimy Twoje informacje.</value>
+  </data>
+  <data name="Privacy_LastUpdated" xml:space="preserve">
+    <value>Ostatnia aktualizacja</value>
+  </data>
+  <data name="Privacy_Intro_Title" xml:space="preserve">
+    <value>Wprowadzenie</value>
+  </data>
+  <data name="Privacy_Intro_Text" xml:space="preserve">
+    <value>Witamy w Kokomija. Szanujemy Twoją prywatność i zobowiązujemy się do ochrony Twoich danych osobowych. Ta polityka prywatności informuje o tym, jak przetwarzamy Twoje dane osobowe podczas odwiedzania naszej strony internetowej oraz o Twoich prawach w zakresie prywatności.</value>
+  </data>
+  <data name="Privacy_InfoCollect_Title" xml:space="preserve">
+    <value>Informacje, które zbieramy</value>
+  </data>
+  <data name="Privacy_InfoCollect_Text" xml:space="preserve">
+    <value>Zbieramy różne rodzaje informacji, aby świadczyć i ulepszać nasze usługi:</value>
+  </data>
+  <data name="Privacy_InfoCollect_Personal" xml:space="preserve">
+    <value>Dane osobowe, które podajesz</value>
+  </data>
+  <data name="Privacy_InfoCollect_Name" xml:space="preserve">
+    <value>Imię i nazwisko</value>
+  </data>
+  <data name="Privacy_InfoCollect_Name_Desc" xml:space="preserve">
+    <value>Do personalizacji doświadczenia i realizacji zamówień</value>
+  </data>
+  <data name="Privacy_InfoCollect_Email" xml:space="preserve">
+    <value>Adres e-mail</value>
+  </data>
+  <data name="Privacy_InfoCollect_Email_Desc" xml:space="preserve">
+    <value>Do tworzenia konta, potwierdzeń zamówień i komunikacji</value>
+  </data>
+  <data name="Privacy_InfoCollect_Phone" xml:space="preserve">
+    <value>Numer telefonu</value>
+  </data>
+  <data name="Privacy_InfoCollect_Phone_Desc" xml:space="preserve">
+    <value>Do aktualizacji dostaw i obsługi klienta</value>
+  </data>
+  <data name="Privacy_InfoCollect_Address" xml:space="preserve">
+    <value>Adres dostawy</value>
+  </data>
+  <data name="Privacy_InfoCollect_Address_Desc" xml:space="preserve">
+    <value>Do dokładnej dostawy zamówień</value>
+  </data>
+  <data name="Privacy_InfoCollect_Payment" xml:space="preserve">
+    <value>Informacje płatnicze</value>
+  </data>
+  <data name="Privacy_InfoCollect_Payment_Desc" xml:space="preserve">
+    <value>Bezpiecznie przetwarzane przez Stripe (nigdy nie przechowujemy pełnych danych karty)</value>
+  </data>
+  <data name="Privacy_InfoCollect_Auto" xml:space="preserve">
+    <value>Automatycznie zbierane informacje</value>
+  </data>
+  <data name="Privacy_InfoCollect_Cookies" xml:space="preserve">
+    <value>Pliki cookies</value>
+  </data>
+  <data name="Privacy_InfoCollect_Cookies_Desc" xml:space="preserve">
+    <value>Do zapamiętania Twoich preferencji i poprawy doświadczenia</value>
+  </data>
+  <data name="Privacy_InfoCollect_Usage" xml:space="preserve">
+    <value>Dane o użytkowaniu</value>
+  </data>
+  <data name="Privacy_InfoCollect_Usage_Desc" xml:space="preserve">
+    <value>Odwiedzane strony, czas spędzony i wzorce przeglądania</value>
+  </data>
+  <data name="Privacy_InfoCollect_Device" xml:space="preserve">
+    <value>Informacje o urządzeniu</value>
+  </data>
+  <data name="Privacy_InfoCollect_Device_Desc" xml:space="preserve">
+    <value>Adres IP, typ przeglądarki i identyfikatory urządzenia</value>
+  </data>
+  <data name="Privacy_Stripe_Title" xml:space="preserve">
+    <value>Przetwarzanie płatności przez Stripe</value>
+  </data>
+  <data name="Privacy_Stripe_Text" xml:space="preserve">
+    <value>Wszystkie transakcje płatnicze są przetwarzane przez Stripe, certyfikowany procesor płatności PCI-DSS Level 1. Stripe bezpiecznie obsługuje wszystkie informacje o kartach płatniczych.</value>
+  </data>
+  <data name="Privacy_Stripe_Important" xml:space="preserve">
+    <value>Ważne</value>
+  </data>
+  <data name="Privacy_Stripe_Important_Text" xml:space="preserve">
+    <value>Stripe jest odpowiedzialny za bezpieczeństwo i prywatność wszystkich informacji płatniczych. Nigdy nie przechowujemy kompletnych danych karty kredytowej na naszych serwerach.</value>
+  </data>
+  <data name="Privacy_Stripe_Process" xml:space="preserve">
+    <value>Podczas dokonywania zakupu Twoje informacje płatnicze są szyfrowane i przesyłane bezpośrednio na bezpieczne serwery Stripe. Stripe przestrzega wiodących w branży standardów bezpieczeństwa i jest regularnie audytowany pod kątem zgodności.</value>
+  </data>
+  <data name="Privacy_Stripe_LearnMore" xml:space="preserve">
+    <value>Dowiedz się więcej o praktykach prywatności Stripe</value>
+  </data>
+  <data name="Privacy_Cloudflare_Title" xml:space="preserve">
+    <value>Bezpieczeństwo z Cloudflare</value>
+  </data>
+  <data name="Privacy_Cloudflare_Text" xml:space="preserve">
+    <value>Używamy Cloudflare do ochrony naszej strony i Twoich danych z funkcjami bezpieczeństwa klasy enterprise:</value>
+  </data>
+  <data name="Privacy_Cloudflare_DDoS" xml:space="preserve">
+    <value>Ochrona DDoS</value>
+  </data>
+  <data name="Privacy_Cloudflare_DDoS_Desc" xml:space="preserve">
+    <value>Chroni przed złośliwymi atakami, zapewniając dostępność strony</value>
+  </data>
+  <data name="Privacy_Cloudflare_SSL" xml:space="preserve">
+    <value>Szyfrowanie SSL/TLS</value>
+  </data>
+  <data name="Privacy_Cloudflare_SSL_Desc" xml:space="preserve">
+    <value>Wszystkie przesyłane dane są szyfrowane przy użyciu standardowych protokołów branżowych</value>
+  </data>
+  <data name="Privacy_Cloudflare_CDN" xml:space="preserve">
+    <value>Globalne CDN</value>
+  </data>
+  <data name="Privacy_Cloudflare_CDN_Desc" xml:space="preserve">
+    <value>Szybka i bezpieczna dostawa treści z serwerów najbliżej Ciebie</value>
+  </data>
+  <data name="Privacy_Cloudflare_WAF" xml:space="preserve">
+    <value>Zapora aplikacji webowej</value>
+  </data>
+  <data name="Privacy_Cloudflare_WAF_Desc" xml:space="preserve">
+    <value>Blokuje złośliwy ruch i chroni przed typowymi podatnościami</value>
+  </data>
+  <data name="Privacy_Cloudflare_LearnMore" xml:space="preserve">
+    <value>Dowiedz się więcej o polityce prywatności Cloudflare</value>
+  </data>
+  <data name="Privacy_Use_Title" xml:space="preserve">
+    <value>Jak wykorzystujemy Twoje informacje</value>
+  </data>
+  <data name="Privacy_Use_Orders" xml:space="preserve">
+    <value>Przetwarzanie i realizacja zamówień</value>
+  </data>
+  <data name="Privacy_Use_Communication" xml:space="preserve">
+    <value>Komunikacja dotycząca zamówień i konta</value>
+  </data>
+  <data name="Privacy_Use_Improve" xml:space="preserve">
+    <value>Ulepszanie naszej strony, produktów i usług</value>
+  </data>
+  <data name="Privacy_Use_Personalize" xml:space="preserve">
+    <value>Personalizacja doświadczenia zakupowego</value>
+  </data>
+  <data name="Privacy_Use_Marketing" xml:space="preserve">
+    <value>Wysyłanie komunikacji marketingowej (za Twoją zgodą)</value>
+  </data>
+  <data name="Privacy_Use_Fraud" xml:space="preserve">
+    <value>Wykrywanie i zapobieganie oszustwom i problemom bezpieczeństwa</value>
+  </data>
+  <data name="Privacy_Use_Legal" xml:space="preserve">
+    <value>Przestrzeganie obowiązków prawnych</value>
+  </data>
+  <data name="Privacy_Account_Title" xml:space="preserve">
+    <value>Twoje prawa do zarządzania kontem</value>
+  </data>
+  <data name="Privacy_Account_Text" xml:space="preserve">
+    <value>Masz pełną kontrolę nad swoim kontem i danymi osobowymi. Możesz łatwo:</value>
+  </data>
+  <data name="Privacy_Account_Update" xml:space="preserve">
+    <value>Aktualizuj informacje</value>
+  </data>
+  <data name="Privacy_Account_Update_Desc" xml:space="preserve">
+    <value>Edytuj swoje dane osobowe, adresy i preferencje w dowolnym momencie</value>
+  </data>
+  <data name="Privacy_Account_Delete" xml:space="preserve">
+    <value>Usuń konto</value>
+  </data>
+  <data name="Privacy_Account_Delete_Desc" xml:space="preserve">
+    <value>Trwale usuń swoje konto i powiązane dane</value>
+  </data>
+  <data name="Privacy_Account_View" xml:space="preserve">
+    <value>Zobacz swoje dane</value>
+  </data>
+  <data name="Privacy_Account_View_Desc" xml:space="preserve">
+    <value>Uzyskaj dostęp do wszystkich informacji osobowych, które przechowujemy</value>
+  </data>
+  <data name="Privacy_Account_Export" xml:space="preserve">
+    <value>Eksportuj dane</value>
+  </data>
+  <data name="Privacy_Account_Export_Desc" xml:space="preserve">
+    <value>Pobierz swoje dane w przenośnym formacie</value>
+  </data>
+  <data name="Privacy_Loyalty_Title" xml:space="preserve">
+    <value>Korzyści programu lojalnościowego</value>
+  </data>
+  <data name="Privacy_Loyalty_Text" xml:space="preserve">
+    <value>Zarejestrowani klienci i powracający kupujący otrzymują ekskluzywne korzyści w ramach naszego programu lojalnościowego:</value>
+  </data>
+  <data name="Privacy_Loyalty_Discounts" xml:space="preserve">
+    <value>Ekskluzywne zniżki</value>
+  </data>
+  <data name="Privacy_Loyalty_Rewards" xml:space="preserve">
+    <value>Punkty nagród</value>
+  </data>
+  <data name="Privacy_Loyalty_Shipping" xml:space="preserve">
+    <value>Korzyści darmowej dostawy</value>
+  </data>
+  <data name="Privacy_Loyalty_Early" xml:space="preserve">
+    <value>Wczesny dostęp do wyprzedaży</value>
+  </data>
+  <data name="Privacy_Loyalty_Birthday" xml:space="preserve">
+    <value>Urodzinowe niespodzianki</value>
+  </data>
+  <data name="Privacy_Loyalty_VIP" xml:space="preserve">
+    <value>Status klienta VIP</value>
+  </data>
+  <data name="Privacy_Security_Title" xml:space="preserve">
+    <value>Bezpieczeństwo danych</value>
+  </data>
+  <data name="Privacy_Security_Text" xml:space="preserve">
+    <value>Wdrażamy standardowe środki bezpieczeństwa branżowego, aby chronić Twoje dane:</value>
+  </data>
+  <data name="Privacy_Security_Encryption" xml:space="preserve">
+    <value>Szyfrowanie end-to-end dla wszystkich wrażliwych danych</value>
+  </data>
+  <data name="Privacy_Security_Access" xml:space="preserve">
+    <value>Ograniczony dostęp do informacji osobowych</value>
+  </data>
+  <data name="Privacy_Security_Monitoring" xml:space="preserve">
+    <value>Całodobowe monitorowanie bezpieczeństwa i wykrywanie zagrożeń</value>
+  </data>
+  <data name="Privacy_Security_Backup" xml:space="preserve">
+    <value>Regularne audyty bezpieczeństwa i kopie zapasowe</value>
+  </data>
+  <data name="Privacy_Cookies_Title" xml:space="preserve">
+    <value>Pliki cookies i śledzenie</value>
+  </data>
+  <data name="Privacy_Cookies_Text" xml:space="preserve">
+    <value>Używamy plików cookies, aby poprawić Twoje doświadczenie przeglądania, zapamiętać Twoje preferencje i analizować ruch na stronie. Możesz zarządzać swoimi preferencjami dotyczącymi cookies w dowolnym momencie.</value>
+  </data>
+  <data name="Privacy_Cookies_Manage" xml:space="preserve">
+    <value>Możesz zarządzać swoimi preferencjami dotyczącymi cookies poprzez ustawienia przeglądarki lub nasz baner zgody na cookies.</value>
+  </data>
+  <data name="Privacy_Retention_Title" xml:space="preserve">
+    <value>Przechowywanie danych</value>
+  </data>
+  <data name="Privacy_Retention_Text" xml:space="preserve">
+    <value>Przechowujemy Twoje dane osobowe tylko tak długo, jak jest to konieczne do realizacji celów określonych w tej polityce prywatności lub zgodnie z wymogami prawa. Gdy dane nie są już potrzebne, są bezpiecznie usuwane lub anonimizowane.</value>
+  </data>
+  <data name="Privacy_ThirdParty_Title" xml:space="preserve">
+    <value>Usługi stron trzecich</value>
+  </data>
+  <data name="Privacy_ThirdParty_Text" xml:space="preserve">
+    <value>Współpracujemy z zaufanymi dostawcami usług zewnętrznych, którzy pomagają nam prowadzić działalność:</value>
+  </data>
+  <data name="Privacy_ThirdParty_Stripe" xml:space="preserve">
+    <value>Przetwarzanie płatności (zgodne z PCI-DSS)</value>
+  </data>
+  <data name="Privacy_ThirdParty_Cloudflare" xml:space="preserve">
+    <value>Bezpieczeństwo, wydajność i ochrona DDoS</value>
+  </data>
+  <data name="Privacy_ThirdParty_Analytics" xml:space="preserve">
+    <value>Usługi analityczne</value>
+  </data>
+  <data name="Privacy_ThirdParty_Analytics_Desc" xml:space="preserve">
+    <value>Analiza i ulepszanie korzystania ze strony</value>
+  </data>
+  <data name="Privacy_Rights_Title" xml:space="preserve">
+    <value>Twoje prawa do prywatności (RODO)</value>
+  </data>
+  <data name="Privacy_Rights_Text" xml:space="preserve">
+    <value>Na mocy RODO masz następujące prawa dotyczące Twoich danych osobowych:</value>
+  </data>
+  <data name="Privacy_Rights_Access" xml:space="preserve">
+    <value>Prawo dostępu do Twoich danych osobowych</value>
+  </data>
+  <data name="Privacy_Rights_Rectification" xml:space="preserve">
+    <value>Prawo do sprostowania niedokładnych danych</value>
+  </data>
+  <data name="Privacy_Rights_Erasure" xml:space="preserve">
+    <value>Prawo do usunięcia ("prawo do bycia zapomnianym")</value>
+  </data>
+  <data name="Privacy_Rights_Restriction" xml:space="preserve">
+    <value>Prawo do ograniczenia przetwarzania</value>
+  </data>
+  <data name="Privacy_Rights_Portability" xml:space="preserve">
+    <value>Prawo do przenoszenia danych</value>
+  </data>
+  <data name="Privacy_Rights_Object" xml:space="preserve">
+    <value>Prawo do sprzeciwu wobec przetwarzania</value>
+  </data>
+  <data name="Privacy_Rights_Withdraw" xml:space="preserve">
+    <value>Prawo do wycofania zgody w dowolnym momencie</value>
+  </data>
+  <data name="Privacy_Contact_Title" xml:space="preserve">
+    <value>Kontakt w sprawie prywatności</value>
+  </data>
+  <data name="Privacy_Contact_Text" xml:space="preserve">
+    <value>Jeśli masz pytania dotyczące tej polityki prywatności lub sposobu, w jaki przetwarzamy Twoje dane, skontaktuj się z nami:</value>
+  </data>
+  <data name="Privacy_Contact_Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Privacy_Contact_Phone" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+  <data name="Privacy_Contact_Address" xml:space="preserve">
+    <value>Adres</value>
+  </data>
+  <data name="Privacy_Contact_Button" xml:space="preserve">
+    <value>Skontaktuj się z nami</value>
+  </data>
+  <data name="Privacy_Changes_Title" xml:space="preserve">
+    <value>Zmiany w tej polityce</value>
+  </data>
+  <data name="Privacy_Changes_Text" xml:space="preserve">
+    <value>Możemy od czasu do czasu aktualizować tę politykę prywatności. Powiadomimy Cię o wszelkich zmianach, publikując nową politykę na tej stronie i aktualizując datę "Ostatnia aktualizacja".</value>
   </data>
 </root>

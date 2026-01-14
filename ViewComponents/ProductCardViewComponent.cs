@@ -1,6 +1,7 @@
 using Kokomija.Data.Abstract;
 using Kokomija.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace Kokomija.ViewComponents
 {
@@ -71,24 +72,46 @@ namespace Kokomija.ViewComponents
             // Check stock availability
             var totalStock = variants.Sum(v => v.StockQuantity);
             var hasStock = totalStock > 0;
+            
+            // Check if user is authenticated - show WELCOME10 discount for non-authenticated users
+            var isAuthenticated = User.Identity?.IsAuthenticated == true;
+            decimal? discountedPrice = null;
+            var isOnSale = false;
+            
+            if (!isAuthenticated)
+            {
+                // WELCOME10: 10% off for non-authenticated users
+                var welcomeDiscountPercent = 10m;
+                discountedPrice = product.Price * (1 - welcomeDiscountPercent / 100);
+                isOnSale = true;
+            }
+            
+            // Get localized slug for product URL
+            var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+            var translation = product.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(currentCulture));
+            var slug = translation?.Slug ?? product.Slug ?? product.Name.ToLower().Replace(" ", "-");
 
             var viewModel = new ProductCardViewModel
             {
                 Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
+                Name = translation?.Name ?? product.Name,
+                Slug = slug,
+                Description = translation?.Description ?? product.Description,
                 BasePrice = product.Price,
-                DiscountedPrice = null, // TODO: Add discount logic
+                DiscountedPrice = discountedPrice,
                 MainImageUrl = primaryImage?.ImageUrl ?? "/img/logo_black.png",
                 Images = images,
                 IsNew = (DateTime.UtcNow - product.CreatedAt).TotalDays <= 30,
-                IsOnSale = false, // TODO: Add sale logic
+                IsOnSale = isOnSale,
                 StockQuantity = totalStock,
                 HasStock = hasStock,
                 Colors = colors,
                 Sizes = sizes,
                 CategoryId = product.CategoryId
             };
+            
+            // Pass current culture to view
+            ViewData["CurrentCulture"] = currentCulture;
 
             return View(viewModel);
         }

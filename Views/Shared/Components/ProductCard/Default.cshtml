@@ -5,7 +5,12 @@
     <div class="product-card-inner">
         <!-- Image Gallery with Swiper & Overlay Content -->
         <div class="product-image-wrapper">
-            <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.Id" class="image-link">
+            @{
+                var culture = ViewData["CurrentCulture"]?.ToString() ?? "en";
+                var productRoute = culture == "pl" ? "produkt" : culture == "tr" ? "urun" : "product";
+                var slug = !string.IsNullOrEmpty(Model.Slug) ? Model.Slug : Model.Name.ToLower().Replace(" ", "-");
+            }
+            <a asp-controller="Product" asp-action="DetailsBySlug" asp-route-culture="@culture" asp-route-slug="@slug" class="image-link">
                 @if (Model.Images.Any())
                 {
                     <div class="swiper product-swiper-@Model.Id">
@@ -39,9 +44,11 @@
                     {
                         <span class="badge badge-new">@L.GetString("New", "Common")</span>
                     }
-                    @if (Model.IsOnSale)
+                    @if (Model.IsOnSale && Model.DiscountedPrice.HasValue)
                     {
-                        <span class="badge badge-sale">@L.GetString("Sale", "Common")</span>
+                        <span class="badge badge-sale" title="@L.GetString("UseCode", "Product") WELCOME10">
+                            -@(Math.Round((1 - (Model.DiscountedPrice.Value / Model.BasePrice)) * 100))%
+                        </span>
                     }
                 </div>
                 <div class="quick-actions">
@@ -55,7 +62,7 @@
         <!-- Compact Product Info -->
         <div class="product-info">
             <h3 class="product-title">
-                <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none">
+                <a asp-controller="Product" asp-action="DetailsBySlug" asp-route-culture="@culture" asp-route-slug="@slug" class="text-decoration-none">
                     @Model.Name
                 </a>
             </h3>
@@ -74,6 +81,9 @@
                         <span class="discount-badge">
                             -@(Math.Round((1 - (Model.DiscountedPrice.Value / Model.BasePrice)) * 100))%
                         </span>
+                    </div>
+                    <div class="welcome-code-hint" title="@L.GetString("UseCode", "Product")">
+                        <i class="fas fa-gift"></i> <small>WELCOME10</small>
                     </div>
                 }
                 else

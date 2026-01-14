@@ -137,6 +137,7 @@ namespace Kokomija.Data
             modelBuilder.SeedProductGroups(); // Seed product groups before products
             modelBuilder.SeedProducts();
             modelBuilder.SeedProductImages();
+            modelBuilder.SeedProductTranslations();
             modelBuilder.SeedProductVariants();
             
             modelBuilder.SeedCarouselSlides();

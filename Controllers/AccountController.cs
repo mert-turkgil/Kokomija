@@ -45,8 +45,19 @@ namespace Kokomija.Controllers
         #region Login
 
         [HttpGet]
-        public async Task<IActionResult> Login(string? returnUrl = null)
+        public async Task<IActionResult> Login(string? returnUrl = null, string? culture = null)
         {
+            // Set culture if provided via route
+            if (!string.IsNullOrEmpty(culture))
+            {
+                Response.Cookies.Append(
+                    Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.DefaultCookieName,
+                    Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.MakeCookieValue(
+                        new Microsoft.AspNetCore.Localization.RequestCulture(culture)),
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+                );
+            }
+            
             if (User.Identity?.IsAuthenticated == true)
             {
                 return RedirectToAction("Index", "Home");
@@ -137,8 +148,19 @@ namespace Kokomija.Controllers
         #region Register
 
         [HttpGet]
-        public IActionResult Register(string? returnUrl = null)
+        public IActionResult Register(string? returnUrl = null, string? culture = null)
         {
+            // Set culture if provided via route
+            if (!string.IsNullOrEmpty(culture))
+            {
+                Response.Cookies.Append(
+                    Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.DefaultCookieName,
+                    Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.MakeCookieValue(
+                        new Microsoft.AspNetCore.Localization.RequestCulture(culture)),
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+                );
+            }
+            
             if (User.Identity?.IsAuthenticated == true)
             {
                 return RedirectToAction("Index", "Home");
@@ -1030,12 +1052,12 @@ namespace Kokomija.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public IActionResult ExternalLogin(string provider, string? returnUrl = null)
+        public IActionResult ExternalLogin(string provider, string? returnUrl = null, bool popupMode = false)
         {
-            _logger.LogInformation("ExternalLogin called with provider: {Provider}, returnUrl: {ReturnUrl}", provider, returnUrl);
+            _logger.LogInformation("ExternalLogin called with provider: {Provider}, returnUrl: {ReturnUrl}, popupMode: {PopupMode}", provider, returnUrl, popupMode);
             
-            // Request a redirect to the external login provider
-            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { ReturnUrl = returnUrl });
+            // Request a redirect to the external login provider - pass popupMode in state
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { ReturnUrl = returnUrl, popupMode });
             _logger.LogInformation("Redirect URL: {RedirectUrl}", redirectUrl);
             
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
@@ -1047,7 +1069,7 @@ namespace Kokomija.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null, bool popupMode = false)
         {
             returnUrl ??= Url.Content("~/");
 
@@ -1081,7 +1103,7 @@ namespace Kokomija.Controllers
                     await _unitOfWork.SaveChangesAsync();
                 }
 
-                return LocalRedirect(returnUrl);
+                return HandleLoginSuccess(returnUrl, popupMode);
             }
 
             if (result.IsLockedOut)
@@ -1183,10 +1205,10 @@ namespace Kokomija.Controllers
                         var roles = await _userManager.GetRolesAsync(existingUser);
                         if (roles.Contains("Admin"))
                         {
-                            return RedirectToAction("Index", "Admin");
+                            return popupMode ? HandleLoginSuccess(Url.Action("Index", "Admin")!, popupMode) : RedirectToAction("Index", "Admin");
                         }
                         
-                        return LocalRedirect(returnUrl);
+                        return HandleLoginSuccess(returnUrl, popupMode);
                     }
                     else
                     {
@@ -1200,7 +1222,7 @@ namespace Kokomija.Controllers
                             await _signInManager.SignInAsync(existingUser, isPersistent: false, info.LoginProvider);
                             existingUser.LastLoginAt = DateTime.UtcNow;
                             await _userManager.UpdateAsync(existingUser);
-                            return LocalRedirect(returnUrl);
+                            return HandleLoginSuccess(returnUrl, popupMode);
                         }
                         
                         TempData["ErrorMessage"] = "Failed to link your account. Please try again.";
@@ -1281,10 +1303,10 @@ namespace Kokomija.Controllers
                         var roles = await _userManager.GetRolesAsync(user);
                         if (roles.Contains("Admin"))
                         {
-                            return RedirectToAction("Index", "Admin");
+                            return popupMode ? HandleLoginSuccess(Url.Action("Index", "Admin")!, popupMode) : RedirectToAction("Index", "Admin");
                         }
 
-                        return LocalRedirect(returnUrl);
+                        return HandleLoginSuccess(returnUrl, popupMode);
                     }
                 }
 
@@ -1297,6 +1319,22 @@ namespace Kokomija.Controllers
                 TempData["ErrorMessage"] = "Failed to create account. Please try again or use a different login method.";
                 return RedirectToAction(nameof(Login));
             }
+        }
+
+        /// <summary>
+        /// Handle successful login - either redirect or show success page for popup mode
+        /// </summary>
+        private IActionResult HandleLoginSuccess(string returnUrl, bool popupMode)
+        {
+            if (popupMode)
+            {
+                // Show success page that will close popup and notify parent window
+                ViewData["RedirectUrl"] = returnUrl;
+                ViewData["IsPopup"] = true;
+                return View("LoginSuccess");
+            }
+            
+            return LocalRedirect(returnUrl);
         }
 
         #endregion

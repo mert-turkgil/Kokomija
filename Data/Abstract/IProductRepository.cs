@@ -10,5 +10,6 @@ namespace Kokomija.Data.Abstract
         Task<IEnumerable<Product>> GetProductsWithVariantsAsync();
         Task<Product?> GetProductWithDetailsAsync(int id);
         Task<IEnumerable<Product>> SearchProductsAsync(string searchTerm);
+        Task<Product?> GetProductBySlugAsync(string slug, string cultureCode);
     }
 }

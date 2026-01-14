@@ -1,5 +1,6 @@
 @model Kokomija.Models.ViewModels.Blog.BlogIndexViewModel
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
 
 @{
     ViewData["Title"] = !string.IsNullOrEmpty(Model.SearchQuery) 
@@ -101,7 +102,7 @@
                                 <article class="blog-post-card">
                                     @if (!string.IsNullOrEmpty(post.FeaturedImage))
                                     {
-                                        <a asp-action="Details" asp-route-slug="@post.Slug" class="post-image-link">
+                                        <a href="@LocalizedUrl.GetBlogPostUrl(post.Slug)" class="post-image-link">
                                             <img src="@post.FeaturedImage" alt="@post.Title" class="post-featured-image" onerror="this.src='/img/logo_black.png'">
                                         </a>
                                     }
@@ -118,7 +119,7 @@
                                         </div>
                                         
                                         <h3 class="post-title">
-                                            <a asp-action="Details" asp-route-slug="@post.Slug">@post.Title</a>
+                                            <a href="@LocalizedUrl.GetBlogPostUrl(post.Slug)">@post.Title</a>
                                         </h3>
                                         
                                         <p class="post-excerpt">@post.Excerpt</p>
@@ -246,13 +247,13 @@
                                     <div class="recent-post-item">
                                         @if (!string.IsNullOrEmpty(post.FeaturedImage))
                                         {
-                                            <a asp-action="Details" asp-route-slug="@post.Slug" class="recent-post-thumb">
+                                            <a href="@LocalizedUrl.GetBlogPostUrl(post.Slug)" class="recent-post-thumb">
                                                 <img src="@post.FeaturedImage" alt="@post.Title" onerror="this.src='/img/logo_black.png'">
                                             </a>
                                         }
                                         <div class="recent-post-content">
                                             <h6 class="recent-post-title">
-                                                <a asp-action="Details" asp-route-slug="@post.Slug">@post.Title</a>
+                                                <a href="@LocalizedUrl.GetBlogPostUrl(post.Slug)">@post.Title</a>
                                             </h6>
                                             <div class="recent-post-meta">
                                                 <small class="text-muted">

@@ -1,15 +1,92 @@
 @using Kokomija.Resources
+@using System.Globalization
 @inject Kokomija.Data.Abstract.IUnitOfWork UnitOfWork
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
+
+@{
+    var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    var htmlLang = currentCulture switch
+    {
+        "pl" => "pl",
+        "tr" => "tr",
+        _ => "en"
+    };
+    var ogLocale = currentCulture switch
+    {
+        "pl" => "pl_PL",
+        "tr" => "tr_TR",
+        _ => "en_US"
+    };
+}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@htmlLang">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#FFFFFF" />
     <title>@ViewData["Title"] - Kokomija</title>
     
+    @* Default Meta Tags - Can be overridden by page-specific Meta section *@
+    @if (ViewData["MetaDescription"] != null)
+    {
+        <meta name="description" content="@ViewData["MetaDescription"]" />
+    }
+    else
+    {
+        <meta name="description" content="@L.GetString("Site_MetaDescription", "Common")" />
+    }
+    
+    @if (ViewData["MetaKeywords"] != null)
+    {
+        <meta name="keywords" content="@ViewData["MetaKeywords"]" />
+    }
+    
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Kokomija" />
+    
+    @* Default Open Graph Tags *@
+    <meta property="og:site_name" content="Kokomija" />
+    <meta property="og:locale" content="@ogLocale" />
+    @if (ViewData["OgTitle"] != null)
+    {
+        <meta property="og:title" content="@ViewData["OgTitle"]" />
+    }
+    else
+    {
+        <meta property="og:title" content="@ViewData["Title"] - Kokomija" />
+    }
+    @if (ViewData["OgDescription"] != null)
+    {
+        <meta property="og:description" content="@ViewData["OgDescription"]" />
+    }
+    @if (ViewData["OgImage"] != null)
+    {
+        <meta property="og:image" content="@ViewData["OgImage"]" />
+    }
+    else
+    {
+        <meta property="og:image" content="@($"{Context.Request.Scheme}://{Context.Request.Host}/img/blue-logo.png")" />
+    }
+    <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
+    @if (ViewData["CanonicalUrl"] != null)
+    {
+        <link rel="canonical" href="@ViewData["CanonicalUrl"]" />
+        <meta property="og:url" content="@ViewData["CanonicalUrl"]" />
+    }
+    
+    @* Twitter Card Tags *@
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@@Kokomija" />
+    
+    @* Alternate language links for SEO *@
+    <link rel="alternate" hreflang="pl" href="@($"{Context.Request.Scheme}://{Context.Request.Host}/pl/strona-glowna")" />
+    <link rel="alternate" hreflang="en" href="@($"{Context.Request.Scheme}://{Context.Request.Host}/en/home")" />
+    <link rel="alternate" hreflang="tr" href="@($"{Context.Request.Scheme}://{Context.Request.Host}/tr/anasayfa")" />
+    <link rel="alternate" hreflang="x-default" href="@($"{Context.Request.Scheme}://{Context.Request.Host}/en/home")" />
+    
+    @* Page-specific Meta section - can override defaults *@
     @await RenderSectionAsync("Meta", required: false)
     
     <!-- Fonts -->
@@ -68,10 +145,10 @@
                     
                     <span class="top-bar-separator">|</span>
                     
-                    <a asp-controller="Home" asp-action="Index" class="top-bar-link">
+                    <a href="@LocalizedUrl.GetHomeUrl()" class="top-bar-link">
                         <i class="fas fa-home me-1"></i> @L.GetString("TopBar_Home", "Common")
                     </a>
-                    <a asp-controller="Product" asp-action="Index" class="top-bar-link">
+                    <a href="@LocalizedUrl.GetProductsUrl()" class="top-bar-link">
                         <i class="fas fa-shopping-bag me-1"></i> @L.GetString("TopBar_Shop", "Common")
                     </a>
                     <a asp-controller="Home" asp-action="FAQ" class="top-bar-link">
@@ -160,7 +237,7 @@
                         }
                         
                         <!-- Logo -->
-                        <a class="navbar-brand mx-4" asp-controller="Home" asp-action="Index">
+                        <a class="navbar-brand mx-4" href="@LocalizedUrl.GetHomeUrl()">
                             <img src="~/img/blue-logo.png" alt="Kokomija Logo" class="navbar-logo" />
                         </a>
                         
@@ -273,7 +350,7 @@
                     </button>
                     
                     <!-- Mobile Logo (Center) -->
-                    <a class="navbar-brand mx-auto" asp-controller="Home" asp-action="Index">
+                    <a class="navbar-brand mx-auto" href="@LocalizedUrl.GetHomeUrl()">
                         <img src="~/img/blue-logo.png" alt="Kokomija Logo" style="height: 40px;" />
                     </a>
                     
@@ -433,11 +510,11 @@
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-title">@L.GetString("QuickLinks", "Footer")</h5>
                     <ul class="footer-links">
-                        <li><a asp-controller="Home" asp-action="Index">@L.GetString("TopBar_Home", "Common")</a></li>
-                        <li><a asp-controller="Product" asp-action="Index">@L.GetString("Shop", "Footer")</a></li>
+                        <li><a href="@LocalizedUrl.GetHomeUrl()">@L.GetString("TopBar_Home", "Common")</a></li>
+                        <li><a href="@LocalizedUrl.GetProductsUrl()">@L.GetString("Shop", "Footer")</a></li>
                         <li><a asp-controller="Blog" asp-action="Index">@L["Blog_Title"]</a></li>
                         <li><a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy">@L.GetString("PrivacyPolicy", "Footer")</a></li>
+                        <li><a href="@LocalizedUrl.GetPrivacyUrl()">@L.GetString("PrivacyPolicy", "Footer")</a></li>
                     </ul>
                 </div>
                 
@@ -447,8 +524,8 @@
                     <ul class="footer-links">
                         <li><a asp-controller="Product" asp-action="Category" asp-route-slug="damskie">@L["Nav_Women"]</a></li>
                         <li><a asp-controller="Product" asp-action="Category" asp-route-slug="meskie">@L["Nav_Men"]</a></li>
-                        <li><a asp-controller="Product" asp-action="Index">@L.GetString("AllProducts", "Footer")</a></li>
-                        <li><a asp-controller="Home" asp-action="Index">@L.GetString("NewArrivals", "Footer")</a></li>
+                        <li><a href="@LocalizedUrl.GetProductsUrl()">@L.GetString("AllProducts", "Footer")</a></li>
+                        <li><a href="@LocalizedUrl.GetHomeUrl()">@L.GetString("NewArrivals", "Footer")</a></li>
                     </ul>
                 </div>
                 
@@ -460,7 +537,7 @@
                         <li><a asp-controller="Home" asp-action="FAQ">@L.GetString("ShippingInfo", "Footer")</a></li>
                         <li><a asp-controller="Home" asp-action="FAQ">@L.GetString("Returns", "Footer")</a></li>
                         <li><a asp-controller="Home" asp-action="FAQ">@L.GetString("SizeGuide", "Footer")</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy">@L.GetString("PrivacyPolicy", "Footer")</a></li>
+                        <li><a href="@LocalizedUrl.GetPrivacyUrl()">@L.GetString("PrivacyPolicy", "Footer")</a></li>
                     </ul>
                 </div>
                 
@@ -484,8 +561,8 @@
                 <p class="mb-0">
                     &copy; @DateTime.Now.Year Kokomija. @L.GetString("AllRightsReserved", "Footer") | 
                     <a asp-controller="Home" asp-action="FAQ">@L["Nav_FAQ"]</a> |
-                    <a asp-controller="Home" asp-action="Privacy">@L.GetString("PrivacyPolicy", "Footer")</a> | 
-                    <a asp-controller="Home" asp-action="Privacy">@L.GetString("Terms", "Footer")</a>
+                    <a href="@LocalizedUrl.GetPrivacyUrl()">@L.GetString("PrivacyPolicy", "Footer")</a> | 
+                    <a href="@LocalizedUrl.GetPrivacyUrl()">@L.GetString("Terms", "Footer")</a>
                 </p>
             </div>
         </div>

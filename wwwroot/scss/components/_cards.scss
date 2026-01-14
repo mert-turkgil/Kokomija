@@ -161,6 +161,17 @@
       }
     }
     
+    .welcome-code-hint {
+      font-size: 0.75rem;
+      color: $danger;
+      margin-top: 0.25rem;
+      font-weight: 500;
+      
+      [data-theme="dark"] & {
+        color: lighten($danger, 10%);
+      }
+    }
+    
     .product-rating {
       display: flex;
       align-items: center;

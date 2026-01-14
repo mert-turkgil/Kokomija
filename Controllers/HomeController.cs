@@ -25,18 +25,38 @@ public class HomeController : Controller
         _localizationService = localizationService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? culture = null)
     {
+        // Set culture if provided via route
+        if (!string.IsNullOrEmpty(culture))
+        {
+            Response.Cookies.Append(
+                Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.DefaultCookieName,
+                Microsoft.AspNetCore.Localization.CookieRequestCultureProvider.MakeCookieValue(
+                    new Microsoft.AspNetCore.Localization.RequestCulture(culture)),
+                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+            );
+        }
+        
         // Example: Using localization service in controller
         var welcomeMessage = _localizationService["Home.Welcome"];
         ViewBag.WelcomeMessage = welcomeMessage;
+
+        // Build canonical URL with language prefix for SEO
+        var currentCulture = culture ?? Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
+        var canonicalPath = currentCulture switch
+        {
+            "pl" => "/pl/strona-glowna",
+            "tr" => "/tr/anasayfa",
+            _ => "/en/home"
+        };
 
         var model = new HomeIndexViewModel
         {
             MetaTitle = _localizationService["Home.MetaTitle"],
             MetaDescription = _localizationService["Home.MetaDescription"],
             MetaKeywords = "clothing, fashion, textiles, men's clothing, women's clothing, online shop",
-            CanonicalUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}"
+            CanonicalUrl = $"{Request.Scheme}://{Request.Host}{canonicalPath}"
         };
 
         // Get featured categories with subcategories
@@ -112,14 +132,40 @@ public class HomeController : Controller
         return View(model);
     }
 
-        public IActionResult Privacy()
+        // Localized privacy policy routes
+        [Route("{culture}/polityka-prywatnosci")]
+        [Route("{culture}/privacy-policy")]
+        [Route("{culture}/gizlilik-politikasi")]
+        public IActionResult Privacy(string? culture = null)
         {
+            // Set culture if provided
+            if (!string.IsNullOrEmpty(culture))
+            {
+                var cultureCode = culture switch
+                {
+                    "pl" => "pl-PL",
+                    "tr" => "tr-TR",
+                    _ => "en-US"
+                };
+                var cultureInfo = new System.Globalization.CultureInfo(cultureCode);
+                System.Globalization.CultureInfo.CurrentCulture = cultureInfo;
+                System.Globalization.CultureInfo.CurrentUICulture = cultureInfo;
+            }
+
+            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+            var routePath = currentCulture switch
+            {
+                "pl" => "polityka-prywatnosci",
+                "tr" => "gizlilik-politikasi",
+                _ => "privacy-policy"
+            };
+            
             var model = new PrivacyViewModel
             {
                 MetaTitle = _localizationService.GetString("Privacy_MetaTitle"),
                 MetaDescription = _localizationService.GetString("Privacy_MetaDescription"),
                 MetaKeywords = _localizationService.GetString("Privacy_MetaKeywords"),
-                CanonicalUrl = Url.Action("Privacy", "Home", null, Request.Scheme) ?? string.Empty
+                CanonicalUrl = $"{Request.Scheme}://{Request.Host}/{currentCulture}/{routePath}"
             };
             return View(model);
         }    public IActionResult FAQ()
@@ -200,7 +246,121 @@ public class HomeController : Controller
             }
         );
 
-        return LocalRedirect(returnUrl ?? "/");
+        // Get the localized URL based on the current page and new culture
+        var localizedUrl = GetLocalizedUrl(returnUrl, culture);
+        return LocalRedirect(localizedUrl);
+    }
+    
+    /// <summary>
+    /// Converts a URL to its localized equivalent based on the culture
+    /// </summary>
+    private string GetLocalizedUrl(string? url, string culture)
+    {
+        if (string.IsNullOrEmpty(url))
+            url = "/";
+            
+        // Get culture code (pl, en, tr)
+        var cultureCode = culture.Split('-')[0].ToLowerInvariant();
+        
+        // Check if this is a product detail page - handle special case for localized product slugs
+        var productDetailMatch = System.Text.RegularExpressions.Regex.Match(
+            url, 
+            @"^/(pl|en|tr)/(produkt|product|urun)/(.+)$", 
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        
+        if (productDetailMatch.Success)
+        {
+            var slug = productDetailMatch.Groups[3].Value;
+            // Try to find product by slug and get the correct localized slug
+            var localizedSlug = GetLocalizedProductSlug(slug, cultureCode);
+            var productPath = cultureCode switch
+            {
+                "pl" => "produkt",
+                "tr" => "urun",
+                _ => "product"
+            };
+            return $"/{cultureCode}/{productPath}/{localizedSlug}";
+        }
+            
+        // Normalize the URL - remove existing culture prefixes
+        var normalizedUrl = url.ToLowerInvariant()
+            .Replace("/pl/strona-glowna", "/")
+            .Replace("/pl/logowanie", "/account/login")
+            .Replace("/pl/rejestracja", "/account/register")
+            .Replace("/pl/produkty", "/product")
+            .Replace("/en/home", "/")
+            .Replace("/en/login", "/account/login")
+            .Replace("/en/sign-up", "/account/register")
+            .Replace("/en/products", "/product")
+            .Replace("/tr/anasayfa", "/")
+            .Replace("/tr/giris", "/account/login")
+            .Replace("/tr/kayit-ol", "/account/register")
+            .Replace("/tr/urunler", "/product");
+        
+        // Map to localized URLs
+        return cultureCode switch
+        {
+            "pl" => normalizedUrl switch
+            {
+                "/" => "/pl/strona-glowna",
+                "/account/login" => "/pl/logowanie",
+                "/account/register" => "/pl/rejestracja",
+                var p when p.StartsWith("/product") => "/pl/produkty" + p.Replace("/product", ""),
+                _ => url // Keep original URL for pages without localized routes
+            },
+            "tr" => normalizedUrl switch
+            {
+                "/" => "/tr/anasayfa",
+                "/account/login" => "/tr/giris",
+                "/account/register" => "/tr/kayit-ol",
+                var p when p.StartsWith("/product") => "/tr/urunler" + p.Replace("/product", ""),
+                _ => url
+            },
+            _ => normalizedUrl switch // English (default)
+            {
+                "/" => "/en/home",
+                "/account/login" => "/en/login",
+                "/account/register" => "/en/sign-up",
+                var p when p.StartsWith("/product") => "/en/products" + p.Replace("/product", ""),
+                _ => url
+            }
+        };
+    }
+    
+    /// <summary>
+    /// Gets the localized product slug for the target culture
+    /// </summary>
+    private string GetLocalizedProductSlug(string currentSlug, string targetCulture)
+    {
+        try
+        {
+            // Try to find product by any of its slugs
+            var product = _unitOfWork.Products.GetProductBySlugAsync(currentSlug, null).Result;
+            if (product == null)
+                return currentSlug;
+            
+            // Find translation for target culture
+            var targetCultureFull = targetCulture switch
+            {
+                "pl" => "pl-PL",
+                "tr" => "tr-TR",
+                _ => "en-US"
+            };
+            
+            var translation = product.Translations?.FirstOrDefault(t => 
+                t.CultureCode.Equals(targetCultureFull, StringComparison.OrdinalIgnoreCase) ||
+                t.CultureCode.StartsWith(targetCulture, StringComparison.OrdinalIgnoreCase));
+            
+            if (translation != null && !string.IsNullOrEmpty(translation.Slug))
+                return translation.Slug;
+            
+            // Fallback to default slug
+            return product.Slug ?? currentSlug;
+        }
+        catch
+        {
+            return currentSlug;
+        }
     }
 
     /// <summary>

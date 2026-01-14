@@ -150,8 +150,12 @@ class CartManager {
                         ${item.quantity > 1 ? ` x ${item.quantity}` : ''}
                     </div>
                 </div>
-                <button class="cart-item-remove" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
-                    <i class="fas fa-times"></i>
+                <button type="button" class="btn btn-sm btn-outline-danger cart-item-remove" 
+                        data-product-id="${item.productId}" 
+                        data-color-id="${item.colorId || ''}" 
+                        data-size-id="${item.sizeId || ''}"
+                        title="Remove item">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </div>
         `;
@@ -162,9 +166,16 @@ class CartManager {
         const removeButtons = this.cartPreviewItems.querySelectorAll('.cart-item-remove');
         removeButtons.forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const productId = parseInt(btn.dataset.productId);
-                const colorId = btn.dataset.colorId ? parseInt(btn.dataset.colorId) : null;
-                const sizeId = btn.dataset.sizeId ? parseInt(btn.dataset.sizeId) : null;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Get the button element (in case click was on the icon inside)
+                const button = e.target.closest('.cart-item-remove');
+                if (!button) return;
+                
+                const productId = parseInt(button.dataset.productId);
+                const colorId = button.dataset.colorId ? parseInt(button.dataset.colorId) : null;
+                const sizeId = button.dataset.sizeId ? parseInt(button.dataset.sizeId) : null;
                 
                 await this.removeFromCart(productId, colorId, sizeId);
             });

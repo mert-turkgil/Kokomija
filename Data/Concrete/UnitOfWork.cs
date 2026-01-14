@@ -56,6 +56,9 @@ namespace Kokomija.Data.Concrete
             
             // Initialize product review repository
             ProductReviews = new ProductReviewRepository(_context);
+            
+            // Initialize order items repository
+            OrderItems = new Repository<OrderItem>(_context);
         }
 
         public IProductRepository Products { get; private set; }
@@ -65,6 +68,7 @@ namespace Kokomija.Data.Concrete
         public ISizeRepository Sizes { get; private set; }
         public IProductVariantRepository ProductVariants { get; private set; }
         public IOrderRepository Orders { get; private set; }
+        public IRepository<OrderItem> OrderItems { get; private set; }
         public IUserRepository Users { get; private set; }
         public ICouponRepository Coupons { get; private set; }
         public IRepository<SiteSetting> SiteSettings { get; private set; }

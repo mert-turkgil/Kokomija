@@ -1,5 +1,6 @@
 @inject Kokomija.Services.ILocalizationService L
 @inject Kokomija.Services.ICookieConsentService CookieConsentService
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
 
 @if (!CookieConsentService.HasConsent(Context))
 {
@@ -8,7 +9,7 @@
             <div class="cookie-consent-message">
                 <h4>@L.GetString("Title", "Cookie")</h4>
                 <p>@L.GetString("Message", "Cookie")</p>
-                <a asp-controller="Home" asp-action="Privacy" class="cookie-learn-more">@L.GetString("LearnMore", "Cookie")</a>
+                <a href="@LocalizedUrl.GetPrivacyUrl()" class="cookie-learn-more">@L.GetString("LearnMore", "Cookie")</a>
             </div>
             <div class="cookie-consent-actions">
                 <button type="button" class="btn btn-success" onclick="acceptAllCookies()">

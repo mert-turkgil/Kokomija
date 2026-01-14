@@ -17,6 +17,11 @@ namespace Kokomija.Services
         string GetString(string key, CultureInfo? culture = null);
 
         /// <summary>
+        /// Get localized string by key, resource name and culture
+        /// </summary>
+        string GetString(string key, string resourceName, CultureInfo? culture = null);
+
+        /// <summary>
         /// Get all localized strings for a specific culture
         /// </summary>
         Dictionary<string, string> GetAllStrings(CultureInfo culture);
@@ -214,6 +219,96 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "❌ [ResourceService] Error getting string for key: {Key}, culture: {Culture}", key, culture?.Name);
+                return key;
+            }
+        }
+
+        /// <summary>
+        /// Get localized string by key, resource name, and culture - searches specific resource folder
+        /// </summary>
+        public string GetString(string key, string resourceName, CultureInfo? culture = null)
+        {
+            try
+            {
+                culture ??= CultureInfo.CurrentCulture;
+                string cacheKey = $"{resourceName}_{key}_{culture.Name}";
+
+                _logger.LogDebug("[ResourceService] GetString(key={Key}, resourceName={ResourceName}, culture={Culture})", key, resourceName, culture.Name);
+
+                // Build the specific resx file path for this resource
+                var resxPath = Path.Combine(_resourcePath, $"{resourceName}Resources", $"{resourceName}Resources.{culture.Name}.resx");
+                
+                // Also try without the "Resources" suffix in folder name
+                if (!File.Exists(resxPath))
+                {
+                    resxPath = Path.Combine(_resourcePath, $"{resourceName}Resources", $"{resourceName}.{culture.Name}.resx");
+                }
+
+                _logger.LogDebug("[ResourceService] Looking for resource file: {Path}", resxPath);
+
+                if (File.Exists(resxPath))
+                {
+                    // Check if file has been modified since we last cached it
+                    var lastWriteTime = File.GetLastWriteTimeUtc(resxPath);
+                    var fileCacheKey = $"{resxPath}_{culture.Name}";
+
+                    if (_fileCache.TryGetValue(fileCacheKey, out var cachedTime))
+                    {
+                        if (lastWriteTime > cachedTime)
+                        {
+                            // File was modified, clear cache for this file
+                            InvalidateFileCache(resxPath, culture.Name);
+                            _fileCache[fileCacheKey] = lastWriteTime;
+                            _logger.LogInformation("[ResourceService] File modified, cache invalidated: {File}", resxPath);
+                        }
+                    }
+                    else
+                    {
+                        _fileCache[fileCacheKey] = lastWriteTime;
+                    }
+
+                    // Try to get from cache
+                    if (_resourceCache.TryGetValue(cacheKey, out var cachedValue))
+                    {
+                        _logger.LogDebug("[ResourceService] Cache hit for {Key}: {Value}", cacheKey, cachedValue);
+                        return cachedValue;
+                    }
+
+                    // Load from XML file with fresh read
+                    try
+                    {
+                        using (var stream = new FileStream(resxPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        {
+                            var xDocument = XDocument.Load(stream);
+                            var dataElement = xDocument.Root?.Elements("data")
+                                .FirstOrDefault(x => x.Attribute("name")?.Value == key);
+
+                            if (dataElement != null)
+                            {
+                                var value = dataElement.Element("value")?.Value ?? key;
+                                _resourceCache[cacheKey] = value;
+                                _logger.LogDebug("[ResourceService] Found {Key} in {ResourceName}: {Value}", key, resourceName, value);
+                                return value;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "[ResourceService] Error reading from {File}", resxPath);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("[ResourceService] Resource file not found: {Path}", resxPath);
+                }
+
+                // Fall back to the generic GetString method
+                _logger.LogDebug("[ResourceService] Key {Key} not found in {ResourceName}, falling back to generic search", key, resourceName);
+                return GetString(key, culture);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "❌ [ResourceService] Error getting string for key: {Key}, resourceName: {ResourceName}, culture: {Culture}", key, resourceName, culture?.Name);
                 return key;
             }
         }

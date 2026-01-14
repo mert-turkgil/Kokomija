@@ -616,6 +616,72 @@ public class AdminProductController : Controller
                 }
             }
 
+            // Handle variant updates
+            if (model.Variants != null && model.Variants.Any())
+            {
+                // Get existing variants
+                var existingVariants = await _unitOfWork.Repository<ProductVariant>()
+                    .FindAsync(v => v.ProductId == product.Id);
+                var existingVariantIds = existingVariants.Select(v => v.Id).ToList();
+                var submittedVariantIds = model.Variants.Where(v => v.Id.HasValue).Select(v => v.Id!.Value).ToList();
+                
+                // Delete variants that were removed
+                var variantsToDelete = existingVariants.Where(v => !submittedVariantIds.Contains(v.Id)).ToList();
+                foreach (var variantToDelete in variantsToDelete)
+                {
+                    _unitOfWork.Repository<ProductVariant>().Remove(variantToDelete);
+                    _logger.LogInformation("Deleted variant {VariantId} from product {ProductId}", variantToDelete.Id, product.Id);
+                }
+                
+                // Update or create variants
+                foreach (var variantDto in model.Variants)
+                {
+                    if (variantDto.Id.HasValue && variantDto.Id > 0)
+                    {
+                        // Update existing variant
+                        var existingVariant = existingVariants.FirstOrDefault(v => v.Id == variantDto.Id);
+                        if (existingVariant != null)
+                        {
+                            existingVariant.SizeId = variantDto.SizeId;
+                            existingVariant.ColorId = variantDto.ColorId;
+                            existingVariant.SKU = variantDto.SKU;
+                            existingVariant.Price = variantDto.Price;
+                            existingVariant.StockQuantity = variantDto.StockQuantity;
+                            existingVariant.UpdatedAt = DateTime.UtcNow;
+                            _unitOfWork.Repository<ProductVariant>().Update(existingVariant);
+                        }
+                    }
+                    else
+                    {
+                        // Create new variant with Stripe price
+                        var stripePriceService = new Stripe.PriceService();
+                        var stripePriceOptions = new Stripe.PriceCreateOptions
+                        {
+                            Product = product.StripeProductId,
+                            UnitAmount = (long)(variantDto.Price * 100),
+                            Currency = "pln",
+                            Active = true
+                        };
+                        var stripePrice = await stripePriceService.CreateAsync(stripePriceOptions);
+                        
+                        var newVariant = new ProductVariant
+                        {
+                            ProductId = product.Id,
+                            SizeId = variantDto.SizeId,
+                            ColorId = variantDto.ColorId,
+                            SKU = variantDto.SKU,
+                            Price = variantDto.Price,
+                            StockQuantity = variantDto.StockQuantity,
+                            StripePriceId = stripePrice.Id,
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _unitOfWork.Repository<ProductVariant>().AddAsync(newVariant);
+                        _logger.LogInformation("Created new variant for product {ProductId}: SKU={SKU}", product.Id, variantDto.SKU);
+                    }
+                }
+            }
+
             // Handle image deletions
             if (model.ImagesToDelete != null && model.ImagesToDelete.Any())
             {

@@ -7,7 +7,8 @@ namespace Kokomija.Entity
     {
         Pending,
         Processed,
-        Failed
+        Failed,
+        Cancelled // Added for refunds
     }
 
     public class DeveloperEarnings

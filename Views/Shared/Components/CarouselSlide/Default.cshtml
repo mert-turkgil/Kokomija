@@ -1,48 +1,101 @@
 @model Kokomija.Models.ViewModels.CarouselSlideCollectionViewModel
+@inject Kokomija.Services.ILocalizationService L
+@using System.Text.Json
 
 @{
     var hasSlides = Model.Slides != null && Model.Slides.Any();
     var firstSlide = Model.Slides?.FirstOrDefault();
+    var requestScheme = Context.Request.Scheme;
+    var requestHost = Context.Request.Host;
 }
 
 @if (hasSlides)
 {
+    <!-- SEO: JSON-LD Structured Data for Carousel/ImageGallery -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "ImageGallery",
+        "name": "Kokomija - @L["Carousel_Banner"]",
+        "description": "@L["Carousel_Description"]",
+        "image": [
+            @for (int i = 0; i < Model.Slides!.Count; i++)
+            {
+                var slide = Model.Slides[i];
+                var imageUrl = slide.FullImagePath.StartsWith("http") 
+                    ? slide.FullImagePath 
+                    : $"{requestScheme}://{requestHost}{slide.FullImagePath}";
+                var escapedAlt = System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(slide.ImageAlt ?? slide.Title);
+                var escapedTitle = System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(slide.Title);
+                
+                @Html.Raw($@"{{
+                ""@@type"": ""ImageObject"",
+                ""contentUrl"": ""{imageUrl}"",
+                ""name"": ""{escapedTitle}"",
+                ""description"": ""{escapedAlt}"",
+                ""caption"": ""{escapedTitle}""
+            }}")
+                if (i < Model.Slides.Count - 1)
+                {
+                    @Html.Raw(",")
+                }
+            }
+        ],
+        "mainEntity": {
+            "@@type": "WebPage",
+            "name": "Kokomija - @L["Home"]",
+            "url": "@requestScheme://@requestHost"
+        }
+    }
+    </script>
+
     <!-- Skip Carousel Link for Accessibility -->
-    <a href="#main-content" class="skip-carousel">Skip carousel</a>
+    <a href="#main-content" class="skip-carousel visually-hidden-focusable">@L["Skip_Carousel"]</a>
     
-    <div class="carousel-container" data-carousel-location="@ViewData["Location"]">
+    <section class="carousel-container" 
+             data-carousel-location="@ViewData["Location"]" 
+             aria-label="@L["Homepage_Carousel"]"
+             role="region">
         <!-- Premium Border Effect -->
         <div class="carousel-premium-border"></div>
         
         <!-- Swiper Hero Carousel -->
-        <div class="swiper heroSwiper" id="heroCarousel">
+        <div class="swiper heroSwiper" id="heroCarousel" role="group" aria-roledescription="carousel">
             <div class="swiper-wrapper">
-                @foreach (var slide in Model.Slides!)
+                @for (int slideIndex = 0; slideIndex < (Model.Slides?.Count ?? 0); slideIndex++)
                 {
+                    var slide = Model.Slides![slideIndex];
                     <div class="swiper-slide @slide.CustomCssClass" 
                          data-swiper-autoplay="@slide.Duration"
-                         data-animation-type="@slide.AnimationType">
+                         data-animation-type="@slide.AnimationType"
+                         role="group"
+                         aria-roledescription="slide"
+                         aria-label="@(slideIndex + 1) @L["Of"] @(Model.Slides?.Count ?? 0): @slide.Title">
                         
                         <div class="carousel-slide-content" 
                              style="@(!string.IsNullOrEmpty(slide.BackgroundColor) ? $"background-color: {slide.BackgroundColor};" : "")">
                             
-                            <!-- Responsive Images with Picture Element -->
+                            <!-- Responsive Images with Picture Element - SEO Optimized -->
                             <picture class="carousel-image-wrapper">
                                 @if (!string.IsNullOrEmpty(slide.FullMobileImagePath))
                                 {
                                     <source media="(max-width: 576px)" 
-                                            srcset="@slide.FullMobileImagePath" />
+                                            srcset="@slide.FullMobileImagePath"
+                                            type="image/webp" />
                                 }
                                 @if (!string.IsNullOrEmpty(slide.FullTabletImagePath))
                                 {
                                     <source media="(max-width: 992px)" 
-                                            srcset="@slide.FullTabletImagePath" />
+                                            srcset="@slide.FullTabletImagePath"
+                                            type="image/webp" />
                                 }
                                 <img src="@slide.FullImagePath" 
-                                     alt="@slide.ImageAlt" 
+                                     alt="@(slide.ImageAlt ?? $"{slide.Title} - Kokomija")" 
+                                     title="@slide.Title"
                                      class="carousel-slide-image @(slide.AnimationType == "zoom" ? "zoom-effect" : "") @(slide.AnimationType == "ken-burns" ? "ken-burns-effect" : "")"
-                                     loading="@(Model.Slides.IndexOf(slide) == 0 ? "eager" : "lazy")"
-                                     decoding="async" />
+                                     loading="@(slideIndex == 0 ? "eager" : "lazy")"
+                                     decoding="async"
+                                     fetchpriority="@(slideIndex == 0 ? "high" : "low")" />
                             </picture>
                             
                             <!-- Particle Effect (optional) -->
@@ -144,19 +197,19 @@
             </div>
             
             <!-- Navigation Arrows -->
-            <div class="swiper-button-next" aria-label="Next slide"></div>
-            <div class="swiper-button-prev" aria-label="Previous slide"></div>
+            <div class="swiper-button-next" aria-label="@L["Next_Slide"]" role="button" tabindex="0"></div>
+            <div class="swiper-button-prev" aria-label="@L["Previous_Slide"]" role="button" tabindex="0"></div>
             
             <!-- Pagination -->
-            <div class="swiper-pagination" role="tablist"></div>
+            <div class="swiper-pagination" role="tablist" aria-label="@L["Carousel_Pagination"]"></div>
         </div>
-    </div>
+    </section>
 
     <!-- Advanced Swiper Initialization Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Get carousel configuration from slides
-            const slides = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Slides.Select(s => new {
+            const slides = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((Model.Slides ?? new List<Kokomija.Models.ViewModels.CarouselSlideViewModel>()).Select(s => new {
                 duration = s.Duration,
                 animationType = s.AnimationType ?? "fade"
             })));

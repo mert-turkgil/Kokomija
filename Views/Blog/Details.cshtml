@@ -1,8 +1,17 @@
 @model Kokomija.Models.ViewModels.Blog.BlogDetailsViewModel
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
 
 @{
     ViewData["Title"] = Model.Title;
+}
+
+@{
+    // Build absolute image URL for social media sharing
+    var baseUrl = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var absoluteImageUrl = !string.IsNullOrEmpty(Model.FeaturedImage) 
+        ? (Model.FeaturedImage.StartsWith("http") ? Model.FeaturedImage : $"{baseUrl}{Model.FeaturedImage}")
+        : null;
 }
 
 @section Meta {
@@ -16,19 +25,23 @@
     <meta property="og:url" content="@Model.CanonicalUrl">
     <meta property="og:title" content="@Model.Title">
     <meta property="og:description" content="@Model.MetaDescription">
-    @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+    <meta property="og:site_name" content="Kokomija">
+    @if (!string.IsNullOrEmpty(absoluteImageUrl))
     {
-        <meta property="og:image" content="@Model.FeaturedImage">
+        <meta property="og:image" content="@absoluteImageUrl">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
     }
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="@Model.CanonicalUrl">
-    <meta property="twitter:title" content="@Model.Title">
-    <meta property="twitter:description" content="@Model.MetaDescription">
-    @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="@Model.CanonicalUrl">
+    <meta name="twitter:title" content="@Model.Title">
+    <meta name="twitter:description" content="@Model.MetaDescription">
+    <meta name="twitter:site" content="@@Kokomija">
+    @if (!string.IsNullOrEmpty(absoluteImageUrl))
     {
-        <meta property="twitter:image" content="@Model.FeaturedImage">
+        <meta name="twitter:image" content="@absoluteImageUrl">
     }
 }
 
@@ -219,14 +232,14 @@
                                     <article class="related-post-card">
                                         @if (!string.IsNullOrEmpty(post.FeaturedImage))
                                         {
-                                            <a asp-action="Details" asp-route-slug="@post.Slug" class="related-post-image">
+                                            <a href="@LocalizedUrl.GetBlogPostUrl(post.Slug)" class="related-post-image">
                                                 <img src="@post.FeaturedImage" alt="@post.Title" onerror="this.src='/img/logo_black.png'">
                                             </a>
                                         }
                                         <div class="related-post-body">
                                             <div class="post-category-small">@post.CategoryName</div>
                                             <h5 class="related-post-title">
-                                                <a asp-action="Details" asp-route-slug="@post.Slug">@post.Title</a>
+                                                <a href="@LocalizedUrl.GetBlogPostUrl(post.Slug)">@post.Title</a>
                                             </h5>
                                             <p class="related-post-excerpt">@post.Excerpt</p>
                                             <div class="related-post-meta">

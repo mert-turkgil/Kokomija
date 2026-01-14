@@ -1,5 +1,6 @@
 @model Kokomija.Models.ViewModels.Account.RegisterViewModel
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
 
 @{
     ViewData["Title"] = "Register";
@@ -10,23 +11,52 @@
             background-color: #4285F4;
             color: white;
         }
-    .google-icon {
-        font-size: 18px;
-        margin-bottom: 1px;}
-   .google-login-button {
-        border-radius: 20px;
-        box-sizing: border-box;
-        padding: 10px 15px;
-        box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px,
-                rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
-                "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
-        font-size: 11px;
-        gap: 5px;
+        .google-icon {
+            font-size: 18px;
+            margin-bottom: 1px;
+        }
+        .google-login-button {
+            border-radius: 20px;
+            box-sizing: border-box;
+            padding: 10px 15px;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px,
+                    rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+                    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            gap: 5px;
+        }
+        
+        /* Google Spinner Animation */
+        .google-spinner-wrapper {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 0;
+        }
+        .google-spinner-wrapper.active {
+            display: flex;
+        }
+        .google-spinner-wrapper .ball {
+            --size: 12px;
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            margin: 0 6px;
+            animation: 2s googleBounce ease infinite;
+        }
+        .google-spinner-wrapper .blue { background-color: #4285f5; }
+        .google-spinner-wrapper .red { background-color: #ea4436; animation-delay: 0.25s; }
+        .google-spinner-wrapper .yellow { background-color: #fbbd06; animation-delay: 0.5s; }
+        .google-spinner-wrapper .green { background-color: #34a952; animation-delay: 0.75s; }
+    </style>
+    <style>
+        @@keyframes googleBounce {
+            50% { transform: translateY(10px); }
         }
     </style>
 }
@@ -187,8 +217,15 @@
                         </div>
                         <div class="social-buttons">
                             <!-- Google Sign-Up -->
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="mb-2" target="_blank">
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="mb-2 google-login-form" target="_blank">
                                 @Html.AntiForgeryToken()
+                                <div class="google-spinner-wrapper">
+                                    <div class="blue ball"></div>
+                                    <div class="red ball"></div>
+                                    <div class="yellow ball"></div>
+                                    <div class="green ball"></div>
+                                </div>
+
                                 <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100 google-login-button">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
                                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
@@ -222,7 +259,7 @@
                     <!-- Login Link -->
                     <div class="auth-links">
                         <p>@L["Auth_HaveAccount"]</p>
-                        <a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" class="link-primary">
+                        <a href="@LocalizedUrl.GetLoginUrl()" class="link-primary">
                             <i class="bi bi-box-arrow-in-right"></i>
                             @L["Auth_SignInLink"]
                         </a>
@@ -268,6 +305,18 @@
                 icon.classList.add('bi-eye');
             }
         }
+        
+        // Google login spinner
+        document.querySelectorAll('.google-login-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const button = this.querySelector('.google-login-button');
+                const spinner = this.querySelector('.google-spinner-wrapper');
+                if (button && spinner) {
+                    button.style.display = 'none';
+                    spinner.classList.add('active');
+                }
+            });
+        });
         
         // Client-side validation for terms checkbox
         document.getElementById('registerForm').addEventListener('submit', function(e) {

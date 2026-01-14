@@ -1,8 +1,64 @@
 @model Kokomija.Models.ViewModels.Account.LoginViewModel
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
 
 @{
     ViewData["Title"] = "Login";
+}
+
+@section Styles{
+    <style>
+        .google-login-button:hover {
+            background-color: #4285F4;
+            color: white;
+        }
+        .google-icon {
+            font-size: 18px;
+            margin-bottom: 1px;
+        }
+        .google-login-button {
+            border-radius: 20px;
+            box-sizing: border-box;
+            padding: 10px 15px;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 10px 36px 0px,
+                    rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+                    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            gap: 5px;
+        }
+        /* Google Spinner Animation */
+        .google-spinner-wrapper {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 0;
+        }
+        .google-spinner-wrapper.active {
+            display: flex;
+        }
+        .google-spinner-wrapper .ball {
+            --size: 12px;
+            width: var(--size);
+            height: var(--size);
+            border-radius: 50%;
+            margin: 0 6px;
+            animation: 2s googleBounce ease infinite;
+        }
+        .google-spinner-wrapper .blue { background-color: #4285f5; }
+        .google-spinner-wrapper .red { background-color: #ea4436; animation-delay: 0.25s; }
+        .google-spinner-wrapper .yellow { background-color: #fbbd06; animation-delay: 0.5s; }
+        .google-spinner-wrapper .green { background-color: #34a952; animation-delay: 0.75s; }
+    </style>
+    <style>
+        @@keyframes googleBounce {
+            50% { transform: translateY(10px); }
+        }
+    </style>
 }
 
 <div class="auth-page">
@@ -97,9 +153,16 @@
                         
                         <div class="social-buttons">
                             <!-- Google Sign-In -->
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="mb-2" target="_blank">
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="mb-2 google-login-form" id="googleLoginForm">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100">
+                                <input type="hidden" name="popupMode" value="true" />
+                                <div class="google-spinner-wrapper">
+                                    <div class="blue ball"></div>
+                                    <div class="red ball"></div>
+                                    <div class="yellow ball"></div>
+                                    <div class="green ball"></div>
+                                </div>
+                                <button type="submit" name="provider" value="Google" class="btn-social btn-google w-100 google-login-button" onclick="return openLoginPopup(this.form, 'Google');">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
                                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                                         <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
@@ -111,9 +174,10 @@
                             </form>
                             
                             <!-- Facebook Sign-In -->
-                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" target="_blank">
+                            <form asp-action="ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" id="facebookLoginForm">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100">
+                                <input type="hidden" name="popupMode" value="true" />
+                                <button type="submit" name="provider" value="Facebook" class="btn-social btn-facebook w-100" onclick="return openLoginPopup(this.form, 'Facebook');">
                                     <i class="bi bi-facebook" style="font-size: 20px;"></i>
                                     <span>@L["Auth_ContinueWithFacebook"]</span>
                                 </button>
@@ -124,7 +188,7 @@
                     <!-- Register Link -->
                     <div class="auth-links">
                         <p>@L["Auth_NoAccount"]</p>
-                        <a asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl" class="link-primary">
+                        <a href="@LocalizedUrl.GetRegisterUrl()" class="link-primary">
                             <i class="bi bi-person-plus"></i>
                             @L["Auth_CreateAccount"]
                         </a>
@@ -146,21 +210,74 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Debug: Log form submission
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Login page loaded');
+        // Open social login in popup window
+        function openLoginPopup(form, provider) {
+            // Show spinner for Google
+            if (provider === 'Google') {
+                const button = form.querySelector('.google-login-button');
+                const spinner = form.querySelector('.google-spinner-wrapper');
+                if (button && spinner) {
+                    button.style.display = 'none';
+                    spinner.classList.add('active');
+                }
+            }
             
-            // Find all forms with ExternalLogin action
-            const externalForms = document.querySelectorAll('form[action="/Account/ExternalLogin"]');
-            console.log('Found ' + externalForms.length + ' external login forms');
+            // Calculate popup position (centered)
+            const width = 500;
+            const height = 600;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
             
-            externalForms.forEach((form, index) => {
-                console.log('Adding submit listener to form ' + index);
-                form.addEventListener('submit', function(e) {
-                    console.log('Form ' + index + ' is being submitted');
-                    console.log('Form data:', new FormData(this));
-                });
-            });
+            // Open popup window
+            const popupName = provider + 'LoginPopup';
+            const popup = window.open('', popupName, 
+                `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+            
+            // Set form target to the popup
+            form.target = popupName;
+            
+            // Check if popup was blocked
+            if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                alert('@L["Auth_PopupBlocked"]');
+                // Reset spinner
+                if (provider === 'Google') {
+                    const button = form.querySelector('.google-login-button');
+                    const spinner = form.querySelector('.google-spinner-wrapper');
+                    if (button && spinner) {
+                        button.style.display = '';
+                        spinner.classList.remove('active');
+                    }
+                }
+                return false;
+            }
+            
+            // Poll to check when popup closes
+            const pollTimer = setInterval(function() {
+                if (popup.closed) {
+                    clearInterval(pollTimer);
+                    // Reset spinner
+                    const button = form.querySelector('.google-login-button');
+                    const spinner = form.querySelector('.google-spinner-wrapper');
+                    if (button && spinner) {
+                        button.style.display = '';
+                        spinner.classList.remove('active');
+                    }
+                }
+            }, 500);
+            
+            return true;
+        }
+        
+        // Listen for message from popup on successful login
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'loginSuccess') {
+                // Refresh the page or redirect
+                if (event.data.redirectUrl) {
+                    window.location.href = event.data.redirectUrl;
+                } else {
+                    window.location.reload();
+                }
+            }
         });
 
         function togglePassword(button) {

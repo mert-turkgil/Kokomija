@@ -21,6 +21,12 @@ namespace Kokomija.Entity
         [Required]
         public string Description { get; set; } = string.Empty;
 
+        /// <summary>
+        /// SEO-friendly URL slug (default language)
+        /// </summary>
+        [MaxLength(250)]
+        public string? Slug { get; set; }
+
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
