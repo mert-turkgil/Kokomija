@@ -76,14 +76,26 @@ namespace Kokomija.Data.Concrete
         {
             var lowerSearchTerm = searchTerm.ToLower();
             
-            return await _dbSet
-                .Where(p => p.IsActive && 
-                    (p.Name.ToLower().Contains(lowerSearchTerm) || 
-                     p.Description.ToLower().Contains(lowerSearchTerm)))
+            // Get all products that are active
+            var products = await _dbSet
+                .Where(p => p.IsActive)
                 .Include(p => p.Category)
+                .Include(p => p.Translations)
                 .Include(p => p.Images.Where(i => i.IsPrimary))
-                .OrderBy(p => p.Name)
                 .ToListAsync();
+            
+            // Filter by search term in English or Polish (product name, description, or translations)
+            var results = products
+                .Where(p => 
+                    p.Name.ToLower().Contains(lowerSearchTerm) ||
+                    p.Description.ToLower().Contains(lowerSearchTerm) ||
+                    p.Translations.Any(t => 
+                        t.Name.ToLower().Contains(lowerSearchTerm) ||
+                        t.Description.ToLower().Contains(lowerSearchTerm)))
+                .OrderBy(p => p.Name)
+                .ToList();
+            
+            return results;
         }
 
         public async Task<Product?> GetProductBySlugAsync(string slug, string cultureCode)

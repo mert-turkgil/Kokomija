@@ -695,56 +695,74 @@ namespace Kokomija.Data
             // Note: HasData only inserts if the Id doesn't exist
             // If products with these Ids exist, they will be skipped automatically
             modelBuilder.Entity<Product>().HasData(
-                // Product 1: Women's Cotton Briefs 5-Pack
+                // Product 1: Women's Cotton Briefs - Base/Single
                 new Product 
                 { 
                     Id = 1, 
+                    Name = "Majtki damskie bawełniane wysokie - Single", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-single",
+                    Description = "Wysokiej jakości majtki damskie bawełniane. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Price = 9.95m,
+                    StripeProductId = string.Empty,
+                    StripePriceId = string.Empty,
+                    StripeTaxCode = "txcd_30011000",
+                    PackSize = 1,
+                    ProductGroupId = 1,
+                    CategoryId = 1,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                
+                // Product 2: Women's Cotton Briefs 5-Pack
+                new Product 
+                { 
+                    Id = 2, 
                     Name = "Majtki damskie bawełniane wysokie - 5 pak", 
                     Slug = "majtki-damskie-bawelniane-wysokie-5-pak",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
                     Price = 49.75m,
-                    StripeProductId = string.Empty, // Will be created by StripeProductSeeder
+                    StripeProductId = string.Empty,
                     StripePriceId = string.Empty,
-                    StripeTaxCode = "txcd_30011000", // Clothing - Apparel
+                    StripeTaxCode = "txcd_30011000",
                     PackSize = 5,
-                    ProductGroupId = 1, // Women's Briefs Pack Collection
-                    CategoryId = 1, // Damskie
+                    ProductGroupId = 1,
+                    CategoryId = 1,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 },
                 
-                // Product 2: Women's Cotton Briefs 6-Pack
-                new Product 
-                { 
-                    Id = 2, 
-                    Name = "Majtki damskie bawełniane wysokie - 6 pak", 
-                    Slug = "majtki-damskie-bawelniane-wysokie-6-pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    Price = 59.70m,
-                    StripeProductId = string.Empty, // Will be created by StripeProductSeeder
-                    StripePriceId = string.Empty,
-                    StripeTaxCode = "txcd_30011000", // Clothing - Apparel
-                    PackSize = 6,
-                    ProductGroupId = 1, // Women's Briefs Pack Collection
-                    CategoryId = 1, // Damskie
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                },
-                
-                // Product 3: Women's Cotton Briefs 8-Pack (Best Value)
+                // Product 3: Women's Cotton Briefs 7-Pack
                 new Product 
                 { 
                     Id = 3, 
+                    Name = "Majtki damskie bawełniane wysokie - 7 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-7-pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 7 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Price = 69.65m,
+                    StripeProductId = string.Empty,
+                    StripePriceId = string.Empty,
+                    StripeTaxCode = "txcd_30011000",
+                    PackSize = 7,
+                    ProductGroupId = 1,
+                    CategoryId = 1,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                
+                // Product 4: Women's Cotton Briefs 8-Pack (Best Value)
+                new Product 
+                { 
+                    Id = 4, 
                     Name = "Majtki damskie bawełniane wysokie - 8 pak", 
                     Slug = "majtki-damskie-bawelniane-wysokie-8-pak",
                     Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
                     Price = 79.60m,
-                    StripeProductId = string.Empty, // Will be created by StripeProductSeeder
+                    StripeProductId = string.Empty,
                     StripePriceId = string.Empty,
-                    StripeTaxCode = "txcd_30011000", // Clothing - Apparel
+                    StripeTaxCode = "txcd_30011000",
                     PackSize = 8,
-                    ProductGroupId = 1, // Women's Briefs Pack Collection
-                    CategoryId = 1, // Damskie
+                    ProductGroupId = 1,
+                    CategoryId = 1,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 }
@@ -756,55 +774,24 @@ namespace Kokomija.Data
             var images = new List<ProductImage>();
             int imageId = 1;
 
-            // Women's Briefs 5-Pack - Product ID 1 (2 images)
-            for (int imageNum = 1; imageNum <= 2; imageNum++)
+            // All 4 products share same images (2 images per product)
+            for (int productId = 1; productId <= 4; productId++)
             {
-                images.Add(new ProductImage
+                for (int imageNum = 1; imageNum <= 2; imageNum++)
                 {
-                    Id = imageId++,
-                    ProductId = 1,
-                    ImageUrl = $"products/briefs-5pack/image-{imageNum}.jpg",
-                    AltText = imageNum == 1 
-                        ? "Majtki damskie bawełniane wysokie 5-pak - widok z przodu" 
-                        : "Majtki damskie bawełniane wysokie 5-pak - szczegóły produktu",
-                    IsPrimary = imageNum == 1,
-                    DisplayOrder = imageNum,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            // Women's Briefs 6-Pack - Product ID 2 (2 images)
-            for (int imageNum = 1; imageNum <= 2; imageNum++)
-            {
-                images.Add(new ProductImage
-                {
-                    Id = imageId++,
-                    ProductId = 2,
-                    ImageUrl = $"products/briefs-6pack/image-{imageNum}.jpg",
-                    AltText = imageNum == 1 
-                        ? "Majtki damskie bawełniane wysokie 6-pak - widok z przodu" 
-                        : "Majtki damskie bawełniane wysokie 6-pak - szczegóły produktu",
-                    IsPrimary = imageNum == 1,
-                    DisplayOrder = imageNum,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-            // Women's Briefs 8-Pack - Product ID 3 (2 images)
-            for (int imageNum = 1; imageNum <= 2; imageNum++)
-            {
-                images.Add(new ProductImage
-                {
-                    Id = imageId++,
-                    ProductId = 3,
-                    ImageUrl = $"products/briefs-8pack/image-{imageNum}.jpg",
-                    AltText = imageNum == 1 
-                        ? "Majtki damskie bawełniane wysokie 8-pak - widok z przodu, najlepsza wartość" 
-                        : "Majtki damskie bawełniane wysokie 8-pak - szczegóły produktu, oszczędności",
-                    IsPrimary = imageNum == 1,
-                    DisplayOrder = imageNum,
-                    CreatedAt = DateTime.UtcNow
-                });
+                    images.Add(new ProductImage
+                    {
+                        Id = imageId++,
+                        ProductId = productId,
+                        ImageUrl = $"products/briefs/image-{imageNum}.jpg",
+                        AltText = imageNum == 1 
+                            ? $"Majtki damskie bawełniane wysokie - widok z przodu" 
+                            : $"Majtki damskie bawełniane wysokie - szczegóły produktu",
+                        IsPrimary = imageNum == 1,
+                        DisplayOrder = imageNum,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
             }
 
             modelBuilder.Entity<ProductImage>().HasData(images);
@@ -812,82 +799,48 @@ namespace Kokomija.Data
 
         public static void SeedProductTranslations(this ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ProductTranslation>().HasData(
-                // Product 1: Women's Cotton Briefs 5-Pack - Polish (default)
-                new ProductTranslation
+            var translations = new List<ProductTranslation>();
+            int translationId = 1;
+
+            // Product names and descriptions with pack info
+            var productData = new[]
+            {
+                new { ProductId = 1, PackName = "Single", PackNamePl = "Pojedyncze", PackDesc = "", PackDescPl = "" },
+                new { ProductId = 2, PackName = "5-Pack", PackNamePl = "5 pak", PackDesc = " (5 pieces)", PackDescPl = " (5 sztuk)" },
+                new { ProductId = 3, PackName = "7-Pack", PackNamePl = "7 pak", PackDesc = " (7 pieces)", PackDescPl = " (7 sztuk)" },
+                new { ProductId = 4, PackName = "8-Pack", PackNamePl = "8 pak", PackDesc = " (8 pieces)", PackDescPl = " (8 sztuk)" }
+            };
+
+            foreach (var product in productData)
+            {
+                // Polish translation
+                translations.Add(new ProductTranslation
                 {
-                    Id = 1,
-                    ProductId = 1,
+                    Id = translationId++,
+                    ProductId = product.ProductId,
                     CultureCode = "pl-PL",
-                    Name = "Majtki damskie bawełniane wysokie - 5 pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    Slug = "majtki-damskie-bawelniane-wysokie-5-pak",
-                    MetaDescription = "Kup majtki damskie bawełniane wysokie 5 sztuk w zestawie. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.",
-                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, 5-pak, Kokomija"
-                },
-                // Product 1: Women's Cotton Briefs 5-Pack - English
-                new ProductTranslation
+                    Name = $"Majtki damskie bawełniane wysokie {product.PackNamePl}",
+                    Description = $"Wysokiej jakości majtki damskie bawełniane{product.PackDescPl}. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Slug = $"majtki-damskie-bawelniane-wysokie-{product.PackNamePl.ToLower().Replace(" ", "-")}",
+                    MetaDescription = $"Kup majtki damskie bawełniane wysokie {product.PackNamePl}. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.",
+                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija"
+                });
+
+                // English translation
+                translations.Add(new ProductTranslation
                 {
-                    Id = 2,
-                    ProductId = 1,
+                    Id = translationId++,
+                    ProductId = product.ProductId,
                     CultureCode = "en-US",
-                    Name = "Women's High-Waist Cotton Briefs - 5 Pack",
-                    Description = "High quality women's cotton briefs in a set of 5. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.",
-                    Slug = "womens-cotton-briefs-5-pack",
-                    MetaDescription = "Buy women's high-waist cotton briefs 5-pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.",
-                    MetaKeywords = "women's briefs, cotton underwear, high-waist briefs, 5-pack, Kokomija"
-                },
-                
-                // Product 2: Women's Cotton Briefs 6-Pack - Polish
-                new ProductTranslation
-                {
-                    Id = 3,
-                    ProductId = 2,
-                    CultureCode = "pl-PL",
-                    Name = "Majtki damskie bawełniane wysokie - 6 pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    Slug = "majtki-damskie-bawelniane-wysokie-6-pak",
-                    MetaDescription = "Kup majtki damskie bawełniane wysokie 6 sztuk w zestawie. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Oszczędź kupując więcej!",
-                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, 6-pak, zestaw, Kokomija"
-                },
-                // Product 2: Women's Cotton Briefs 6-Pack - English
-                new ProductTranslation
-                {
-                    Id = 4,
-                    ProductId = 2,
-                    CultureCode = "en-US",
-                    Name = "Women's High-Waist Cotton Briefs - 6 Pack",
-                    Description = "High quality women's cotton briefs in a set of 6. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.",
-                    Slug = "womens-cotton-briefs-6-pack",
-                    MetaDescription = "Buy women's high-waist cotton briefs 6-pack. Comfortable, breathable and durable underwear. Save more when buying more!",
-                    MetaKeywords = "women's briefs, cotton underwear, high-waist briefs, 6-pack, value pack, Kokomija"
-                },
-                
-                // Product 3: Women's Cotton Briefs 8-Pack - Polish
-                new ProductTranslation
-                {
-                    Id = 5,
-                    ProductId = 3,
-                    CultureCode = "pl-PL",
-                    Name = "Majtki damskie bawełniane wysokie - 8 pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
-                    Slug = "majtki-damskie-bawelniane-wysokie-8-pak",
-                    MetaDescription = "Kup majtki damskie bawełniane wysokie 8 sztuk w zestawie - NAJLEPSZA WARTOŚĆ! Wygodne, przewiewne i trwałe. Dostawa w Polsce. Największe oszczędności!",
-                    MetaKeywords = "majtki damskie, bawełna, bielizna damska, majtki wysokie, 8-pak, najlepsza wartość, oszczędności, Kokomija"
-                },
-                // Product 3: Women's Cotton Briefs 8-Pack - English
-                new ProductTranslation
-                {
-                    Id = 6,
-                    ProductId = 3,
-                    CultureCode = "en-US",
-                    Name = "Women's High-Waist Cotton Briefs - 8 Pack",
-                    Description = "High quality women's cotton briefs in a set of 8. Comfortable, breathable and durable. Best value choice! Available in various colors and sizes.",
-                    Slug = "womens-cotton-briefs-8-pack",
-                    MetaDescription = "Buy women's high-waist cotton briefs 8-pack - BEST VALUE! Comfortable, breathable and durable underwear. Maximum savings!",
-                    MetaKeywords = "women's briefs, cotton underwear, high-waist briefs, 8-pack, best value, savings, Kokomija"
-                }
-            );
+                    Name = $"Women's Cotton Briefs {product.PackName}",
+                    Description = $"High quality women's cotton briefs{product.PackDesc}. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.",
+                    Slug = $"womens-cotton-briefs-{product.PackName.ToLower().Replace(" ", "-")}",
+                    MetaDescription = $"Buy women's cotton briefs {product.PackName}. Comfortable, breathable and durable underwear. Best quality at an affordable price.",
+                    MetaKeywords = "women's briefs, cotton underwear, briefs, Kokomija"
+                });
+            }
+
+            modelBuilder.Entity<ProductTranslation>().HasData(translations);
         }
 
         public static void SeedProductVariants(this ModelBuilder modelBuilder)
@@ -895,63 +848,52 @@ namespace Kokomija.Data
             var variants = new List<ProductVariant>();
             int variantId = 1;
 
-            // Sizes available: XS=1, S=2, M=3, L=4, XL=5, XXL=6
-            // Colors: Multi-color mix (no specific color, use id=8 for "Mix")
+            // Sizes: 2=S, 3=M, 4=L, 5=XL, 6=XXL
+            // Colors: 1=Black, 2=White, 3=Red, 4=Blue, 7=Navy
+            
+            int[] colors = { 1, 2, 3, 4, 7 }; // Black, White, Red, Blue, Navy
             int[] sizes = { 2, 3, 4, 5, 6 }; // S, M, L, XL, XXL
-            int mixColorId = 8; // Gray/Mix placeholder
 
-            // Product 1: Women's Briefs 5-Pack
-            foreach (var sizeId in sizes)
+            // Product pricing
+            var productPrices = new Dictionary<int, decimal>
             {
-                variants.Add(new ProductVariant
-                {
-                    Id = variantId++,
-                    ProductId = 1,
-                    SizeId = sizeId,
-                    ColorId = mixColorId,
-                    SKU = $"BRIEFS-5PK-S{sizeId}",
-                    Price = 49.75m,
-                    StockQuantity = 100,
-                    StripePriceId = string.Empty,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
+                { 1, 9.95m },     // Single: 9.95 PLN
+                { 2, 49.75m },    // 5-Pack: 49.75 PLN
+                { 3, 69.65m },    // 7-Pack: 69.65 PLN
+                { 4, 79.60m }     // 8-Pack: 79.60 PLN
+            };
 
-            // Product 2: Women's Briefs 6-Pack
-            foreach (var sizeId in sizes)
+            // Create 25 variants per product (5 colors × 5 sizes)
+            for (int productId = 1; productId <= 4; productId++)
             {
-                variants.Add(new ProductVariant
+                foreach (var colorId in colors)
                 {
-                    Id = variantId++,
-                    ProductId = 2,
-                    SizeId = sizeId,
-                    ColorId = mixColorId,
-                    SKU = $"BRIEFS-6PK-S{sizeId}",
-                    Price = 59.70m,
-                    StockQuantity = 100,
-                    StripePriceId = string.Empty,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
+                    foreach (var sizeId in sizes)
+                    {
+                        string packName = productId switch
+                        {
+                            1 => "SINGLE",
+                            2 => "5PK",
+                            3 => "7PK",
+                            4 => "8PK",
+                            _ => "BULK"
+                        };
 
-            // Product 3: Women's Briefs 8-Pack (Best Value)
-            foreach (var sizeId in sizes)
-            {
-                variants.Add(new ProductVariant
-                {
-                    Id = variantId++,
-                    ProductId = 3,
-                    SizeId = sizeId,
-                    ColorId = mixColorId,
-                    SKU = $"BRIEFS-8PK-S{sizeId}",
-                    Price = 79.60m,
-                    StockQuantity = 100,
-                    StripePriceId = string.Empty,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                });
+                        variants.Add(new ProductVariant
+                        {
+                            Id = variantId++,
+                            ProductId = productId,
+                            SizeId = sizeId,
+                            ColorId = colorId,
+                            SKU = $"BRIEFS-{packName}-C{colorId}-S{sizeId}",
+                            Price = productPrices[productId],
+                            StockQuantity = 100,
+                            StripePriceId = string.Empty,
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
             }
 
             modelBuilder.Entity<ProductVariant>().HasData(variants);

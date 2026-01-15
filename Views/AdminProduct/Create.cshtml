@@ -18,6 +18,58 @@
                 </a>
             </div>
         </div>
+        
+        <!-- Quick Guide Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-success h-100">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-1-circle me-2"></i><strong>Single Product</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Example:</strong> 1 pair of socks</p>
+                        <ol class="ps-3 mb-0 small">
+                            <li>Set <strong>Pack Size = 1</strong></li>
+                            <li>Set price for single item (e.g., 9.99 zł)</li>
+                            <li>Upload at least 1 image</li>
+                            <li>Add variants (sizes/colors)</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-primary h-100">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-box2-heart me-2"></i><strong>Pack Product</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Example:</strong> 5-pack of socks</p>
+                        <ol class="ps-3 mb-0 small">
+                            <li>Set <strong>Pack Size = 5</strong> (or 7, 8, etc.)</li>
+                            <li>Set price for entire pack (e.g., 39.99 zł)</li>
+                            <li>Upload pack-specific images</li>
+                            <li>Select same <strong>Product Group</strong> as single</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-info h-100">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-link-45deg me-2"></i><strong>Grouping Packs</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>To link related products:</strong></p>
+                        <ol class="ps-3 mb-0 small">
+                            <li>Create Single product first</li>
+                            <li>Create each pack separately (5-pack, 7-pack)</li>
+                            <li>Use same <strong>Product Group</strong> for all</li>
+                            <li>Each gets its own Stripe product + price</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
        
         <form asp-action="Create" method="post" id="productForm">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
@@ -210,6 +262,14 @@
                             <h5 class="border-bottom pb-2 mb-3">
                                 <i class="bi bi-images"></i> Product Images
                             </h5>
+                            
+                            <!-- Image Required Warning -->
+                            <div class="alert alert-warning mb-3">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Required for Stripe:</strong> Upload at least 1 image. Products without images may cause errors when syncing to Stripe.
+                                Each pack size needs its own images (e.g., 5-pack image shows 5 items).
+                            </div>
+                            
                             <div class="mb-3">
                                 <label class="form-label">Upload Images (Max 5MB each, JPG/PNG/WEBP)</label>
                                 

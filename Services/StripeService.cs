@@ -97,6 +97,19 @@ namespace Kokomija.Services
 
         public async Task<Stripe.Product> CreateProductAsync(Entity.Product product)
         {
+            // Get the primary image URL for Stripe
+            var primaryImage = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+            var imageUrls = new List<string>();
+            
+            if (primaryImage != null && !string.IsNullOrEmpty(primaryImage.ImageUrl))
+            {
+                // Stripe requires full HTTPS URLs for images
+                // Use a placeholder or your actual domain
+                var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl") ?? "https://kokomija.com";
+                var imageUrl = $"{baseUrl}/img/ProductImage/{primaryImage.ImageUrl}";
+                imageUrls.Add(imageUrl);
+            }
+            
             var options = new ProductCreateOptions
             {
                 Name = product.Name,
@@ -106,9 +119,16 @@ namespace Kokomija.Services
                 Metadata = new Dictionary<string, string>
                 {
                     { "product_id", product.Id.ToString() },
-                    { "category_id", product.CategoryId?.ToString() ?? "" }
+                    { "category_id", product.CategoryId?.ToString() ?? "" },
+                    { "pack_size", product.PackSize.ToString() }
                 }
             };
+            
+            // Only add images if we have at least one (Stripe requires valid URLs)
+            if (imageUrls.Any())
+            {
+                options.Images = imageUrls;
+            }
 
             return await _productService.CreateAsync(options);
         }
@@ -128,6 +148,17 @@ namespace Kokomija.Services
 
         public async Task<Stripe.Product> UpdateProductAsync(string stripeProductId, Entity.Product product)
         {
+            // Get the primary image URL for Stripe
+            var primaryImage = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+            var imageUrls = new List<string>();
+            
+            if (primaryImage != null && !string.IsNullOrEmpty(primaryImage.ImageUrl))
+            {
+                var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl") ?? "https://kokomija.com";
+                var imageUrl = $"{baseUrl}/img/ProductImage/{primaryImage.ImageUrl}";
+                imageUrls.Add(imageUrl);
+            }
+            
             var options = new ProductUpdateOptions
             {
                 Name = product.Name,
@@ -137,9 +168,16 @@ namespace Kokomija.Services
                 Metadata = new Dictionary<string, string>
                 {
                     { "product_id", product.Id.ToString() },
-                    { "category_id", product.CategoryId?.ToString() ?? "" }
+                    { "category_id", product.CategoryId?.ToString() ?? "" },
+                    { "pack_size", product.PackSize.ToString() }
                 }
             };
+            
+            // Update images if available
+            if (imageUrls.Any())
+            {
+                options.Images = imageUrls;
+            }
 
             return await _productService.UpdateAsync(stripeProductId, options);
         }

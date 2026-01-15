@@ -122,18 +122,37 @@
                         </div>
                     </div>
 
-                    <!-- Bulk/Multi-Pack Filter -->
+                    <!-- Product Type Filter -->
                     <div class="filter-section">
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-box-seam me-2"></i>@L["Products_ProductType"]
+                            </h6>
+                        </div>
                         <div class="filter-options">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="bulkProductsOnly" name="bulkOnly">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" id="allProducts" name="productType" value="all" checked>
+                                <label class="form-check-label" for="allProducts">
+                                    <i class="bi bi-grid me-1 text-secondary"></i>
+                                    @L["Products_AllProducts"]
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" id="singleProductsOnly" name="productType" value="single">
+                                <label class="form-check-label" for="singleProductsOnly">
+                                    <i class="bi bi-1-square me-1 text-success"></i>
+                                    @L["Products_SingleOnly"]
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" id="bulkProductsOnly" name="productType" value="bulk">
                                 <label class="form-check-label" for="bulkProductsOnly">
                                     <i class="bi bi-box2-heart me-1 text-info"></i>
                                     @L["Products_BulkOnly"]
                                 </label>
                             </div>
                             <small class="text-muted d-block mt-2">
-                                Show products available in multi-packs
+                                <i class="bi bi-info-circle me-1"></i>@L["Products_ProductTypeHint"]
                             </small>
                         </div>
                     </div>
@@ -230,7 +249,7 @@
                 maxPrice: null,
                 sortBy: 'newest',
                 showDiscountsOnly: false,
-                bulkOnly: false
+                productType: 'all' // 'all', 'single', 'bulk'
             };
 
             // Load filter options
@@ -288,7 +307,7 @@
                 filterState.maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
                 filterState.sortBy = $('#sortBy').val();
                 filterState.showDiscountsOnly = $('#showDiscountsOnly').prop('checked');
-                filterState.bulkOnly = $('#bulkProductsOnly').prop('checked');
+                filterState.productType = $('input[name="productType"]:checked').val() || 'all';
 
                 let $products = $('#productsGrid > div');
                 let visibleCount = 0;
@@ -300,6 +319,7 @@
                     const productPrice = parseFloat($product.data('price'));
                     const packSize = parseInt($product.data('pack-size')) || 1;
                     const isBulk = $product.attr('data-is-bulk') === 'true';
+                    const isSingle = !isBulk; // Single = PackSize == 1
                     const hasDiscount = $product.find('.price-with-discount, .discount-badge, .badge-sale').length > 0;
                     
                     let showProduct = true;
@@ -319,8 +339,11 @@
                         showProduct = false;
                     }
 
-                    // Filter - only show bulk/multi-pack products
-                    if (filterState.bulkOnly && !isBulk) {
+                    // Filter by product type (all/single/bulk)
+                    if (filterState.productType === 'single' && !isSingle) {
+                        showProduct = false;
+                    }
+                    if (filterState.productType === 'bulk' && !isBulk) {
                         showProduct = false;
                     }
 
@@ -400,7 +423,7 @@
             }
 
             // Event listeners (excluding category - handled by attachCategoryHandlers)
-            $(document).on('change', 'input[name="color"], #sortBy, #showDiscountsOnly, #bulkProductsOnly', triggerFilter);
+            $(document).on('change', 'input[name="color"], input[name="productType"], #sortBy, #showDiscountsOnly', triggerFilter);
             $('#applyPriceFilter').click(applyFilters);
             $('#minPrice, #maxPrice').on('keyup', function(e) {
                 if (e.keyCode === 13) { // Enter key
@@ -417,6 +440,7 @@
             // Clear filters
             $('#clearFilters, #resetFiltersBtn').click(function() {
                 $('input[type="checkbox"]').prop('checked', false).prop('indeterminate', false);
+                $('input[name="productType"][value="all"]').prop('checked', true); // Reset to "All Products"
                 $('.size-btn').removeClass('active');
                 $('#minPrice, #maxPrice').val('');
                 $('#sortBy').val('newest');
@@ -429,6 +453,7 @@
                 filterState.maxPrice = null;
                 filterState.sortBy = 'newest';
                 filterState.showDiscountsOnly = false;
+                filterState.productType = 'all';
 
                 $('#productsGrid > div').fadeIn(300);
                 $('.products-count').html('<strong>' + $('#productsGrid > div').length + '</strong> @L["Products_ItemsFound_Plural"]');
