@@ -148,9 +148,9 @@ if (!string.IsNullOrEmpty(appleClientId) && !string.IsNullOrEmpty(appleTeamId) &
 builder.Services.ConfigureExternalCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-        ? CookieSecurePolicy.SameAsRequest 
-        : CookieSecurePolicy.Always;
+    options.Cookie.Name = "Kokomija.External";
+    // Always use HTTPS for external auth cookies
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
@@ -163,11 +163,11 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
-    // Use SameAsRequest for development (HTTP), Always for production (HTTPS)
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-        ? CookieSecurePolicy.SameAsRequest 
-        : CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.Name = "Kokomija.Auth";
+    // Always use HTTPS for authentication cookies
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.IsEssential = true;
     
     // Handle authentication timeout gracefully
     options.Events.OnRedirectToLogin = context =>
@@ -293,11 +293,19 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // GDPR: Session cookies are essential
-    // Use SameAsRequest for development (HTTP), Always for production (HTTPS)
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-        ? CookieSecurePolicy.SameAsRequest 
-        : CookieSecurePolicy.Always;
+    options.Cookie.Name = "Kokomija.Session";
+    // Always use HTTPS for session cookies
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
+// Configure Cookie Policy Options (enforce secure cookies)
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    // Requires HTTPS for all cookies (SecurePolicy setting in middleware)
+    options.MinimumSameSitePolicy = SameSiteMode.Strict;
+    // Mark all cookies as essential for GDPR compliance in this application
+    options.CheckConsentNeeded = context => false;
 });
 
 var app = builder.Build();
@@ -359,9 +367,17 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+else
+{
+    // In development, still redirect HTTP to HTTPS for testing secure cookies
+    app.UseHttpsRedirection();
+}
 
 // Serve static files (needed for runtime-uploaded images like blog images)
 app.UseStaticFiles();
+
+// Enable cookie policy (required for secure cookies in production HTTPS)
+app.UseCookiePolicy();
 
 // Add security headers
 app.UseSecurityHeaders();

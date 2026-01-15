@@ -75,6 +75,7 @@ namespace Kokomija.Entity
         public ICollection<ProductColor> AvailableColors { get; set; } = new List<ProductColor>();
         public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
         public ICollection<ProductTranslation> Translations { get; set; } = new List<ProductTranslation>();
+        public SizeGuide? SizeGuide { get; set; }
 
         // Computed properties
         [NotMapped]

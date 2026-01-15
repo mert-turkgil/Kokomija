@@ -136,36 +136,56 @@
                     <div class="card mb-4">
                         <div class="card-body">
                             <h5 class="border-bottom pb-2 mb-3">
-                                <i class="bi bi-currency-dollar"></i> Pricing, Category & Options
+                                <i class="bi bi-currency-dollar"></i> Pricing, Pack Size & Category
                             </h5>
+                            
+                            <!-- Pack Size Information -->
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Product Pack Size:</strong> This product is a 
+                                <strong>@Model.PackSize @(Model.PackSize == 1 ? "Single Item" : "Pack")</strong>.
+                                Each pack size is its own product with its own price and Stripe entry.
+                            </div>
+                            
                             <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label asp-for="Price" class="form-label">Price (zł) *</label>
-                                    <input asp-for="Price" type="number" step="0.01" class="form-control" />
-                                    <span asp-validation-for="Price" class="text-danger"></span>
-                                    <small class="text-muted">Changing price will create new Stripe price</small>
-                                </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label asp-for="PackSize" class="form-label">Pack Size *</label>
-                                    <input asp-for="PackSize" type="number" class="form-control" />
+                                    <input asp-for="PackSize" type="number" min="1" max="100" class="form-control form-control-lg fw-bold" />
                                     <span asp-validation-for="PackSize" class="text-danger"></span>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-box2"></i> Number of items<br/>
+                                        1 = Single, 5 = 5-Pack, etc.
+                                    </small>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Product Group</label>
-                                    <select asp-for="ProductGroupId" class="form-select">
-                                        <option value="">No group</option>
+                                <div class="col-md-3 mb-3">
+                                    <label asp-for="Price" class="form-label">Price (zł) *</label>
+                                    <input asp-for="Price" type="number" step="0.01" class="form-control form-control-lg fw-bold" />
+                                    <span asp-validation-for="Price" class="text-danger"></span>
+                                    <small class="text-muted">Price for this pack size. Changing price creates new Stripe price.</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="ProductGroupId" class="form-label">Product Group (Optional)</label>
+                                    <select asp-for="ProductGroupId" class="form-select form-select-lg">
+                                        <option value="">Create new or no group</option>
                                         @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
                                         {
-                                            <option value="@group.Id">@group.Name</option>
+                                            if (Model.ProductGroupId == group.Id)
+                                            {
+                                                <option value="@group.Id" selected>@group.Name</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@group.Id">@group.Name</option>
+                                            }
                                         }
                                     </select>
-                                    <small class="text-muted">Group related products</small>
+                                    <small class="text-muted">Group related products (Single, 5-Pack, 10-Pack of same item)</small>
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Category *</label>
-                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModalEdit">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#categoryModalEdit">
                                     <i class="bi bi-search"></i> Select Category
                                 </button>
                                 <input type="hidden" asp-for="CategoryId" id="selectedCategoryIdEdit" required />
@@ -1224,6 +1244,7 @@
         let variantIndex = @Model.Variants.Count;
         const sizes = @Html.Raw(Json.Serialize(ViewBag.AvailableSizes));
         const colors = @Html.Raw(Json.Serialize(ViewBag.AvailableColors));
+        const packQuantities = @Html.Raw(Json.Serialize(ViewBag.AvailablePackQuantities ?? new List<dynamic>()));
 
         document.getElementById('addVariantBtn')?.addEventListener('click', function() {
             const existingTable = document.getElementById('variantsTableBody');
@@ -1244,6 +1265,12 @@
                         <select name="Variants[${variantIndex}].ColorId" class="form-select form-select-sm">
                             <option value="">-- None --</option>
                             ${colors.map(c => `<option value="${c.value}">${c.text}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="Variants[${variantIndex}].PackQuantityId" class="form-select form-select-sm">
+                            <option value="">-- None --</option>
+                            ${packQuantities.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                         </select>
                     </td>
                     <td>
@@ -1276,14 +1303,14 @@
                             </div>
                             <input type="hidden" name="Variants[${variantIndex}].Id" value="" />
                             <div class="row">
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-4 mb-2">
                                     <label class="form-label">Size</label>
                                     <select name="Variants[${variantIndex}].SizeId" class="form-select form-select-sm">
                                         <option value="">-- Optional --</option>
                                         ${sizes.map(s => `<option value="${s.value}">${s.text}</option>`).join('')}
                                     </select>
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-4 mb-2">
                                     <label class="form-label">Color</label>
                                     <select name="Variants[${variantIndex}].ColorId" class="form-select form-select-sm">
                                         <option value="">-- Optional --</option>
@@ -1291,14 +1318,21 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-2">
+                                    <label class="form-label">Pack Quantity</label>
+                                    <select name="Variants[${variantIndex}].PackQuantityId" class="form-select form-select-sm">
+                                        <option value="">-- Optional --</option>
+                                        ${packQuantities.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label">SKU *</label>
                                     <input name="Variants[${variantIndex}].SKU" type="text" class="form-control form-control-sm" required placeholder="SKU-001" />
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label">Price (zł) *</label>
                                     <input name="Variants[${variantIndex}].Price" type="number" step="0.01" class="form-control form-control-sm" required value="@Model.Price" />
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label">Stock *</label>
                                     <input name="Variants[${variantIndex}].StockQuantity" type="number" class="form-control form-control-sm" required value="100" />
                                 </div>

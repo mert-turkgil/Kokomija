@@ -78,6 +78,9 @@ public class ProductCreateDto
     [StringLength(50)]
     public string? CustomColorName { get; set; }
 
+    // Size Guide (photo and/or data table)
+    public SizeGuideDto? SizeGuide { get; set; }
+
     // Image upload - temp file names from AJAX upload
     public List<string> TempImageFileNames { get; set; } = new();
 
@@ -141,6 +144,9 @@ public class ProductUpdateDto
     public string StripeProductId { get; set; } = string.Empty;
     public string StripePriceId { get; set; } = string.Empty;
 
+    // Size Guide (photo and/or data table)
+    public SizeGuideDto? SizeGuide { get; set; }
+
     // Images
     public List<string> ExistingImageUrls { get; set; } = new();
     public List<string> NewImageTempFileNames { get; set; } = new();
@@ -169,6 +175,8 @@ public class ProductVariantDto
     public string? ColorName { get; set; }
     public int? SizeId { get; set; }
     public string? SizeName { get; set; }
+    public int? PackQuantityId { get; set; }
+    public string? PackQuantityName { get; set; }
     public int StockQuantity { get; set; }
     
     [Required]
@@ -199,6 +207,35 @@ public class ProductReviewManagementDto
 public class ProductImageCancelDto
 {
     public List<string> TempFileNames { get; set; } = new();
+}
+
+public class SizeGuideDto
+{
+    public int? Id { get; set; }
+    
+    /// <summary>
+    /// Path to size chart image (optional)
+    /// </summary>
+    [MaxLength(500)]
+    public string? ChartImageUrl { get; set; }
+    
+    /// <summary>
+    /// JSON-encoded size data for table display
+    /// </summary>
+    public string? SizeDataJson { get; set; }
+    
+    /// <summary>
+    /// Measurement instructions text
+    /// </summary>
+    public string? MeasurementInstructions { get; set; }
+    
+    /// <summary>
+    /// Translation key for measurement instructions
+    /// </summary>
+    [MaxLength(100)]
+    public string? MeasurementInstructionsKey { get; set; }
+    
+    public bool IsActive { get; set; } = true;
 }
 
 public class ProductTranslationDto

@@ -65,6 +65,62 @@ namespace Kokomija.Data
             );
         }
 
+        public static void SeedPackQuantities(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<PackQuantity>().HasData(
+                new PackQuantity 
+                { 
+                    Id = 1, 
+                    Quantity = 1, 
+                    Name = "Single", 
+                    NameKey = "PackQuantity_Single",
+                    DisplayOrder = 1,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new PackQuantity 
+                { 
+                    Id = 2, 
+                    Quantity = 5, 
+                    Name = "5-Pack", 
+                    NameKey = "PackQuantity_5Pack",
+                    DisplayOrder = 2,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new PackQuantity 
+                { 
+                    Id = 3, 
+                    Quantity = 6, 
+                    Name = "6-Pack", 
+                    NameKey = "PackQuantity_6Pack",
+                    DisplayOrder = 3,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new PackQuantity 
+                { 
+                    Id = 4, 
+                    Quantity = 8, 
+                    Name = "8-Pack", 
+                    NameKey = "PackQuantity_8Pack",
+                    DisplayOrder = 4,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new PackQuantity 
+                { 
+                    Id = 5, 
+                    Quantity = 10, 
+                    Name = "10-Pack", 
+                    NameKey = "PackQuantity_10Pack",
+                    DisplayOrder = 5,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                }
+            );
+        }
+
         public static void SeedColors(this ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Color>().HasData(

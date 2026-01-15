@@ -122,6 +122,22 @@
                         </div>
                     </div>
 
+                    <!-- Bulk/Multi-Pack Filter -->
+                    <div class="filter-section">
+                        <div class="filter-options">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="bulkProductsOnly" name="bulkOnly">
+                                <label class="form-check-label" for="bulkProductsOnly">
+                                    <i class="bi bi-box2-heart me-1 text-info"></i>
+                                    @L["Products_BulkOnly"]
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                Show products available in multi-packs
+                            </small>
+                        </div>
+                    </div>
+
                     <!-- Discount/Sale Filter -->
                     <div class="filter-section">
                         <div class="filter-section-header mb-3">
@@ -184,11 +200,14 @@
                     <div class="products-grid row g-4" id="productsGrid">
                         @foreach (var product in Model)
                         {
+                            var isBulkProduct = product.PackSize > 1;
                             <div class="col-md-6 col-lg-4" 
                                  data-category="@product.CategoryId" 
                                  data-price="@product.Price"
                                  data-name="@product.Name"
-                                 data-created="@product.CreatedAt.Ticks">
+                                 data-created="@product.CreatedAt.Ticks"
+                                 data-pack-size="@product.PackSize"
+                                 data-is-bulk="@(isBulkProduct ? "true" : "false")">
                                 @await Component.InvokeAsync("ProductCard", new { productId = product.Id })
                             </div>
                         }
@@ -210,7 +229,8 @@
                 minPrice: null,
                 maxPrice: null,
                 sortBy: 'newest',
-                showDiscountsOnly: false
+                showDiscountsOnly: false,
+                bulkOnly: false
             };
 
             // Load filter options
@@ -268,6 +288,7 @@
                 filterState.maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
                 filterState.sortBy = $('#sortBy').val();
                 filterState.showDiscountsOnly = $('#showDiscountsOnly').prop('checked');
+                filterState.bulkOnly = $('#bulkProductsOnly').prop('checked');
 
                 let $products = $('#productsGrid > div');
                 let visibleCount = 0;
@@ -277,6 +298,8 @@
                     const $product = $(this);
                     const productCategory = parseInt($product.data('category'));
                     const productPrice = parseFloat($product.data('price'));
+                    const packSize = parseInt($product.data('pack-size')) || 1;
+                    const isBulk = $product.attr('data-is-bulk') === 'true';
                     const hasDiscount = $product.find('.price-with-discount, .discount-badge, .badge-sale').length > 0;
                     
                     let showProduct = true;
@@ -293,6 +316,11 @@
                     
                     // Filter by discount - for non-authenticated users, all products have WELCOME10
                     if (filterState.showDiscountsOnly && !hasDiscount) {
+                        showProduct = false;
+                    }
+
+                    // Filter - only show bulk/multi-pack products
+                    if (filterState.bulkOnly && !isBulk) {
                         showProduct = false;
                     }
 
@@ -372,7 +400,7 @@
             }
 
             // Event listeners (excluding category - handled by attachCategoryHandlers)
-            $(document).on('change', 'input[name="color"], #sortBy, #showDiscountsOnly', triggerFilter);
+            $(document).on('change', 'input[name="color"], #sortBy, #showDiscountsOnly, #bulkProductsOnly', triggerFilter);
             $('#applyPriceFilter').click(applyFilters);
             $('#minPrice, #maxPrice').on('keyup', function(e) {
                 if (e.keyCode === 13) { // Enter key

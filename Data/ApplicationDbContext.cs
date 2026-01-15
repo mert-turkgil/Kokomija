@@ -22,6 +22,8 @@ namespace Kokomija.Data
 
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductGroup> ProductGroups { get; set; }
+        public DbSet<PackQuantity> PackQuantities { get; set; }
+        public DbSet<SizeGuide> SizeGuides { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Color> Colors { get; set; }
         public DbSet<Size> Sizes { get; set; }
@@ -77,6 +79,8 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new ApplicationUserConfiguration());
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
             modelBuilder.ApplyConfiguration(new ProductGroupConfiguration());
+            modelBuilder.ApplyConfiguration(new PackQuantityConfiguration());
+            modelBuilder.ApplyConfiguration(new SizeGuideConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new CategoryTranslationConfiguration());
             modelBuilder.ApplyConfiguration(new ColorConfiguration());
@@ -119,6 +123,7 @@ namespace Kokomija.Data
 
             // Seed initial data (only runs on InitialCreate migration)
             modelBuilder.SeedSizes();
+            modelBuilder.SeedPackQuantities();
             modelBuilder.SeedColors();
             modelBuilder.SeedCategories();
             modelBuilder.SeedLanguages();

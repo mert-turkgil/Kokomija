@@ -21,6 +21,14 @@ namespace Kokomija.Entity
         [ForeignKey("ColorId")]
         public Color? Color { get; set; }
 
+        /// <summary>
+        /// Optional: Pack quantity for this variant (5-pack, 6-pack, 8-pack, etc.)
+        /// Allows same product to be sold in different pack sizes
+        /// </summary>
+        public int? PackQuantityId { get; set; }
+        [ForeignKey("PackQuantityId")]
+        public PackQuantity? PackQuantity { get; set; }
+
         [Required]
         [MaxLength(50)]
         public string SKU { get; set; } = string.Empty;

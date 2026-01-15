@@ -101,6 +101,7 @@ public class AdminProductController : Controller
             .GetAllAsync(c => c.Translations!);
         var sizes = await _unitOfWork.Sizes.GetAllAsync();
         var colors = await _unitOfWork.Colors.GetAllAsync();
+        var packQuantities = await _unitOfWork.Repository<PackQuantity>().GetAllAsync();
         var productGroups = await _unitOfWork.Repository<ProductGroup>().GetAllAsync();
         var activeCoupons = await _unitOfWork.Repository<Coupon>()
             .FindAsync(c => c.IsActive && 
@@ -116,6 +117,7 @@ public class AdminProductController : Controller
         ViewBag.Categories = categories.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder).ToList();
         ViewBag.ProductGroups = productGroups.ToList();
         ViewBag.Coupons = activeCoupons.ToList();
+        ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
 
         return View(model);
     }
@@ -382,10 +384,11 @@ public class AdminProductController : Controller
         var categories = await _unitOfWork.Categories.GetAllAsync();
         var sizes = await _unitOfWork.Sizes.GetAllAsync();
         var colors = await _unitOfWork.Colors.GetAllAsync();
+        var packQuantities = await _unitOfWork.Repository<PackQuantity>().GetAllAsync();
 
         // Get existing variants
         var variants = await _unitOfWork.Repository<ProductVariant>()
-            .FindAsync(v => v.ProductId == id, v => v.Size!, v => v.Color!);
+            .FindAsync(v => v.ProductId == id, v => v.Size!, v => v.Color!, v => v.PackQuantity!);
 
         // Get existing reviews with user info
         var reviews = (await _unitOfWork.Repository<ProductReview>()
@@ -432,6 +435,8 @@ public class AdminProductController : Controller
                 ColorName = v.Color?.Name,
                 SizeId = v.SizeId,
                 SizeName = v.Size?.Name,
+                PackQuantityId = v.PackQuantityId,
+                PackQuantityName = v.PackQuantity?.Name,
                 SKU = v.SKU,
                 Price = v.Price,
                 StockQuantity = v.StockQuantity
@@ -474,6 +479,7 @@ public class AdminProductController : Controller
         ViewBag.Coupons = activeCoupons.ToList();
         ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
         ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
+        ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
 
         // Get product specific coupons
         var productCoupons = await _unitOfWork.Repository<Coupon>()

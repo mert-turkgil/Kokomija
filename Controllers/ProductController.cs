@@ -411,6 +411,49 @@ namespace Kokomija.Controllers
             }
         }
 
+        // Returns pack quantities that are actually used by active products
+        [HttpGet]
+        public async Task<IActionResult> GetPackQuantities()
+        {
+            try
+            {
+                // Get distinct pack quantity IDs from active product variants
+                var usedPackIds = (await _unitOfWork.Repository<Entity.ProductVariant>()
+                    .FindAsync(v => v.PackQuantityId.HasValue && v.IsActive, v => v.Product, v => v.PackQuantity!))
+                    .Where(v => v.Product is not null && v.Product.IsActive && v.PackQuantity is not null)
+                    .Select(v => v.PackQuantityId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                if (usedPackIds.Count == 0)
+                {
+                    return Json(new List<object>());
+                }
+
+                // Get only the pack quantities that are actually used
+                var allPacks = await _unitOfWork.Repository<Entity.PackQuantity>().GetAllAsync();
+                var usedPacks = allPacks
+                    .Where(p => usedPackIds.Contains(p.Id))
+                    .OrderBy(p => p.Quantity)
+                    .ToList();
+
+                var result = usedPacks.Select(p => new
+                {
+                    id = p.Id,
+                    name = p.Name ?? string.Empty,
+                    quantity = p.Quantity,
+                    displayName = $"{p.Quantity}x"
+                }).ToList();
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving pack quantities");
+                return BadRequest();
+            }
+        }
+
         // API: Get specific size by ID
         [HttpGet("api/sizes/{id}")]
         public async Task<IActionResult> GetSize(int id)

@@ -335,7 +335,7 @@ public class HomeController : Controller
         try
         {
             // Try to find product by any of its slugs
-            var product = _unitOfWork.Products.GetProductBySlugAsync(currentSlug, null).Result;
+            var product = _unitOfWork.Products.GetProductBySlugAsync(currentSlug, string.Empty).Result;
             if (product == null)
                 return currentSlug;
             

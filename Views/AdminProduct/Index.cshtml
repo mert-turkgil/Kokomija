@@ -169,7 +169,14 @@
                                                 <strong>@product.Price.ToString("C")</strong>
                                             </td>
                                             <td>
-                                                <span class="badge bg-info">@product.PackSize x</span>
+                                                @if (product.PackSize == 1)
+                                                {
+                                                    <span class="badge bg-secondary">Single</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info fw-bold">@product.PackSize-Pack</span>
+                                                }
                                             </td>
                                             <td>
                                                 @if (product.TotalStock == 0)

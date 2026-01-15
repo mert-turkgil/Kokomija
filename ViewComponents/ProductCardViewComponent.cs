@@ -98,6 +98,7 @@ namespace Kokomija.ViewComponents
                 Slug = slug,
                 Description = translation?.Description ?? product.Description,
                 BasePrice = product.Price,
+                Price = product.Price,
                 DiscountedPrice = discountedPrice,
                 MainImageUrl = primaryImage?.ImageUrl ?? "/img/logo_black.png",
                 Images = images,
@@ -107,6 +108,7 @@ namespace Kokomija.ViewComponents
                 HasStock = hasStock,
                 Colors = colors,
                 Sizes = sizes,
+                PackSize = product.PackSize,
                 CategoryId = product.CategoryId
             };
             

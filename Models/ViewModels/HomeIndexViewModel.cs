@@ -23,6 +23,7 @@ namespace Kokomija.Models.ViewModels
         public string Slug { get; set; } = string.Empty;
         public string? Description { get; set; }
         public decimal BasePrice { get; set; }
+        public decimal Price { get; set; }
         public decimal? DiscountedPrice { get; set; }
         public string? MainImagePath { get; set; }
         public string? MainImageUrl { get; set; }
@@ -34,6 +35,7 @@ namespace Kokomija.Models.ViewModels
         public List<string> AvailableSizes { get; set; } = new();
         public List<ColorViewModel> Colors { get; set; } = new();
         public List<SizeViewModel> Sizes { get; set; } = new();
+        public int PackSize { get; set; } = 1;
         public List<ProductImageViewModel> Images { get; set; } = new();
         public int? CategoryId { get; set; }
     }
