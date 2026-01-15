@@ -19,11 +19,151 @@ jobs:
     - name: Publish
       run: dotnet publish -c Release -o ./publish
 
-    # 1. ADIM: Sadece app_offline.htm dosyasını göndererek uygulamayı durdurun
-    - name: Stop App (Upload app_offline.htm)
+    # 1. ADIM: Profesyonel ve Animasyonlu app_offline.htm Dosyasını Oluştur
+    # Bu dosya HTML5 standartlarında, responsive ve şık bir tasarıma sahiptir.
+    - name: Create styled app_offline.htm
       run: |
-        echo "<html><head><meta charset='UTF-8'></head><body><h2>Sistem güncelleniyor, lütfen 5 dakika sonra tekrar deneyin...</h2></body></html>" > app_offline.htm
-    
+        cat <<EOF > app_offline.htm
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Updating...</title>
+            <style>
+                body {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    background-color: #f8f9fa;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    color: #495057;
+                    text-align: center;
+                }
+                .message-container {
+                    margin-top: 60px;
+                }
+                h2 {
+                    font-size: 1.2rem;
+                    margin: 10px 0;
+                    font-weight: 400;
+                    opacity: 0.9;
+                }
+                /* KULLANICININ VERDİĞİ ANIMASYON KODLARI */
+                .🤚 {
+                  --skin-color: #E4C560;
+                  --tap-speed: 0.6s;
+                  --tap-stagger: 0.1s;
+                  position: relative;
+                  width: 80px;
+                  height: 60px;
+                  /* Ortalama sorunu olmaması için margin-left kaldırıldı veya container ile dengelendi */
+                }
+                .🤚:before {
+                  content: '';
+                  display: block;
+                  width: 180%;
+                  height: 75%;
+                  position: absolute;
+                  top: 70%;
+                  right: 20%;
+                  background-color: black;
+                  border-radius: 40px 10px;
+                  filter: blur(10px);
+                  opacity: 0.3;
+                }
+                .🌴 {
+                  display: block;
+                  width: 100%;
+                  height: 100%;
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  background-color: var(--skin-color);
+                  border-radius: 10px 40px;
+                }
+                .👍 {
+                  position: absolute;
+                  width: 120%;
+                  height: 38px;
+                  background-color: var(--skin-color);
+                  bottom: -18%;
+                  right: 1%;
+                  transform-origin: calc(100% - 20px) 20px;
+                  transform: rotate(-20deg);
+                  border-radius: 30px 20px 20px 10px;
+                  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+                  border-left: 2px solid rgba(0, 0, 0, 0.1);
+                }
+                .👍:after {
+                  width: 20%;
+                  height: 60%;
+                  content: '';
+                  background-color: rgba(255, 255, 255, 0.3);
+                  position: absolute;
+                  bottom: -8%;
+                  left: 5px;
+                  border-radius: 60% 10% 10% 30%;
+                  border-right: 2px solid rgba(0, 0, 0, 0.05);
+                }
+                .👉 {
+                  position: absolute;
+                  width: 80%;
+                  height: 35px;
+                  background-color: var(--skin-color);
+                  bottom: 32%;
+                  right: 64%;
+                  transform-origin: 100% 20px;
+                  animation-duration: calc(var(--tap-speed) * 2);
+                  animation-timing-function: ease-in-out;
+                  animation-iteration-count: infinite;
+                  transform: rotate(10deg);
+                }
+                .👉:before {
+                  content: '';
+                  position: absolute;
+                  width: 140%;
+                  height: 30px;
+                  background-color: var(--skin-color);
+                  bottom: 8%;
+                  right: 65%;
+                  transform-origin: calc(100% - 20px) 20px;
+                  transform: rotate(-60deg);
+                  border-radius: 20px;
+                }
+                .👉:nth-child(1) { animation-delay: 0; filter: brightness(70%); animation-name: tap-upper-1; }
+                .👉:nth-child(2) { animation-delay: var(--tap-stagger); filter: brightness(80%); animation-name: tap-upper-2; }
+                .👉:nth-child(3) { animation-delay: calc(var(--tap-stagger) * 2); filter: brightness(90%); animation-name: tap-upper-3; }
+                .👉:nth-child(4) { animation-delay: calc(var(--tap-stagger) * 3); filter: brightness(100%); animation-name: tap-upper-4; }
+                @keyframes tap-upper-1 { 0%, 50%, 100% { transform: rotate(10deg) scale(0.4); } 40% { transform: rotate(50deg) scale(0.4); } }
+                @keyframes tap-upper-2 { 0%, 50%, 100% { transform: rotate(10deg) scale(0.6); } 40% { transform: rotate(50deg) scale(0.6); } }
+                @keyframes tap-upper-3 { 0%, 50%, 100% { transform: rotate(10deg) scale(0.8); } 40% { transform: rotate(50deg) scale(0.8); } }
+                @keyframes tap-upper-4 { 0%, 50%, 100% { transform: rotate(10deg) scale(1); } 40% { transform: rotate(50deg) scale(1); } }
+            </style>
+        </head>
+        <body>
+            <div class="🤚">
+                <div class="👉"></div>
+                <div class="👉"></div>
+                <div class="👉"></div>
+                <div class="👉"></div>
+                <div class="🌴"></div>		
+                <div class="👍"></div>
+            </div>
+
+            <div class="message-container">
+                <h2>The system is updating, please try again in 5 minutes...</h2>
+                <h2>System jest aktualizowany, spróbuj ponownie za 5 minut...</h2>
+                <h2>Sistem güncelleniyor, lütfen 5 dakika sonra tekrar deneyin...</h2>
+            </div>
+        </body>
+        </html>
+        EOF
+
+    # 2. ADIM: Sadece app_offline.htm dosyasını gönder (Uygulamayı Durdur)
     - name: FTP Upload app_offline
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -36,11 +176,11 @@ jobs:
           **/*
           !app_offline.htm
 
-    # 2. ADIM: GARANTİ BEKLEME (5 Dakika / 300 Saniye)
+    # 3. ADIM: GARANTİ BEKLEME (5 Dakika / 300 Saniye)
     - name: Wait for 5 minutes to ensure all locks are released
       run: sleep 300
 
-    # 3. ADIM: Tüm dosyaları (DLL'leri) yükle
+    # 4. ADIM: Tüm dosyaları (DLL'leri) yükle
     - name: FTP Deploy (Full Upload)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -51,7 +191,7 @@ jobs:
         server-dir: /wwwroot/
         protocol: ftp
 
-    # 4. ADIM: app_offline.htm dosyasını sil ve siteyi aç
+    # 5. ADIM: app_offline.htm dosyasını sil ve siteyi aç
     - name: Start App (Delete app_offline.htm)
       run: rm ./publish/app_offline.htm || true
 
