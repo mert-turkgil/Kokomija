@@ -2,7 +2,7 @@ name: .NET Core Deploy to MonsterASP
 
 on:
   push:
-    branches: [ main ] # Sadece main branch'e push yapınca çalışır
+    branches: [ main ]
 
 jobs:
   publish-and-deploy:
@@ -14,16 +14,33 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '9.0.x' # Sizin kullandığınız versiyon
+        dotnet-version: '9.0.x'
 
     - name: Publish
       run: dotnet publish -c Release -o ./publish
 
+    # 1. ADIM: Bakım Modunu Hazırla
+    - name: Create app_offline.htm
+      run: echo "<html><head><meta charset='UTF-8'></head><body><h2>Site güncelleniyor, lütfen birkaç saniye sonra tekrar deneyin...</h2></body></html>" > ./publish/app_offline.htm
+
+    # 2. ADIM: Tüm Dosyaları Yükle (app_offline.htm dahil)
     - name: FTP Deploy
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./publish/ # Sadece publish klasörünü gönder
-        server-dir: /wwwroot/ # Sunucudaki hedef klasör
+        local-dir: ./publish/
+        server-dir: /wwwroot/
+        protocol: ftp
+        port: 21
+
+    # 3. ADIM: Uygulamayı Otomatik Başlat (app_offline.htm dosyasını sil)
+    - name: Remove app_offline.htm to start app
+      uses: StephanEyre/ftp-delete-action@v1.0.1
+      with:
+        host: ${{ secrets.FTP_SERVER }}
+        user: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        remoteFiles: /wwwroot/app_offline.htm
+        ignoreError: true # Dosya zaten yoksa hata verme
