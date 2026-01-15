@@ -24,7 +24,7 @@ jobs:
       run: echo "<html><head><meta charset='UTF-8'></head><body><h2>Site güncelleniyor, lütfen birkaç saniye sonra tekrar deneyin...</h2></body></html>" > ./publish/app_offline.htm
 
     # 2. ADIM: Tüm Dosyaları Yükle (app_offline.htm dahil)
-    - name: FTP Deploy
+    - name: FTP Deploy (Upload)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -35,12 +35,19 @@ jobs:
         protocol: ftp
         port: 21
 
-    # 3. ADIM: Uygulamayı Otomatik Başlat (app_offline.htm dosyasını sil)
-    - name: Remove app_offline.htm to start app
-      uses: StephanEyre/ftp-delete-action@v1.0.1
+    # 3. ADIM: Uygulamayı Başlat (app_offline.htm dosyasını sil)
+    # publish klasöründen dosyayı siliyoruz ve sync modunda tekrar 'deploy' ediyoruz
+    - name: Remove app_offline and Sync
+      run: rm ./publish/app_offline.htm
+
+    - name: FTP Sync (Remove app_offline)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        host: ${{ secrets.FTP_SERVER }}
-        user: ${{ secrets.FTP_USERNAME }}
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        remoteFiles: /wwwroot/app_offline.htm
-        ignoreError: true # Dosya zaten yoksa hata verme
+        local-dir: ./publish/
+        server-dir: /wwwroot/
+        protocol: ftp
+        port: 21
+        dangerous-clean-slate: false # Sadece eksik olanı (yani sildiğimiz app_offline'ı) sunucudan kaldırır
