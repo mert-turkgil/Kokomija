@@ -19,12 +19,29 @@ jobs:
     - name: Publish
       run: dotnet publish -c Release -o ./publish
 
-    # 1. ADIM: Bakım Modunu Hazırla
-    - name: Create app_offline.htm
-      run: echo "<html><head><meta charset='UTF-8'></head><body><h2>Site güncelleniyor, lütfen birkaç saniye sonra tekrar deneyin...</h2></body></html>" > ./publish/app_offline.htm
+    # 1. ADIM: Sadece app_offline.htm dosyasını göndererek uygulamayı durdurun
+    - name: Stop App (Upload app_offline.htm)
+      run: |
+        echo "<html><head><meta charset='UTF-8'></head><body><h2>Sistem güncelleniyor, lütfen 5 dakika sonra tekrar deneyin...</h2></body></html>" > app_offline.htm
+    
+    - name: FTP Upload app_offline
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /wwwroot/
+        exclude: |
+          **/*
+          !app_offline.htm
 
-    # 2. ADIM: Tüm Dosyaları Yükle (app_offline.htm dahil)
-    - name: FTP Deploy (Upload)
+    # 2. ADIM: GARANTİ BEKLEME (5 Dakika / 300 Saniye)
+    - name: Wait for 5 minutes to ensure all locks are released
+      run: sleep 300
+
+    # 3. ADIM: Tüm dosyaları (DLL'leri) yükle
+    - name: FTP Deploy (Full Upload)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -33,14 +50,12 @@ jobs:
         local-dir: ./publish/
         server-dir: /wwwroot/
         protocol: ftp
-        port: 21
 
-    # 3. ADIM: Uygulamayı Başlat (app_offline.htm dosyasını sil)
-    # publish klasöründen dosyayı siliyoruz ve sync modunda tekrar 'deploy' ediyoruz
-    - name: Remove app_offline and Sync
-      run: rm ./publish/app_offline.htm
+    # 4. ADIM: app_offline.htm dosyasını sil ve siteyi aç
+    - name: Start App (Delete app_offline.htm)
+      run: rm ./publish/app_offline.htm || true
 
-    - name: FTP Sync (Remove app_offline)
+    - name: FTP Cleanup (Remove app_offline from server)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -48,6 +63,4 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
         server-dir: /wwwroot/
-        protocol: ftp
-        port: 21
-        dangerous-clean-slate: false # Sadece eksik olanı (yani sildiğimiz app_offline'ı) sunucudan kaldırır
+        dangerous-clean-slate: false
