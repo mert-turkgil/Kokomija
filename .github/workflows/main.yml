@@ -1,0 +1,29 @@
+name: .NET Core Deploy to MonsterASP
+
+on:
+  push:
+    branches: [ main ] # Sadece main branch'e push yapınca çalışır
+
+jobs:
+  publish-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x' # Sizin kullandığınız versiyon
+
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish/ # Sadece publish klasörünü gönder
+        server-dir: /wwwroot/ # Sunucudaki hedef klasör
