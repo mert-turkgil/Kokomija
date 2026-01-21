@@ -227,4 +227,149 @@
   <data name="Products_ItemsFound_Plural" xml:space="preserve">
     <value>products</value>
   </data>
+  
+  <!-- Admin Category -->
+  <data name="Admin_Category_CreateNew" xml:space="preserve">
+    <value>Create New Category</value>
+  </data>
+  <data name="Admin_Category_Edit" xml:space="preserve">
+    <value>Edit Category</value>
+  </data>
+  <data name="Admin_Category_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Admin_Category_Slug" xml:space="preserve">
+    <value>Slug (URL-friendly name)</value>
+  </data>
+  <data name="Admin_Category_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Admin_Category_MetaDescription" xml:space="preserve">
+    <value>Meta Description</value>
+  </data>
+  <data name="Admin_Category_MetaKeywords" xml:space="preserve">
+    <value>Meta Keywords</value>
+  </data>
+  <data name="Admin_Category_ParentCategory" xml:space="preserve">
+    <value>Parent Category</value>
+  </data>
+  <data name="Admin_Category_NoParent" xml:space="preserve">
+    <value>No Parent (Top Level)</value>
+  </data>
+  <data name="Admin_Category_DisplayOrder" xml:space="preserve">
+    <value>Display Order</value>
+  </data>
+  <data name="Admin_Category_IsActive" xml:space="preserve">
+    <value>Is Active</value>
+  </data>
+  <data name="Admin_Category_ShowInNavbar" xml:space="preserve">
+    <value>Show in Navbar</value>
+  </data>
+  <data name="Admin_Category_IconCssClass" xml:space="preserve">
+    <value>Icon CSS Class</value>
+  </data>
+  <data name="Admin_Category_CurrentImage" xml:space="preserve">
+    <value>Current Image</value>
+  </data>
+  <data name="Admin_Category_Image" xml:space="preserve">
+    <value>Category Image (optional)</value>
+  </data>
+  <data name="Admin_Category_DragDrop" xml:space="preserve">
+    <value>Drag &amp; drop your image here or click to browse</value>
+  </data>
+  <data name="Admin_Category_Translations" xml:space="preserve">
+    <value>Translations</value>
+  </data>
+  <data name="Admin_Category_ImageInfo" xml:space="preserve">
+    <value>Recommended size: 800x600px. Max 2MB. JPG, PNG, or WebP.</value>
+  </data>
+  <data name="Admin_Category_Save" xml:space="preserve">
+    <value>Save Category</value>
+  </data>
+  <data name="Admin_Category_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  
+  <!-- Admin Carousel -->
+  <data name="Admin_Carousel_CreateNew" xml:space="preserve">
+    <value>Create New Carousel Slide</value>
+  </data>
+  <data name="Admin_Carousel_EditSlide" xml:space="preserve">
+    <value>Edit Carousel Slide</value>
+  </data>
+  <data name="Admin_Carousel_DesktopImage" xml:space="preserve">
+    <value>Desktop Image (Required)</value>
+  </data>
+  <data name="Admin_Carousel_TabletImage" xml:space="preserve">
+    <value>Tablet Image (Optional)</value>
+  </data>
+  <data name="Admin_Carousel_MobileImage" xml:space="preserve">
+    <value>Mobile Image (Optional)</value>
+  </data>
+  <data name="Admin_Carousel_DragDrop" xml:space="preserve">
+    <value>Drag &amp; drop your image here or click to browse</value>
+  </data>
+  <data name="Admin_Carousel_CurrentImage" xml:space="preserve">
+    <value>Current Image</value>
+  </data>
+  <data name="Admin_Carousel_TitleLabel" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Admin_Carousel_DescriptionLabel" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Admin_Carousel_ButtonTextLabel" xml:space="preserve">
+    <value>Button Text</value>
+  </data>
+  <data name="Admin_Carousel_LinkUrl" xml:space="preserve">
+    <value>Link URL</value>
+  </data>
+  <data name="Admin_Carousel_LinkUrlPlaceholder" xml:space="preserve">
+    <value>e.g., /products/featured</value>
+  </data>
+  <data name="Admin_Carousel_DisplayOrder" xml:space="preserve">
+    <value>Display Order</value>
+  </data>
+  <data name="Admin_Carousel_IsActive" xml:space="preserve">
+    <value>Is Active</value>
+  </data>
+  <data name="Admin_Carousel_Translations" xml:space="preserve">
+    <value>Translations</value>
+  </data>
+  <data name="Admin_Carousel_BackgroundColor" xml:space="preserve">
+    <value>Background Color</value>
+  </data>
+  <data name="Admin_Carousel_TextColor" xml:space="preserve">
+    <value>Text Color</value>
+  </data>
+  <data name="Admin_Carousel_TextAlign" xml:space="preserve">
+    <value>Text Alignment</value>
+  </data>
+  <data name="Admin_Carousel_AnimationType" xml:space="preserve">
+    <value>Animation Type</value>
+  </data>
+  <data name="Admin_Carousel_StartDate" xml:space="preserve">
+    <value>Start Date</value>
+  </data>
+  <data name="Admin_Carousel_EndDate" xml:space="preserve">
+    <value>End Date</value>
+  </data>
+  <data name="Admin_Carousel_Duration" xml:space="preserve">
+    <value>Duration (seconds)</value>
+  </data>
+  <data name="Admin_Carousel_Location" xml:space="preserve">
+    <value>Location/Position</value>
+  </data>
+  <data name="Admin_Carousel_TranslationTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Admin_Carousel_TranslationSubtitle" xml:space="preserve">
+    <value>Subtitle</value>
+  </data>
+  <data name="Admin_Carousel_TranslationButtonText" xml:space="preserve">
+    <value>Button Text</value>
+  </data>
+  <data name="Admin_Carousel_TranslationImageAlt" xml:space="preserve">
+    <value>Image Alt Text</value>
+  </data>
 </root>

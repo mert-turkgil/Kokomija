@@ -6,6 +6,8 @@ using Kokomija.Entity;
 using Kokomija.Middleware;
 using Kokomija.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -25,6 +27,13 @@ var connectionString = databaseProvider.GetConnectionString(builder.Configuratio
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     databaseProvider.ConfigureDbContext(options, connectionString));
+
+// CRITICAL: Configure DataProtection to persist keys
+// Without this, OAuth correlation cookies become invalid after app restart
+var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
+builder.Services.AddDataProtection()
+    .SetApplicationName("Kokomija")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder));
 
 // Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -66,6 +75,15 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         googleOptions.CallbackPath = "/signin-google";
         googleOptions.SaveTokens = true;
         
+        // IMPORTANT: Set CorrelationCookie options for production (fixes cookie correlation issues)
+        // SameSite.Lax is required for OAuth redirects - None doesn't work reliably
+        googleOptions.CorrelationCookie.SecurePolicy = builder.Environment.IsDevelopment() 
+            ? CookieSecurePolicy.SameAsRequest 
+            : CookieSecurePolicy.Always;
+        googleOptions.CorrelationCookie.SameSite = SameSiteMode.Lax; // Must be Lax for OAuth to work
+        googleOptions.CorrelationCookie.HttpOnly = true;
+        googleOptions.CorrelationCookie.IsEssential = true; // Bypass cookie consent for auth
+        
         // Request email, profile and birthday scopes
         googleOptions.Scope.Add("email");
         googleOptions.Scope.Add("profile");
@@ -73,6 +91,28 @@ if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientS
         
         // Map birthday claim
         googleOptions.ClaimActions.MapJsonKey("urn:google:birthday", "birthday");
+        
+        // OAuth Events with enhanced error logging
+        googleOptions.Events.OnRemoteFailure = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("GoogleAuth");
+            
+            logger.LogError(context.Failure, "Google OAuth remote failure: {Message}. Request path: {Path}",
+                context.Failure?.Message ?? "Unknown error",
+                context.Request.Path);
+            
+            // Log correlation cookie info for debugging
+            var correlationCookie = context.Request.Cookies
+                .FirstOrDefault(c => c.Key.StartsWith(".AspNetCore.Correlation"));
+            logger.LogWarning("Correlation cookie present: {Present}, All cookies: {Cookies}", 
+                !string.IsNullOrEmpty(correlationCookie.Key),
+                string.Join(", ", context.Request.Cookies.Keys));
+            
+            context.Response.Redirect($"/Account/Login?error={Uri.EscapeDataString(context.Failure?.Message ?? "Authentication failed")}");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
         
         // Force account selection even if user is already logged in (for logout support)
         googleOptions.Events.OnRedirectToAuthorizationEndpoint = context =>
@@ -149,9 +189,13 @@ builder.Services.ConfigureExternalCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.Name = "Kokomija.External";
-    // Always use HTTPS for external auth cookies
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
+    // IMPORTANT: SameSite.Lax is required for OAuth redirects to work properly
+    // SameSite.None causes correlation failures because the cookie isn't sent back
     options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.IsEssential = true; // Always essential for authentication
 });
 
 // Configure Cookie settings
@@ -164,8 +208,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.Name = "Kokomija.Auth";
-    // Always use HTTPS for authentication cookies
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // Match the request protocol - works with both HTTP and HTTPS transparently
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.IsEssential = true;
     
@@ -220,6 +264,7 @@ builder.Services.AddScoped<IStripeCustomerService, StripeCustomerService>();
 builder.Services.AddScoped<IStripeProductSeeder, StripeProductSeeder>();
 builder.Services.AddScoped<IStripePayoutService, StripePayoutService>();
 builder.Services.AddScoped<IPriceHistoryService, PriceHistoryService>();
+builder.Services.AddScoped<IShippingRateSyncService, ShippingRateSyncService>();
 
 // Register Cookie Consent Service
 builder.Services.AddScoped<ICookieConsentService, CookieConsentService>();
@@ -294,17 +339,17 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // GDPR: Session cookies are essential
     options.Cookie.Name = "Kokomija.Session";
-    // Always use HTTPS for session cookies
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // Use HTTPS in production, allow HTTP in development for OAuth testing
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
 // Configure Cookie Policy Options (enforce secure cookies)
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    // Requires HTTPS for all cookies (SecurePolicy setting in middleware)
-    options.MinimumSameSitePolicy = SameSiteMode.Strict;
-    // Mark all cookies as essential for GDPR compliance in this application
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
     options.CheckConsentNeeded = context => false;
 });
 
@@ -360,16 +405,22 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+
+// CRITICAL: ForwardedHeaders must come FIRST in the pipeline
+// This is essential for OAuth callbacks behind IIS/reverse proxy
+// It allows the app to correctly determine the original scheme (HTTPS) and host
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
+    // Trust all proxies in production (IIS, load balancers, etc.)
+    // For more security, configure KnownProxies/KnownNetworks in production
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
-    app.UseHttpsRedirection();
-}
-else
-{
-    // In development, still redirect HTTP to HTTPS for testing secure cookies
     app.UseHttpsRedirection();
 }
 
@@ -381,12 +432,6 @@ app.UseCookiePolicy();
 
 // Add security headers
 app.UseSecurityHeaders();
-
-// Add Site Closure Check Middleware (Emergency maintenance mode - blocks non-ROOT users)
-app.UseMiddleware<SiteClosureCheckMiddleware>();
-
-// Add Site Closure Middleware (Email-based reopening)
-app.UseMiddleware<SiteClosureMiddleware>();
 
 // Add localization support
 var localizationOptions = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>();
@@ -402,6 +447,13 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// IMPORTANT: Site Closure Middleware must run AFTER authentication
+// so it can check if user is Admin/Root
+app.UseMiddleware<SiteClosureCheckMiddleware>();
+
+// Add Site Closure Middleware (Email-based reopening)
+app.UseMiddleware<SiteClosureMiddleware>();
 
 app.MapStaticAssets();
 
@@ -475,6 +527,23 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+// Sync shipping rates with Stripe on startup
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        logger.LogInformation("Syncing shipping rates with Stripe on startup...");
+        var shippingRateSyncService = scope.ServiceProvider.GetRequiredService<IShippingRateSyncService>();
+        await shippingRateSyncService.SyncAllShippingRatesAsync();
+        logger.LogInformation("Shipping rates sync completed successfully");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to sync shipping rates with Stripe on startup");
+        // Don't fail the app startup if shipping sync fails
+    }
+}
 
 app.Run();
 

@@ -57,18 +57,21 @@ namespace Kokomija.Controllers
         [Authorize]
         public async Task<IActionResult> CreateCheckoutSession([FromBody] CreateCheckoutSessionRequest? request)
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            // Get selected shipping option from session or request
+            var shippingOption = request?.ShippingOption 
+                ?? HttpContext.Session.GetString("SelectedShippingOption") 
+                ?? "standard";
+            
+            var couponCode = request?.CouponCode;
+
             try
             {
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null)
-                {
-                    return Json(new { success = false, message = "User not found" });
-                }
-
-                // Get selected shipping option from session or request
-                var shippingOption = request?.ShippingOption 
-                    ?? HttpContext.Session.GetString("SelectedShippingOption") 
-                    ?? "standard";
 
                 // Get cart items
                 var cartItems = (await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id)).ToList();
@@ -89,7 +92,7 @@ namespace Kokomija.Controllers
                 };
 
                 // Store coupon code for Stripe (don't apply to price, let Stripe handle it)
-                var couponCode = HttpContext.Session.GetString("AppliedCouponCode");
+                couponCode = couponCode ?? HttpContext.Session.GetString("AppliedCouponCode");
 
                 _logger.LogInformation($"Checkout for user {user.Id}: VIP {vipDiscountPercentage}%");
 
@@ -240,6 +243,7 @@ namespace Kokomija.Controllers
                     Mode = "payment",
                     SuccessUrl = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
                     CancelUrl = $"{domain}/Checkout/Cancel",
+                    ClientReferenceId = user.Id, // Set user ID for order creation
                     Metadata = metadata,
                     PhoneNumberCollection = new SessionPhoneNumberCollectionOptions
                     {
@@ -305,32 +309,45 @@ namespace Kokomija.Controllers
                     // Convert to grosze for Stripe
                     var shippingCostInGrosze = (long)(shippingCost * 100);
                     
-                    options.ShippingOptions.Add(new SessionShippingOptionOptions
+                    // Use pre-created Stripe shipping rate if available, otherwise create on the fly
+                    if (!string.IsNullOrEmpty(selectedRate.StripeShippingRateId) && !qualifiesForFreeShipping)
                     {
-                        ShippingRateData = new SessionShippingOptionShippingRateDataOptions
+                        // Use the pre-created Stripe shipping rate ID
+                        options.ShippingOptions.Add(new SessionShippingOptionOptions
                         {
-                            Type = "fixed_amount",
-                            FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
+                            ShippingRate = selectedRate.StripeShippingRateId
+                        });
+                    }
+                    else
+                    {
+                        // Create shipping rate data on the fly (for discounted/free shipping)
+                        options.ShippingOptions.Add(new SessionShippingOptionOptions
+                        {
+                            ShippingRateData = new SessionShippingOptionShippingRateDataOptions
                             {
-                                Amount = shippingCostInGrosze,
-                                Currency = "pln"
-                            },
-                            DisplayName = displayName,
-                            DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
-                            {
-                                Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                Type = "fixed_amount",
+                                FixedAmount = new SessionShippingOptionShippingRateDataFixedAmountOptions
                                 {
-                                    Unit = "business_day",
-                                    Value = selectedRate.EstimatedDaysMin > 0 ? selectedRate.EstimatedDaysMin : 3
+                                    Amount = shippingCostInGrosze,
+                                    Currency = "pln"
                                 },
-                                Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                DisplayName = displayName,
+                                DeliveryEstimate = new SessionShippingOptionShippingRateDataDeliveryEstimateOptions
                                 {
-                                    Unit = "business_day",
-                                    Value = selectedRate.EstimatedDaysMax > 0 ? selectedRate.EstimatedDaysMax : 7
+                                    Minimum = new SessionShippingOptionShippingRateDataDeliveryEstimateMinimumOptions
+                                    {
+                                        Unit = "business_day",
+                                        Value = selectedRate.EstimatedDaysMin > 0 ? selectedRate.EstimatedDaysMin : 3
+                                    },
+                                    Maximum = new SessionShippingOptionShippingRateDataDeliveryEstimateMaximumOptions
+                                    {
+                                        Unit = "business_day",
+                                        Value = selectedRate.EstimatedDaysMax > 0 ? selectedRate.EstimatedDaysMax : 7
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
                 else
                 {
@@ -421,10 +438,32 @@ namespace Kokomija.Controllers
                     var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
                     if (coupon != null && coupon.IsActive && !string.IsNullOrEmpty(coupon.StripePromotionCodeId))
                     {
-                        options.Discounts = new List<SessionDiscountOptions>
+                        // Check if user has prior orders (to avoid "first-time customer only" restrictions)
+                        var userOrders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
+                        var hasPriorOrders = userOrders.Any();
+                        
+                        // Check if coupon has customer restrictions (FirstTimeTransaction)
+                        var stripeCoupon = await _stripeService.GetStripeCouponAsync(coupon.StripeCouponId ?? "");
+                        var hasFirstTimeRestriction = stripeCoupon?.AppliesTo?.Products != null || 
+                                                     coupon.UsageLimitPerUser == 1;
+                        
+                        // Only apply if user qualifies
+                        if (!hasPriorOrders || !hasFirstTimeRestriction)
                         {
-                            new SessionDiscountOptions { PromotionCode = coupon.StripePromotionCodeId }
-                        };
+                            options.Discounts = new List<SessionDiscountOptions>
+                            {
+                                new SessionDiscountOptions { PromotionCode = coupon.StripePromotionCodeId }
+                            };
+                            _logger.LogInformation("Applied promotion code {Code} for customer {Email}", couponCode, user.Email);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Skipping promotion code {Code} for customer {Email} due to prior orders restriction", 
+                                couponCode, user.Email);
+                            // Clear the coupon from session since it can't be used
+                            HttpContext.Session.Remove("AppliedCouponCode");
+                            options.AllowPromotionCodes = true;
+                        }
                     }
                 }
                 else
@@ -437,6 +476,28 @@ namespace Kokomija.Controllers
                 var session = await sessionService.CreateAsync(options);
 
                 return Json(new { success = true, sessionId = session.Id, url = session.Url });
+            }
+            catch (Stripe.StripeException stripeEx) when (stripeEx.Message.Contains("promotion code cannot be redeemed"))
+            {
+                _logger.LogWarning(stripeEx, "Promotion code cannot be used for customer {Email}. This may be due to customer restrictions.", user.Email);
+                // Clear the invalid coupon from session
+                HttpContext.Session.Remove("AppliedCouponCode");
+                return Json(new 
+                { 
+                    success = false, 
+                    message = "The promotion code you entered cannot be used with your account. It has been removed from your cart.",
+                    redirectUrl = Url.Action("Index", "Cart")
+                });
+            }
+            catch (Stripe.StripeException stripeEx)
+            {
+                _logger.LogError(stripeEx, "Stripe error creating checkout session: {Error}", stripeEx.Message);
+                return Json(new 
+                { 
+                    success = false, 
+                    message = $"Payment error: {stripeEx.Message}",
+                    redirectUrl = Url.Action("Index", "Cart")
+                });
             }
             catch (Exception ex)
             {
@@ -483,12 +544,18 @@ namespace Kokomija.Controllers
                     return RedirectToAction("Failure", new { session_id, reason = "payment_pending" });
                 }
 
+                // Try to get user from session or from Stripe customer metadata
                 var user = await _userManager.GetUserAsync(User);
+                if (user == null && !string.IsNullOrEmpty(session.ClientReferenceId))
+                {
+                    user = await _userManager.FindByIdAsync(session.ClientReferenceId);
+                }
+                
                 if (user == null)
                 {
                     _logger.LogWarning("User not found during checkout success for session: {SessionId}", session_id);
                     TempData["Error"] = _localizationService["Error_UserNotFound"];
-                    return RedirectToAction("Login", "Account");
+                    return RedirectToAction("Index", "Cart");
                 }
 
                 // Create order from cart

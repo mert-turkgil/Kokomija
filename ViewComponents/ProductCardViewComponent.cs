@@ -16,7 +16,10 @@ namespace Kokomija.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync(int productId)
         {
-            var product = await _unitOfWork.Products.GetByIdAsync(productId);
+            var product = await _unitOfWork.Products.GetByIdAsync(productId, 
+                p => p.Images, 
+                p => p.Translations, 
+                p => p.Variants);
             if (product == null)
                 return Content(string.Empty);
 
@@ -109,7 +112,14 @@ namespace Kokomija.ViewComponents
                 Colors = colors,
                 Sizes = sizes,
                 PackSize = product.PackSize,
-                CategoryId = product.CategoryId
+                CategoryId = product.CategoryId,
+                Translations = product.Translations?.Select(t => new ProductTranslationViewModel
+                {
+                    CultureCode = t.CultureCode,
+                    Name = t.Name,
+                    Description = t.Description,
+                    Slug = t.Slug
+                }).ToList() ?? new()
             };
             
             // Pass current culture to view

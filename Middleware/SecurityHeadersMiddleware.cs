@@ -9,10 +9,13 @@ namespace Kokomija.Middleware
         private readonly RequestDelegate _next;
         private readonly IConfiguration _configuration;
 
-        public SecurityHeadersMiddleware(RequestDelegate next, IConfiguration configuration)
+        private readonly IWebHostEnvironment _environment;
+
+        public SecurityHeadersMiddleware(RequestDelegate next, IConfiguration configuration, IWebHostEnvironment environment)
         {
             _next = next;
             _configuration = configuration;
+            _environment = environment;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -47,17 +50,20 @@ namespace Kokomija.Middleware
 
             // Content Security Policy (CSP)
             // NOTE: Adjust based on your actual external resources (CDNs, Stripe, etc.)
+            // In development, allow HTTP for OAuth callbacks; in production, restrict to HTTPS
+            var formActionPolicy = _environment.IsDevelopment() ? "'self' http: https:" : "'self' https:";
+            
             var cspPolicy = _configuration.GetValue<string>("Security:ContentSecurityPolicy") ??
                 "default-src 'self'; " +
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://api.stripe.com https://cdn.ckeditor.com; " +
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.ckeditor.com; " +
                 "img-src 'self' data: https: blob:; " +
                 "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com https://fonts.googleapis.com; " +
-                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com wss://localhost:* ws://localhost:*; " +
-                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com; " +
+                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://accounts.google.com https://www.facebook.com https://graph.facebook.com wss://localhost:* ws://localhost:*; " +
+                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com https://accounts.google.com https://www.facebook.com; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +
-                "form-action 'self' https: " + // Allow form submission to any HTTPS origin
+                $"form-action {formActionPolicy} https://accounts.google.com https://www.facebook.com " + // Allow OAuth form submissions in dev and prod
                 "frame-ancestors 'self';";
 
             context.Response.Headers.Append("Content-Security-Policy", cspPolicy);

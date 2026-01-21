@@ -28,7 +28,10 @@ namespace Kokomija.Middleware
                 path.StartsWith("/images") ||
                 path.StartsWith("/uploads") ||
                 path.StartsWith("/favicon.ico") ||
-                path.StartsWith("/api/stripewebhook"))
+                path.StartsWith("/api/stripewebhook") ||
+                path.StartsWith("/admin") ||  // Allow admin panel access
+                path.StartsWith("/signin-") ||  // Skip OAuth callbacks (Google, Facebook, etc.)
+                path.StartsWith("/account/externallogi"))  // Skip external login callback
             {
                 await _next(context);
                 return;
@@ -40,8 +43,8 @@ namespace Kokomija.Middleware
 
             if (activeClosure != null)
             {
-                // Check if user is ROOT
-                var isRoot = false;
+                // Check if user is ROOT or ADMIN
+                var isAdminOrRoot = false;
                 var currentUserName = "Anonymous";
                 
                 if (context.User?.Identity?.IsAuthenticated == true)
@@ -53,38 +56,60 @@ namespace Kokomija.Middleware
                         var user = await userManager.FindByNameAsync(userName);
                         if (user != null)
                         {
-                            isRoot = await userManager.IsInRoleAsync(user, "Root");
+                            var isRoot = await userManager.IsInRoleAsync(user, "Root");
+                            var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
+                            isAdminOrRoot = isRoot || isAdmin;
+                            
+                            if (isAdminOrRoot)
+                            {
+                                _logger.LogInformation("Admin/Root user {User} (IsRoot: {IsRoot}, IsAdmin: {IsAdmin}) accessing {Path} - full access granted", 
+                                    currentUserName, isRoot, isAdmin, path);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("User {UserName} authenticated but not found in UserManager", userName);
                         }
                     }
                 }
-
-                // Block non-ROOT users
-                if (!isRoot)
-                {
-                    // Allow access to login page for ROOT to login
-                    if (path.StartsWith("/account/login") || 
-                        path.StartsWith("/account/logout"))
-                    {
-                        await _next(context);
-                        return;
-                    }
-
-                    _logger.LogWarning("Site is closed. Blocking request from {IP} to {Path}", 
-                        context.Connection.RemoteIpAddress, 
-                        context.Request.Path);
-
-                    // Set response
-                    context.Response.StatusCode = 503; // Service Unavailable
-                    context.Response.ContentType = "text/html; charset=utf-8";
-
-                    var html = GenerateSiteClosedHtml(activeClosure.Reason, activeClosure.ScheduledReopenAt);
-                    await context.Response.WriteAsync(html);
-                    return;
-                }
                 else
                 {
-                    _logger.LogInformation("ROOT user {User} accessing site during closure", currentUserName);
+                    _logger.LogDebug("User not authenticated. IsAuthenticated: {IsAuth}, Path: {Path}", 
+                        context.User?.Identity?.IsAuthenticated ?? false, path);
                 }
+
+                // If user is Admin/Root, allow full site access
+                if (isAdminOrRoot)
+                {
+                    await _next(context);
+                    return;
+                }
+
+                // Block non-ADMIN/ROOT users
+                // Allow access to login page and maintenance login
+                // Support culture-prefixed routes like /en/login, /pl/login
+                if (path.StartsWith("/account/login") || 
+                    path.StartsWith("/account/logout") ||
+                    path.StartsWith("/account/maintenancelogin") ||
+                    path.StartsWith("/home/maintenance") ||
+                    path.Contains("/login") ||  // Catch culture-prefixed login routes
+                    path.Contains("/logout"))   // Catch culture-prefixed logout routes
+                {
+                    await _next(context);
+                    return;
+                }
+
+                _logger.LogWarning("Site is closed. Blocking request from {IP} to {Path}", 
+                    context.Connection.RemoteIpAddress, 
+                    context.Request.Path);
+
+                // Set response
+                context.Response.StatusCode = 503; // Service Unavailable
+                context.Response.ContentType = "text/html; charset=utf-8";
+
+                var html = GenerateSiteClosedHtml(activeClosure.Reason, activeClosure.ScheduledReopenAt);
+                await context.Response.WriteAsync(html);
+                return;
             }
 
             await _next(context);

@@ -36,6 +36,10 @@ namespace Kokomija.Services
         Task DeleteStripeCouponAsync(string couponId);
         Task DeleteStripeProductAsync(string stripeProductId);
         Task ArchiveStripeProductAsync(string stripeProductId);
+        Task<Stripe.ShippingRate> CreateShippingRateAsync(Entity.ShippingRate shippingRate);
+        Task<Stripe.ShippingRate> UpdateShippingRateAsync(string stripeShippingRateId, Entity.ShippingRate shippingRate);
+        Task<Stripe.ShippingRate> GetShippingRateAsync(string stripeShippingRateId);
+        Task<IEnumerable<Stripe.ShippingRate>> ListAllShippingRatesAsync(int limit = 100);
     }
 
     public class StripeService : IStripeService
@@ -51,6 +55,7 @@ namespace Kokomija.Services
         private readonly PromotionCodeService _promotionCodeService;
         private readonly Stripe.Checkout.SessionService _checkoutSessionService;
         private readonly PaymentMethodService _paymentMethodService;
+        private readonly ShippingRateService _shippingRateService;
 
         public StripeService(IConfiguration configuration, ILogger<StripeService> logger)
         {
@@ -65,6 +70,7 @@ namespace Kokomija.Services
             _promotionCodeService = new PromotionCodeService();
             _checkoutSessionService = new Stripe.Checkout.SessionService();
             _paymentMethodService = new PaymentMethodService();
+            _shippingRateService = new ShippingRateService();
         }
 
         public async Task<Customer> CreateCustomerAsync(string email, string name, Dictionary<string, string>? metadata = null)
@@ -658,6 +664,105 @@ namespace Kokomija.Services
             };
             var promotionCodes = await _promotionCodeService.ListAsync(options);
             return promotionCodes.Data;
+        }
+
+        /// <summary>
+        /// Create a Stripe shipping rate
+        /// </summary>
+        public async Task<Stripe.ShippingRate> CreateShippingRateAsync(Entity.ShippingRate shippingRate)
+        {
+            try
+            {
+                var options = new ShippingRateCreateOptions
+                {
+                    DisplayName = shippingRate.Name,
+                    Type = "fixed_amount",
+                    FixedAmount = new ShippingRateFixedAmountOptions
+                    {
+                        Amount = (long)(shippingRate.BasePrice * 100), // Convert to cents
+                        Currency = "pln"
+                    },
+                    DeliveryEstimate = new ShippingRateDeliveryEstimateOptions
+                    {
+                        Minimum = new ShippingRateDeliveryEstimateMinimumOptions
+                        {
+                            Unit = "business_day",
+                            Value = shippingRate.MinDeliveryDays
+                        },
+                        Maximum = new ShippingRateDeliveryEstimateMaximumOptions
+                        {
+                            Unit = "business_day",
+                            Value = shippingRate.MaxDeliveryDays
+                        }
+                    },
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "kokomija_rate_id", shippingRate.Id.ToString() },
+                        { "provider_id", shippingRate.ShippingProviderId.ToString() },
+                        { "description", shippingRate.Description ?? "" }
+                    }
+                };
+
+                var stripeRate = await _shippingRateService.CreateAsync(options);
+                _logger.LogInformation("Created Stripe shipping rate {StripeId} for {Name}", stripeRate.Id, shippingRate.Name);
+                return stripeRate;
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Failed to create Stripe shipping rate for {Name}", shippingRate.Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Update a Stripe shipping rate (note: most fields are immutable, this updates metadata)
+        /// </summary>
+        public async Task<Stripe.ShippingRate> UpdateShippingRateAsync(string stripeShippingRateId, Entity.ShippingRate shippingRate)
+        {
+            try
+            {
+                var options = new ShippingRateUpdateOptions
+                {
+                    Active = shippingRate.IsActive,
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "kokomija_rate_id", shippingRate.Id.ToString() },
+                        { "provider_id", shippingRate.ShippingProviderId.ToString() },
+                        { "description", shippingRate.Description ?? "" }
+                    }
+                };
+
+                var stripeRate = await _shippingRateService.UpdateAsync(stripeShippingRateId, options);
+                _logger.LogInformation("Updated Stripe shipping rate {StripeId}", stripeShippingRateId);
+                return stripeRate;
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Failed to update Stripe shipping rate {StripeId}", stripeShippingRateId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get a Stripe shipping rate
+        /// </summary>
+        public async Task<Stripe.ShippingRate> GetShippingRateAsync(string stripeShippingRateId)
+        {
+            return await _shippingRateService.GetAsync(stripeShippingRateId);
+        }
+
+        /// <summary>
+        /// List all Stripe shipping rates
+        /// </summary>
+        public async Task<IEnumerable<Stripe.ShippingRate>> ListAllShippingRatesAsync(int limit = 100)
+        {
+            var options = new ShippingRateListOptions
+            {
+                Limit = limit,
+                Active = true
+            };
+            var rates = await _shippingRateService.ListAsync(options);
+            return rates.Data;
         }
     }
 }

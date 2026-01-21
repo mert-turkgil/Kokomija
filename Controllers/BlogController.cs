@@ -118,10 +118,12 @@ namespace Kokomija.Controllers
                 // Get translation for current culture
                 var currentCulture = CultureInfo.CurrentCulture.Name;
                 var translation = blog.Translations?.FirstOrDefault(t => t.CultureCode == currentCulture)
-                                ?? blog.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+                                ?? blog.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL")
+                                ?? blog.Translations?.FirstOrDefault();
 
                 if (translation == null)
                 {
+                    _logger.LogWarning("No translation found for blog slug: {Slug}, culture: {Culture}", slug, currentCulture);
                     return NotFound();
                 }
 

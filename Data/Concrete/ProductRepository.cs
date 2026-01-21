@@ -25,6 +25,7 @@ namespace Kokomija.Data.Concrete
             return await _dbSet
                 .Where(p => p.IsActive)
                 .Include(p => p.Category)
+                .Include(p => p.Translations)
                 .Include(p => p.Images.Where(i => i.IsPrimary))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
@@ -76,15 +77,19 @@ namespace Kokomija.Data.Concrete
         {
             var lowerSearchTerm = searchTerm.ToLower();
             
+            // Get current culture from thread
+            var currentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture.Name;
+            
             // Get all products that are active
             var products = await _dbSet
                 .Where(p => p.IsActive)
                 .Include(p => p.Category)
+                    .ThenInclude(c => c.Translations)
                 .Include(p => p.Translations)
                 .Include(p => p.Images.Where(i => i.IsPrimary))
                 .ToListAsync();
             
-            // Filter by search term in English or Polish (product name, description, or translations)
+            // Filter by search term in all languages (product name, description, or translations)
             var results = products
                 .Where(p => 
                     p.Name.ToLower().Contains(lowerSearchTerm) ||
@@ -92,10 +97,35 @@ namespace Kokomija.Data.Concrete
                     p.Translations.Any(t => 
                         t.Name.ToLower().Contains(lowerSearchTerm) ||
                         t.Description.ToLower().Contains(lowerSearchTerm)))
-                .OrderBy(p => p.Name)
                 .ToList();
             
-            return results;
+            // Apply culture-specific translations to product names and descriptions
+            foreach (var product in results)
+            {
+                var translation = product.Translations.FirstOrDefault(t => t.CultureCode == currentCulture)
+                               ?? product.Translations.FirstOrDefault(t => t.CultureCode == "pl-PL");
+                
+                if (translation != null)
+                {
+                    product.Name = translation.Name ?? product.Name;
+                    product.Description = translation.Description ?? product.Description;
+                    product.Slug = translation.Slug ?? product.Slug;
+                }
+                
+                // Also translate category if it has translations
+                if (product.Category?.Translations != null)
+                {
+                    var categoryTranslation = product.Category.Translations.FirstOrDefault(t => t.CultureCode == currentCulture)
+                                           ?? product.Category.Translations.FirstOrDefault(t => t.CultureCode == "pl-PL");
+                    
+                    if (categoryTranslation != null)
+                    {
+                        product.Category.Name = categoryTranslation.Name ?? product.Category.Name;
+                    }
+                }
+            }
+            
+            return results.OrderBy(p => p.Name).ToList();
         }
 
         public async Task<Product?> GetProductBySlugAsync(string slug, string cultureCode)

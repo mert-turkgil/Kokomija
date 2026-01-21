@@ -410,6 +410,9 @@ appsettings.Staging.json
 # Keep the base appsettings.json with placeholder values
 # appsettings.json - This one is tracked
 
+# Data Protection Keys - Contains encryption keys, should never be committed
+DataProtection-Keys/
+
 # Database files
 *.db
 *.db-shm

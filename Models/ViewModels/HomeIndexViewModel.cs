@@ -38,6 +38,7 @@ namespace Kokomija.Models.ViewModels
         public int PackSize { get; set; } = 1;
         public List<ProductImageViewModel> Images { get; set; } = new();
         public int? CategoryId { get; set; }
+        public List<ProductTranslationViewModel> Translations { get; set; } = new();
     }
     
     public class ColorViewModel
@@ -72,6 +73,14 @@ namespace Kokomija.Models.ViewModels
         public string ButtonUrl { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public string BackgroundColor { get; set; } = "#F4A261";
+    }
+
+    public class ProductTranslationViewModel
+    {
+        public string CultureCode { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? Slug { get; set; }
     }
 
     public class CouponBannerViewModel

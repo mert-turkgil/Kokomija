@@ -85,4 +85,55 @@
   <data name="Products_AllProducts" xml:space="preserve"><value>Wszystkie produkty</value></data>
   <data name="Products_SearchResults" xml:space="preserve"><value>Wyniki wyszukiwania</value></data>
   <data name="Products_ItemsFound_Plural" xml:space="preserve"><value>produktów</value></data>
+  
+  <!-- Admin Category -->
+  <data name="Admin_Category_CreateNew" xml:space="preserve"><value>Utwórz nową kategorię</value></data>
+  <data name="Admin_Category_Edit" xml:space="preserve"><value>Edytuj kategorię</value></data>
+  <data name="Admin_Category_Name" xml:space="preserve"><value>Nazwa</value></data>
+  <data name="Admin_Category_Slug" xml:space="preserve"><value>Slug (nazwa przyjazna dla URL)</value></data>
+  <data name="Admin_Category_Description" xml:space="preserve"><value>Opis</value></data>
+  <data name="Admin_Category_MetaDescription" xml:space="preserve"><value>Meta opis</value></data>
+  <data name="Admin_Category_MetaKeywords" xml:space="preserve"><value>Meta słowa kluczowe</value></data>
+  <data name="Admin_Category_ParentCategory" xml:space="preserve"><value>Kategoria nadrzędna</value></data>
+  <data name="Admin_Category_NoParent" xml:space="preserve"><value>Brak nadrzędnej (Poziom główny)</value></data>
+  <data name="Admin_Category_DisplayOrder" xml:space="preserve"><value>Kolejność wyświetlania</value></data>
+  <data name="Admin_Category_IsActive" xml:space="preserve"><value>Jest aktywna</value></data>
+  <data name="Admin_Category_ShowInNavbar" xml:space="preserve"><value>Pokaż w nawigacji</value></data>
+  <data name="Admin_Category_IconCssClass" xml:space="preserve"><value>Klasa CSS ikony</value></data>
+  <data name="Admin_Category_CurrentImage" xml:space="preserve"><value>Aktualne zdjęcie</value></data>
+  <data name="Admin_Category_Image" xml:space="preserve"><value>Zdjęcie kategorii (opcjonalne)</value></data>
+  <data name="Admin_Category_DragDrop" xml:space="preserve"><value>Przeciągnij i upuść obraz tutaj lub kliknij, aby przeglądać</value></data>
+  <data name="Admin_Category_Translations" xml:space="preserve"><value>Tłumaczenia</value></data>
+  <data name="Admin_Category_ImageInfo" xml:space="preserve"><value>Zalecany rozmiar: 800x600px. Maks. 2MB. JPG, PNG lub WebP.</value></data>
+  <data name="Admin_Category_Save" xml:space="preserve"><value>Zapisz kategorię</value></data>
+  <data name="Admin_Category_Cancel" xml:space="preserve"><value>Anuluj</value></data>
+  
+  <!-- Admin Carousel -->
+  <data name="Admin_Carousel_CreateNew" xml:space="preserve"><value>Utwórz nowy slajd karuzeli</value></data>
+  <data name="Admin_Carousel_EditSlide" xml:space="preserve"><value>Edytuj slajd karuzeli</value></data>
+  <data name="Admin_Carousel_DesktopImage" xml:space="preserve"><value>Obraz desktopowy (wymagany)</value></data>
+  <data name="Admin_Carousel_TabletImage" xml:space="preserve"><value>Obraz tabletowy (opcjonalny)</value></data>
+  <data name="Admin_Carousel_MobileImage" xml:space="preserve"><value>Obraz mobilny (opcjonalny)</value></data>
+  <data name="Admin_Carousel_DragDrop" xml:space="preserve"><value>Przeciągnij i upuść obraz tutaj lub kliknij, aby przeglądać</value></data>
+  <data name="Admin_Carousel_CurrentImage" xml:space="preserve"><value>Aktualne zdjęcie</value></data>
+  <data name="Admin_Carousel_TitleLabel" xml:space="preserve"><value>Tytuł</value></data>
+  <data name="Admin_Carousel_DescriptionLabel" xml:space="preserve"><value>Opis</value></data>
+  <data name="Admin_Carousel_ButtonTextLabel" xml:space="preserve"><value>Tekst przycisku</value></data>
+  <data name="Admin_Carousel_LinkUrl" xml:space="preserve"><value>Link URL</value></data>
+  <data name="Admin_Carousel_LinkUrlPlaceholder" xml:space="preserve"><value>np. /products/featured</value></data>
+  <data name="Admin_Carousel_DisplayOrder" xml:space="preserve"><value>Kolejność wyświetlania</value></data>
+  <data name="Admin_Carousel_IsActive" xml:space="preserve"><value>Jest aktywny</value></data>
+  <data name="Admin_Carousel_Translations" xml:space="preserve"><value>Tłumaczenia</value></data>
+  <data name="Admin_Carousel_BackgroundColor" xml:space="preserve"><value>Kolor tła</value></data>
+  <data name="Admin_Carousel_TextColor" xml:space="preserve"><value>Kolor tekstu</value></data>
+  <data name="Admin_Carousel_TextAlign" xml:space="preserve"><value>Wyrównanie tekstu</value></data>
+  <data name="Admin_Carousel_AnimationType" xml:space="preserve"><value>Typ animacji</value></data>
+  <data name="Admin_Carousel_StartDate" xml:space="preserve"><value>Data rozpoczęcia</value></data>
+  <data name="Admin_Carousel_EndDate" xml:space="preserve"><value>Data zakończenia</value></data>
+  <data name="Admin_Carousel_Duration" xml:space="preserve"><value>Czas trwania (sekundy)</value></data>
+  <data name="Admin_Carousel_Location" xml:space="preserve"><value>Lokalizacja/Pozycja</value></data>
+  <data name="Admin_Carousel_TranslationTitle" xml:space="preserve"><value>Tytuł</value></data>
+  <data name="Admin_Carousel_TranslationSubtitle" xml:space="preserve"><value>Podtytuł</value></data>
+  <data name="Admin_Carousel_TranslationButtonText" xml:space="preserve"><value>Tekst przycisku</value></data>
+  <data name="Admin_Carousel_TranslationImageAlt" xml:space="preserve"><value>Tekst alternatywny obrazu</value></data>
 </root>

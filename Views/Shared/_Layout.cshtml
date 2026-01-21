@@ -110,6 +110,34 @@
 <body>
     <a href="#main-content" class="skip-to-content">@L["Accessibility_SkipToContent"]</a>
     
+    @if (User?.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Root")))
+    {
+        var closures = await UnitOfWork.SiteClosures.GetAllAsync();
+        var activeClosure = closures.FirstOrDefault(c => c.IsClosed);
+        
+        if (activeClosure != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show m-0 rounded-0 text-center" role="alert" style="position: sticky; top: 0; z-index: 9999; border: none; background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                <div class="container-fluid">
+                    <strong><i class="fas fa-tools me-2"></i>🔧 MAINTENANCE MODE ACTIVE</strong>
+                    <span class="mx-2">|</span>
+                    @if (!string.IsNullOrEmpty(activeClosure.Reason))
+                    {
+                        <span class="me-2">Reason: <strong>@activeClosure.Reason</strong></span>
+                        <span class="mx-2">|</span>
+                    }
+                    @if (activeClosure.ScheduledReopenAt.HasValue)
+                    {
+                        <span>Scheduled Reopen: <strong>@activeClosure.ScheduledReopenAt.Value.ToString("MMM dd, yyyy 'at' hh:mm tt")</strong></span>
+                        <span class="mx-2">|</span>
+                    }
+                    <span class="text-white-50">Regular users see maintenance page. You have full access.</span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+    }
+    
     <script>
         // Set authentication status for cart manager
         document.body.dataset.authenticated = '@(User.Identity?.IsAuthenticated == true ? "true" : "false")';
@@ -189,6 +217,16 @@
                     Kokomija.Entity.Category? secondCategory = navbarCategories.Count > 1 ? navbarCategories[1] : null;
                     IEnumerable<Kokomija.Entity.Category>? firstCategorySubCategories = firstCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
                     IEnumerable<Kokomija.Entity.Category>? secondCategorySubCategories = secondCategory?.SubCategories.Where(sc => sc.IsActive && sc.ShowInNavbar).OrderBy(sc => sc.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.Category>();
+                    
+                    // Get current culture for translations
+                    var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "tr" ? "tr-TR" : "en-US";
+                    
+                    // Helper function to get translated category name
+                    string GetCategoryName(Kokomija.Entity.Category cat) {
+                        var translation = cat.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
+                                       ?? cat.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+                        return translation?.Name ?? cat.Name;
+                    }
                 }
                 
                 <!-- Desktop Navigation (hidden on mobile) -->
@@ -206,14 +244,14 @@
                                    aria-expanded="false">
                                     @if (!string.IsNullOrEmpty(firstCategory.ImageUrl))
                                     {
-                                        <img src="@firstCategory.ImageUrl" alt="@firstCategory.Name" class="nav-category-icon me-2" onerror="this.style.display='none'" />
+                                        <img src="@firstCategory.ImageUrl" alt="@GetCategoryName(firstCategory)" class="nav-category-icon me-2" onerror="this.style.display='none'" />
                                     }
-                                    <span>@firstCategory.Name.ToUpper()</span>
+                                    <span>@GetCategoryName(firstCategory).ToUpper()</span>
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="firstCategoryDropdown">
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@firstCategory.Slug">
-                                            @L.GetString("AllProducts", "Footer") - @firstCategory.Name
+                                            @L.GetString("AllProducts", "Footer") - @GetCategoryName(firstCategory)
                                         </a>
                                     </li>
                                     @if (firstCategorySubCategories.Any())
@@ -227,7 +265,7 @@
                                                     {
                                                         <i class="@subCat.IconCssClass me-2"></i>
                                                     }
-                                                    @subCat.Name
+                                                    @GetCategoryName(subCat)
                                                 </a>
                                             </li>
                                         }
@@ -249,14 +287,14 @@
                                    aria-expanded="false">
                                     @if (!string.IsNullOrEmpty(secondCategory.ImageUrl))
                                     {
-                                        <img src="@secondCategory.ImageUrl" alt="@secondCategory.Name" class="nav-category-icon me-2" onerror="this.style.display='none'" />
+                                        <img src="@secondCategory.ImageUrl" alt="@GetCategoryName(secondCategory)" class="nav-category-icon me-2" onerror="this.style.display='none'" />
                                     }
-                                    <span>@secondCategory.Name.ToUpper()</span>
+                                    <span>@GetCategoryName(secondCategory).ToUpper()</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="secondCategoryDropdown">
                                     <li>
                                         <a class="dropdown-item fw-bold" asp-controller="Product" asp-action="Category" asp-route-slug="@secondCategory.Slug">
-                                            @L.GetString("AllProducts", "Footer") - @secondCategory.Name
+                                            @L.GetString("AllProducts", "Footer") - @GetCategoryName(secondCategory)
                                         </a>
                                     </li>
                                     @if (secondCategorySubCategories.Any())
@@ -270,7 +308,7 @@
                                                     {
                                                         <i class="@subCat.IconCssClass me-2"></i>
                                                     }
-                                                    @subCat.Name
+                                                    @GetCategoryName(subCat)
                                                 </a>
                                             </li>
                                         }

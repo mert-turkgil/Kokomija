@@ -74,6 +74,7 @@ namespace Kokomija.Models.ViewModels
         public int EstimatedDaysMin { get; set; }
         public int EstimatedDaysMax { get; set; }
         public bool IsActive { get; set; }
+        public string? StripeShippingRateId { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

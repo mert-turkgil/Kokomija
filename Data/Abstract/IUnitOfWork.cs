@@ -22,6 +22,7 @@ namespace Kokomija.Data.Abstract
         IRepository<DeveloperEarnings> DeveloperEarnings { get; }
         IRepository<CommissionSettings> CommissionSettings { get; }
         IRepository<ReturnRequest> ReturnRequests { get; }
+        IRepository<ShippingRate> ShippingRates { get; }
         ICarouselSlideRepository CarouselSlides { get; }
         ICarouselSlideTranslationRepository CarouselSlideTranslations { get; }
         IWishlistRepository Wishlists { get; }

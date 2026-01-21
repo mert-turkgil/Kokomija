@@ -32,10 +32,16 @@ namespace Kokomija.Middleware
             // Allow access to specific paths even when closed
             var path = context.Request.Path.Value?.ToLower() ?? "";
             
-            // Allow admin paths for reopening
-            if (path.StartsWith("/admin/site-control") || 
+            // Allow admin paths, maintenance page, and admin login
+            if (path.StartsWith("/admin") || 
                 path.StartsWith("/api/site-control") ||
-                path.StartsWith("/api/email-command"))
+                path.StartsWith("/api/email-command") ||
+                path.StartsWith("/account/maintenancelogin") ||
+                path.StartsWith("/home/maintenance") ||
+                path.StartsWith("/signin-") ||  // Skip OAuth callbacks
+                path.StartsWith("/account/externallogi") ||  // Skip external login callback
+                path.StartsWith("/account/login") ||  // Allow regular login page access
+                path.StartsWith("/account/logout"))  // Allow logout
             {
                 await _next(context);
                 return;
@@ -45,7 +51,9 @@ namespace Kokomija.Middleware
             if (path.StartsWith("/css") || 
                 path.StartsWith("/js") || 
                 path.StartsWith("/images") ||
+                path.StartsWith("/img") ||
                 path.StartsWith("/lib") ||
+                path.StartsWith("/wwwroot") ||
                 path.Contains(".css") ||
                 path.Contains(".js") ||
                 path.Contains(".ico"))
@@ -54,8 +62,9 @@ namespace Kokomija.Middleware
                 return;
             }
 
-            // Check if user has emergency password in session
-            if (context.Session.GetString("EmergencyAccess") == "true")
+            // Check if user is authenticated as admin
+            if (context.User?.Identity?.IsAuthenticated == true && 
+                (context.User.IsInRole("Admin") || context.User.IsInRole("Root")))
             {
                 await _next(context);
                 return;
@@ -66,12 +75,8 @@ namespace Kokomija.Middleware
             
             _logger.LogWarning("Request blocked due to site closure: {Path}", path);
 
-            // Return maintenance page
-            context.Response.StatusCode = 503; // Service Unavailable
-            context.Response.ContentType = "text/html; charset=utf-8";
-
-            var html = GenerateMaintenancePage(closure);
-            await context.Response.WriteAsync(html, Encoding.UTF8);
+            // Redirect to maintenance page
+            context.Response.Redirect("/Home/Maintenance");
         }
 
         private string GenerateMaintenancePage(Entity.SiteClosure? closure)

@@ -193,8 +193,8 @@ public class LocalizedUrlMiddleware
             return true;
         }
         
-        // Skip signin callbacks
-        if (path.StartsWith("/signin-"))
+        // Skip signin callbacks and external login callbacks
+        if (path.StartsWith("/signin-") || path.StartsWith("/account/externallogi"))
         {
             return true;
         }

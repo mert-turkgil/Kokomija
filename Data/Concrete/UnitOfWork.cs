@@ -39,6 +39,7 @@ namespace Kokomija.Data.Concrete
             DeveloperEarnings = new Repository<DeveloperEarnings>(_context);
             CommissionSettings = new Repository<CommissionSettings>(_context);
             ReturnRequests = new Repository<ReturnRequest>(_context);
+            ShippingRates = new Repository<ShippingRate>(_context);
             
             // Initialize carousel repository
             CarouselSlides = new CarouselSlideRepository(_context);
@@ -79,6 +80,7 @@ namespace Kokomija.Data.Concrete
         public IRepository<DeveloperEarnings> DeveloperEarnings { get; private set; }
         public IRepository<CommissionSettings> CommissionSettings { get; private set; }
         public IRepository<ReturnRequest> ReturnRequests { get; private set; }
+        public IRepository<ShippingRate> ShippingRates { get; private set; }
         public ICarouselSlideRepository CarouselSlides { get; private set; }
         public ICarouselSlideTranslationRepository CarouselSlideTranslations { get; private set; }
         public IWishlistRepository Wishlists { get; private set; }

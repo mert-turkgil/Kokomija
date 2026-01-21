@@ -35,6 +35,7 @@ public class AdminController : Controller
     private readonly IStripeService _stripeService;
     private readonly IStripePayoutService _stripePayoutService;
     private readonly ICarrierApiService _carrierApiService;
+    private readonly ISiteControlService _siteControlService;
 
     // Constants for demo order detection
     private const string DemoPaymentIntentPrefix = "demo_";
@@ -58,7 +59,8 @@ public class AdminController : Controller
         IReturnRequestService returnRequestService,
         IStripeService stripeService,
         IStripePayoutService stripePayoutService,
-        ICarrierApiService carrierApiService)
+        ICarrierApiService carrierApiService,
+        ISiteControlService siteControlService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -78,6 +80,7 @@ public class AdminController : Controller
         _stripeService = stripeService;
         _stripePayoutService = stripePayoutService;
         _carrierApiService = carrierApiService;
+        _siteControlService = siteControlService;
     }
 
     public async Task<IActionResult> Index()
@@ -1171,6 +1174,17 @@ public class AdminController : Controller
         if (!string.IsNullOrEmpty(tab))
         {
             ViewBag.ActiveTab = tab;
+        }
+
+        // Get maintenance mode status
+        var isMaintenanceMode = await _siteControlService.IsSiteClosedAsync();
+        ViewBag.IsMaintenanceMode = isMaintenanceMode;
+        
+        if (isMaintenanceMode)
+        {
+            var maintenanceClosure = await _siteControlService.GetCurrentClosureAsync();
+            ViewBag.MaintenanceReason = maintenanceClosure?.Reason;
+            ViewBag.MaintenanceScheduledReopen = maintenanceClosure?.ScheduledReopenAt?.ToString("MMMM dd, yyyy 'at' hh:mm tt");
         }
 
         var viewModel = new SiteSettingsViewModel();
@@ -5391,6 +5405,115 @@ public class AdminController : Controller
     }
 
     #endregion
+
+    #region Maintenance Mode
+
+    /// <summary>
+    /// GET: Get current maintenance mode status
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetMaintenanceStatus()
+    {
+        try
+        {
+            var isClosed = await _siteControlService.IsSiteClosedAsync();
+            var closure = await _siteControlService.GetCurrentClosureAsync();
+            
+            return Json(new 
+            { 
+                success = true, 
+                isEnabled = isClosed,
+                reason = closure?.Reason,
+                closedBy = closure?.ClosedBy,
+                closedAt = closure?.ClosedAt,
+                scheduledReopen = closure?.ScheduledReopenAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting maintenance status");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// POST: Toggle maintenance mode
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> ToggleMaintenanceMode([FromBody] ToggleMaintenanceModeDto dto)
+    {
+        try
+        {
+            var userEmail = User.Identity?.Name ?? "Unknown";
+            
+            if (dto.Enable)
+            {
+                var reason = string.IsNullOrWhiteSpace(dto.Reason) 
+                    ? "Site maintenance in progress" 
+                    : dto.Reason;
+                
+                var success = await _siteControlService.CloseSiteAsync(reason, userEmail);
+                
+                if (success)
+                {
+                    // Update scheduled reopen time if custom hours provided
+                    if (dto.ReopenHours.HasValue && dto.ReopenHours.Value > 0)
+                    {
+                        var siteClosure = await _siteControlService.GetCurrentClosureAsync();
+                        if (siteClosure != null)
+                        {
+                            siteClosure.ScheduledReopenAt = DateTime.UtcNow.AddHours(dto.ReopenHours.Value);
+                            _unitOfWork.Repository<SiteClosure>().Update(siteClosure);
+                            await _unitOfWork.SaveChangesAsync();
+                        }
+                    }
+                    
+                    _logger.LogWarning("Maintenance mode ENABLED by {User} for {Hours} hours", userEmail, dto.ReopenHours ?? 24);
+                    
+                    var finalClosure = await _siteControlService.GetCurrentClosureAsync();
+                    var reopenTime = finalClosure?.ScheduledReopenAt?.ToString("MMMM dd, yyyy 'at' hh:mm tt");
+                    
+                    return Json(new 
+                    { 
+                        success = true, 
+                        message = $"Maintenance mode enabled. Scheduled to reopen: {reopenTime}",
+                        isEnabled = true,
+                        scheduledReopen = reopenTime
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Site is already in maintenance mode" });
+                }
+            }
+            else
+            {
+                var success = await _siteControlService.ReopenSiteAsync(userEmail, "manual");
+                
+                if (success)
+                {
+                    _logger.LogInformation("Maintenance mode DISABLED by {User}", userEmail);
+                    return Json(new 
+                    { 
+                        success = true, 
+                        message = "Maintenance mode disabled. Site is now accessible to all users.",
+                        isEnabled = false
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Site is not currently in maintenance mode" });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling maintenance mode");
+            return Json(new { success = false, message = $"Error: {ex.Message}" });
+        }
+    }
+
+    #endregion
 }
 
 public class CommissionChangeRequestDto
@@ -5433,4 +5556,11 @@ public class CreateTaxRateDto
     public bool IsDefault { get; set; }
     public string? StripeTaxRateId { get; set; }
     public string? Description { get; set; }
+}
+
+public class ToggleMaintenanceModeDto
+{
+    public bool Enable { get; set; }
+    public string? Reason { get; set; }
+    public int? ReopenHours { get; set; }
 }

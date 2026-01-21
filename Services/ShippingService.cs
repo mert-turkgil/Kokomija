@@ -188,6 +188,7 @@ namespace Kokomija.Services
                     EstimatedDaysMin = sr.MinDeliveryDays,
                     EstimatedDaysMax = sr.MaxDeliveryDays,
                     IsActive = sr.IsActive,
+                    StripeShippingRateId = sr.StripeShippingRateId,
                     CreatedAt = sr.CreatedAt
                 })
                 .OrderBy(sr => sr.ProviderName)
@@ -214,6 +215,7 @@ namespace Kokomija.Services
                     EstimatedDaysMin = sr.MinDeliveryDays,
                     EstimatedDaysMax = sr.MaxDeliveryDays,
                     IsActive = sr.IsActive,
+                    StripeShippingRateId = sr.StripeShippingRateId,
                     CreatedAt = sr.CreatedAt
                 })
                 .OrderBy(sr => sr.Country)
@@ -239,6 +241,7 @@ namespace Kokomija.Services
                     EstimatedDaysMin = sr.MinDeliveryDays,
                     EstimatedDaysMax = sr.MaxDeliveryDays,
                     IsActive = sr.IsActive,
+                    StripeShippingRateId = sr.StripeShippingRateId,
                     CreatedAt = sr.CreatedAt
                 })
                 .FirstOrDefaultAsync();
@@ -377,6 +380,7 @@ namespace Kokomija.Services
                     EstimatedDaysMin = sr.MinDeliveryDays,
                     EstimatedDaysMax = sr.MaxDeliveryDays,
                     IsActive = sr.IsActive,
+                    StripeShippingRateId = sr.StripeShippingRateId,
                     CreatedAt = sr.CreatedAt
                 })
                 .OrderBy(sr => sr.Rate)

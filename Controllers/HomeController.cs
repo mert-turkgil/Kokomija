@@ -59,17 +59,39 @@ public class HomeController : Controller
             CanonicalUrl = $"{Request.Scheme}://{Request.Host}{canonicalPath}"
         };
 
-        // Get featured categories with subcategories
-        var allCategories = await _unitOfWork.Categories.GetAllAsync(c => c.SubCategories);
-        model.FeaturedCategories = allCategories
+        // Get featured categories with subcategories and translations
+        var allCategories = await _unitOfWork.Categories.GetAllAsync(
+            c => c.SubCategories,
+            c => c.Translations
+        );
+        
+        // Filter and map categories with translated names
+        var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "tr" ? "tr-TR" : "en-US";
+        var categories = allCategories
             .Where(c => c.IsActive && c.ParentCategoryId == null)
             .OrderBy(c => c.DisplayOrder)
             .ToList();
+        
+        // Apply translations to categories (in-memory)
+        foreach (var category in categories)
+        {
+            var translation = category.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
+                           ?? category.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+            
+            if (translation != null)
+            {
+                category.Name = translation.Name ?? category.Name;
+                category.Description = translation.Description ?? category.Description;
+            }
+        }
+        
+        model.FeaturedCategories = categories;
 
         // Get featured products (newest, active only)
         var allProducts = await _unitOfWork.Products.GetAllAsync(
             p => p.Images,
-            p => p.Variants
+            p => p.Variants,
+            p => p.Translations
         );
         
         var featuredProducts = allProducts
@@ -78,20 +100,28 @@ public class HomeController : Controller
             .Take(8)
             .ToList();
 
-        model.FeaturedProducts = featuredProducts.Select(p => new ProductCardViewModel
+        // Use the same culture code as categories (already defined above)
+        model.FeaturedProducts = featuredProducts.Select(p =>
         {
-            Id = p.Id,
-            Name = p.Name,
-            Slug = p.StripeProductId, // Using StripeProductId as slug for now
-            Description = p.Description,
-            BasePrice = p.Price,
-            DiscountedPrice = null,
-            MainImagePath = p.Images?.FirstOrDefault()?.ImageUrl,
-            IsNew = p.CreatedAt >= DateTime.UtcNow.AddDays(-30),
-            IsOnSale = false,
-            StockQuantity = p.Variants?.Sum(pv => pv.StockQuantity),
-            AvailableColors = new List<string>(),
-            AvailableSizes = new List<string>()
+            // Get translation for current culture, fallback to default if not found
+            var translation = p.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
+                           ?? p.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+            
+            return new ProductCardViewModel
+            {
+                Id = p.Id,
+                Name = translation?.Name ?? p.Name,
+                Slug = translation?.Slug ?? p.StripeProductId, // Use translated slug
+                Description = translation?.Description ?? p.Description,
+                BasePrice = p.Price,
+                DiscountedPrice = null,
+                MainImagePath = p.Images?.FirstOrDefault()?.ImageUrl,
+                IsNew = p.CreatedAt >= DateTime.UtcNow.AddDays(-30),
+                IsOnSale = false,
+                StockQuantity = p.Variants?.Sum(pv => pv.StockQuantity),
+                AvailableColors = new List<string>(),
+                AvailableSizes = new List<string>()
+            };
         }).ToList();
 
         // Hero Ad (sample - you can make this dynamic from database)
@@ -395,6 +425,34 @@ public class HomeController : Controller
             TempData["ErrorMessage"] = "Failed to invalidate cache.";
             return RedirectToAction("Index");
         }
+    }
+
+    /// <summary>
+    /// Maintenance mode page
+    /// </summary>
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public async Task<IActionResult> Maintenance()
+    {
+        // If user is Admin or Root, redirect them to admin panel or home
+        // They should never see the maintenance page
+        if (User?.Identity?.IsAuthenticated == true && 
+            (User.IsInRole("Admin") || User.IsInRole("Root")))
+        {
+            return RedirectToAction("Index", "Admin");
+        }
+        
+        var closures = await _unitOfWork.SiteClosures.GetAllAsync();
+        var closure = closures.FirstOrDefault(c => c.IsClosed);
+        
+        if (closure != null)
+        {
+            ViewBag.Reason = closure.Reason;
+            ViewBag.ScheduledReopen = closure.ScheduledReopenAt?.ToString("MMMM dd, yyyy 'at' hh:mm tt");
+        }
+        
+        ViewBag.ReturnUrl = Request.Query["returnUrl"].ToString();
+        
+        return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

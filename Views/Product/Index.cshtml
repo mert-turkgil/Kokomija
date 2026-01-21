@@ -1,9 +1,24 @@
 @model IEnumerable<Kokomija.Entity.Product>
 @inject Kokomija.Services.ILocalizationService L
+@using System.Globalization
 
 @{
-    ViewData["Title"] = ViewBag.Category != null 
-        ? ViewBag.Category.Name 
+    // Get current culture for translations
+    var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "tr" ? "tr-TR" : "en-US";
+    
+    // Helper function to get translated category name
+    string GetCategoryName(Kokomija.Entity.Category? cat) {
+        if (cat == null) return "";
+        var translation = cat.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
+                       ?? cat.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+        return translation?.Name ?? cat.Name;
+    }
+    
+    // Set page title with translation
+    var category = ViewBag.Category as Kokomija.Entity.Category;
+    ViewData["Title"] = category != null 
+        ? GetCategoryName(category)
         : (ViewBag.SearchQuery != null ? $"{L["Products_SearchResults"]}: {ViewBag.SearchQuery}" : L["Products_AllProducts"]);
 }
 
@@ -18,16 +33,15 @@
                             <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
                             @if (ViewBag.Category != null)
                             {
-                                var category = ViewBag.Category as Kokomija.Entity.Category;
                                 if (category?.ParentCategory != null)
                                 {
                                     <li class="breadcrumb-item">
                                         <a asp-controller="Product" asp-action="Category" asp-route-slug="@category.ParentCategory.Slug">
-                                            @(!string.IsNullOrEmpty(category.ParentCategory.NameKey) ? L[category.ParentCategory.NameKey] : category.ParentCategory.Name)
+                                            @GetCategoryName(category.ParentCategory)
                                         </a>
                                     </li>
                                 }
-                                <li class="breadcrumb-item active" aria-current="page">@category?.Name</li>
+                                <li class="breadcrumb-item active" aria-current="page">@GetCategoryName(category)</li>
                             }
                             else if (ViewBag.SearchQuery != null)
                             {

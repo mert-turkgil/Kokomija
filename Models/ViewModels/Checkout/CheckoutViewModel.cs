@@ -86,5 +86,6 @@ namespace Kokomija.Models.ViewModels.Checkout
     public class CreateCheckoutSessionRequest
     {
         public string ShippingOption { get; set; } = "standard";
+        public string? CouponCode { get; set; }
     }
 }

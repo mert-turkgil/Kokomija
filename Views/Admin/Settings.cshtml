@@ -4,7 +4,7 @@
 }
 
 <div class="admin-dashboard">
-    <div class="container-fluid py-4">
+    <div class="container-xl py-4">
         <!-- Page Header -->
         <div class="row mb-4">
             <div class="welcome-card">
@@ -630,12 +630,34 @@
                                         <div class="settings-group">
                                             <h5>Maintenance Mode</h5>
                                             <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" id="maintenanceMode" disabled>
+                                                <input class="form-check-input" type="checkbox" id="maintenanceMode" 
+                                                       @(ViewBag.IsMaintenanceMode == true ? "checked" : "")
+                                                       onchange="toggleMaintenanceMode(this)">
                                                 <label class="form-check-label" for="maintenanceMode">
-                                                    Enable Maintenance Mode
+                                                    <strong id="maintenanceStatusText">
+                                                        @(ViewBag.IsMaintenanceMode == true ? "Maintenance Mode Active" : "Enable Maintenance Mode")
+                                                    </strong>
                                                 </label>
                                             </div>
-                                            <small class="text-muted">When enabled, only admins can access the site</small>
+                                            <small class="text-muted d-block">
+                                                When enabled, only admins can access the site. All cart items will be cleared.
+                                            </small>
+                                            @if (ViewBag.IsMaintenanceMode == true)
+                                            {
+                                                <div class="alert alert-warning mt-3 mb-0" role="alert">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                                    <strong>Site is currently in Maintenance Mode</strong>
+                                                    <p class="mb-0 mt-1">Regular users cannot access the website.</p>
+                                                    @if (!string.IsNullOrEmpty(ViewBag.MaintenanceReason))
+                                                    {
+                                                        <p class="mb-0 mt-1"><small><strong>Reason:</strong> @ViewBag.MaintenanceReason</small></p>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(ViewBag.MaintenanceScheduledReopen))
+                                                    {
+                                                        <p class="mb-0 mt-1"><small><strong>Scheduled Reopen:</strong> @ViewBag.MaintenanceScheduledReopen</small></p>
+                                                    }
+                                                </div>
+                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -1352,6 +1374,121 @@
                     closeButton: true,
                     positionClass: 'toast-top-right'
                 });
+            }
+        }
+
+        // Toggle Maintenance Mode
+        async function toggleMaintenanceMode(checkbox) {
+            const isEnabled = checkbox.checked;
+            const statusText = document.getElementById('maintenanceStatusText');
+            
+            // Show confirmation dialog
+            let confirmMessage;
+            if (isEnabled) {
+                confirmMessage = 'Are you sure you want to ENABLE Maintenance Mode?\n\n' +
+                                '⚠️ This will:\n' +
+                                '• Block all regular users from accessing the site\n' +
+                                '• Clear all shopping cart items\n' +
+                                '• Show maintenance page to visitors\n\n' +
+                                'Only admins will be able to access the site.';
+            } else {
+                confirmMessage = 'Are you sure you want to DISABLE Maintenance Mode?\n\n' +
+                                'The site will be accessible to all users again.';
+            }
+            
+            if (!confirm(confirmMessage)) {
+                checkbox.checked = !isEnabled;
+                return;
+            }
+            
+            // Show loading state
+            checkbox.disabled = true;
+            statusText.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+            
+            try {
+                let reason = null;
+                let reopenHours = null;
+                
+                if (isEnabled) {
+                    reason = prompt('Please enter a reason for maintenance (optional):');
+                    if (reason === null) {
+                        checkbox.checked = false;
+                        checkbox.disabled = false;
+                        statusText.textContent = 'Enable Maintenance Mode';
+                        return;
+                    }
+                    
+                    // Ask for reopen time in hours
+                    const hoursInput = prompt('How many hours until site reopens? (Default: 24 hours)\nEnter 0 for indefinite maintenance:', '24');
+                    if (hoursInput === null) {
+                        checkbox.checked = false;
+                        checkbox.disabled = false;
+                        statusText.textContent = 'Enable Maintenance Mode';
+                        return;
+                    }
+                    
+                    reopenHours = parseInt(hoursInput) || 24;
+                    if (reopenHours < 0) reopenHours = 24;
+                }
+                
+                const response = await fetch('@Url.Action("ToggleMaintenanceMode", "Admin")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({
+                        enable: isEnabled,
+                        reason: reason,
+                        reopenHours: reopenHours
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    checkbox.checked = result.isEnabled;
+                    statusText.textContent = result.isEnabled ? 'Maintenance Mode Active' : 'Enable Maintenance Mode';
+                    
+                    let message = result.message;
+                    if (result.scheduledReopen) {
+                        message += '<br><small>Scheduled reopen: ' + result.scheduledReopen + '</small>';
+                    }
+                    
+                    toastr.success(message, result.isEnabled ? '🔒 Maintenance Enabled' : '✅ Maintenance Disabled', {
+                        timeOut: 5000,
+                        closeButton: true,
+                        progressBar: true,
+                        positionClass: 'toast-top-right',
+                        escapeHtml: false
+                    });
+                    
+                    // Reload page after 2 seconds to show/hide alert
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    checkbox.checked = !isEnabled;
+                    statusText.textContent = !isEnabled ? 'Maintenance Mode Active' : 'Enable Maintenance Mode';
+                    
+                    toastr.error(result.message || 'Failed to toggle maintenance mode', 'Error', {
+                        timeOut: 4000,
+                        closeButton: true,
+                        positionClass: 'toast-top-right'
+                    });
+                }
+            } catch (error) {
+                console.error('Error toggling maintenance mode:', error);
+                checkbox.checked = !isEnabled;
+                statusText.textContent = !isEnabled ? 'Maintenance Mode Active' : 'Enable Maintenance Mode';
+                
+                toastr.error('An error occurred while toggling maintenance mode', 'Error', {
+                    timeOut: 4000,
+                    closeButton: true,
+                    positionClass: 'toast-top-right'
+                });
+            } finally {
+                checkbox.disabled = false;
             }
         }
     </script>

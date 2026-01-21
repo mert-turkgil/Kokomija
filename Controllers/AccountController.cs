@@ -45,8 +45,15 @@ namespace Kokomija.Controllers
         #region Login
 
         [HttpGet]
-        public async Task<IActionResult> Login(string? returnUrl = null, string? culture = null)
+        public async Task<IActionResult> Login(string? returnUrl = null, string? culture = null, string? error = null)
         {
+            // Handle OAuth error messages
+            if (!string.IsNullOrEmpty(error))
+            {
+                TempData["ErrorMessage"] = $"Authentication failed: {error}";
+                _logger.LogWarning("OAuth authentication error displayed: {Error}", error);
+            }
+            
             // Set culture if provided via route
             if (!string.IsNullOrEmpty(culture))
             {
@@ -141,6 +148,85 @@ namespace Kokomija.Controllers
 
             ModelState.AddModelError(string.Empty, "Invalid email or password.");
             return View(model);
+        }
+
+        /// <summary>
+        /// POST: Admin login during maintenance mode
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MaintenanceLogin(string email, string password, string? returnUrl = null)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                TempData["Error"] = "Email and password are required.";
+                return RedirectToAction("Maintenance", "Home", new { returnUrl });
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                TempData["Error"] = "Invalid credentials or insufficient permissions.";
+                return RedirectToAction("Maintenance", "Home", new { returnUrl });
+            }
+
+            // Check if user is admin or root
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Contains("Admin") && !roles.Contains("Root"))
+            {
+                TempData["Error"] = "Only administrators can access during maintenance mode.";
+                _logger.LogWarning("Non-admin user {Email} attempted to login during maintenance", email);
+                return RedirectToAction("Maintenance", "Home", new { returnUrl });
+            }
+
+            // Verify password
+            var result = await _signInManager.PasswordSignInAsync(
+                user.UserName ?? user.Email ?? string.Empty,
+                password,
+                isPersistent: true,
+                lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("Admin {Email} logged in during maintenance mode", email);
+                
+                // Clear all cart items (maintenance mode requirement)
+                await ClearAllCartsAsync();
+                
+                // Redirect to admin panel
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                
+                return RedirectToAction("Index", "Admin");
+            }
+
+            TempData["Error"] = "Invalid credentials or insufficient permissions.";
+            return RedirectToAction("Maintenance", "Home", new { returnUrl });
+        }
+
+        /// <summary>
+        /// Clear all cart items (called when maintenance mode is activated)
+        /// </summary>
+        private async Task ClearAllCartsAsync()
+        {
+            try
+            {
+                var allCarts = await _unitOfWork.Carts.GetAllAsync();
+                var cartsList = allCarts.ToList();
+                
+                if (cartsList.Any())
+                {
+                    _unitOfWork.Repository<Cart>().RemoveRange(cartsList);
+                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogInformation("All {Count} cart items cleared during maintenance mode activation", cartsList.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing cart items during maintenance mode");
+            }
         }
 
         #endregion
@@ -1080,112 +1166,118 @@ namespace Kokomija.Controllers
                 return RedirectToAction(nameof(Login), new { ReturnUrl = returnUrl });
             }
 
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
+            try
             {
-                _logger.LogWarning("External login info not available");
-                TempData["ErrorMessage"] = "External login information not available.";
-                return RedirectToAction(nameof(Login), new { ReturnUrl = returnUrl });
-            }
-
-            // Sign in the user with this external login provider if the user already has a login
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
-            
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User logged in with {Provider} provider", info.LoginProvider);
-                
-                // Update last login time
-                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                if (user != null)
+                var info = await _signInManager.GetExternalLoginInfoAsync();
+                if (info == null)
                 {
-                    user.LastLoginAt = DateTime.UtcNow;
-                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogWarning("External login info not available. Check OAuth configuration and callback URL.");
+                    _logger.LogWarning("Current request URL: {RequestUrl}", $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}");
+                    _logger.LogWarning("Available cookies: {Cookies}", string.Join(", ", Request.Cookies.Keys));
+                    TempData["ErrorMessage"] = "External login information not available. Please ensure your OAuth callback URL is correctly configured.";
+                    return RedirectToAction(nameof(Login), new { ReturnUrl = returnUrl });
                 }
 
-                return HandleLoginSuccess(returnUrl, popupMode);
-            }
+                _logger.LogInformation("External login info retrieved for provider: {Provider}, key: {ProviderKey}", info.LoginProvider, info.ProviderKey);
 
-            if (result.IsLockedOut)
-            {
-                _logger.LogWarning("User account locked out during external login");
-                return View("Lockout");
-            }
-            else
-            {
-                // Get email from external provider
-                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                if (string.IsNullOrEmpty(email))
-                {
-                    _logger.LogError("Email claim not received from external provider");
-                    TempData["ErrorMessage"] = "Email not provided by the external login provider.";
-                    return RedirectToAction(nameof(Login));
-                }
-
-                // Check if a user with this email already exists
-                var existingUser = await _userManager.FindByEmailAsync(email);
+                // Sign in the user with this external login provider if the user already has a login
+                var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
                 
-                if (existingUser != null)
+                if (result.Succeeded)
                 {
-                    // User exists - link the external login to the existing account
-                    var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
+                    _logger.LogInformation("User logged in with {Provider} provider", info.LoginProvider);
                     
-                    if (addLoginResult.Succeeded)
+                    // Update last login time
+                    var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                    if (user != null)
                     {
-                        _logger.LogInformation("Linked {Provider} login to existing account for {Email}", info.LoginProvider, email);
+                        user.LastLoginAt = DateTime.UtcNow;
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+
+                    return HandleLoginSuccess(returnUrl, popupMode);
+                }
+
+                if (result.IsLockedOut)
+                {
+                    _logger.LogWarning("User account locked out during external login");
+                    return View("Lockout");
+                }
+                else
+                {
+                    // Get email from external provider
+                    var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                    if (string.IsNullOrEmpty(email))
+                    {
+                        _logger.LogError("Email claim not received from external provider");
+                        TempData["ErrorMessage"] = "Email not provided by the external login provider.";
+                        return RedirectToAction(nameof(Login));
+                    }
+
+                    // Check if a user with this email already exists
+                    var existingUser = await _userManager.FindByEmailAsync(email);
+                    
+                    if (existingUser != null)
+                    {
+                        // User exists - link the external login to the existing account
+                        var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
                         
-                        // Update user info from external provider if missing
-                        var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
-                        var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
-                        var name = info.Principal.FindFirstValue(ClaimTypes.Name);
-                        
-                        // Extract birthday from claims (different providers use different claim types)
-                        var birthdayClaim = info.Principal.FindFirstValue(ClaimTypes.DateOfBirth) 
-                            ?? info.Principal.FindFirstValue("urn:google:birthday")
-                            ?? info.Principal.FindFirstValue("birthday");
-                        
-                        bool needsUpdate = false;
-                        
-                        // Update birthday if not set and available from provider
-                        if (!existingUser.Birthday.HasValue && !string.IsNullOrEmpty(birthdayClaim))
+                        if (addLoginResult.Succeeded)
                         {
-                            if (DateTime.TryParse(birthdayClaim, out var birthday))
+                            _logger.LogInformation("Linked {Provider} login to existing account for {Email}", info.LoginProvider, email);
+                            
+                            // Update user info from external provider if missing
+                            var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
+                            var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
+                            var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+                            
+                            // Extract birthday from claims (different providers use different claim types)
+                            var birthdayClaim = info.Principal.FindFirstValue(ClaimTypes.DateOfBirth) 
+                                ?? info.Principal.FindFirstValue("urn:google:birthday")
+                                ?? info.Principal.FindFirstValue("birthday");
+                            
+                            bool needsUpdate = false;
+                            
+                            // Update birthday if not set and available from provider
+                            if (!existingUser.Birthday.HasValue && !string.IsNullOrEmpty(birthdayClaim))
                             {
-                                existingUser.Birthday = birthday;
-                                needsUpdate = true;
-                                _logger.LogInformation("Updated birthday for existing user from {Provider}", info.LoginProvider);
+                                if (DateTime.TryParse(birthdayClaim, out var birthday))
+                                {
+                                    existingUser.Birthday = birthday;
+                                    needsUpdate = true;
+                                    _logger.LogInformation("Updated birthday for existing user from {Provider}", info.LoginProvider);
+                                }
                             }
-                        }
-                        
-                        // Update first name if empty
-                        if (string.IsNullOrEmpty(existingUser.FirstName) && !string.IsNullOrEmpty(firstName))
-                        {
-                            existingUser.FirstName = firstName;
-                            needsUpdate = true;
-                        }
-                        
-                        // Update last name if empty
-                        if (string.IsNullOrEmpty(existingUser.LastName) && !string.IsNullOrEmpty(lastName))
-                        {
-                            existingUser.LastName = lastName;
-                            needsUpdate = true;
-                        }
-                        
-                        // If first/last name still empty, try to split full name
-                        if (string.IsNullOrEmpty(existingUser.FirstName) && !string.IsNullOrEmpty(name))
-                        {
-                            var nameParts = name.Split(' ', 2);
-                            existingUser.FirstName = nameParts[0];
-                            existingUser.LastName = nameParts.Length > 1 ? nameParts[1] : "";
-                            needsUpdate = true;
-                        }
-                        
-                        // Mark email as confirmed (since external provider verified it)
-                        if (!existingUser.EmailConfirmed)
-                        {
-                            existingUser.EmailConfirmed = true;
-                            needsUpdate = true;
-                        }
+                            
+                            // Update first name if empty
+                            if (string.IsNullOrEmpty(existingUser.FirstName) && !string.IsNullOrEmpty(firstName))
+                            {
+                                existingUser.FirstName = firstName;
+                                needsUpdate = true;
+                            }
+                            
+                            // Update last name if empty
+                            if (string.IsNullOrEmpty(existingUser.LastName) && !string.IsNullOrEmpty(lastName))
+                            {
+                                existingUser.LastName = lastName;
+                                needsUpdate = true;
+                            }
+                            
+                            // If first/last name still empty, try to split full name
+                            if (string.IsNullOrEmpty(existingUser.FirstName) && !string.IsNullOrEmpty(name))
+                            {
+                                var nameParts = name.Split(' ', 2);
+                                existingUser.FirstName = nameParts[0];
+                                existingUser.LastName = nameParts.Length > 1 ? nameParts[1] : "";
+                                needsUpdate = true;
+                            }
+                            
+                            // Mark email as confirmed (since external provider verified it)
+                            if (!existingUser.EmailConfirmed)
+                            {
+                                existingUser.EmailConfirmed = true;
+                                needsUpdate = true;
+                            }
                         
                         // Update last login time
                         existingUser.LastLoginAt = DateTime.UtcNow;
@@ -1318,6 +1410,13 @@ namespace Kokomija.Controllers
 
                 TempData["ErrorMessage"] = "Failed to create account. Please try again or use a different login method.";
                 return RedirectToAction(nameof(Login));
+            }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception during external login callback: {Message}", ex.Message);
+                TempData["ErrorMessage"] = $"Authentication failed: {ex.Message}. Please try again.";
+                return RedirectToAction(nameof(Login), new { ReturnUrl = returnUrl });
             }
         }
 
