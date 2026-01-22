@@ -2653,9 +2653,126 @@ public class AdminController : Controller
                 return Json(new { success = false, message = "Shipping provider not found." });
             }
 
-            if (string.IsNullOrEmpty(provider.ApiKey) || string.IsNullOrEmpty(provider.ApiSecret))
+            // Test real API connection for InPost
+            if (provider.Code.StartsWith("inpost"))
             {
-                return Json(new { success = false, message = "API credentials are not configured for this provider." });
+                var token = _configuration[$"InPost:ShipXApiToken"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Json(new { success = false, message = "InPost API token not found in configuration." });
+                }
+
+                try
+                {
+                    using var client = new HttpClient();
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    
+                    // Test InPost API - Get organization details
+                    var response = await client.GetAsync("https://api-shipx-pl.easypack24.net/v1/organizations");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        return Json(new { 
+                            success = true, 
+                            message = $"✓ Successfully connected to {provider.Name} API\n" +
+                                     $"API Base URL: {provider.ApiBaseUrl}\n" +
+                                     $"Authentication: Bearer Token\n" +
+                                     $"Status: {(int)response.StatusCode} {response.ReasonPhrase}\n" +
+                                     $"Connection: ACTIVE"
+                        });
+                    }
+                    else
+                    {
+                        return Json(new { 
+                            success = false, 
+                            message = $"✗ Failed to connect to {provider.Name} API\n" +
+                                     $"Status: {(int)response.StatusCode} {response.ReasonPhrase}\n" +
+                                     $"Error: {await response.Content.ReadAsStringAsync()}"
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = $"InPost API Error: {ex.Message}" });
+                }
+            }
+
+            // Test real API connection for DHL
+            if (provider.Code.StartsWith("dhl"))
+            {
+                var apiKey = _configuration["DHL:ApiKey"];
+                var secretKey = _configuration["DHL:SecretKey"];
+                
+                if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(secretKey))
+                {
+                    return Json(new { success = false, message = "DHL API credentials not found in configuration." });
+                }
+
+                try
+                {
+                    using var client = new HttpClient();
+                    var credentials = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{apiKey}:{secretKey}"));
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+                    
+                    // Test DHL API - Get tracking capabilities
+                    var response = await client.GetAsync("https://express.api.dhl.com/mydhlapi/test/rates");
+                    
+                    if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        // BadRequest is OK - it means auth worked but we need proper payload
+                        return Json(new { 
+                            success = true, 
+                            message = $"✓ Successfully authenticated with {provider.Name} API\n" +
+                                     $"API Base URL: {provider.ApiBaseUrl}\n" +
+                                     $"Authentication: Basic Auth\n" +
+                                     $"Status: {(int)response.StatusCode} {response.ReasonPhrase}\n" +
+                                     $"Connection: ACTIVE\n" +
+                                     $"Note: Credentials are valid. Ready for shipment operations."
+                        });
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        return Json(new { 
+                            success = false, 
+                            message = $"✗ Authentication failed with {provider.Name} API\n" +
+                                     $"Status: 401 Unauthorized\n" +
+                                     $"Error: Invalid API credentials. Please check your API Key and Secret."
+                        });
+                    }
+                    else
+                    {
+                        return Json(new { 
+                            success = false, 
+                            message = $"✗ Failed to connect to {provider.Name} API\n" +
+                                     $"Status: {(int)response.StatusCode} {response.ReasonPhrase}\n" +
+                                     $"Error: {await response.Content.ReadAsStringAsync()}"
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = $"DHL API Error: {ex.Message}" });
+                }
+            }
+
+            // For Poczta Polska - no API (tracking only)
+            if (provider.Code == "poczta_polska")
+            {
+                return Json(new { 
+                    success = true, 
+                    message = $"ℹ {provider.Name} Status\n" +
+                             $"Tracking URL: {provider.TrackingUrlTemplate}\n" +
+                             $"Note: Poczta Polska does not require API authentication.\n" +
+                             $"Tracking is available via their public tracking page.\n" +
+                             $"Status: READY"
+                });
+            }
+
+            // For custom providers with API credentials
+            if (string.IsNullOrEmpty(provider.ApiKey))
+            {
+                return Json(new { success = false, message = "API credentials are not configured for this provider. Please add API Key to test the connection." });
             }
 
             var status = await _carrierApiService.CheckCarrierStatusAsync(provider.Code);
@@ -2664,14 +2781,16 @@ public class AdminController : Controller
             {
                 return Json(new { 
                     success = true, 
-                    message = $"Successfully connected to {provider.Name} API. Last successful call: {status.LastSuccessfulCall?.ToString("g") ?? "N/A"}" 
+                    message = $"✓ Successfully connected to {provider.Name} API\n" +
+                             $"Last successful call: {status.LastSuccessfulCall?.ToString("g") ?? "N/A"}\n" +
+                             $"Status: ACTIVE"
                 });
             }
             else
             {
                 return Json(new { 
                     success = false, 
-                    message = status.ErrorMessage ?? $"Failed to connect to {provider.Name} API. Please verify your credentials." 
+                    message = status.ErrorMessage ?? $"✗ Failed to connect to {provider.Name} API. Please verify your credentials." 
                 });
             }
         }

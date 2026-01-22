@@ -788,14 +788,45 @@ namespace Kokomija.Controllers
 
         private async Task<IEnumerable<string>> GetAvailableCouponsForUser()
         {
-            // Get all active coupons - show them all to users
+            // Get all active coupons
             var activeCoupons = await _unitOfWork.Coupons.GetActiveCouponsAsync();
+            
+            // Get current user ID if authenticated
+            string? userId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            }
 
-            var couponCodes = activeCoupons
-                .Select(c => c.Code)
-                .ToList();
+            var availableCouponCodes = new List<string>();
 
-            return couponCodes;
+            foreach (var coupon in activeCoupons)
+            {
+                // Check if coupon is for a specific user
+                if (coupon.UserId != null)
+                {
+                    // Only show if it's for this specific user
+                    if (userId != coupon.UserId)
+                        continue;
+                }
+
+                // Check per-user usage limit
+                if (!string.IsNullOrEmpty(userId) && coupon.UsageLimitPerUser.HasValue)
+                {
+                    var userUsageCount = await _unitOfWork.Coupons.GetUserUsageCountAsync(coupon.Id, userId);
+                    if (userUsageCount >= coupon.UsageLimitPerUser.Value)
+                        continue; // User has already used this coupon the maximum number of times
+                }
+
+                // Check global usage limit
+                if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
+                    continue; // Coupon has been used the maximum number of times globally
+
+                // Coupon is available for this user
+                availableCouponCodes.Add(coupon.Code);
+            }
+
+            return availableCouponCodes;
         }
         
         /// <summary>

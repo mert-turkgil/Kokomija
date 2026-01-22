@@ -50,8 +50,15 @@
         }
 
         setTheme(theme, save = true) {
-            // Update DOM
+            // Update DOM - Bootstrap 5 theme attribute
+            const html = document.documentElement;
+            html.setAttribute('data-bs-theme', theme);
+            html.classList.remove(THEME_DARK, THEME_LIGHT);
+            html.classList.add(theme);
+            
+            // Also set on body for backwards compatibility
             document.body.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-bs-theme', theme);
 
             // Update toggle state
             if (this.themeToggle) {
@@ -74,7 +81,7 @@
         }
 
         toggleTheme() {
-            const currentTheme = document.body.getAttribute('data-theme');
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
             const newTheme = currentTheme === THEME_DARK ? THEME_LIGHT : THEME_DARK;
             this.setTheme(newTheme);
         }

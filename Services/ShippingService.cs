@@ -148,18 +148,34 @@ namespace Kokomija.Services
         {
             try
             {
-                var provider = await _context.ShippingProviders.FindAsync(id);
+                var provider = await _context.ShippingProviders
+                    .Include(p => p.ShippingRates)
+                    .FirstOrDefaultAsync(p => p.Id == id);
+                    
                 if (provider == null)
                     return (false, "Shipping provider not found.");
 
                 provider.IsActive = !provider.IsActive;
                 provider.UpdatedAt = DateTime.UtcNow;
 
-                await _context.SaveChangesAsync();
+                // Cascade status to all associated rates
+                var updatedRates = new List<int>();
+                foreach (var rate in provider.ShippingRates)
+                {
+                    rate.IsActive = provider.IsActive;
+                    rate.UpdatedAt = DateTime.UtcNow;
+                    updatedRates.Add(rate.Id);
+                    _context.Entry(rate).State = EntityState.Modified;
+                }
+
+                _context.Entry(provider).State = EntityState.Modified;
+                var changes = await _context.SaveChangesAsync();
 
                 var status = provider.IsActive ? "activated" : "deactivated";
-                _logger.LogInformation("Shipping provider {ProviderId} {Status}", id, status);
-                return (true, $"Shipping provider {status} successfully.");
+                var ratesCount = provider.ShippingRates.Count;
+                _logger.LogInformation("Shipping provider {ProviderId} {Status}. Updated {RatesCount} rates (IDs: {RateIds}). Total changes: {Changes}", 
+                    id, status, ratesCount, string.Join(", ", updatedRates), changes);
+                return (true, $"Shipping provider {status}! {ratesCount} rate(s) also {status} (IDs: {string.Join(", ", updatedRates)}).");
             }
             catch (Exception ex)
             {
@@ -606,6 +622,56 @@ namespace Kokomija.Services
                 return null;
 
             return shipment.ShippingProvider.TrackingUrlTemplate.Replace("{trackingNumber}", shipment.TrackingNumber);
+        }
+
+        // ==================== Configuration Sync ====================
+        
+        public async Task SyncApiKeysFromConfigurationAsync(IConfiguration configuration)
+        {
+            try
+            {
+                // Sync InPost credentials
+                var inpostProviders = await _context.ShippingProviders
+                    .Where(sp => sp.Code.StartsWith("inpost"))
+                    .ToListAsync();
+
+                foreach (var provider in inpostProviders)
+                {
+                    if (string.IsNullOrEmpty(provider.ApiKey))
+                    {
+                        provider.ApiKey = configuration["InPost:ShipXApiToken"];
+                        provider.ApiSecret = configuration["InPost:PointsApiToken"];
+                        provider.ApiBaseUrl = configuration["InPost:BaseUrl"];
+                        provider.UpdatedAt = DateTime.UtcNow;
+                        _logger.LogInformation("Synced InPost API credentials for provider {ProviderId}", provider.Id);
+                    }
+                }
+
+                // Sync DHL credentials
+                var dhlProviders = await _context.ShippingProviders
+                    .Where(sp => sp.Code.StartsWith("dhl"))
+                    .ToListAsync();
+
+                foreach (var provider in dhlProviders)
+                {
+                    if (string.IsNullOrEmpty(provider.ApiKey))
+                    {
+                        provider.ApiKey = configuration["DHL:ApiKey"];
+                        provider.ApiSecret = configuration["DHL:SecretKey"];
+                        provider.ApiBaseUrl = configuration["DHL:BaseUrl"];
+                        provider.ApiAccountNumber = configuration["DHL:AccountNumber"];
+                        provider.UpdatedAt = DateTime.UtcNow;
+                        _logger.LogInformation("Synced DHL API credentials for provider {ProviderId}", provider.Id);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("API keys sync completed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error syncing API keys from configuration");
+            }
         }
     }
 }

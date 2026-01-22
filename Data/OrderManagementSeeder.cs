@@ -8,11 +8,12 @@ namespace Kokomija.Data
         public static void SeedShippingProviders(this ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ShippingProvider>().HasData(
+                // InPost - 2 variants
                 new ShippingProvider
                 {
                     Id = 1,
-                    Name = "InPost",
-                    Code = "inpost",
+                    Name = "InPost Paczkomat",
+                    Code = "inpost_paczkomat",
                     IsActive = true,
                     TrackingUrlTemplate = "https://inpost.pl/sledzenie-przesylek?number={trackingNumber}",
                     SupportedCountries = "[\"PL\"]",
@@ -23,39 +24,41 @@ namespace Kokomija.Data
                 new ShippingProvider
                 {
                     Id = 2,
-                    Name = "DHL",
-                    Code = "dhl",
+                    Name = "InPost Kurier",
+                    Code = "inpost_courier",
                     IsActive = true,
-                    TrackingUrlTemplate = "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}",
-                    SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\"]",
-                    EstimatedDeliveryDays = 3,
+                    TrackingUrlTemplate = "https://inpost.pl/sledzenie-przesylek?number={trackingNumber}",
+                    SupportedCountries = "[\"PL\"]",
+                    EstimatedDeliveryDays = 1,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
+                // DHL - 2 variants
                 new ShippingProvider
                 {
                     Id = 3,
-                    Name = "UPS",
-                    Code = "ups",
+                    Name = "DHL Express",
+                    Code = "dhl_express",
                     IsActive = true,
-                    TrackingUrlTemplate = "https://www.ups.com/track?tracknum={trackingNumber}",
-                    SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\"]",
-                    EstimatedDeliveryDays = 3,
+                    TrackingUrlTemplate = "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}",
+                    SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\",\"FR\",\"IT\"]",
+                    EstimatedDeliveryDays = 2,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
                 new ShippingProvider
                 {
                     Id = 4,
-                    Name = "FedEx",
-                    Code = "fedex",
+                    Name = "DHL Standard",
+                    Code = "dhl_standard",
                     IsActive = true,
-                    TrackingUrlTemplate = "https://www.fedex.com/fedextrack/?trknbr={trackingNumber}",
-                    SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\"]",
-                    EstimatedDeliveryDays = 3,
+                    TrackingUrlTemplate = "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}",
+                    SupportedCountries = "[\"PL\",\"DE\",\"US\",\"GB\",\"FR\",\"IT\"]",
+                    EstimatedDeliveryDays = 4,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
+                // Poczta Polska - 1 variant
                 new ShippingProvider
                 {
                     Id = 5,
@@ -74,7 +77,7 @@ namespace Kokomija.Data
         public static void SeedShippingRates(this ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ShippingRate>().HasData(
-                // InPost rates
+                // InPost Paczkomat rates
                 new ShippingRate
                 {
                     Id = 1,
@@ -90,11 +93,12 @@ namespace Kokomija.Data
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
+                // InPost Kurier rates
                 new ShippingRate
                 {
                     Id = 2,
-                    ShippingProviderId = 1,
-                    Name = "InPost Courier",
+                    ShippingProviderId = 2,
+                    Name = "InPost Kurier",
                     Description = "Home delivery by InPost courier",
                     BasePrice = 14.99m,
                     FreeShippingThreshold = 150.00m,
@@ -105,24 +109,11 @@ namespace Kokomija.Data
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
-                // DHL rates
+                // DHL Express rates
                 new ShippingRate
                 {
                     Id = 3,
-                    ShippingProviderId = 2,
-                    Name = "DHL Standard",
-                    Description = "Standard international delivery",
-                    BasePrice = 29.99m,
-                    MinDeliveryDays = 3,
-                    MaxDeliveryDays = 5,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new ShippingRate
-                {
-                    Id = 4,
-                    ShippingProviderId = 2,
+                    ShippingProviderId = 3,
                     Name = "DHL Express",
                     Description = "Express international delivery",
                     BasePrice = 49.99m,
@@ -132,7 +123,21 @@ namespace Kokomija.Data
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 },
-                // Poczta Polska
+                // DHL Standard rates
+                new ShippingRate
+                {
+                    Id = 4,
+                    ShippingProviderId = 4,
+                    Name = "DHL Standard",
+                    Description = "Standard international delivery",
+                    BasePrice = 29.99m,
+                    MinDeliveryDays = 3,
+                    MaxDeliveryDays = 5,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                },
+                // Poczta Polska rates
                 new ShippingRate
                 {
                     Id = 5,

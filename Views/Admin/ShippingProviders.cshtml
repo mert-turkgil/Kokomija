@@ -137,13 +137,16 @@
                                             <td><small>@provider.CreatedAt.ToString("yyyy-MM-dd")</small></td>
                                             <td>
                                                 <div class="btn-group btn-group-sm" role="group">
-                                                    <button type="button" class="btn btn-outline-primary" onclick="editProvider(@provider.Id)" title="Edit">
+                                                    <button type="button" class="btn btn-outline-primary" onclick="editProvider(@provider.Id)" data-bs-toggle="tooltip" title="Edit provider">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-@(provider.IsActive ? "warning" : "success")" onclick="toggleProvider(@provider.Id)" title="@(provider.IsActive ? "Deactivate" : "Activate")">
+                                                    <button type="button" class="btn btn-outline-info" onclick="testConnection(@provider.Id)" data-bs-toggle="tooltip" title="Test API connection">
+                                                        <i class="bi bi-wifi"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-@(provider.IsActive ? "warning" : "success")" onclick="toggleProvider(@provider.Id)" data-bs-toggle="tooltip" title="@(provider.IsActive ? "Deactivate" : "Activate")">
                                                         <i class="bi bi-@(provider.IsActive ? "pause" : "play")-circle"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-danger" onclick="deleteProvider(@provider.Id)" title="Delete">
+                                                    <button type="button" class="btn btn-outline-danger" onclick="deleteProvider(@provider.Id)" data-bs-toggle="tooltip" title="Delete provider">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -279,7 +282,196 @@
 </div>
 
 @section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap5.min.css">
+    
     <style>
+        /* Professional enhancements */
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .welcome-card h1 {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .welcome-card p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .table thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+        
+        .btn-group-sm .btn {
+            padding: 0.4rem 0.6rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-group-sm .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .badge {
+            padding: 0.35rem 0.65rem;
+            font-weight: 500;
+            border-radius: 6px;
+        }
+        
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        /* DataTables Professional Styling */
+        .dataTables_wrapper .dataTables_length {
+            margin-bottom: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.375rem 2rem 0.375rem 0.75rem;
+            background: white;
+            font-size: 0.875rem;
+            margin: 0 0.5rem;
+        }
+        
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            margin-left: 0.5rem;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        table.dataTable {
+            border-collapse: separate !important;
+            border-spacing: 0;
+        }
+        
+        table.dataTable thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 1rem 0.75rem;
+            color: #495057;
+        }
+        
+        table.dataTable thead th:first-child {
+            border-top-left-radius: 8px;
+        }
+        
+        table.dataTable thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+        
+        table.dataTable tbody td {
+            padding: 0.875rem 0.75rem;
+            border-bottom: 1px solid #f1f3f5;
+            vertical-align: middle;
+        }
+        
+        table.dataTable tbody tr {
+            transition: all 0.2s;
+        }
+        
+        table.dataTable tbody tr:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+            transform: scale(1.001);
+        }
+        
+        .dataTables_wrapper .dataTables_info {
+            padding-top: 1rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate {
+            padding-top: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.375rem 0.75rem;
+            margin: 0 2px;
+            background: white;
+            color: #495057 !important;
+            transition: all 0.2s;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+            background: white;
+            color: #495057 !important;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .stat-card-small {
             background: white;
             border-radius: 10px;
@@ -303,10 +495,144 @@
             margin: 0;
             font-weight: 600;
         }
+        
+        /* Dark theme adjustments */
+        [data-bs-theme="dark"] .welcome-card {
+            background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
+        }
+        
+        [data-bs-theme="dark"] code {
+            background: #374151;
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .table thead th {
+            border-bottom-color: #374151;
+        }
+        
+        [data-bs-theme="dark"] .stat-card-small {
+            background: #1e293b;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        [data-bs-theme="dark"] .stat-card-small h6 {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        
+        [data-bs-theme="dark"] .modal-content {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        
+        [data-bs-theme="dark"] .modal-header,
+        [data-bs-theme="dark"] .modal-footer {
+            border-color: #334155;
+        }
+        
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background-color: #0f172a;
+            border-color: #60a5fa;
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] label {
+            color: #cbd5e1;
+        }
+        
+        /* DataTables dark theme */
+        [data-bs-theme="dark"] .dataTables_wrapper {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_length,
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter,
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_info,
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate {
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #4c51bf !important;
+            box-shadow: 0 0 0 3px rgba(76, 81, 191, 0.2) !important;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_length select {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        
+        [data-bs-theme="dark"] table.dataTable thead th {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+            color: #e2e8f0 !important;
+            border-bottom: 2px solid #475569 !important;
+        }
+        
+        [data-bs-theme="dark"] table.dataTable tbody tr {
+            background-color: transparent !important;
+            color: #e2e8f0 !important;
+        }
+        
+        [data-bs-theme="dark"] table.dataTable tbody tr:hover {
+            background: linear-gradient(135deg, rgba(76, 81, 191, 0.1) 0%, rgba(85, 60, 154, 0.1) 100%) !important;
+        }
+        
+        [data-bs-theme="dark"] table.dataTable tbody td {
+            border-bottom-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%) !important;
+            color: white !important;
+            border-color: #4c51bf !important;
+            box-shadow: 0 2px 8px rgba(76, 81, 191, 0.3) !important;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%) !important;
+            color: white !important;
+            border-color: #4c51bf !important;
+            box-shadow: 0 2px 8px rgba(76, 81, 191, 0.3) !important;
+        }
+        
+        [data-bs-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+            background: #0f172a !important;
+            color: #e2e8f0 !important;
+            box-shadow: none !important;
+        }
     </style>
 }
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap5.min.js"></script>
+    
     <script>
         let isEditMode = false;
 
@@ -395,6 +721,8 @@
             document.getElementById('providerCode').disabled = true;
             document.getElementById('trackingUrlTemplate').value = providerData.trackingUrlTemplate || '';
             document.getElementById('supportedCountries').value = providerData.supportedCountries || '';
+            document.getElementById('apiKey').value = providerData.apiKey || '';
+            document.getElementById('apiSecret').value = providerData.apiSecret || '';
             document.getElementById('isActiveContainer').style.display = 'block';
             document.getElementById('isActive').checked = providerData.isActive;
             document.getElementById('apiDocsSection').classList.add('d-none');
@@ -446,7 +774,7 @@
         }
 
         async function toggleProvider(id) {
-            if (!confirm('Are you sure you want to toggle this provider status?')) return;
+            if (!confirm('Are you sure you want to toggle this provider status? This will also affect all associated shipping rates.')) return;
 
             try {
                 const response = await fetch(`/Admin/ToggleShippingProvider?id=${id}`, {
@@ -456,6 +784,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    alert(result.message); // Show detailed success message
                     location.reload();
                 } else {
                     alert('Error: ' + result.message);
@@ -526,11 +855,28 @@
 
         // Initialize DataTable
         $(document).ready(function() {
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
             if ($.fn.DataTable) {
                 $('#providersTable').DataTable({
                     order: [[0, 'desc']],
-                    pageLength: 25,
-                    responsive: true
+                    pageLength: 10,
+                    responsive: true,
+                    language: {
+                        search: "<i class='bi bi-search'></i> Search:",
+                        lengthMenu: "Show _MENU_ providers",
+                        info: "Showing _START_ to _END_ of _TOTAL_ providers",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "<i class='bi bi-chevron-right'></i>",
+                            previous: "<i class='bi bi-chevron-left'></i>"
+                        }
+                    }
                 });
             }
         });

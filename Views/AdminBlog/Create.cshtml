@@ -276,6 +276,20 @@
     <script src="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.umd.js"></script>
     <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.css" />
     
+    <style>
+        /* CKEditor custom styling */
+        .ck-editor__editable {
+            min-height: 500px !important;
+            resize: vertical !important;
+            overflow-y: auto !important;
+        }
+        
+        /* Dark theme breadcrumb fix */
+        [data-bs-theme="dark"] .breadcrumb-item + .breadcrumb-item::before {
+            color: rgba(255, 255, 255, 0.75) !important;
+        }
+    </style>
+    
     <script>
         const {
             ClassicEditor,

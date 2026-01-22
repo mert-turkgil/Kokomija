@@ -240,7 +240,12 @@
                         @if (firstCategory != null)
                         {
                             <div class="nav-item dropdown dropdown-hover">
-                                <a class="nav-link dropdown-toggle fw-bold fs-5" href="#" id="firstCategoryDropdown" role="button" 
+                                <a class="nav-link dropdown-toggle fw-bold fs-5" 
+                                   asp-controller="Product" 
+                                   asp-action="Category" 
+                                   asp-route-slug="@firstCategory.Slug" 
+                                   id="firstCategoryDropdown" 
+                                   role="button" 
                                    aria-expanded="false">
                                     @if (!string.IsNullOrEmpty(firstCategory.ImageUrl))
                                     {
@@ -283,7 +288,12 @@
                         @if (secondCategory != null)
                         {
                             <div class="nav-item dropdown dropdown-hover">
-                                <a class="nav-link dropdown-toggle fw-bold fs-5" href="#" id="secondCategoryDropdown" role="button" 
+                                <a class="nav-link dropdown-toggle fw-bold fs-5" 
+                                   asp-controller="Product" 
+                                   asp-action="Category" 
+                                   asp-route-slug="@secondCategory.Slug" 
+                                   id="secondCategoryDropdown" 
+                                   role="button" 
                                    aria-expanded="false">
                                     @if (!string.IsNullOrEmpty(secondCategory.ImageUrl))
                                     {
@@ -628,6 +638,7 @@
         }
     </script>
     <script src="~/js/theme.js" asp-append-version="true"></script>
+    <script src="~/js/navbar-dropdown.js" asp-append-version="true"></script>
     <script src="~/js/main.js" asp-append-version="true"></script>
     <script src="~/js/cart.js" asp-append-version="true"></script>
     <script>

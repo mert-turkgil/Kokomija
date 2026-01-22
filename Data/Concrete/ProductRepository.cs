@@ -84,7 +84,7 @@ namespace Kokomija.Data.Concrete
             var products = await _dbSet
                 .Where(p => p.IsActive)
                 .Include(p => p.Category)
-                    .ThenInclude(c => c.Translations)
+                    .ThenInclude(c => c!.Translations)
                 .Include(p => p.Translations)
                 .Include(p => p.Images.Where(i => i.IsPrimary))
                 .ToListAsync();
@@ -138,6 +138,7 @@ namespace Kokomija.Data.Concrete
             var allProducts = await _dbSet
                 .Include(p => p.Translations)
                 .Include(p => p.Category)
+                    .ThenInclude(c => c!.Translations)
                 .Include(p => p.Images.OrderBy(i => i.DisplayOrder))
                     .ThenInclude(i => i.Color)
                 .Include(p => p.Variants)
@@ -150,6 +151,8 @@ namespace Kokomija.Data.Concrete
                     .ThenInclude(ps => ps.Size)
                 .Include(p => p.Reviews.Where(r => r.IsVisible).OrderByDescending(r => r.CreatedAt))
                     .ThenInclude(r => r.User)
+                .Include(p => p.Reviews.Where(r => r.IsVisible).OrderByDescending(r => r.CreatedAt))
+                    .ThenInclude(r => r.AdminUser)
                 .ToListAsync();
             
             // Find product by matching any translation slug (case-insensitive)

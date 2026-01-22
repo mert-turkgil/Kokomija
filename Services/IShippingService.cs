@@ -11,6 +11,7 @@ namespace Kokomija.Services
         Task<(bool Success, string Message)> UpdateProviderAsync(int id, UpdateShippingProviderDto dto);
         Task<(bool Success, string Message)> DeleteProviderAsync(int id);
         Task<(bool Success, string Message)> ToggleProviderStatusAsync(int id);
+        Task SyncApiKeysFromConfigurationAsync(IConfiguration configuration);
 
         // Shipping Rates
         Task<List<ShippingRateDto>> GetAllRatesAsync();

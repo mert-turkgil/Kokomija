@@ -531,6 +531,8 @@ app.MapControllerRoute(
 using (var scope = app.Services.CreateScope())
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    // Sync shipping rates with Stripe
     try
     {
         logger.LogInformation("Syncing shipping rates with Stripe on startup...");
@@ -542,6 +544,21 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogError(ex, "Failed to sync shipping rates with Stripe on startup");
         // Don't fail the app startup if shipping sync fails
+    }
+    
+    // Sync shipping provider API keys from configuration
+    try
+    {
+        logger.LogInformation("Syncing shipping provider API keys from configuration...");
+        var shippingService = scope.ServiceProvider.GetRequiredService<IShippingService>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        await shippingService.SyncApiKeysFromConfigurationAsync(configuration);
+        logger.LogInformation("API keys sync completed successfully");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to sync API keys from configuration");
+        // Don't fail the app startup if API key sync fails
     }
 }
 

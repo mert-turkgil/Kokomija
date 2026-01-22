@@ -236,37 +236,80 @@
   
   // Dropdown menu
   .dropdown-menu {
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
     border-radius: $border-radius-lg;
-    padding: 0.5rem;
+    padding: 0.75rem;
     margin-top: 0.5rem;
-    animation: fadeInUp 0.3s ease;
     position: absolute;
     top: 100%;
     z-index: 1050;
+    min-width: 220px;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.98);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    
+    // Show state (used by JavaScript and CSS hover)
+    &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      display: block;
+    }
     
     [data-theme="dark"] & {
-      background-color: $dark-surface;
-      border-color: $dark-border;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      background: rgba(30, 35, 45, 0.98);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     }
     
     .dropdown-item {
-      padding: 0.625rem 1rem;
+      padding: 0.75rem 1.25rem;
       border-radius: $border-radius;
-      font-size: 0.9rem;
-      transition: $transition-fast;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 0;
+        background: linear-gradient(135deg, $primary, lighten($primary, 15%));
+        border-radius: 0 2px 2px 0;
+        transition: height 0.2s ease;
+      }
       
       &:hover,
       &:focus {
-        background-color: rgba($primary, 0.1);
+        background: linear-gradient(135deg, rgba($primary, 0.08), rgba($primary, 0.12));
         color: $primary;
+        padding-left: 1.5rem;
+        transform: translateX(2px);
+        
+        &::before {
+          height: 70%;
+        }
       }
       
       &.active {
-        background-color: $primary;
+        background: linear-gradient(135deg, $primary, darken($primary, 5%));
         color: $white;
+        font-weight: 600;
+        
+        &::before {
+          height: 70%;
+          background: $white;
+        }
       }
       
       [data-theme="dark"] & {
@@ -274,8 +317,12 @@
         
         &:hover,
         &:focus {
-          background-color: rgba($primary-dark, 0.2);
+          background: linear-gradient(135deg, rgba($primary-dark, 0.15), rgba($primary-dark, 0.25));
           color: $primary-dark;
+        }
+        
+        &.active {
+          background: linear-gradient(135deg, $primary-dark, darken($primary-dark, 5%));
         }
       }
     }
@@ -294,23 +341,64 @@
   .dropdown-hover {
     position: relative;
     
+    // Keep dropdown visible when hovering over parent or menu (CSS fallback + JS enhancement)
     &:hover > .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
       display: block;
+      pointer-events: auto;
+    }
+    
+    > .dropdown-menu:hover {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      display: block;
+      pointer-events: auto;
     }
     
     .dropdown-toggle::after {
       content: none;
     }
     
-    // Create a bridge between the toggle and dropdown to prevent closing
+    .dropdown-menu {
+      pointer-events: auto;
+      
+      a {
+        pointer-events: auto;
+        cursor: pointer;
+      }
+    }
+    
+    // Create a large invisible bridge area for smooth mouse movement
+    &::before {
+      content: '';
+      position: absolute;
+      left: -10px;
+      right: -10px;
+      bottom: -1.5rem;
+      height: 2rem;
+      display: none;
+      pointer-events: auto;
+      z-index: 1049;
+    }
+    
+    &:hover::before {
+      display: block;
+    }
+    
+    // Additional hover area below the toggle
     &::after {
       content: '';
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 0.5rem;
+      height: 1.5rem;
       display: none;
+      pointer-events: auto;
+      z-index: 1049;
     }
     
     &:hover::after {
