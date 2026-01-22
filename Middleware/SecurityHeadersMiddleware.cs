@@ -59,7 +59,7 @@ namespace Kokomija.Middleware
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.ckeditor.com; " +
                 "img-src 'self' data: https: blob:; " +
                 "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com https://fonts.googleapis.com; " +
-                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://accounts.google.com https://www.facebook.com https://graph.facebook.com wss://localhost:* ws://localhost:*; " +
+                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://accounts.google.com https://www.facebook.com https://graph.facebook.com wss://localhost:* ws://localhost:*; " +
                 "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com https://accounts.google.com https://www.facebook.com; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +

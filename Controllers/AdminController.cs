@@ -2328,6 +2328,47 @@ public class AdminController : Controller
         }
     }
 
+    /// <summary>
+    /// POST: Update category order and parent via drag-and-drop (AJAX)
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateCategoryOrder([FromBody] UpdateCategoryOrderDto dto)
+    {
+        try
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(dto.CategoryId);
+            if (category == null)
+            {
+                return Json(new { success = false, message = "Category not found" });
+            }
+
+            // Update parent if changed
+            if (dto.ParentCategoryId.HasValue)
+            {
+                category.ParentCategoryId = dto.ParentCategoryId.Value;
+            }
+            else
+            {
+                category.ParentCategoryId = null;
+            }
+
+            // Update display order
+            category.DisplayOrder = dto.DisplayOrder;
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Category {CategoryId} order updated to {DisplayOrder}, parent: {ParentId}", 
+                dto.CategoryId, dto.DisplayOrder, dto.ParentCategoryId);
+
+            return Json(new { success = true, message = "Category order updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating category order");
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
     #endregion
 
 
@@ -5563,4 +5604,11 @@ public class ToggleMaintenanceModeDto
     public bool Enable { get; set; }
     public string? Reason { get; set; }
     public int? ReopenHours { get; set; }
+}
+
+public class UpdateCategoryOrderDto
+{
+    public int CategoryId { get; set; }
+    public int DisplayOrder { get; set; }
+    public int? ParentCategoryId { get; set; }
 }

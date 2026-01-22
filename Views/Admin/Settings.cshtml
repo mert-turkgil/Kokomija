@@ -682,11 +682,43 @@
         .comment-cell-wrapper:hover .comment-editable {
             border-color: #ced4da;
         }
+        
+        /* Drag and Drop Styles */
+        .category-item.sortable-ghost {
+            opacity: 0.4;
+            background: #f8f9fa;
+        }
+        .category-item.sortable-drag {
+            opacity: 1;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .subcategory-item.sortable-ghost {
+            opacity: 0.4;
+            background: #f8f9fa;
+        }
+        .subcategory-item.sortable-drag {
+            opacity: 1;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .drag-handle {
+            cursor: move;
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .drop-indicator {
+            border: 2px dashed #0d6efd;
+            background: rgba(13, 110, 253, 0.1);
+            min-height: 50px;
+            display: none;
+        }
     </style>
 }
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>    
     <script>
         console.log('Site Settings page loaded');
         
@@ -884,6 +916,9 @@
                     localStorage.setItem('admin-settings-active-tab', target);
                 });
             });
+            
+            // Initialize drag-and-drop for categories
+            initializeCategoryDragAndDrop();
             
             // Load translation files when translations tab is shown
             const translationsTab = document.getElementById('translations-tab');
@@ -1489,6 +1524,76 @@
                 });
             } finally {
                 checkbox.disabled = false;
+            }
+        }
+
+        // ================================
+        // Category Drag and Drop
+        // ================================
+        function initializeCategoryDragAndDrop() {
+            const categoriesTree = document.querySelector('.categories-tree');
+            if (!categoriesTree) return;
+
+            // Make main category list sortable
+            new Sortable(categoriesTree, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: async function(evt) {
+                    const categoryId = evt.item.dataset.id;
+                    const newIndex = evt.newIndex;
+                    
+                    await updateCategoryOrder(categoryId, newIndex, null);
+                }
+            });
+
+            // Make each subcategory list sortable
+            document.querySelectorAll('.subcategories').forEach(subcatContainer => {
+                new Sortable(subcatContainer, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    group: 'subcategories',
+                    onEnd: async function(evt) {
+                        const categoryId = evt.item.dataset.id;
+                        const newParentId = evt.to.closest('.category-item')?.dataset.id;
+                        const newIndex = evt.newIndex;
+                        
+                        await updateCategoryOrder(categoryId, newIndex, newParentId);
+                    }
+                });
+            });
+        }
+
+        // Update category order via AJAX
+        async function updateCategoryOrder(categoryId, displayOrder, parentId) {
+            try {
+                const response = await fetch('@Url.Action("UpdateCategoryOrder", "Admin")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        categoryId: parseInt(categoryId),
+                        displayOrder: displayOrder,
+                        parentCategoryId: parentId ? parseInt(parentId) : null
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastr.success('Category order updated successfully');
+                } else {
+                    toastr.error(result.message || 'Failed to update category order');
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+            } catch (error) {
+                console.error('Error updating category order:', error);
+                toastr.error('An error occurred while updating category order');
+                setTimeout(() => window.location.reload(), 1500);
             }
         }
     </script>
