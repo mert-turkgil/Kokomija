@@ -5,7 +5,7 @@
 @{
     // Get current culture for translations
     var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-    var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "tr" ? "tr-TR" : "en-US";
+    var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "en" ? "en-US" : "en-US";
     
     // Helper function to get translated category name
     string GetCategoryName(Kokomija.Entity.Category? cat) {

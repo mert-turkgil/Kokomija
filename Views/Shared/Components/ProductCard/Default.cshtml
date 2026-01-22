@@ -7,7 +7,7 @@
     {
         var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
         var currentCultureCode = currentCulture == "pl" ? "pl-PL" : 
-                                 currentCulture == "tr" ? "tr-TR" : 
+                                 currentCulture == "en" ? "en-US" : 
                                  "en-US";
         
         var translation = product.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode) 
@@ -23,7 +23,7 @@
         <div class="product-image-wrapper">
             @{
                 var culture = ViewData["CurrentCulture"]?.ToString() ?? "en";
-                var productRoute = culture == "pl" ? "produkt" : culture == "tr" ? "urun" : "product";
+                var productRoute = culture == "pl" ? "produkt" : culture == "en" ? "product" : "product";
                 var slug = !string.IsNullOrEmpty(Model.Slug) ? Model.Slug : Model.Name.ToLower().Replace(" ", "-");
             }
             <a asp-controller="Product" asp-action="DetailsBySlug" asp-route-culture="@culture" asp-route-slug="@slug" class="image-link">

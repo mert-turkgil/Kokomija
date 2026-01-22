@@ -142,6 +142,16 @@
 <!-- Shop by Collection -->
 @if (Model.FeaturedCategories.Any())
 {
+    var currentCultureTwoLetter = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    var currentCultureCodeForCategory = currentCultureTwoLetter == "pl" ? "pl-PL" : currentCultureTwoLetter == "en" ? "en-US" : "en-US";
+    
+    // Helper function to get translated category name
+    string GetCategoryName(Kokomija.Entity.Category? cat) {
+        if (cat == null) return "";
+        var translation = cat.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCodeForCategory)
+                       ?? cat.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+        return translation?.Name ?? cat.Name;
+    }
     <section class="py-5 categories-section">
         <div class="container">
             <div class="text-center mb-5">
@@ -157,14 +167,14 @@
                                 <div class="category-group-header">
                                     @if (!string.IsNullOrEmpty(category.ImageUrl))
                                     {
-                                        <img src="@category.ImageUrl" class="category-group-image" alt="@category.Name" onerror="this.src='/img/logo_black.png';">
+                                        <img src="@category.ImageUrl" class="category-group-image" alt="@GetCategoryName(category)" onerror="this.src='/img/logo_black.png';">
                                     }
                                     else
                                     {
-                                        <img src="~/img/logo_black.png" class="category-group-image" alt="@category.Name">
+                                        <img src="~/img/logo_black.png" class="category-group-image" alt="@GetCategoryName(category)">
                                     }
                                     <h3 class="category-group-title">
-                                        @category.Name
+                                        @GetCategoryName(category)
                                     </h3>
                                 </div>
                             </a>
@@ -179,7 +189,7 @@
                                             {
                                                 <i class="@subcat.IconCssClass me-2"></i>
                                             }
-                                            @subcat.Name
+                                            @GetCategoryName(subcat)
                                             <i class="bi bi-arrow-right ms-auto"></i>
                                         </a>
                                     }
