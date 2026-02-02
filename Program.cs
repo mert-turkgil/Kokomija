@@ -448,20 +448,6 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 
-// Serve temp blog images from uploads folder (outside wwwroot to prevent dotnet watch hot reload)
-var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads", "blog", "temp");
-Directory.CreateDirectory(uploadsPath); // Ensure folder exists
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
-    RequestPath = "/blog-temp",
-    OnPrepareResponse = ctx =>
-    {
-        // No caching for temp files
-        ctx.Context.Response.Headers.Append("Cache-Control", "no-cache,no-store,must-revalidate");
-    }
-});
-
 // Enable cookie policy (required for secure cookies in production HTTPS)
 app.UseCookiePolicy();
 
