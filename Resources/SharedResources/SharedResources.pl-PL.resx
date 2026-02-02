@@ -2107,4 +2107,44 @@
   <data name="Privacy_Changes_Text" xml:space="preserve">
     <value>Możemy od czasu do czasu aktualizować tę politykę prywatności. Powiadomimy Cię o wszelkich zmianach, publikując nową politykę na tej stronie i aktualizując datę "Ostatnia aktualizacja".</value>
   </data>
+  <!-- B2B Business Mode -->
+  <data name="Cart_BusinessMode" xml:space="preserve">
+    <value>Tryb Biznesowy Aktywny</value>
+  </data>
+  <data name="Cart_BusinessModeDescription" xml:space="preserve">
+    <value>Widzisz specjalne ceny biznesowe dla zweryfikowanych klientów firmowych.</value>
+  </data>
+  <data name="Product_BusinessPrice" xml:space="preserve">
+    <value>Cena Biznesowa</value>
+  </data>
+  <data name="Product_RetailPrice" xml:space="preserve">
+    <value>Cena Detaliczna</value>
+  </data>
+  <data name="Product_BusinessOnly" xml:space="preserve">
+    <value>Tylko dla Firm</value>
+  </data>
+  <data name="Product_BusinessOnly_Message" xml:space="preserve">
+    <value>Ten produkt jest dostępny wyłącznie dla zweryfikowanych klientów biznesowych. Zarejestruj swój profil firmowy, aby uzyskać dostęp do produktów ekskluzywnych i specjalnych cen.</value>
+  </data>
+  <data name="Business_Benefits_Title" xml:space="preserve">
+    <value>Korzyści z Konta Firmowego</value>
+  </data>
+  <data name="Business_Benefit_ExclusiveProducts" xml:space="preserve">
+    <value>Dostęp do ekskluzywnych produktów tylko dla firm</value>
+  </data>
+  <data name="Business_Benefit_SpecialPricing" xml:space="preserve">
+    <value>Specjalne ceny hurtowe na wszystkie produkty</value>
+  </data>
+  <data name="Business_Benefit_BulkOrders" xml:space="preserve">
+    <value>Ilości hurtowe dla sprzedawców</value>
+  </data>
+  <data name="Business_Benefit_InvoiceSupport" xml:space="preserve">
+    <value>Profesjonalna obsługa faktur z NIP</value>
+  </data>
+  <data name="Setup_Business_Profile" xml:space="preserve">
+    <value>Załóż Profil Firmowy</value>
+  </data>
+  <data name="Login_To_Setup_Business" xml:space="preserve">
+    <value>Zaloguj się, aby założyć firmę</value>
+  </data>
 </root>

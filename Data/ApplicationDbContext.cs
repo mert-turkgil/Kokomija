@@ -71,6 +71,10 @@ namespace Kokomija.Data
         public DbSet<SiteBlockLog> SiteBlockLogs { get; set; }
         public DbSet<DeveloperCommissionRequest> DeveloperCommissionRequests { get; set; }
 
+        // Business (B2B) Features
+        public DbSet<BusinessProfile> BusinessProfiles { get; set; }
+        public DbSet<NIPVerificationLog> NIPVerificationLogs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -120,6 +124,10 @@ namespace Kokomija.Data
             modelBuilder.ApplyConfiguration(new DeveloperEarningsConfiguration());
             modelBuilder.ApplyConfiguration(new PaymentTransactionConfiguration());
             modelBuilder.ApplyConfiguration(new SiteBlockLogConfiguration());
+
+            // Business (B2B) Configurations
+            modelBuilder.ApplyConfiguration(new BusinessProfileConfiguration());
+            modelBuilder.ApplyConfiguration(new NIPVerificationLogConfiguration());
 
             // Seed initial data (only runs on InitialCreate migration)
             modelBuilder.SeedSizes();

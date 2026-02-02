@@ -537,6 +537,72 @@
                         </div>
                     </div>
 
+                    <!-- B2B Business Settings -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-building"></i> Business (B2B) Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-3">
+                                <input asp-for="IsBusinessOnly" class="form-check-input" type="checkbox" id="isBusinessOnly" onchange="updateBusinessFields()" />
+                                <label class="form-check-label" asp-for="IsBusinessOnly">
+                                    <strong>Business Only</strong>
+                                    <small class="d-block text-muted">Only visible to verified business customers</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input asp-for="IsAvailableForBusiness" class="form-check-input" type="checkbox" id="isAvailableForBusiness" />
+                                <label class="form-check-label" asp-for="IsAvailableForBusiness">
+                                    <strong>Available for Business</strong>
+                                    <small class="d-block text-muted">Allow business customers to purchase</small>
+                                </label>
+                            </div>
+
+                            <hr />
+
+                            <div class="mb-3">
+                                <label asp-for="MinBusinessQuantity" class="form-label">
+                                    <i class="bi bi-box-seam"></i> Minimum Business Quantity
+                                </label>
+                                <input asp-for="MinBusinessQuantity" type="number" min="0" class="form-control" />
+                                <small class="text-muted">Minimum order quantity for business customers (0 = no minimum)</small>
+                                <span asp-validation-for="MinBusinessQuantity" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="BusinessPrice" class="form-label">
+                                    <i class="bi bi-currency-dollar"></i> Business Price (zł)
+                                </label>
+                                <input asp-for="BusinessPrice" type="number" step="0.01" min="0" class="form-control" placeholder="Leave empty to use retail price" />
+                                <small class="text-muted">Special wholesale price for business customers</small>
+                                <span asp-validation-for="BusinessPrice" class="text-danger"></span>
+                            </div>
+
+                            @if (Model.BusinessPrice.HasValue && Model.BusinessPrice < Model.Price)
+                            {
+                                var savings = Model.Price - Model.BusinessPrice.Value;
+                                var savingsPercent = (savings / Model.Price) * 100;
+                                <div class="alert alert-success">
+                                    <i class="bi bi-graph-down-arrow me-1"></i>
+                                    <strong>Business Discount:</strong> @savingsPercent.ToString("F1")% off retail price
+                                    <br/>
+                                    <small>Retail: @Model.Price.ToString("C") → Business: @Model.BusinessPrice.Value.ToString("C")</small>
+                                </div>
+                            }
+
+                            <div class="alert alert-info small">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>B2B Features:</strong>
+                                <ul class="mb-0 mt-1">
+                                    <li>Business customers must verify their NIP number</li>
+                                    <li>Business-only products are hidden from regular customers</li>
+                                    <li>Business price takes priority when customer is in business mode</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Coupons -->
                     <div class="card mb-4">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -1378,5 +1444,24 @@
             });
             variantIndex = rows.length;
         }
+
+        // B2B Business Settings Logic
+        function updateBusinessFields() {
+            const isBusinessOnly = document.getElementById('isBusinessOnly').checked;
+            const isAvailableForBusiness = document.getElementById('isAvailableForBusiness');
+            
+            if (isBusinessOnly) {
+                // If Business Only is checked, it should be available for business
+                isAvailableForBusiness.checked = true;
+                isAvailableForBusiness.disabled = true;
+            } else {
+                isAvailableForBusiness.disabled = false;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBusinessFields();
+        });
     </script>
 }

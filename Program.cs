@@ -15,8 +15,8 @@ using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// Add services to the container - configured with localization below
+// builder.Services.AddControllersWithViews();
 
 // Add HttpContextAccessor for localization service
 builder.Services.AddHttpContextAccessor();
@@ -236,6 +236,12 @@ var supportedCultures = builder.Configuration.GetSection("Localization:Supported
 var defaultCulture = builder.Configuration.GetValue<string>("Localization:DefaultCulture") ?? "en-US";
 
 builder.Services.AddLocalization();
+
+// Add MVC with view localization support
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
+    .AddDataAnnotationsLocalization();
+
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(defaultCulture);
@@ -318,7 +324,12 @@ builder.Services.AddScoped<ICarouselImageService, CarouselImageService>();
 
 // Register Blog Image Service (Blog image upload and management)
 builder.Services.AddScoped<IBlogImageService, BlogImageService>();
-builder.Services.AddSingleton<ICKEditorImageTrackingService, CKEditorImageTrackingService>();
+builder.Services.AddScoped<IBlogService, BlogService>();
+builder.Services.AddHostedService<BlogCleanupService>();
+
+// Register NIP Validation Service (Polish VAT/NIP verification for B2B)
+builder.Services.AddHttpClient("NIPValidation");
+builder.Services.AddScoped<INIPValidationService, NIPValidationService>();
 
 // Register Category Image Service (Category image upload and management)
 builder.Services.AddScoped<ICategoryImageService, CategoryImageService>();
@@ -425,7 +436,31 @@ if (!app.Environment.IsDevelopment())
 }
 
 // Serve static files (needed for runtime-uploaded images like blog images)
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Cache blog images for 30 days
+        if (ctx.Context.Request.Path.StartsWithSegments("/img/Blog"))
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=2592000");
+        }
+    }
+});
+
+// Serve temp blog images from uploads folder (outside wwwroot to prevent dotnet watch hot reload)
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads", "blog", "temp");
+Directory.CreateDirectory(uploadsPath); // Ensure folder exists
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/blog-temp",
+    OnPrepareResponse = ctx =>
+    {
+        // No caching for temp files
+        ctx.Context.Response.Headers.Append("Cache-Control", "no-cache,no-store,must-revalidate");
+    }
+});
 
 // Enable cookie policy (required for secure cookies in production HTTPS)
 app.UseCookiePolicy();
@@ -458,6 +493,17 @@ app.UseMiddleware<SiteClosureMiddleware>();
 app.MapStaticAssets();
 
 // SEO-friendly localized routes for key pages
+// Maintenance pages
+app.MapControllerRoute(
+    name: "en-maintenance",
+    pattern: "en/in-maintenance",
+    defaults: new { controller = "Home", action = "Maintenance", culture = "en" });
+
+app.MapControllerRoute(
+    name: "pl-maintenance",
+    pattern: "pl/w-trakcie-konserwacji",
+    defaults: new { controller = "Home", action = "Maintenance", culture = "pl" });
+
 // Polish routes
 app.MapControllerRoute(
     name: "pl-home",
@@ -561,6 +607,29 @@ using (var scope = app.Services.CreateScope())
         // Don't fail the app startup if API key sync fails
     }
 }
+
+// Register cleanup handler for temp files on application shutdown
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+lifetime.ApplicationStopping.Register(() =>
+{
+    using var scope = app.Services.CreateScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        logger.LogInformation("Application stopping - cleaning up temp files...");
+        
+        // Clean up blog temp files
+        var blogImageService = scope.ServiceProvider.GetRequiredService<IBlogImageService>();
+        blogImageService.ClearOldTempFilesAsync(0).Wait(); // Clean ALL temp files on shutdown
+        
+        logger.LogInformation("Temp file cleanup completed on shutdown");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error during temp file cleanup on shutdown");
+    }
+});
 
 app.Run();
 

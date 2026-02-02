@@ -31,7 +31,9 @@ namespace Kokomija.Middleware
                 path.StartsWith("/api/stripewebhook") ||
                 path.StartsWith("/admin") ||  // Allow admin panel access
                 path.StartsWith("/signin-") ||  // Skip OAuth callbacks (Google, Facebook, etc.)
-                path.StartsWith("/account/externallogi"))  // Skip external login callback
+                path.StartsWith("/account/externallogi") ||  // Skip external login callback
+                path.StartsWith("/en/in-maintenance") ||  // English maintenance page
+                path.StartsWith("/pl/w-trakcie-konserwacji"))  // Polish maintenance page
             {
                 await _next(context);
                 return;
@@ -91,9 +93,13 @@ namespace Kokomija.Middleware
                 if (path.StartsWith("/account/login") || 
                     path.StartsWith("/account/logout") ||
                     path.StartsWith("/account/maintenancelogin") ||
-                    path.StartsWith("/home/maintenance") ||
-                    path.Contains("/login") ||  // Catch culture-prefixed login routes
-                    path.Contains("/logout"))   // Catch culture-prefixed logout routes
+                    path.StartsWith("/home/maintenance") || 
+                    path.StartsWith("/en/in-maintenance") ||
+                    path.StartsWith("/pl/w-trakcie-konserwacji") ||
+                    path.Contains("/login") ||  // Catch culture-prefixed login routes (English)
+                    path.Contains("/logout") || // Catch culture-prefixed logout routes (English)
+                    path.Contains("/logowanie") || // Polish login
+                    path.Contains("/wyloguj"))   // Polish logout
                 {
                     await _next(context);
                     return;
@@ -103,19 +109,33 @@ namespace Kokomija.Middleware
                     context.Connection.RemoteIpAddress, 
                     context.Request.Path);
 
-                // Set response
+                // Set response status and send maintenance page
                 context.Response.StatusCode = 503; // Service Unavailable
                 context.Response.ContentType = "text/html; charset=utf-8";
 
-                var html = GenerateSiteClosedHtml(activeClosure.Reason, activeClosure.ScheduledReopenAt);
+                var maintenanceUrl = GetMaintenancePathByCulture(context);
+                var html = GenerateSiteClosedHtml(activeClosure.Reason, activeClosure.ScheduledReopenAt, maintenanceUrl);
                 await context.Response.WriteAsync(html);
+                
+                // Stop the pipeline - response has been written
                 return;
             }
 
             await _next(context);
         }
 
-        private string GenerateSiteClosedHtml(string? reason, DateTime? reopenDate)
+        private string GetMaintenancePathByCulture(HttpContext context)
+        {
+            var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
+            
+            // Detect culture from path or default to English
+            if (path.StartsWith("/pl") || path.Contains("/pl/"))
+                return "/pl/w-trakcie-konserwacji";
+            
+            return "/en/in-maintenance";
+        }
+
+        private string GenerateSiteClosedHtml(string? reason, DateTime? reopenDate, string maintenanceUrl)
         {
             var reopenText = reopenDate.HasValue 
                 ? $"<p class=\"reopen-date\">Scheduled to reopen: {reopenDate.Value:MMMM dd, yyyy HH:mm} UTC</p>"
@@ -243,7 +263,7 @@ namespace Kokomija.Middleware
             We apologize for any inconvenience. Please check back soon!
         </div>
         <div class=""login-link"">
-            <small>Administrator? <a href=""/Account/Login"">Sign in here</a></small>
+            <small>Administrator? <a href=""{maintenanceUrl}"">Sign in here</a></small>
         </div>
     </div>
 </body>

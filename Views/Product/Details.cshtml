@@ -20,24 +20,29 @@
     var metaKeywords = translation?.MetaKeywords ?? "";
     var productSlug = translation?.Slug ?? Model.Slug ?? Model.Id.ToString();
     
+    // B2B Business Mode pricing
+    var isBusinessMode = (bool)(ViewData["IsBusinessMode"] ?? ViewBag.IsBusinessMode ?? false);
+    var hasBusinessPrice = isBusinessMode && Model.IsAvailableForBusiness && Model.BusinessPrice.HasValue;
+    var effectivePrice = hasBusinessPrice ? Model.BusinessPrice!.Value : Model.Price;
+    
     // Calculate pricing for structured data
-    var pricePerPiece = Model.PackSize > 1 ? Model.Price / Model.PackSize : Model.Price;
+    var pricePerPiece = Model.PackSize > 1 ? effectivePrice / Model.PackSize : effectivePrice;
     var hasDiscount = Model.Price > 60; // Best value indicator
     var primaryImage = Model.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
     var primaryImageUrl = primaryImage != null 
         ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/ProductImage/{primaryImage.ImageUrl}"
         : $"{Context.Request.Scheme}://{Context.Request.Host}/img/logo_black.png";
     
-    // WELCOME10 discount for non-authenticated users (10% off first order)
+    // WELCOME10 discount for non-authenticated users (10% off first order) - only if not in business mode
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     var welcomeDiscountPercent = 10m;
-    var welcomeDiscountedPrice = Model.Price * (1 - welcomeDiscountPercent / 100);
+    var welcomeDiscountedPrice = effectivePrice * (1 - welcomeDiscountPercent / 100);
     var welcomeDiscountedPricePerPiece = Model.PackSize > 1 ? welcomeDiscountedPrice / Model.PackSize : welcomeDiscountedPrice;
-    var showWelcomeDiscount = !isAuthenticated; // Show discount for non-logged-in users
+    var showWelcomeDiscount = !isAuthenticated && !isBusinessMode; // Show discount for non-logged-in users, not for B2B
     
     // For SEO structured data, always show the discount price (WELCOME10 available for new users)
-    var seoPrice = showWelcomeDiscount ? welcomeDiscountedPrice : Model.Price;
-    var seoHighPrice = Model.Price;
+    var seoPrice = showWelcomeDiscount ? welcomeDiscountedPrice : effectivePrice;
+    var seoHighPrice = effectivePrice;
     var seoLowPrice = welcomeDiscountedPrice;
     
     // SEO: Set ViewData for layout
@@ -525,8 +530,43 @@
                         <meta itemprop="availability" content="@availability" />
                         <meta itemprop="priceValidUntil" content="@DateTime.UtcNow.AddMonths(6).ToString("yyyy-MM-dd")" />
                         
+                        @* B2B Business Mode Banner *@
+                        @if (isBusinessMode)
+                        {
+                            <div class="business-mode-badge mb-2">
+                                <span class="badge bg-info">
+                                    <i class="bi bi-building"></i> @L["Cart_BusinessMode"]
+                                </span>
+                            </div>
+                        }
+                        
                         <div class="price-display">
-                            @if (showWelcomeDiscount)
+                            @if (hasBusinessPrice)
+                            {
+                                @* Show business pricing for B2B customers *@
+                                @if (Model.PackSize > 1)
+                                {
+                                    <span class="current-price b2b-price" id="productPrice">
+                                        @effectivePrice.ToString("N2") zł
+                                    </span>
+                                    <span class="original-price">@Model.Price.ToString("N2") zł</span>
+                                    <span class="price-per-piece">(@pricePerPiece.ToString("N2") zł / @L.GetString("Piece", "Product"))</span>
+                                }
+                                else
+                                {
+                                    <span class="current-price b2b-price" id="productPrice">@effectivePrice.ToString("N2") zł</span>
+                                    <span class="original-price">@Model.Price.ToString("N2") zł</span>
+                                }
+                                <div class="business-price-indicator mt-2">
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-building-check me-1"></i>@L["Product_BusinessPrice"]
+                                    </span>
+                                    <span class="savings-text text-success ms-2">
+                                        @L["Product_RetailPrice"]: @Model.Price.ToString("N2") zł
+                                    </span>
+                                </div>
+                            }
+                            else if (showWelcomeDiscount)
                             {
                                 @* Show discounted price for non-authenticated users *@
                                 @if (Model.PackSize > 1)
@@ -562,13 +602,13 @@
                                 @if (Model.PackSize > 1)
                                 {
                                     <span class="current-price" id="productPrice" itemprop="priceSpecification" itemscope itemtype="https://schema.org/PriceSpecification">
-                                        <span itemprop="price">@Model.Price.ToString("N2")</span> <span itemprop="priceCurrency">zł</span>
+                                        <span itemprop="price">@effectivePrice.ToString("N2")</span> <span itemprop="priceCurrency">zł</span>
                                     </span>
                                     <span class="price-per-piece">(@pricePerPiece.ToString("N2") zł / @L.GetString("Piece", "Product"))</span>
                                 }
                                 else
                                 {
-                                    <span class="current-price" id="productPrice">@Model.Price.ToString("N2") zł</span>
+                                    <span class="current-price" id="productPrice">@effectivePrice.ToString("N2") zł</span>
                                 }
                             }
                         </div>

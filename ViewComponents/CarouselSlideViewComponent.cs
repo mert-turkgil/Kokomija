@@ -83,10 +83,29 @@ namespace Kokomija.ViewComponents
             
             // Get current culture code
             var currentCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+            var twoLetterCulture = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
             
-            // Get translation for current culture, fallback to first available translation or null
+            // Log translation info for debugging
+            _logger.LogInformation("Slide {SlideId}: Has {TranslationCount} translations. Current culture: {Culture} ({TwoLetter})",
+                slide.Id,
+                slide.Translations?.Count ?? 0,
+                currentCulture,
+                twoLetterCulture);
+            
+            // Get translation for current culture with multiple fallback options
             var translation = slide.Translations?.FirstOrDefault(t => t.CultureCode == currentCulture)
+                ?? slide.Translations?.FirstOrDefault(t => t.CultureCode == "en-US")
+                ?? slide.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL")
                 ?? slide.Translations?.FirstOrDefault();
+            
+            if (translation != null)
+            {
+                _logger.LogInformation("Using translation for slide {SlideId}: CultureCode={Culture}", slide.Id, translation.CultureCode);
+            }
+            else
+            {
+                _logger.LogWarning("No translation found for slide {SlideId}", slide.Id);
+            }
             
             // Check if desktop image exists, if not use fallback
             var useFallback = false;

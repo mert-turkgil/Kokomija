@@ -57,6 +57,37 @@ namespace Kokomija.Entity
         [ForeignKey("ProductGroupId")]
         public ProductGroup? ProductGroup { get; set; }
 
+        // ===== BUSINESS (B2B) FEATURES =====
+        
+        /// <summary>
+        /// If true, this product is only visible to users with verified business profiles
+        /// </summary>
+        public bool IsBusinessOnly { get; set; } = false;
+
+        /// <summary>
+        /// If true, this product is available for both retail and business customers
+        /// </summary>
+        public bool IsAvailableForBusiness { get; set; } = true;
+
+        /// <summary>
+        /// Minimum quantity required for purchase by business customers (0 = no minimum)
+        /// </summary>
+        public int MinBusinessQuantity { get; set; } = 0;
+
+        /// <summary>
+        /// Special business price (if different from retail). Null means same as Price
+        /// </summary>
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? BusinessPrice { get; set; }
+
+        /// <summary>
+        /// Stripe Price ID for business price (if different)
+        /// </summary>
+        [MaxLength(100)]
+        public string? BusinessStripePriceId { get; set; }
+
+        // ===== END BUSINESS FEATURES =====
+
         public bool IsActive { get; set; } = true;
 
         public int? CategoryId { get; set; }
@@ -85,5 +116,11 @@ namespace Kokomija.Entity
 
         [NotMapped]
         public int ReviewCount => Reviews?.Count(r => r.IsVisible) ?? 0;
+
+        /// <summary>
+        /// Gets the effective price for a customer based on their business status
+        /// </summary>
+        public decimal GetEffectivePrice(bool isBusinessCustomer) =>
+            isBusinessCustomer && BusinessPrice.HasValue ? BusinessPrice.Value : Price;
     }
 }

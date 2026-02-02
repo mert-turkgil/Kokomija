@@ -12,11 +12,23 @@ namespace Kokomija.Models.ViewModels.Account
         public DateTime? LastLoginAt { get; set; }
         public bool IsAdmin { get; set; }
         
+        // Default Shipping Address
+        public string? DefaultAddress { get; set; }
+        public string? DefaultCity { get; set; }
+        public string? DefaultPostalCode { get; set; }
+        public string? DefaultCountry { get; set; }
+        
         // VIP Status
         public VIPStatusViewModel VIPStatus { get; set; } = new VIPStatusViewModel();
         
+        // Business Profile
+        public BusinessProfileViewModel? BusinessProfile { get; set; }
+        
         // Recent Orders
         public IEnumerable<OrderViewModel> RecentOrders { get; set; } = new List<OrderViewModel>();
+        
+        // Return Requests
+        public IEnumerable<ReturnRequestSummaryViewModel> RecentReturnRequests { get; set; } = new List<ReturnRequestSummaryViewModel>();
         
         // Statistics
         public int TotalOrders { get; set; }
@@ -25,6 +37,40 @@ namespace Kokomija.Models.ViewModels.Account
         public decimal TotalSpent { get; set; }
         public int WishlistCount { get; set; }
         public int CartItemsCount { get; set; }
+        public int PendingReturnRequests { get; set; }
+    }
+    
+    public class ReturnRequestSummaryViewModel
+    {
+        public int Id { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public decimal RequestedAmount { get; set; }
+        public decimal? RefundedAmount { get; set; }
+        public DateTime RequestedAt { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+    }
+    
+    public class BusinessProfileViewModel
+    {
+        public int Id { get; set; }
+        public string NIP { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+        public string? REGON { get; set; }
+        public string? KRS { get; set; }
+        public string? VATStatus { get; set; }
+        public string? ResidenceAddress { get; set; }
+        public string? WorkingAddress { get; set; }
+        public bool IsVerified { get; set; }
+        public bool IsBusinessModeActive { get; set; }
+        public DateTime? VerifiedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+    
+    public class NIPVerificationRequestModel
+    {
+        public string NIP { get; set; } = string.Empty;
     }
     
     public class OrderViewModel
@@ -105,5 +151,42 @@ namespace Kokomija.Models.ViewModels.Account
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsUnlocked { get; set; }
+    }
+    
+    public class ReturnRequestDetailsViewModel
+    {
+        public int Id { get; set; }
+        public int OrderId { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string Reason { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal RequestedAmount { get; set; }
+        public decimal? RefundedAmount { get; set; }
+        public string? RefundTransactionId { get; set; }
+        public DateTime RequestedAt { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+        public string? ReviewedBy { get; set; }
+        public string? ReviewNotes { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        
+        // Order Item details
+        public OrderItemViewModel? OrderItem { get; set; }
+        
+        // Status History
+        public List<ReturnStatusHistoryViewModel> StatusHistory { get; set; } = new List<ReturnStatusHistoryViewModel>();
+        
+        // Images uploaded with the request
+        public List<string> Images { get; set; } = new List<string>();
+    }
+    
+    public class ReturnStatusHistoryViewModel
+    {
+        public int Id { get; set; }
+        public string? PreviousStatus { get; set; }
+        public string NewStatus { get; set; } = string.Empty;
+        public DateTime ChangedAt { get; set; }
+        public string? ChangedBy { get; set; }
+        public string? Notes { get; set; }
     }
 }

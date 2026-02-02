@@ -10,12 +10,17 @@ namespace Kokomija.Models.ViewModels.Admin
         [Required(ErrorMessage = "Category is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Please select a category")]
         public int CategoryId { get; set; }
+        
         public int? ProductId { get; set; }
+        
         public string? FeaturedImage { get; set; }
-        public string? ImageTempFileName { get; set; }
-        public string? SessionId { get; set; }
+        
+        public IFormFile? FeaturedImageFile { get; set; }
+        
         public bool IsPublished { get; set; }
+        
         public DateTime? PublishedDate { get; set; }
+        
         public bool AllowComments { get; set; } = true;
 
         public List<BlogTranslationDto> Translations { get; set; } = new();
@@ -27,15 +32,21 @@ namespace Kokomija.Models.ViewModels.Admin
     public class BlogUpdateDto
     {
         public int Id { get; set; }
+        
         [Required(ErrorMessage = "Category is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Please select a category")]
         public int CategoryId { get; set; }
+        
         public int? ProductId { get; set; }
+        
         public string? FeaturedImage { get; set; }
-        public string? NewImageTempFileName { get; set; }
-        public string? SessionId { get; set; }
+        
+        public IFormFile? FeaturedImageFile { get; set; }
+        
         public bool IsPublished { get; set; }
+        
         public DateTime? PublishedDate { get; set; }
+        
         public bool AllowComments { get; set; } = true;
 
         public List<BlogTranslationDto> Translations { get; set; } = new();

@@ -23,11 +23,11 @@ namespace Kokomija.Entity
 
         // ==================== API Configuration ====================
         
-        [MaxLength(500)]
-        public string? ApiKey { get; set; } // Encrypted
+        [MaxLength(9000)]
+        public string? ApiKey { get; set; } // Encrypted - JWT tokens can be long
 
-        [MaxLength(500)]
-        public string? ApiSecret { get; set; } // Encrypted
+        [MaxLength(9000)]
+        public string? ApiSecret { get; set; } // Encrypted - JWT tokens can be long
         
         [MaxLength(500)]
         public string? ApiAccountNumber { get; set; } // Some carriers need account number

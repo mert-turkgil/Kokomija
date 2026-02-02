@@ -18,6 +18,7 @@
     <meta name="description" content="@Model.MetaDescription">
     <meta name="keywords" content="@Model.MetaKeywords">
     <meta name="author" content="@Model.AuthorName">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="@Model.CanonicalUrl">
     
     <!-- Open Graph / Facebook -->
@@ -26,11 +27,21 @@
     <meta property="og:title" content="@Model.Title">
     <meta property="og:description" content="@Model.MetaDescription">
     <meta property="og:site_name" content="Kokomija">
+    <meta property="og:locale" content="@System.Globalization.CultureInfo.CurrentCulture.Name.Replace("-", "_")">
+    <meta property="article:published_time" content="@Model.PublishedDate?.ToString("yyyy-MM-ddTHH:mm:ssZ")">
+    <meta property="article:modified_time" content="@Model.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")">
+    <meta property="article:author" content="@Model.AuthorName">
+    <meta property="article:section" content="@Model.CategoryName">
     @if (!string.IsNullOrEmpty(absoluteImageUrl))
     {
         <meta property="og:image" content="@absoluteImageUrl">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
+        <meta property="og:image:alt" content="@Model.Title">
+    }
+    @foreach (var tag in Model.Tags)
+    {
+        <meta property="article:tag" content="@tag">
     }
     
     <!-- Twitter -->
@@ -39,10 +50,86 @@
     <meta name="twitter:title" content="@Model.Title">
     <meta name="twitter:description" content="@Model.MetaDescription">
     <meta name="twitter:site" content="@@Kokomija">
+    <meta name="twitter:creator" content="@@Kokomija">
     @if (!string.IsNullOrEmpty(absoluteImageUrl))
     {
         <meta name="twitter:image" content="@absoluteImageUrl">
+        <meta name="twitter:image:alt" content="@Model.Title">
     }
+
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "BlogPosting",
+        "mainEntityOfPage": {
+            "@@type": "WebPage",
+            "@@id": "@Model.CanonicalUrl"
+        },
+        "headline": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.Title).ToString())",
+        "description": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.MetaDescription ?? "").ToString())",
+        @if (!string.IsNullOrEmpty(absoluteImageUrl))
+        {
+            <text>"image": {
+            "@@type": "ImageObject",
+            "url": "@absoluteImageUrl",
+            "width": 1200,
+            "height": 630
+        },</text>
+        }
+        "author": {
+            "@@type": "Person",
+            "name": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.AuthorName ?? "").ToString())"
+        },
+        "publisher": {
+            "@@type": "Organization",
+            "name": "Kokomija",
+            "logo": {
+                "@@type": "ImageObject",
+                "url": "@baseUrl/img/logo_black.png"
+            }
+        },
+        "datePublished": "@Model.PublishedDate?.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+        "dateModified": "@Model.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+        "articleSection": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.CategoryName ?? "").ToString())",
+        "keywords": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.MetaKeywords ?? "").ToString())",
+        "wordCount": @(Model.Content?.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length ?? 0),
+        "inLanguage": "@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName"
+    }
+    </script>
+
+    <!-- BreadcrumbList Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "@baseUrl"
+            },
+            {
+                "@@type": "ListItem",
+                "position": 2,
+                "name": "Blog",
+                "item": "@baseUrl/blog"
+            },
+            {
+                "@@type": "ListItem",
+                "position": 3,
+                "name": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.CategoryName ?? "").ToString())",
+                "item": "@baseUrl/blog?categoryId=@Model.CategoryId"
+            },
+            {
+                "@@type": "ListItem",
+                "position": 4,
+                "name": "@Html.Raw(System.Text.Json.JsonEncodedText.Encode(Model.Title).ToString())"
+            }
+        ]
+    }
+    </script>
 }
 
 <div class="blog-details-page">
@@ -284,5 +371,336 @@
                 alert('@L["Blog_CopyFailed"]');
             });
         }
+
+        // Convert CKEditor oembed tags to proper embeds (YouTube, Vimeo, etc.)
+        document.addEventListener('DOMContentLoaded', function() {
+            convertOembedToIframes();
+        });
+
+        function convertOembedToIframes() {
+            // Find all oembed elements in article content
+            const oembedElements = document.querySelectorAll('.article-content oembed[url], .article-content figure.media oembed');
+            
+            oembedElements.forEach(function(element) {
+                const url = element.getAttribute('url');
+                if (!url) return;
+
+                const container = document.createElement('div');
+                container.className = 'video-embed-container';
+                
+                const iframe = createIframeFromUrl(url);
+                if (iframe) {
+                    container.appendChild(iframe);
+                    
+                    // Replace the figure.media or oembed element
+                    const figure = element.closest('figure.media') || element.parentElement;
+                    if (figure && figure.tagName === 'FIGURE') {
+                        figure.replaceWith(container);
+                    } else {
+                        element.replaceWith(container);
+                    }
+                }
+            });
+
+            // Also handle figures with data-oembed-url attribute
+            const figuresWithOembed = document.querySelectorAll('.article-content figure[data-oembed-url]');
+            figuresWithOembed.forEach(function(figure) {
+                const url = figure.getAttribute('data-oembed-url');
+                if (!url) return;
+
+                const container = document.createElement('div');
+                container.className = 'video-embed-container';
+                
+                const iframe = createIframeFromUrl(url);
+                if (iframe) {
+                    container.appendChild(iframe);
+                    figure.replaceWith(container);
+                }
+            });
+        }
+
+        function createIframeFromUrl(url) {
+            let embedUrl = null;
+            
+            // YouTube URLs
+            const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (youtubeMatch) {
+                embedUrl = `https://www.youtube.com/embed/${youtubeMatch[1]}?rel=0&modestbranding=1`;
+            }
+            
+            // Vimeo URLs
+            const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+            if (vimeoMatch) {
+                embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+            }
+
+            // Dailymotion URLs
+            const dailymotionMatch = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+            if (dailymotionMatch) {
+                embedUrl = `https://www.dailymotion.com/embed/video/${dailymotionMatch[1]}`;
+            }
+
+            // Spotify URLs
+            const spotifyMatch = url.match(/spotify\.com\/(track|album|playlist|episode)\/([a-zA-Z0-9]+)/);
+            if (spotifyMatch) {
+                embedUrl = `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`;
+            }
+
+            if (embedUrl) {
+                const iframe = document.createElement('iframe');
+                iframe.src = embedUrl;
+                iframe.setAttribute('frameborder', '0');
+                iframe.setAttribute('allowfullscreen', 'true');
+                iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+                iframe.setAttribute('loading', 'lazy');
+                iframe.setAttribute('title', 'Embedded video');
+                return iframe;
+            }
+
+            return null;
+        }
     </script>
+}
+
+@section Styles {
+    <style>
+        /* Blog content responsive styles */
+        .article-content {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        /* Make all images in blog content responsive */
+        .article-content img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin: 2rem auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* CKEditor figure wrapper */
+        .article-content figure {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .article-content figure img {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        .article-content figcaption {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Video embed container for converted oembed */
+        .article-content .video-embed-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            margin: 2rem 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            background: #000;
+        }
+
+        .article-content .video-embed-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+        }
+
+        /* YouTube and other iframe embeds - Responsive */
+        .article-content iframe {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 16 / 9;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 2rem 0;
+        }
+
+        /* CKEditor media embed wrapper */
+        .article-content .ck-media__wrapper,
+        .article-content figure.media {
+            position: relative;
+            width: 100% !important;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            margin: 2rem 0;
+            border-radius: 12px;
+            background: #000;
+        }
+
+        .article-content .ck-media__wrapper iframe,
+        .article-content figure.media iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0;
+            border: none;
+        }
+
+        /* Hide raw oembed tags before JS converts them */
+        .article-content oembed {
+            display: none;
+        }
+
+        /* Tables responsive */
+        .article-content table {
+            width: 100% !important;
+            max-width: 100%;
+            margin: 2rem 0;
+            border-collapse: collapse;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .article-content table td,
+        .article-content table th {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .article-content table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        /* Code blocks */
+        .article-content pre {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        .article-content code {
+            background-color: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.875em;
+        }
+
+        /* Lists */
+        .article-content ul,
+        .article-content ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .article-content li {
+            margin: 0.5rem 0;
+        }
+
+        /* Blockquotes */
+        .article-content blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: #666;
+        }
+
+        /* Headings in content */
+        .article-content h2 {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .article-content h3 {
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .article-content h4 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Links */
+        .article-content a {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .article-content a:hover {
+            color: #764ba2;
+        }
+
+        /* Mobile responsiveness */
+        @@media (max-width: 768px) {
+            .article-content {
+                font-size: 1rem;
+                line-height: 1.7;
+            }
+
+            .article-content img {
+                margin: 1.5rem auto;
+            }
+
+            .article-content h2 {
+                font-size: 1.5rem;
+            }
+
+            .article-content h3 {
+                font-size: 1.25rem;
+            }
+
+            .article-content h4 {
+                font-size: 1.125rem;
+            }
+
+            .article-content .video-embed-container {
+                margin: 1.5rem 0;
+                border-radius: 8px;
+            }
+        }
+
+        /* Dark mode support */
+        [data-bs-theme="dark"] .article-content {
+            color: #e9ecef;
+        }
+
+        [data-bs-theme="dark"] .article-content blockquote {
+            color: #adb5bd;
+        }
+
+        [data-bs-theme="dark"] .article-content pre,
+        [data-bs-theme="dark"] .article-content code {
+            background-color: #212529;
+        }
+
+        [data-bs-theme="dark"] .article-content table th {
+            background-color: #343a40;
+        }
+
+        [data-bs-theme="dark"] .article-content table td,
+        [data-bs-theme="dark"] .article-content table th {
+            border-color: #495057;
+        }
+    </style>
 }

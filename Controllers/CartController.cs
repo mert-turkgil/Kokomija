@@ -17,6 +17,7 @@ namespace Kokomija.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IShippingService _shippingService;
+        private readonly INIPValidationService _nipValidationService;
 
         public CartController(
             IUnitOfWork unitOfWork,
@@ -24,7 +25,8 @@ namespace Kokomija.Controllers
             ILogger<CartController> logger,
             UserManager<ApplicationUser> userManager,
             IConfiguration configuration,
-            IShippingService shippingService)
+            IShippingService shippingService,
+            INIPValidationService nipValidationService)
         {
             _unitOfWork = unitOfWork;
             _localizationService = localizationService;
@@ -32,6 +34,7 @@ namespace Kokomija.Controllers
             _userManager = userManager;
             _configuration = configuration;
             _shippingService = shippingService;
+            _nipValidationService = nipValidationService;
         }
 
         #region View Actions
@@ -449,12 +452,26 @@ namespace Kokomija.Controllers
 
         #region Private Helper Methods
 
+        private async Task<bool> IsBusinessModeActiveAsync()
+        {
+            if (User.Identity?.IsAuthenticated != true) return false;
+            
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return false;
+            
+            var businessProfile = await _nipValidationService.GetBusinessProfileAsync(userId);
+            return businessProfile?.IsVerified == true && businessProfile?.IsBusinessModeActive == true;
+        }
+
         private async Task<CartIndexViewModel> BuildCartViewModel(
             IEnumerable<Cart> cartItems,
             Coupon? appliedCoupon = null)
         {
             var items = new List<CartItemViewModel>();
             decimal subtotal = 0;
+            
+            // Check if user is in business mode
+            bool isBusinessMode = await IsBusinessModeActiveAsync();
 
             foreach (var cartItem in cartItems)
             {
@@ -463,6 +480,23 @@ namespace Kokomija.Controllers
                     cartItem.ProductId,
                     cartItem.SizeId,
                     cartItem.ColorId);
+
+                // Get base price (from variant or product)
+                decimal basePrice = variant?.Price ?? cartItem.Product.Price;
+                
+                // Apply business price if in business mode and product has business price
+                decimal effectivePrice = basePrice;
+                bool isBusinessPrice = false;
+                
+                if (isBusinessMode && cartItem.Product.IsAvailableForBusiness)
+                {
+                    // Use business price if available, otherwise use regular price
+                    if (cartItem.Product.BusinessPrice.HasValue)
+                    {
+                        effectivePrice = cartItem.Product.BusinessPrice.Value;
+                        isBusinessPrice = true;
+                    }
+                }
 
                 var itemViewModel = new CartItemViewModel
                 {
@@ -477,12 +511,14 @@ namespace Kokomija.Controllers
                     SizeId = cartItem.SizeId,
                     SizeName = cartItem.Size?.DisplayName,
                     Quantity = cartItem.Quantity,
-                    UnitPrice = variant?.Price ?? cartItem.Product.Price,
-                    TotalPrice = (variant?.Price ?? cartItem.Product.Price) * cartItem.Quantity,
+                    UnitPrice = effectivePrice,
+                    TotalPrice = effectivePrice * cartItem.Quantity,
                     StockQuantity = variant?.StockQuantity ?? 0,
                     IsInStock = variant != null && variant.StockQuantity >= cartItem.Quantity,
                     MaxQuantity = variant?.StockQuantity ?? 10,
-                    PackSize = cartItem.Product.PackSize
+                    PackSize = cartItem.Product.PackSize,
+                    IsBusinessPrice = isBusinessPrice,
+                    OriginalPrice = isBusinessPrice ? basePrice : null
                 };
 
                 items.Add(itemViewModel);
@@ -721,7 +757,8 @@ namespace Kokomija.Controllers
                 RemainingForFreeShipping = remainingForFreeShipping,
                 AvailableCoupons = availableCoupons,
                 SelectedShippingOption = selectedShippingOption,
-                ShippingOptions = shippingOptions
+                ShippingOptions = shippingOptions,
+                IsBusinessMode = isBusinessMode
             };
         }
 

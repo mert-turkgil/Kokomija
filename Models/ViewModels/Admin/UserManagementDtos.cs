@@ -27,6 +27,14 @@ namespace Kokomija.Models.ViewModels.Admin
         public int TotalReviews { get; set; }
         public bool IsRoot { get; set; } = false;
         
+        // Role information
+        public List<string> Roles { get; set; } = new();
+        
+        // Business profile info
+        public bool HasBusinessProfile { get; set; }
+        public bool IsBusinessVerified { get; set; }
+        public string? CompanyName { get; set; }
+        
         public string FullName => !string.IsNullOrEmpty(FirstName) || !string.IsNullOrEmpty(LastName) 
             ? $"{FirstName} {LastName}".Trim() 
             : Email;
@@ -55,11 +63,35 @@ namespace Kokomija.Models.ViewModels.Admin
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLogin { get; set; }
         
+        // Business Profile Info
+        public UserBusinessProfileDto? BusinessProfile { get; set; }
+        
+        // Role Management
+        public List<string> AssignedRoles { get; set; } = new();
+        public List<string> AvailableRoles { get; set; } = new();
+        
         public List<UserReviewDto> Reviews { get; set; } = new();
         public List<UserOrderDto> Orders { get; set; } = new();
         public List<UserWishlistDto> Wishlist { get; set; } = new();
         public List<UserCouponDto> UsedCoupons { get; set; } = new();
         public List<UserCouponDto> AvailableCoupons { get; set; } = new();
+    }
+
+    public class UserBusinessProfileDto
+    {
+        public int Id { get; set; }
+        public string NIP { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+        public string? REGON { get; set; }
+        public string? KRS { get; set; }
+        public string? VATStatus { get; set; }
+        public string? ResidenceAddress { get; set; }
+        public string? WorkingAddress { get; set; }
+        public DateTime? RegistrationLegalDate { get; set; }
+        public bool IsVerified { get; set; }
+        public bool IsBusinessModeActive { get; set; }
+        public DateTime? VerifiedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
     public class UserReviewDto

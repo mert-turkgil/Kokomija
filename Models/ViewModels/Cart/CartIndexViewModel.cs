@@ -24,6 +24,9 @@ namespace Kokomija.Models.ViewModels.Cart
         public List<ShippingOptionModel> ShippingOptions { get; set; } = new();
         public bool IsFreeShippingVip { get; set; } // VIP qualifies for free shipping
         public decimal OriginalShippingCost { get; set; } // Cost before free shipping applied
+        
+        // B2B Business Mode
+        public bool IsBusinessMode { get; set; } // User is in business mode with verified profile
     }
     
     public class ShippingOptionModel
@@ -63,6 +66,10 @@ namespace Kokomija.Models.ViewModels.Cart
         public int MaxQuantity { get; set; }
         public int PackSize { get; set; } = 1;
         public int TotalItems => PackSize * Quantity; // Total individual items across all packs
+        
+        // B2B Pricing
+        public bool IsBusinessPrice { get; set; }
+        public decimal? OriginalPrice { get; set; } // Original retail price when business price is applied
     }
     
     public class ApplyCouponRequest

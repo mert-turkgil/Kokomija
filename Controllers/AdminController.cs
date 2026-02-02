@@ -1194,22 +1194,38 @@ public class AdminController : Controller
             // Get carousel slides (exclude soft-deleted)
             var carouselSlides = await _unitOfWork.CarouselSlides.GetAllAsync();
             var activeCarouselSlides = carouselSlides.Where(c => !c.IsDeleted).ToList();
-            viewModel.CarouselSlides = activeCarouselSlides.Select(c => new CarouselSlideItemViewModel
+            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+            
+            viewModel.CarouselSlides = new List<CarouselSlideItemViewModel>();
+            foreach (var slide in activeCarouselSlides.OrderBy(c => c.DisplayOrder))
             {
-                Id = c.Id,
-                Title = c.Title,
-                Subtitle = c.Subtitle,
-                ImagePath = c.ImagePath,
-                LinkUrl = c.LinkUrl,
-                ButtonText = c.ButtonText,
-                DisplayOrder = c.DisplayOrder,
-                IsActive = c.IsActive,
-                StartDate = c.StartDate,
-                EndDate = c.EndDate,
-                Location = c.Location,
-                CreatedAt = c.CreatedAt,
-                CreatedBy = c.CreatedBy
-            }).OrderBy(c => c.DisplayOrder).ToList();
+                var translations = (await _unitOfWork.Repository<Entity.CarouselSlideTranslation>()
+                    .FindAsync(t => t.CarouselSlideId == slide.Id)).ToList();
+                
+                var translation = translations.FirstOrDefault(t => t.CultureCode == currentCulture)
+                                ?? translations.FirstOrDefault(t => t.CultureCode == "pl-PL")
+                                ?? translations.FirstOrDefault(); // Fallback to any translation
+                
+                if (translation != null)
+                {
+                    viewModel.CarouselSlides.Add(new CarouselSlideItemViewModel
+                    {
+                        Id = slide.Id,
+                        Title = translation.Title,
+                        Subtitle = translation.Subtitle,
+                        ImagePath = slide.ImagePath,
+                        LinkUrl = translation.LinkUrl ?? slide.LinkUrl,
+                        ButtonText = translation.ButtonText,
+                        DisplayOrder = slide.DisplayOrder,
+                        IsActive = slide.IsActive,
+                        StartDate = slide.StartDate,
+                        EndDate = slide.EndDate,
+                        Location = slide.Location,
+                        CreatedAt = slide.CreatedAt,
+                        CreatedBy = slide.CreatedBy
+                    });
+                }
+            }
 
             viewModel.TotalCarouselSlides = activeCarouselSlides.Count();
             viewModel.ActiveCarouselSlides = activeCarouselSlides.Count(c => c.IsActive);
@@ -1267,7 +1283,6 @@ public class AdminController : Controller
 
             // Get blog posts
             var blogs = await _unitOfWork.Blogs.GetAllAsync();
-            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
             
             viewModel.BlogPosts = new List<BlogItemViewModel>();
             foreach (var blog in blogs.Where(b => !b.IsDeleted).OrderByDescending(b => b.CreatedAt))

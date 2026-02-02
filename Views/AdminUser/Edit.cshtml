@@ -198,6 +198,205 @@
             </div>
         </div>
 
+        <!-- Business Profile & Roles Row -->
+        <div class="row mt-4">
+            <!-- Role Management -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-shield-check"></i> Role Management
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Current Roles</label>
+                            <div class="d-flex flex-wrap gap-2" id="currentRoles">
+                                @if (Model.AssignedRoles.Any())
+                                {
+                                    @foreach (var role in Model.AssignedRoles)
+                                    {
+                                        var roleBadgeClass = role switch
+                                        {
+                                            "Root" => "bg-dark",
+                                            "Admin" => "bg-danger",
+                                            "Moderator" => "bg-warning text-dark",
+                                            "Business" => "bg-primary",
+                                            "Developer" => "bg-info",
+                                            _ => "bg-secondary"
+                                        };
+                                        <span class="badge @roleBadgeClass d-flex align-items-center gap-1" id="role-badge-@role">
+                                            <i class="bi bi-person-badge"></i> @role
+                                            @if (ViewBag.IsCurrentUserRoot == true && role != "Root")
+                                            {
+                                                <button type="button" class="btn-close btn-close-white ms-1" 
+                                                        style="font-size: 0.6rem;" 
+                                                        onclick="removeRole('@Model.Id', '@role')"
+                                                        title="Remove @role role"></button>
+                                            }
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No roles assigned (regular user)</span>
+                                }
+                            </div>
+                        </div>
+
+                        @if (ViewBag.IsCurrentUserRoot == true && Model.AvailableRoles.Any())
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Add Role</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="roleToAdd">
+                                        <option value="">Select a role...</option>
+                                        @foreach (var role in Model.AvailableRoles)
+                                        {
+                                            <option value="@role">@role</option>
+                                        }
+                                    </select>
+                                    <button type="button" class="btn btn-primary" onclick="addRole('@Model.Id')">
+                                        <i class="bi bi-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        
+                        <div class="alert alert-info mt-3">
+                            <small>
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Business Role:</strong> Automatically assigned when user verifies NIP number. Allows access to business products and pricing.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Profile -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-building"></i> Business Profile
+                        </h5>
+                        
+                        @if (Model.BusinessProfile != null)
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Status</span>
+                                    @if (Model.BusinessProfile.IsVerified)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
+                                    }
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Business Mode</span>
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="businessModeSwitch"
+                                               @(Model.BusinessProfile.IsBusinessModeActive ? "checked" : "")
+                                               onchange="toggleBusinessMode('@Model.Id')">
+                                        <label class="form-check-label" for="businessModeSwitch">
+                                            @(Model.BusinessProfile.IsBusinessModeActive ? "Active" : "Inactive")
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr />
+                            
+                            <div class="row g-2 small">
+                                <div class="col-6">
+                                    <strong>Company Name:</strong>
+                                    <div>@Model.BusinessProfile.CompanyName</div>
+                                </div>
+                                <div class="col-6">
+                                    <strong>NIP:</strong>
+                                    <div><code>@Model.BusinessProfile.NIP</code></div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(Model.BusinessProfile.REGON))
+                                {
+                                    <div class="col-6">
+                                        <strong>REGON:</strong>
+                                        <div>@Model.BusinessProfile.REGON</div>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.BusinessProfile.KRS))
+                                {
+                                    <div class="col-6">
+                                        <strong>KRS:</strong>
+                                        <div>@Model.BusinessProfile.KRS</div>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.BusinessProfile.VATStatus))
+                                {
+                                    <div class="col-6">
+                                        <strong>VAT Status:</strong>
+                                        <div>
+                                            @if (Model.BusinessProfile.VATStatus == "Czynny")
+                                            {
+                                                <span class="badge bg-success">@Model.BusinessProfile.VATStatus</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@Model.BusinessProfile.VATStatus</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                @if (Model.BusinessProfile.VerifiedAt.HasValue)
+                                {
+                                    <div class="col-6">
+                                        <strong>Verified At:</strong>
+                                        <div>@Model.BusinessProfile.VerifiedAt.Value.ToString("dd MMM yyyy")</div>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.BusinessProfile.ResidenceAddress))
+                                {
+                                    <div class="col-12">
+                                        <strong>Address:</strong>
+                                        <div>@Model.BusinessProfile.ResidenceAddress</div>
+                                    </div>
+                                }
+                            </div>
+
+                            <hr />
+                            
+                            <div class="d-flex gap-2">
+                                @if (!Model.BusinessProfile.IsVerified)
+                                {
+                                    <button type="button" class="btn btn-sm btn-success" onclick="verifyBusinessProfile('@Model.Id')">
+                                        <i class="bi bi-check-circle"></i> Manually Verify
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="unverifyBusinessProfile('@Model.Id')">
+                                        <i class="bi bi-x-circle"></i> Revoke Verification
+                                    </button>
+                                }
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteBusinessProfile('@Model.Id')">
+                                    <i class="bi bi-trash"></i> Delete Profile
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-building text-muted fs-1 mb-2 d-block"></i>
+                                <p class="text-muted mb-3">No business profile found.</p>
+                                <p class="small text-muted">User hasn't verified their NIP number yet.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- User Orders -->
         @if (Model.Orders.Any())
         {
@@ -1457,6 +1656,150 @@
                 },
                 error: function() {
                     alert('Error toggling coupon status');
+                }
+            });
+        }
+
+        // ==================== Role Management ====================
+        function addRole(userId) {
+            const roleName = $('#roleToAdd').val();
+            if (!roleName) {
+                alert('Please select a role to add');
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("AddRole")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId, roleName: roleName }),
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error adding role');
+                }
+            });
+        }
+
+        function removeRole(userId, roleName) {
+            if (!confirm('Are you sure you want to remove the "' + roleName + '" role from this user?')) return;
+
+            $.ajax({
+                url: '@Url.Action("RemoveRole")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId, roleName: roleName }),
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error removing role');
+                }
+            });
+        }
+
+        // ==================== Business Profile Management ====================
+        function toggleBusinessMode(userId) {
+            $.ajax({
+                url: '@Url.Action("ToggleBusinessMode")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId }),
+                success: function(response) {
+                    if (response.success) {
+                        const switchEl = $('#businessModeSwitch');
+                        const label = switchEl.next('label');
+                        if (response.isActive) {
+                            label.text('Active');
+                        } else {
+                            label.text('Inactive');
+                        }
+                    } else {
+                        alert('Error: ' + response.message);
+                        // Revert the switch
+                        $('#businessModeSwitch').prop('checked', !$('#businessModeSwitch').prop('checked'));
+                    }
+                },
+                error: function() {
+                    alert('Error toggling business mode');
+                    $('#businessModeSwitch').prop('checked', !$('#businessModeSwitch').prop('checked'));
+                }
+            });
+        }
+
+        function verifyBusinessProfile(userId) {
+            if (!confirm('Are you sure you want to manually verify this business profile?')) return;
+
+            $.ajax({
+                url: '@Url.Action("VerifyBusinessProfile")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Business profile verified successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error verifying business profile');
+                }
+            });
+        }
+
+        function unverifyBusinessProfile(userId) {
+            if (!confirm('Are you sure you want to revoke verification for this business profile? The user will need to re-verify their NIP.')) return;
+
+            $.ajax({
+                url: '@Url.Action("UnverifyBusinessProfile")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Business profile verification revoked.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error unverifying business profile');
+                }
+            });
+        }
+
+        function deleteBusinessProfile(userId) {
+            if (!confirm('Are you sure you want to DELETE the business profile?\n\nThis will remove all business data and revoke business access. This action cannot be undone!')) return;
+
+            $.ajax({
+                url: '@Url.Action("DeleteBusinessProfile")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ userId: userId }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Business profile deleted successfully.');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error deleting business profile');
                 }
             });
         }

@@ -9,6 +9,16 @@
 
 <div class="cart-page container my-5">
     <h1 class="mb-4">Shopping Cart</h1>
+    
+    @if (Model.IsBusinessMode)
+    {
+        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-building-check me-2 fs-4"></i>
+            <div>
+                <strong>@L["Cart_BusinessMode"]</strong> - @L["Cart_BusinessModeDescription"]
+            </div>
+        </div>
+    }
 
     @if (!Model.Items.Any())
     {
@@ -90,7 +100,16 @@
                                         }
                                     </div>
                                     <div class="col-md-2 text-end">
-                                        <strong>@item.TotalPrice.ToString("C", plnCulture)</strong>
+                                        @if (item.IsBusinessPrice && item.OriginalPrice.HasValue)
+                                        {
+                                            <small class="text-decoration-line-through text-muted d-block">@((item.OriginalPrice.Value * item.Quantity).ToString("C", plnCulture))</small>
+                                            <strong class="text-success">@item.TotalPrice.ToString("C", plnCulture)</strong>
+                                            <span class="badge bg-info ms-1" title="Business Price"><i class="bi bi-building"></i> B2B</span>
+                                        }
+                                        else
+                                        {
+                                            <strong>@item.TotalPrice.ToString("C", plnCulture)</strong>
+                                        }
                                     </div>
                                     <div class="col-md-2 text-end">
                                         <button class="btn btn-sm btn-outline-danger remove-item">

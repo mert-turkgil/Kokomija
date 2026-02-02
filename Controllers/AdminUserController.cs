@@ -16,18 +16,24 @@ public class AdminUserController : Controller
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AdminUserController> _logger;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IStripeService _stripeService;
+    private readonly INIPValidationService _nipValidationService;
 
     public AdminUserController(
         IUnitOfWork unitOfWork,
         ILogger<AdminUserController> logger,
         UserManager<ApplicationUser> userManager,
-        IStripeService stripeService)
+        RoleManager<IdentityRole> roleManager,
+        IStripeService stripeService,
+        INIPValidationService nipValidationService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _userManager = userManager;
+        _roleManager = roleManager;
         _stripeService = stripeService;
+        _nipValidationService = nipValidationService;
     }
 
     /// <summary>
@@ -46,17 +52,27 @@ public class AdminUserController : Controller
         var allOrders = await _unitOfWork.Orders.GetAllAsync();
         var allReviews = await _unitOfWork.Repository<ProductReview>().GetAllAsync();
 
+        // Get all business profiles
+        var businessProfiles = await _unitOfWork.Repository<BusinessProfile>().GetAllAsync();
+
         // Get current user to check if Root
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var currentUser = await _userManager.FindByIdAsync(currentUserId!);
         var isCurrentUserRoot = currentUser != null && await _userManager.IsInRoleAsync(currentUser, "Root");
         ViewBag.IsCurrentUserRoot = isCurrentUserRoot;
 
+        // Get all available roles for the role management dropdown
+        var allRoles = await _roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.AllRoles = allRoles;
+
         // Build user list with role information
         var userDtos = new List<UserListItemDto>();
         foreach (var u in users)
         {
-            var isRoot = await _userManager.IsInRoleAsync(u, "Root");
+            var userRoles = await _userManager.GetRolesAsync(u);
+            var isRoot = userRoles.Contains("Root");
+            var businessProfile = businessProfiles.FirstOrDefault(bp => bp.UserId == u.Id);
+
             userDtos.Add(new UserListItemDto
             {
                 Id = u.Id,
@@ -71,7 +87,11 @@ public class AdminUserController : Controller
                 LastLogin = u.LastLoginAt,
                 TotalOrders = allOrders.Count(o => o.UserId == u.Id),
                 TotalReviews = allReviews.Count(r => r.UserId == u.Id),
-                IsRoot = isRoot
+                IsRoot = isRoot,
+                Roles = userRoles.ToList(),
+                HasBusinessProfile = businessProfile != null,
+                IsBusinessVerified = businessProfile?.IsVerified ?? false,
+                CompanyName = businessProfile?.CompanyName
             });
         }
 
@@ -200,6 +220,13 @@ public class AdminUserController : Controller
             }
         }
 
+        // Get business profile
+        var businessProfile = await _nipValidationService.GetBusinessProfileAsync(id);
+        
+        // Get user roles
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var allRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
+
         var viewModel = new UserEditDto
         {
             Id = user.Id,
@@ -212,6 +239,24 @@ public class AdminUserController : Controller
             BannedUntil = user.LockoutEnd,
             CreatedAt = user.CreatedAt,
             LastLogin = user.LastLoginAt,
+            BusinessProfile = businessProfile != null ? new UserBusinessProfileDto
+            {
+                Id = businessProfile.Id,
+                NIP = businessProfile.NIP,
+                CompanyName = businessProfile.CompanyName,
+                REGON = businessProfile.REGON,
+                KRS = businessProfile.KRS,
+                VATStatus = businessProfile.VATStatus,
+                ResidenceAddress = businessProfile.ResidenceAddress,
+                WorkingAddress = businessProfile.WorkingAddress,
+                RegistrationLegalDate = businessProfile.RegistrationLegalDate,
+                IsVerified = businessProfile.IsVerified,
+                IsBusinessModeActive = businessProfile.IsBusinessModeActive,
+                VerifiedAt = businessProfile.VerifiedAt,
+                CreatedAt = businessProfile.CreatedAt
+            } : null,
+            AssignedRoles = userRoles.ToList(),
+            AvailableRoles = allRoles.Where(r => !userRoles.Contains(r)).ToList(),
             Reviews = reviews.Select(r => new UserReviewDto
             {
                 Id = r.Id,
@@ -930,6 +975,402 @@ public class AdminUserController : Controller
             return Json(new { success = false, message = "Error loading coupon" });
         }
     }
+
+    #region Role Management
+
+    /// <summary>
+    /// GET: Get all available roles
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetRoles()
+    {
+        var roles = await _roleManager.Roles.ToListAsync();
+        var roleList = roles.Select(r => new { r.Id, r.Name }).OrderBy(r => r.Name).ToList();
+        return Json(new { success = true, roles = roleList });
+    }
+
+    /// <summary>
+    /// GET: Get user's current roles
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetUserRoles(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Json(new { success = false, message = "User not found" });
+
+        var userRoles = await _userManager.GetRolesAsync(user);
+        return Json(new { success = true, roles = userRoles });
+    }
+
+    /// <summary>
+    /// POST: Add role to user
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> AddRole([FromBody] UserRoleDto dto)
+    {
+        try
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(dto.UserId) || string.IsNullOrWhiteSpace(dto.RoleName))
+                return Json(new { success = false, message = "User ID and role name are required" });
+
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user == null)
+                return Json(new { success = false, message = "User not found" });
+
+            // Check if role exists
+            if (!await _roleManager.RoleExistsAsync(dto.RoleName))
+                return Json(new { success = false, message = "Role does not exist" });
+
+            // Prevent adding Root role unless current user is Root
+            if (dto.RoleName == "Root")
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var currentUser = await _userManager.FindByIdAsync(currentUserId!);
+                if (currentUser == null || !await _userManager.IsInRoleAsync(currentUser, "Root"))
+                    return Json(new { success = false, message = "Only Root users can assign the Root role" });
+            }
+
+            // Check if user already has the role
+            if (await _userManager.IsInRoleAsync(user, dto.RoleName))
+                return Json(new { success = false, message = "User already has this role" });
+
+            var result = await _userManager.AddToRoleAsync(user, dto.RoleName);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("Role {Role} added to user {UserId}", dto.RoleName, dto.UserId);
+                return Json(new { success = true, message = $"Role '{dto.RoleName}' added successfully" });
+            }
+
+            return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding role {Role} to user {UserId}", dto.RoleName, dto.UserId);
+            return Json(new { success = false, message = "Error adding role" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Remove role from user
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root")]
+    public async Task<IActionResult> RemoveRole([FromBody] UserRoleDto dto)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(dto.UserId) || string.IsNullOrWhiteSpace(dto.RoleName))
+                return Json(new { success = false, message = "User ID and role name are required" });
+
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user == null)
+                return Json(new { success = false, message = "User not found" });
+
+            // Prevent removing Root from yourself
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (dto.RoleName == "Root" && dto.UserId == currentUserId)
+                return Json(new { success = false, message = "Cannot remove Root role from yourself" });
+
+            // Prevent removing the last Root user
+            if (dto.RoleName == "Root")
+            {
+                var rootUsers = await _userManager.GetUsersInRoleAsync("Root");
+                if (rootUsers.Count <= 1)
+                    return Json(new { success = false, message = "Cannot remove the last Root user" });
+            }
+
+            if (!await _userManager.IsInRoleAsync(user, dto.RoleName))
+                return Json(new { success = false, message = "User does not have this role" });
+
+            var result = await _userManager.RemoveFromRoleAsync(user, dto.RoleName);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("Role {Role} removed from user {UserId}", dto.RoleName, dto.UserId);
+                return Json(new { success = true, message = $"Role '{dto.RoleName}' removed successfully" });
+            }
+
+            return Json(new { success = false, message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing role {Role} from user {UserId}", dto.RoleName, dto.UserId);
+            return Json(new { success = false, message = "Error removing role" });
+        }
+    }
+
+    #endregion
+
+    #region Business Profile Management
+
+    /// <summary>
+    /// GET: Get user's business profile
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetBusinessProfile(string userId)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(userId);
+            if (profile == null)
+                return Json(new { success = true, hasProfile = false });
+
+            return Json(new
+            {
+                success = true,
+                hasProfile = true,
+                profile = new
+                {
+                    profile.Id,
+                    profile.NIP,
+                    profile.CompanyName,
+                    profile.REGON,
+                    profile.KRS,
+                    profile.VATStatus,
+                    profile.ResidenceAddress,
+                    profile.WorkingAddress,
+                    profile.RegistrationLegalDate,
+                    profile.IsVerified,
+                    profile.IsBusinessModeActive,
+                    profile.VerifiedAt,
+                    profile.CreatedAt
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting business profile for user {UserId}", userId);
+            return Json(new { success = false, message = "Error loading business profile" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Toggle business mode for a user
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> ToggleBusinessMode([FromBody] UserIdDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found" });
+
+            profile.IsBusinessModeActive = !profile.IsBusinessModeActive;
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Business mode toggled for user {UserId}: {IsActive}", 
+                dto.UserId, profile.IsBusinessModeActive);
+
+            return Json(new { success = true, isActive = profile.IsBusinessModeActive });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling business mode for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "Error toggling business mode" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Manually verify business profile (admin override)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> VerifyBusinessProfile([FromBody] UserIdDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found" });
+
+            profile.IsVerified = true;
+            profile.VerifiedAt = DateTime.UtcNow;
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.SaveChangesAsync();
+
+            // Also add Business role if not already assigned
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user != null && !await _userManager.IsInRoleAsync(user, "Business"))
+            {
+                await _userManager.AddToRoleAsync(user, "Business");
+            }
+
+            _logger.LogInformation("Business profile manually verified for user {UserId}", dto.UserId);
+            return Json(new { success = true, message = "Business profile verified successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error verifying business profile for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "Error verifying business profile" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Revoke business profile verification
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> UnverifyBusinessProfile([FromBody] UserIdDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found" });
+
+            profile.IsVerified = false;
+            profile.IsBusinessModeActive = false;
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.SaveChangesAsync();
+
+            // Remove Business role
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user != null && await _userManager.IsInRoleAsync(user, "Business"))
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Business");
+            }
+
+            _logger.LogInformation("Business profile verification revoked for user {UserId}", dto.UserId);
+            return Json(new { success = true, message = "Business profile verification revoked" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unverifying business profile for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "Error revoking verification" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Delete business profile entirely
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> DeleteBusinessProfile([FromBody] UserIdDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found" });
+
+            _unitOfWork.Repository<BusinessProfile>().Remove(profile);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Remove Business role
+            var user = await _userManager.FindByIdAsync(dto.UserId);
+            if (user != null && await _userManager.IsInRoleAsync(user, "Business"))
+            {
+                await _userManager.RemoveFromRoleAsync(user, "Business");
+            }
+
+            _logger.LogInformation("Business profile deleted for user {UserId}", dto.UserId);
+            return Json(new { success = true, message = "Business profile deleted" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting business profile for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "Error deleting business profile" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Manually verify/unverify business profile (admin override)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> ToggleBusinessVerification([FromBody] ToggleBusinessVerificationDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found" });
+
+            profile.IsVerified = dto.IsVerified;
+            profile.UpdatedAt = DateTime.UtcNow;
+
+            if (dto.IsVerified && !profile.VerifiedAt.HasValue)
+            {
+                profile.VerifiedAt = DateTime.UtcNow;
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Business profile verification toggled for user {UserId}: {IsVerified}", 
+                dto.UserId, dto.IsVerified);
+
+            return Json(new { success = true, message = dto.IsVerified ? "Profile verified" : "Verification removed" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error toggling business verification for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "Error updating business verification" });
+        }
+    }
+
+    /// <summary>
+    /// GET: Get NIP verification logs for a user
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetNIPVerificationLogs(string userId)
+    {
+        try
+        {
+            var logs = await _unitOfWork.Repository<NIPVerificationLog>()
+                .FindAsync(l => l.UserId == userId);
+
+            var logDtos = logs.OrderByDescending(l => l.AttemptedAt).Select(l => new
+            {
+                l.Id,
+                l.NIP,
+                l.WasSuccessful,
+                l.ErrorMessage,
+                l.ResponseCode,
+                l.IPAddress,
+                l.AttemptedAt
+            }).ToList();
+
+            return Json(new { success = true, logs = logDtos });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting NIP verification logs for user {UserId}", userId);
+            return Json(new { success = false, message = "Error loading verification logs" });
+        }
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// DTO for user role operations
+/// </summary>
+public class UserRoleDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string RoleName { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Simple DTO for operations requiring only user ID
+/// </summary>
+public class UserIdDto
+{
+    public string UserId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO for toggling business verification
+/// </summary>
+public class ToggleBusinessVerificationDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public bool IsVerified { get; set; }
 }
 
 /// <summary>

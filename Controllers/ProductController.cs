@@ -1,4 +1,7 @@
 using Kokomija.Data.Abstract;
+using Kokomija.Entity;
+using Kokomija.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 
@@ -13,25 +16,76 @@ namespace Kokomija.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<ProductController> _logger;
         private readonly Kokomija.Services.ILocalizationService _localizationService;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INIPValidationService _nipValidationService;
 
         public ProductController(
             IUnitOfWork unitOfWork, 
             ILogger<ProductController> logger,
-            Kokomija.Services.ILocalizationService localizationService)
+            Kokomija.Services.ILocalizationService localizationService,
+            UserManager<ApplicationUser> userManager,
+            INIPValidationService nipValidationService)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _localizationService = localizationService;
+            _userManager = userManager;
+            _nipValidationService = nipValidationService;
         }
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Checks if the current user is in business mode
+        /// </summary>
+        private async Task<bool> IsBusinessModeActiveAsync()
+        {
+            if (!User.Identity?.IsAuthenticated == true)
+                return false;
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return false;
+
+            var profile = await _nipValidationService.GetBusinessProfileAsync(user.Id);
+            return profile?.IsBusinessModeActive == true && profile?.IsVerified == true;
+        }
+
+        /// <summary>
+        /// Filters products based on business mode status
+        /// </summary>
+        private IEnumerable<Product> FilterProductsForBusinessMode(IEnumerable<Product> products, bool isBusinessMode)
+        {
+            if (isBusinessMode)
+            {
+                // Business users see all products that are available for business
+                return products.Where(p => !p.IsBusinessOnly || p.IsAvailableForBusiness);
+            }
+            else
+            {
+                // Regular users don't see business-only products
+                return products.Where(p => !p.IsBusinessOnly);
+            }
+        }
+
+        #endregion
 
         // GET: Product
         public async Task<IActionResult> Index()
         {
             try
             {
+                // Check if user is in business mode
+                var isBusinessMode = await IsBusinessModeActiveAsync();
+                ViewBag.IsBusinessMode = isBusinessMode;
+
                 // Get all active products with their primary images
                 var products = await _unitOfWork.Products.GetActiveProductsAsync();
-                return View(products);
+                
+                // Filter products based on business mode
+                var filteredProducts = FilterProductsForBusinessMode(products, isBusinessMode);
+                
+                return View(filteredProducts);
             }
             catch (Exception ex)
             {
@@ -123,6 +177,17 @@ namespace Kokomija.Controllers
                 // Check stock availability
                 var hasStock = product.Variants?.Any(v => v.StockQuantity > 0) ?? true;
                 ViewData["HasStock"] = hasStock;
+
+                // Check if user is in business mode for B2B pricing
+                var isBusinessMode = await IsBusinessModeActiveAsync();
+                ViewData["IsBusinessMode"] = isBusinessMode;
+                
+                // Check if this is a business-only product and user doesn't have business access
+                if (product.IsBusinessOnly && !isBusinessMode)
+                {
+                    _logger.LogInformation("Product {ProductId} is business-only, user not in business mode", product.Id);
+                    return View("ProductBusinessOnly");
+                }
 
                 // Load related products
                 await LoadRelatedProducts(product);
@@ -230,6 +295,21 @@ namespace Kokomija.Controllers
                     relatedProducts = new List<Kokomija.Entity.Product>();
                 }
 
+                // Check if user is in business mode
+                var isBusinessMode = await IsBusinessModeActiveAsync();
+                ViewBag.IsBusinessMode = isBusinessMode;
+
+                // If product is business-only and user is not in business mode, show unavailable
+                if (product.IsBusinessOnly && !isBusinessMode)
+                {
+                    ViewBag.ProductName = product.Name;
+                    ViewBag.IsBusinessOnlyRestricted = true;
+                    ViewBag.AlternativeProducts = relatedProducts.Where(p => !p.IsBusinessOnly).Take(4).ToList();
+                    return View("ProductUnavailable");
+                }
+
+                // Filter related products based on business mode
+                relatedProducts = FilterProductsForBusinessMode(relatedProducts, isBusinessMode).ToList();
                 ViewBag.RelatedProducts = relatedProducts;
 
                 // Set page metadata
@@ -258,10 +338,17 @@ namespace Kokomija.Controllers
                     return NotFound();
                 }
 
+                // Check if user is in business mode
+                var isBusinessMode = await IsBusinessModeActiveAsync();
+                ViewBag.IsBusinessMode = isBusinessMode;
+
                 var products = await _unitOfWork.Products.GetProductsByCategoryAsync(category.Id);
                 
+                // Filter products based on business mode
+                var filteredProducts = FilterProductsForBusinessMode(products, isBusinessMode);
+                
                 ViewBag.Category = category;
-                return View("Index", products);
+                return View("Index", filteredProducts);
             }
             catch (Exception ex)
             {
@@ -280,10 +367,17 @@ namespace Kokomija.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
+                // Check if user is in business mode
+                var isBusinessMode = await IsBusinessModeActiveAsync();
+                ViewBag.IsBusinessMode = isBusinessMode;
+
                 var products = await _unitOfWork.Products.SearchProductsAsync(q);
                 
+                // Filter products based on business mode
+                var filteredProducts = FilterProductsForBusinessMode(products, isBusinessMode);
+                
                 ViewBag.SearchQuery = q;
-                return View("Index", products);
+                return View("Index", filteredProducts);
             }
             catch (Exception ex)
             {

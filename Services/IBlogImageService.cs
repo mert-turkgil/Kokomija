@@ -1,5 +1,10 @@
-namespace Kokomija.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
+namespace Kokomija.Services
+{
 public interface IBlogImageService
 {
     /// <summary>
@@ -32,4 +37,5 @@ public interface IBlogImageService
     /// Clear all temp files older than specified hours
     /// </summary>
     Task ClearOldTempFilesAsync(int olderThanHours = 24);
+}
 }

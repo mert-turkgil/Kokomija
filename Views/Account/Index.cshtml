@@ -2,469 +2,1197 @@
 @inject Kokomija.Services.ILocalizationService L
 
 @{
-    ViewData[index: "Title"] = "My Account";
-    bool isAdmin = User.IsInRole(role: "Admin") || User.IsInRole(role: "Root");
+    ViewData["Title"] = L["Account_Dashboard"] ?? "My Account";
+    bool isAdmin = User.IsInRole("Admin") || User.IsInRole("Root");
+    var plnCulture = new System.Globalization.CultureInfo("pl-PL");
 }
 
-<div class="account-page container my-5">
-    @if (TempData[key: "SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData[key: "SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    
-    @if (TempData[key: "ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData[key: "ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1>@L["Account_Welcome"], @Model.FirstName!</h1>
-            @if (isAdmin)
-            {
-                <a asp-controller="Admin" asp-action="Index" class="btn btn-primary mt-2">
-                    <i class="bi bi-shield-lock"></i> @L.GetString(key: "Account_AdminPanel",resourceName: "Account")
-                </a>
-            }
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-muted">@L.GetString(key: "Account_TotalOrders",resourceName: "Account")</h5>
-                    <h2 class="display-4">@Model.TotalOrders</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-muted">@L.GetString(key: "Account_CompletedOrders",resourceName: "Account")</h5>
-                    <h2 class="display-4">@Model.CompletedOrders</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-muted">@L.GetString(key: "Account_TotalSpent",resourceName: "Account")</h5>
-                    <h2 class="display-4">@Model.TotalSpent.ToString("C")</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title text-muted">@L.GetString(key: "Account_WishlistItems",resourceName: "Account")</h5>
-                    <h2 class="display-4">@Model.WishlistCount</h2>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">@L.GetString(key: "Account_Tab_Overview",resourceName: "Account")</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">@L.GetString(key: "Account_Tab_Orders",resourceName: "Account")</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="wishlist-tab" data-bs-toggle="tab" data-bs-target="#wishlist" type="button" role="tab">
-                <i class="fas fa-heart me-1"></i>@L.GetString(key: "Account_Tab_Wishlist",resourceName: "Account") <span class="badge bg-danger ms-1">@Model.WishlistCount</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">@L.GetString(key: "Account_Tab_VIP",resourceName: "Account")</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">@L.GetString(key: "Account_Tab_Settings",resourceName: "Account")</button>
-        </li>
-    </ul>
-
-    <div class="tab-content" id="accountTabsContent">
-        <div class="tab-pane fade show active" id="overview" role="tabpanel">
-            <div class="row">
+<!-- Modern Account Dashboard -->
+<div class="account-dashboard">
+    <!-- Hero Section with User Info -->
+    <div class="account-hero bg-gradient-primary text-white py-5 mb-4">
+        <div class="container">
+            <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">@L.GetString(key: "Account_RecentOrders",resourceName: "Account")</h5>
-                            <a href="#orders" data-bs-toggle="tab" class="btn btn-sm btn-outline-primary">@L.GetString(key: "Account_ViewAll",resourceName: "Account")</a>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-wrapper me-4">
+                            <div class="avatar-circle">
+                                <span class="avatar-initials">@(Model.FirstName?.FirstOrDefault())@(Model.LastName?.FirstOrDefault())</span>
+                            </div>
+                            @if (Model.VIPStatus.TierName != "None")
+                            {
+                                <span class="vip-badge badge bg-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light text-dark" : Model.VIPStatus.TierName == "Gold" ? "warning" : "info")">
+                                    <i class="bi bi-star-fill"></i> @Model.VIPStatus.TierName
+                                </span>
+                            }
                         </div>
-                        <div class="card-body">
-                            @if (Model.RecentOrders.Any())
-                            {
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>@L.GetString(key: "Account_OrderNumber",resourceName: "Account")</th>
-                                                <th>@L.GetString(key: "Account_Date",resourceName: "Account")</th>
-                                                <th>@L.GetString(key: "Account_Items",resourceName: "Account")</th>
-                                                <th>@L.GetString(key: "Account_Total",resourceName: "Account")</th>
-                                                <th>@L.GetString(key: "Account_Currency",resourceName: "Account")</th>
-                                                <th>@L.GetString(key: "Account_Status",resourceName: "Account")</th>
-                                                <th>@L.GetString(key: "Account_SessionStatus",resourceName: "Account")</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (Kokomija.Models.ViewModels.Account.OrderViewModel order in Model.RecentOrders)
-                                            {
-                                                <tr>
-                                                    <td>#@order.OrderNumber</td>
-                                                    <td>@order.OrderDate.ToShortDateString()</td>
-                                                    <td>@order.ItemCount</td>
-                                                    <td>@order.TotalAmount.ToString(format: "N2")</td>
-                                                    <td>
-                                                        <span class="badge bg-secondary">
-                                                            @L[$"Currency_{order.Currency.ToUpper()}"]
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        @if (order.PaymentStatus == "refunded")
-                                                        {
-                                                            <span class="badge bg-secondary">
-                                                                <i class="bi bi-arrow-counterclockwise me-1"></i>Refunded
-                                                            </span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" || order.OrderStatus == "delivered" ? "success" : order.OrderStatus == "Cancelled" || order.OrderStatus == "cancelled" ? "danger" : "warning")">
-                                                                @order.OrderStatus
-                                                            </span>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (!string.IsNullOrEmpty(order.SessionStatus))
-                                                        {
-                                                            <span class="badge bg-@(order.SessionStatus == "complete" ? "success" : order.SessionStatus == "cancelled" ? "danger" : "secondary")">
-                                                                @L[$"Session_{char.ToUpper(order.SessionStatus[0]) + order.SessionStatus.Substring(1)}"]
-                                                            </span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="text-muted">-</span>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
-                                                            @L["View_Details"]
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
-                            else
-                            {
-                                <p class="text-muted text-center py-4">@L["Account_NoOrders"] <a asp-controller="Product" asp-action="Index">@L["Account_StartShopping"]</a></p>
-                            }
+                        <div>
+                            <h1 class="display-6 fw-bold mb-1">@L["Account_Welcome"], @Model.FirstName!</h1>
+                            <p class="mb-2 opacity-75">
+                                <i class="bi bi-envelope me-1"></i> @Model.Email
+                                @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                                {
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-phone me-1"></i> @Model.PhoneNumber
+                                }
+                            </p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (isAdmin)
+                                {
+                                    <a asp-controller="Admin" asp-action="Index" class="btn btn-light btn-sm">
+                                        <i class="bi bi-shield-lock me-1"></i> @(L["Account_AdminPanel"] ?? "Admin Panel")
+                                    </a>
+                                }
+                                @if (Model.BusinessProfile?.IsVerified == true)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-building-check me-1"></i> B2B Verified</span>
+                                }
+                                <span class="badge bg-white bg-opacity-25">
+                                    <i class="bi bi-calendar3 me-1"></i> @(L["Account_MemberSince"] ?? "Member since") @Model.CreatedAt.ToString("MMM yyyy")
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">@L.GetString(key: "Account_VIP_Status",resourceName: "Account")</h5>
+                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                    <div class="quick-stats d-flex justify-content-lg-end gap-4">
+                        <div class="stat-item text-center">
+                            <div class="stat-value display-6 fw-bold">@Model.TotalOrders</div>
+                            <div class="stat-label small opacity-75">@(L["Account_Orders"] ?? "Orders")</div>
                         </div>
-                        <div class="card-body text-center">
-                            @if (Model.VIPStatus.TierName == "None")
-                            {
-                                <div class="mb-3">
-                                    <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
+                        <div class="stat-item text-center">
+                            <div class="stat-value display-6 fw-bold">@Model.TotalSpent.ToString("N0", plnCulture)</div>
+                            <div class="stat-label small opacity-75">PLN @(L["Account_Spent"] ?? "Spent")</div>
+                        </div>
+                        <div class="stat-item text-center">
+                            <div class="stat-value display-6 fw-bold">@Model.WishlistCount</div>
+                            <div class="stat-label small opacity-75">@(L["Account_Wishlist"] ?? "Wishlist")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Alerts -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Modern Tab Navigation -->
+        <div class="nav-tabs-wrapper mb-4">
+            <ul class="nav nav-pills nav-fill flex-nowrap overflow-auto" id="accountTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                        <i class="bi bi-grid-1x2 me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_Overview"] ?? "Overview")</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">
+                        <i class="bi bi-bag me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_Orders"] ?? "Orders")</span>
+                        @if (Model.PendingOrders > 0)
+                        {
+                            <span class="badge bg-warning ms-1">@Model.PendingOrders</span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="wishlist-tab" data-bs-toggle="tab" data-bs-target="#wishlist" type="button" role="tab">
+                        <i class="bi bi-heart me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_Wishlist"] ?? "Wishlist")</span>
+                        @if (Model.WishlistCount > 0)
+                        {
+                            <span class="badge bg-danger ms-1">@Model.WishlistCount</span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="returns-tab" data-bs-toggle="tab" data-bs-target="#returns" type="button" role="tab">
+                        <i class="bi bi-arrow-return-left me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_Returns"] ?? "Returns")</span>
+                        @if (Model.PendingReturnRequests > 0)
+                        {
+                            <span class="badge bg-warning ms-1">@Model.PendingReturnRequests</span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="vip-tab" data-bs-toggle="tab" data-bs-target="#vip" type="button" role="tab">
+                        <i class="bi bi-gem me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_VIP"] ?? "VIP")</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="business-tab" data-bs-toggle="tab" data-bs-target="#business" type="button" role="tab">
+                        <i class="bi bi-building me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_Business"] ?? "Business")</span>
+                        @if (Model.BusinessProfile?.IsVerified == true)
+                        {
+                            <span class="badge bg-success ms-1"><i class="bi bi-check-lg"></i></span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                        <i class="bi bi-gear me-2"></i><span class="d-none d-sm-inline">@(L["Account_Tab_Settings"] ?? "Settings")</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="accountTabsContent">
+            
+            <!-- ==================== OVERVIEW TAB ==================== -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Quick Actions -->
+                    <div class="col-12">
+                        <div class="quick-actions-grid">
+                            <a asp-controller="Product" asp-action="Index" class="quick-action-card">
+                                <div class="icon bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-bag-plus"></i>
                                 </div>
-                                <h5 class="text-muted">@L.GetString(key: "Account_VIP_None",resourceName: "Account")</h5>
-                                <p class="text-muted">@L.GetString(key: "Account_VIP_NotVIP_Message",resourceName: "Account")</p>
-                                <div class="alert alert-info mb-3">
-                                    <small>@L.GetString(key: "Account_VIP_SpendToUnlock",resourceName: "Account").Replace("{0}", Model.VIPStatus.NextTierThreshold.ToString("C"))</small>
+                                <span>@(L["Account_ShopNow"] ?? "Shop Now")</span>
+                            </a>
+                            <a asp-controller="Wishlist" asp-action="Index" class="quick-action-card">
+                                <div class="icon bg-danger bg-opacity-10 text-danger">
+                                    <i class="bi bi-heart"></i>
                                 </div>
-                                <a asp-controller="Product" asp-action="Index" class="btn btn-primary w-100">
-                                    <i class="bi bi-cart me-2"></i>@L.GetString(key: "Account_VIP_ShopNow",resourceName: "Account")
-                                </a>
-                            }
-                            else
-                            {
-                                <div class="mb-3">
-                                    <span class="badge fs-4 bg-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light text-dark" : Model.VIPStatus.TierName == "Gold" ? "warning" : "primary")">
-                                        <i class="bi bi-star-fill me-1"></i>@Model.VIPStatus.TierName
-                                    </span>
+                                <span>@(L["Account_Wishlist"] ?? "Wishlist")</span>
+                            </a>
+                            <a asp-controller="Cart" asp-action="Index" class="quick-action-card">
+                                <div class="icon bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-cart3"></i>
                                 </div>
-                                <p class="mb-2">@L["Account_VIP_Discount"]: <strong>@Model.VIPStatus.DiscountPercentage%</strong></p>
-                                @if (Model.VIPStatus.NextTierThreshold > 0)
+                                <span>@(L["Account_Cart"] ?? "Cart") (@Model.CartItemsCount)</span>
+                            </a>
+                            <a href="#" class="quick-action-card" onclick="document.getElementById('settings-tab').click(); return false;">
+                                <div class="icon bg-secondary bg-opacity-10 text-secondary">
+                                    <i class="bi bi-person-gear"></i>
+                                </div>
+                                <span>@(L["Account_EditProfile"] ?? "Edit Profile")</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Recent Orders -->
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                                <h5 class="mb-0 fw-semibold">
+                                    <i class="bi bi-clock-history text-primary me-2"></i>@(L["Account_RecentOrders"] ?? "Recent Orders")
+                                </h5>
+                                <button class="btn btn-sm btn-outline-primary" onclick="document.getElementById('orders-tab').click()">
+                                    @(L["Account_ViewAll"] ?? "View All") <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                @if (Model.RecentOrders.Any())
                                 {
-                                    <div class="progress mb-2" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%">
-                                            @Model.VIPStatus.ProgressPercentage%
-                                        </div>
+                                    <div class="list-group list-group-flush">
+                                        @foreach (var order in Model.RecentOrders.Take(5))
+                                        {
+                                            var statusClass = order.OrderStatus?.ToLower() switch {
+                                                "pending" => "warning",
+                                                "processing" => "info",
+                                                "shipped" => "primary",
+                                                "delivered" => "success",
+                                                "cancelled" => "danger",
+                                                _ => "secondary"
+                                            };
+                                            var statusIcon = order.OrderStatus?.ToLower() switch {
+                                                "pending" => "hourglass-split",
+                                                "processing" => "gear",
+                                                "shipped" => "truck",
+                                                "delivered" => "check-circle-fill",
+                                                "cancelled" => "x-circle-fill",
+                                                _ => "question-circle"
+                                            };
+                                            
+                                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="list-group-item list-group-item-action py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="order-icon-sm me-3">
+                                                        <div class="rounded-circle bg-@statusClass bg-opacity-10 p-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                                            <i class="bi bi-@statusIcon text-@statusClass fs-5"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1 min-width-0">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <h6 class="mb-1 fw-semibold">#@order.OrderNumber</h6>
+                                                                <small class="text-muted">
+                                                                    <i class="bi bi-calendar3 me-1"></i>@order.OrderDate.ToString("dd MMM yyyy")
+                                                                    <span class="mx-1">•</span>
+                                                                    <i class="bi bi-box me-1"></i>@order.ItemCount @(L["Account_Items"] ?? "items")
+                                                                </small>
+                                                            </div>
+                                                            <div class="text-end">
+                                                                <div class="fw-bold text-primary">@order.TotalAmount.ToString("C", plnCulture)</div>
+                                                                <span class="badge bg-@statusClass">@order.OrderStatus</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <i class="bi bi-chevron-right text-muted ms-3"></i>
+                                                </div>
+                                            </a>
+                                        }
                                     </div>
-                                    <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C") @L.GetString(key: "Account_VIP_NextTier",resourceName: "Account")</small>
                                 }
                                 else
                                 {
-                                    <div class="alert alert-success mb-0">
-                                        <i class="bi bi-trophy-fill me-2"></i>
-                                        <strong>Maximum VIP Tier!</strong>
+                                    <div class="text-center py-5">
+                                        <div class="empty-state">
+                                            <i class="bi bi-bag text-muted" style="font-size: 4rem;"></i>
+                                            <h5 class="mt-3 text-muted">@(L["Account_NoOrders"] ?? "No orders yet")</h5>
+                                            <p class="text-muted">@(L["Account_NoOrdersDescription"] ?? "Start shopping to see your orders here")</p>
+                                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
+                                                <i class="bi bi-bag-plus me-2"></i>@(L["Account_StartShopping"] ?? "Start Shopping")
+                                            </a>
+                                        </div>
                                     </div>
                                 }
-                                <a href="#vip" data-bs-toggle="tab" class="btn btn-outline-primary btn-sm mt-3 w-100">@L.GetString(key: "Account_VIP_ViewBenefits",resourceName: "Account")</a>
-                            }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIP Status Card -->
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm border-0 h-100 vip-status-card">
+                            <div class="card-body text-center p-4">
+                                @if (Model.VIPStatus.TierName == "None")
+                                {
+                                    <div class="vip-icon mb-3">
+                                        <i class="bi bi-star text-muted" style="font-size: 3.5rem;"></i>
+                                    </div>
+                                    <h5 class="fw-semibold">@(L["Account_VIP_NotYet"] ?? "Not a VIP yet")</h5>
+                                    <p class="text-muted small mb-3">@(L["Account_VIP_NotYetDesc"] ?? "Shop more to unlock exclusive benefits!")</p>
+                                    <div class="progress mb-3" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%"></div>
+                                    </div>
+                                    <small class="text-muted">@Model.VIPStatus.NextTierThreshold.ToString("C", plnCulture) @(L["Account_VIP_ToUnlock"] ?? "to unlock Bronze")</small>
+                                }
+                                else
+                                {
+                                    <div class="vip-badge-large mb-3">
+                                        <span class="badge fs-2 bg-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light text-dark border" : Model.VIPStatus.TierName == "Gold" ? "warning" : "info") px-4 py-2">
+                                            <i class="bi bi-gem me-2"></i>@Model.VIPStatus.TierName
+                                        </span>
+                                    </div>
+                                    <h4 class="fw-bold text-primary mb-2">@Model.VIPStatus.DiscountPercentage% @(L["Account_VIP_Discount"] ?? "Discount")</h4>
+                                    @if (Model.VIPStatus.HasFreeShipping)
+                                    {
+                                        <span class="badge bg-success mb-3"><i class="bi bi-truck me-1"></i> @(L["Account_VIP_FreeShipping"] ?? "Free Shipping")</span>
+                                    }
+                                    @if (Model.VIPStatus.NextTierThreshold > 0)
+                                    {
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%"></div>
+                                        </div>
+                                        <small class="text-muted">@((Model.VIPStatus.NextTierThreshold - Model.VIPStatus.CurrentSpending).ToString("C", plnCulture)) @(L["Account_VIP_ToNextTier"] ?? "to next tier")</small>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-success py-2 mb-0">
+                                            <i class="bi bi-trophy-fill me-2"></i>@(L["Account_VIP_MaxTier"] ?? "Maximum tier reached!")
+                                        </div>
+                                    }
+                                }
+                                <hr class="my-3">
+                                <button class="btn btn-outline-primary btn-sm w-100" onclick="document.getElementById('vip-tab').click()">
+                                    <i class="bi bi-info-circle me-1"></i>@(L["Account_VIP_ViewBenefits"] ?? "View Benefits")
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="tab-pane fade" id="orders" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    @if (Model.RecentOrders.Any())
-                    {
-                        @foreach (var order in Model.RecentOrders)
+            <!-- ==================== ORDERS TAB ==================== -->
+            <div class="tab-pane fade" id="orders" role="tabpanel">
+                <!-- Stats Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card-modern bg-gradient-primary text-white">
+                            <i class="bi bi-receipt stat-icon"></i>
+                            <div class="stat-content">
+                                <div class="stat-number">@Model.TotalOrders</div>
+                                <div class="stat-label">@(L["Account_TotalOrders"] ?? "Total Orders")</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card-modern bg-gradient-warning text-white">
+                            <i class="bi bi-hourglass-split stat-icon"></i>
+                            <div class="stat-content">
+                                <div class="stat-number">@Model.PendingOrders</div>
+                                <div class="stat-label">@(L["Account_PendingOrders"] ?? "Pending")</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card-modern bg-gradient-success text-white">
+                            <i class="bi bi-check-circle stat-icon"></i>
+                            <div class="stat-content">
+                                <div class="stat-number">@Model.CompletedOrders</div>
+                                <div class="stat-label">@(L["Account_CompletedOrders"] ?? "Completed")</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card-modern bg-gradient-info text-white">
+                            <i class="bi bi-wallet2 stat-icon"></i>
+                            <div class="stat-content">
+                                <div class="stat-number">@Model.TotalSpent.ToString("N0", plnCulture)</div>
+                                <div class="stat-label">PLN @(L["Account_TotalSpent"] ?? "Spent")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders List -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-semibold"><i class="bi bi-bag-check text-primary me-2"></i>@(L["Account_YourOrders"] ?? "Your Orders")</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.RecentOrders.Any())
                         {
-                            <div class="order-card border rounded p-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h5>@L["Order_Number"] #@order.OrderNumber</h5>
-                                        <p class="text-muted mb-1">@order.OrderDate.ToString("MMMM dd, yyyy")</p>
-                                        <div class="mb-2">
-                                            @if (order.PaymentStatus == "refunded")
+                            @foreach (var order in Model.RecentOrders)
+                            {
+                                var statusClass = order.OrderStatus?.ToLower() switch {
+                                    "pending" => "warning",
+                                    "processing" => "info",
+                                    "shipped" => "primary",
+                                    "delivered" => "success",
+                                    "cancelled" => "danger",
+                                    _ => "secondary"
+                                };
+                                var statusIcon = order.OrderStatus?.ToLower() switch {
+                                    "pending" => "hourglass-split",
+                                    "processing" => "gear-fill",
+                                    "shipped" => "truck",
+                                    "delivered" => "house-check-fill",
+                                    "cancelled" => "x-circle-fill",
+                                    _ => "question-circle"
+                                };
+                                
+                                <div class="order-card @(order.OrderStatus?.ToLower() == "cancelled" ? "order-cancelled" : "")">
+                                    <div class="row align-items-center g-3">
+                                        <!-- Order Info -->
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="d-flex align-items-center">
+                                                <div class="order-status-icon me-3">
+                                                    <div class="status-circle bg-@statusClass">
+                                                        <i class="bi bi-@statusIcon"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a asp-action="OrderDetails" asp-route-id="@order.Id" class="fw-bold text-dark text-decoration-none order-number">
+                                                        #@order.OrderNumber
+                                                    </a>
+                                                    <div class="small text-muted">
+                                                        <i class="bi bi-calendar3 me-1"></i>@order.OrderDate.ToString("dd MMM yyyy, HH:mm")
+                                                    </div>
+                                                    <div class="small text-muted">
+                                                        <i class="bi bi-box-seam me-1"></i>@order.ItemCount @(L["Account_Items"] ?? "items")
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Items Preview -->
+                                        <div class="col-lg-3 col-md-6">
+                                            @if (order.Items.Any())
                                             {
-                                                <span class="badge bg-secondary me-1">
-                                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Refunded
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-@(order.OrderStatus == "Completed" || order.OrderStatus == "Delivered" || order.OrderStatus == "delivered" ? "success" : order.OrderStatus == "Cancelled" || order.OrderStatus == "cancelled" ? "danger" : "warning") me-1">
-                                                    @order.OrderStatus
-                                                </span>
-                                            }
-                                            @if (!string.IsNullOrEmpty(order.SessionStatus))
-                                            {
-                                                <span class="badge bg-@(order.SessionStatus == "complete" ? "success" : order.SessionStatus == "cancelled" ? "danger" : "secondary")">
-                                                    @L[$"Session_{char.ToUpper(order.SessionStatus[0]) + order.SessionStatus.Substring(1)}"]
-                                                </span>
+                                                <div class="items-preview d-flex gap-1">
+                                                    @foreach (var item in order.Items.Take(3))
+                                                    {
+                                                        <div class="item-thumb" data-bs-toggle="tooltip" title="@item.ProductName">
+                                                            @if (!string.IsNullOrEmpty(item.ProductImage))
+                                                            {
+                                                                <img src="@Url.Content($"~/img/ProductImage/{item.ProductImage}")" alt="@item.ProductName" onerror="this.src='@Url.Content("~/img/logo_black.png")'">
+                                                            }
+                                                            else
+                                                            {
+                                                                <img src="@Url.Content("~/img/logo_black.png")" alt="Product">
+                                                            }
+                                                            @if (item.Quantity > 1)
+                                                            {
+                                                                <span class="qty-badge">x@item.Quantity</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    @if (order.Items.Count() > 3)
+                                                    {
+                                                        <div class="item-thumb more-items">
+                                                            <span>+@(order.Items.Count() - 3)</span>
+                                                        </div>
+                                                    }
+                                                </div>
                                             }
                                         </div>
-                                        @if (!string.IsNullOrEmpty(order.CustomerCountry))
-                                        {
-                                            <small class="text-muted">
-                                                <i class="bi bi-geo-alt me-1"></i>@order.CustomerCountry
-                                            </small>
-                                        }
-                                    </div>
-                                    <div class="text-end">
-                                        <h4>
-                                            @order.TotalAmount.ToString("N2")
-                                            <small class="text-muted">@L[$"Currency_{order.Currency.ToUpper()}"]</small>
-                                        </h4>
-                                        <small class="text-muted">@order.ItemCount @L.GetString(key: "Account_Order_Items",resourceName: "Account")</small>
-                                    </div>
-                                </div>
-                                <div class="btn-group" role="group">
-                                    <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye me-1"></i>@L.GetString(key: "View_Details",resourceName: "Account")
-                                    </a>
-                                    @if (order.CanCancel)
-                                    {
-                                        <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(@order.Id)">
-                                            <i class="bi bi-x-circle me-1"></i>@L.GetString(key: "Account_CancelOrder",resourceName: "Account")
-                                        </button>
-                                    }
-                                    @if (order.CanReturn)
-                                    {
-                                        <a asp-action="ReturnRequest" asp-route-orderId="@order.Id" class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-arrow-return-left me-1"></i>@L.GetString(key: "Account_RequestReturn",resourceName: "Account")
-                                        </a>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
-                            <p class="text-muted mt-3">@L.GetString(key: "Account_NoOrders",resourceName: "Account")</p>
-                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">@L.GetString(key: "Account_StartShopping",resourceName: "Account")</a>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="wishlist" role="tabpanel">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-heart text-danger me-2"></i>
-                        @L.GetString(key: "Account_Wishlist_Title",resourceName: "Account")
-                    </h5>
-                    <a asp-controller="Wishlist" asp-action="Index" class="btn btn-sm btn-primary">
-                        @L.GetString(key: "Account_ViewFullWishlist",resourceName: "Account")
-                    </a>
-                </div>
-                <div class="card-body">
-                    <div id="wishlistContainer">
-                        <div class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="vip" role="tabpanel">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">@L.GetString(key: "Account_VIP_YourBenefits",resourceName: "Account")</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @foreach (Kokomija.Models.ViewModels.Account.VIPBenefitViewModel benefit in Model.VIPStatus.Benefits)
-                        {
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 @(benefit.IsUnlocked ? "border-success" : "")">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-start">
-                                            <i class="bi bi-@benefit.Icon fs-3 me-3 @(benefit.IsUnlocked ? "text-success" : "text-muted")"></i>
-                                            <div>
-                                                <h6>@benefit.Title</h6>
-                                                <p class="small text-muted mb-0">@benefit.Description</p>
-                                                @if (!benefit.IsUnlocked)
+                                        
+                                        <!-- Status & Price -->
+                                        <div class="col-lg-3 col-6">
+                                            <div class="d-flex flex-column align-items-lg-center">
+                                                <span class="badge bg-@statusClass mb-1">
+                                                    <i class="bi bi-@statusIcon me-1"></i>@order.OrderStatus
+                                                </span>
+                                                @if (order.PaymentStatus == "refunded")
                                                 {
-                                                    <small class="text-warning">@L.GetString(key: "Account_VIP_Locked",resourceName: "Account")</small>
+                                                    <span class="badge bg-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Refunded</span>
+                                                }
+                                                <div class="fw-bold fs-5 text-primary mt-2">
+                                                    @order.TotalAmount.ToString("C", plnCulture)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Actions -->
+                                        <div class="col-lg-2 col-6">
+                                            <div class="d-flex flex-column gap-2">
+                                                <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-eye me-1"></i>@(L["View_Details"] ?? "Details")
+                                                </a>
+                                                @if (order.CanReturn)
+                                                {
+                                                    <a asp-action="ReturnRequest" asp-route-orderId="@order.Id" class="btn btn-outline-warning btn-sm">
+                                                        <i class="bi bi-arrow-return-left me-1"></i>@(L["Account_Return"] ?? "Return")
+                                                    </a>
+                                                }
+                                                @if (order.CanCancel)
+                                                {
+                                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder(@order.Id)">
+                                                        <i class="bi bi-x-circle me-1"></i>@(L["Account_Cancel"] ?? "Cancel")
+                                                    </button>
                                                 }
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="bi bi-bag-x text-muted" style="font-size: 5rem;"></i>
+                                    <h4 class="mt-4 text-muted">@(L["Account_NoOrders"] ?? "No orders yet")</h4>
+                                    <p class="text-muted mb-4">@(L["Account_NoOrdersDescription"] ?? "You haven't placed any orders yet.")</p>
+                                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-bag-plus me-2"></i>@(L["Account_StartShopping"] ?? "Start Shopping")
+                                    </a>
+                                </div>
                             </div>
                         }
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">@L.GetString(key: "Account_VIP_TierComparison",resourceName: "Account")</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>@L.GetString(key: "Account_VIP_Tier",resourceName: "Account")</th>
-                                    <th>@L.GetString(key: "Account_VIP_Requirement",resourceName: "Account")</th>
-                                    <th>@L.GetString(key: "Account_VIP_Discount",resourceName: "Account")</th>
-                                    <th>@L.GetString(key: "Account_VIP_Benefits",resourceName: "Account")</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="@(Model.VIPStatus.TierName == "Bronze" ? "table-active" : "")">
-                                    <td><span class="badge bg-secondary">Bronze</span></td>
-                                    <td>0 - 500 PLN</td>
-                                    <td>2%</td>
-                                    <td>@L["Account_VIP_BasicDiscount"]</td>
-                                </tr>
-                                <tr class="@(Model.VIPStatus.TierName == "Silver" ? "table-active" : "")">
-                                    <td><span class="badge bg-light text-dark">Silver</span></td>
-                                    <td>500 PLN+</td>
-                                    <td>5%</td>
-                                    <td>@L["Account_VIP_FreeShipping"]</td>
-                                </tr>
-                                <tr class="@(Model.VIPStatus.TierName == "Gold" ? "table-active" : "")">
-                                    <td><span class="badge bg-warning">Gold</span></td>
-                                    <td>1,500 PLN+</td>
-                                    <td>8%</td>
-                                    <td>@L["Account_VIP_EarlyAccess"]</td>
-                                </tr>
-                                <tr class="@(Model.VIPStatus.TierName == "Platinum" ? "table-active" : "")">
-                                    <td><span class="badge bg-primary">Platinum</span></td>
-                                    <td>5,000 PLN+</td>
-                                    <td>12%</td>
-                                    <td>@L["Account_VIP_BirthdayGift"]</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <!-- ==================== WISHLIST TAB ==================== -->
+            <div class="tab-pane fade" id="wishlist" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                        <h5 class="mb-0 fw-semibold">
+                            <i class="bi bi-heart-fill text-danger me-2"></i>@(L["Account_Wishlist_Title"] ?? "My Wishlist")
+                        </h5>
+                        <a asp-controller="Wishlist" asp-action="Index" class="btn btn-sm btn-primary">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>@(L["Account_ViewFullWishlist"] ?? "View Full Wishlist")
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div id="wishlistContainer">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="tab-pane fade" id="settings" role="tabpanel">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">@L.GetString(key: "Account_AccountSettings",resourceName: "Account")</h5>
+            <!-- ==================== RETURNS TAB ==================== -->
+            <div class="tab-pane fade" id="returns" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-semibold">
+                            <i class="bi bi-arrow-return-left text-primary me-2"></i>@(L["Account_ReturnRequests"] ?? "Return Requests")
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.RecentReturnRequests.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>@(L["Account_Return_ID"] ?? "Return ID")</th>
+                                            <th>@(L["Account_Order"] ?? "Order")</th>
+                                            <th>@(L["Account_Product"] ?? "Product")</th>
+                                            <th>@(L["Account_Status"] ?? "Status")</th>
+                                            <th>@(L["Account_Amount"] ?? "Amount")</th>
+                                            <th>@(L["Account_Date"] ?? "Date")</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var request in Model.RecentReturnRequests)
+                                        {
+                                            var returnStatusClass = request.Status?.ToLower() switch {
+                                                "pending" => "warning",
+                                                "underreview" => "info",
+                                                "approved" => "primary",
+                                                "rejected" => "danger",
+                                                "completed" => "success",
+                                                "cancelled" => "secondary",
+                                                _ => "secondary"
+                                            };
+                                            
+                                            <tr>
+                                                <td><strong>#@request.Id</strong></td>
+                                                <td>#@request.OrderNumber</td>
+                                                <td class="text-truncate" style="max-width: 200px;">@request.ProductName</td>
+                                                <td><span class="badge bg-@returnStatusClass">@request.Status</span></td>
+                                                <td>
+                                                    @request.RequestedAmount.ToString("C", plnCulture)
+                                                    @if (request.RefundedAmount.HasValue && request.RefundedAmount > 0)
+                                                    {
+                                                        <br><small class="text-success"><i class="bi bi-check-circle me-1"></i>Refunded: @request.RefundedAmount.Value.ToString("C", plnCulture)</small>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <small>@request.RequestedAt.ToString("dd MMM yyyy")</small>
+                                                </td>
+                                                <td>
+                                                    <a asp-action="ReturnRequestDetails" asp-route-id="@request.Id" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-arrow-return-left text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 text-muted">@(L["Account_NoReturns"] ?? "No return requests")</h5>
+                                <p class="text-muted">@(L["Account_NoReturnsDesc"] ?? "You haven't made any return requests yet.")</p>
+                            </div>
+                        }
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post" asp-action="UpdateProfile">
-                        @Html.AntiForgeryToken()
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="FirstName" class="form-label">@L.GetString(key: "Account_Settings_FirstName",resourceName: "Account")</label>
-                                <input type="text" class="form-control" id="FirstName" name="FirstName" value="@Model.FirstName" required>
+
+                <!-- Return Policy Info -->
+                <div class="card shadow-sm border-0 mt-4 bg-light">
+                    <div class="card-body">
+                        <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle text-primary me-2"></i>@(L["Account_ReturnPolicy"] ?? "Return Policy")</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar-check text-primary fs-4 me-3"></i>
+                                    <div>
+                                        <strong>30 @(L["Account_Days"] ?? "Days")</strong>
+                                        <div class="small text-muted">@(L["Account_ReturnWindow"] ?? "Return Window")</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="LastName" class="form-label">@L.GetString(key: "Account_Settings_LastName",resourceName: "Account")</label>
-                                <input type="text" class="form-control" id="LastName" name="LastName" value="@Model.LastName" required>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-box-seam text-primary fs-4 me-3"></i>
+                                    <div>
+                                        <strong>@(L["Account_Original"] ?? "Original")</strong>
+                                        <div class="small text-muted">@(L["Account_PackagingRequired"] ?? "Packaging Required")</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-credit-card-2-back text-primary fs-4 me-3"></i>
+                                    <div>
+                                        <strong>5-10 @(L["Account_Days"] ?? "Days")</strong>
+                                        <div class="small text-muted">@(L["Account_RefundTime"] ?? "Refund Processing")</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="PhoneNumber" class="form-label">@L.GetString(key: "Phone",resourceName: "Account")</label>
-                            <input type="tel" class="form-control" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== VIP TAB ==================== -->
+            <div class="tab-pane fade" id="vip" role="tabpanel">
+                <!-- Current Status -->
+                <div class="card shadow-sm border-0 mb-4 overflow-hidden">
+                    <div class="vip-hero-banner bg-gradient-@(Model.VIPStatus.TierName == "Bronze" ? "secondary" : Model.VIPStatus.TierName == "Silver" ? "light" : Model.VIPStatus.TierName == "Gold" ? "warning" : Model.VIPStatus.TierName == "Platinum" ? "primary" : "dark") text-@(Model.VIPStatus.TierName == "Silver" ? "dark" : "white") p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-gem display-4 me-3"></i>
+                                    <div>
+                                        <h3 class="mb-1">@(Model.VIPStatus.TierName == "None" ? (L["Account_VIP_NotYet"] ?? "Not a VIP yet") : Model.VIPStatus.TierName + " " + (L["Account_VIP_Member"] ?? "Member"))</h3>
+                                        <p class="mb-0 opacity-75">
+                                            @if (Model.VIPStatus.TierName != "None")
+                                            {
+                                                @(L["Account_VIP_Enjoy"] ?? "Enjoy") <strong>@Model.VIPStatus.DiscountPercentage%</strong> @(L["Account_VIP_DiscountOnAll"] ?? "discount on all orders")
+                                            }
+                                            else
+                                            {
+                                                @(L["Account_VIP_SpendMore"] ?? "Spend more to unlock VIP benefits!")
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                @if (Model.VIPStatus.NextTierThreshold > 0)
+                                {
+                                    <div class="next-tier-info">
+                                        <small class="opacity-75">@(L["Account_VIP_NextTier"] ?? "Next tier in")</small>
+                                        <div class="fw-bold fs-5">@((Model.VIPStatus.NextTierThreshold - Model.VIPStatus.CurrentSpending).ToString("C", plnCulture))</div>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">@L.GetString(key: "Account_Settings_Email",resourceName: "Account")</label>
-                            <input type="email" class="form-control" id="email" value="@Model.Email" disabled>
-                            <small class="text-muted">@L.GetString(key: "Account_Settings_EmailNote",resourceName: "Account")</small>
+                        @if (Model.VIPStatus.NextTierThreshold > 0)
+                        {
+                            <div class="progress mt-3" style="height: 10px;">
+                                <div class="progress-bar bg-white" role="progressbar" style="width: @Model.VIPStatus.ProgressPercentage%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Benefits -->
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-semibold"><i class="bi bi-gift text-primary me-2"></i>@(L["Account_VIP_YourBenefits"] ?? "Your Benefits")</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach (var benefit in Model.VIPStatus.Benefits)
+                            {
+                                <div class="col-md-6">
+                                    <div class="benefit-card @(benefit.IsUnlocked ? "unlocked" : "locked")">
+                                        <div class="benefit-icon">
+                                            <i class="bi bi-@benefit.Icon"></i>
+                                        </div>
+                                        <div class="benefit-content">
+                                            <h6 class="mb-1">@benefit.Title</h6>
+                                            <p class="small text-muted mb-0">@benefit.Description</p>
+                                        </div>
+                                        @if (!benefit.IsUnlocked)
+                                        {
+                                            <span class="locked-badge"><i class="bi bi-lock"></i></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="unlocked-badge"><i class="bi bi-check-circle-fill"></i></span>
+                                        }
+                                    </div>
+                                </div>
+                            }
                         </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save me-2"></i>@L.GetString(key: "Account_Settings_SaveChanges",resourceName: "Account")</button>
-                        </button>
-                    </form>
-                    
-                    <hr class="my-4">
-                    
-                    <h6>@L.GetString(key: "Account_Settings_Password",resourceName: "Account")</h6>
-                    <p class="text-muted">Update your password to keep your account secure.</p>
-                    <a asp-action="ChangePassword" class="btn btn-outline-secondary">
-                        <i class="bi bi-key me-2"></i>@L.GetString(key: "Account_Settings_ChangePassword",resourceName: "Account")
-                    </a>
-                    
-                    <hr class="my-4">
-                    
-                    <h6 class="text-danger">@L.GetString(key: "Account_Settings_DeleteAccount",resourceName: "Account")</h6>
-                    <p class="text-muted">@L.GetString(key: "Account_Settings_DeleteAccountWarning",resourceName: "Account")</p>
-                    <button type="button" class="btn btn-danger" onclick="confirmDeleteAccount()">
-                        <i class="bi bi-trash me-2"></i>@L.GetString(key: "Account_Settings_DeleteAccount",resourceName: "Account")
-                    </button>
+                    </div>
+                </div>
+
+                <!-- Tier Comparison -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-semibold"><i class="bi bi-bar-chart text-primary me-2"></i>@(L["Account_VIP_TierComparison"] ?? "Tier Comparison")</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 vip-tiers-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>@(L["Account_VIP_Tier"] ?? "Tier")</th>
+                                        <th>@(L["Account_VIP_Requirement"] ?? "Requirement")</th>
+                                        <th>@(L["Account_VIP_Discount"] ?? "Discount")</th>
+                                        <th>@(L["Account_VIP_Benefits"] ?? "Benefits")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="@(Model.VIPStatus.TierName == "Bronze" ? "table-active" : "")">
+                                        <td><span class="badge bg-secondary fs-6"><i class="bi bi-star me-1"></i>Bronze</span></td>
+                                        <td>0 - 500 PLN</td>
+                                        <td><strong class="text-success">2%</strong></td>
+                                        <td>@(L["Account_VIP_BasicDiscount"] ?? "Basic discount on all orders")</td>
+                                    </tr>
+                                    <tr class="@(Model.VIPStatus.TierName == "Silver" ? "table-active" : "")">
+                                        <td><span class="badge bg-light text-dark fs-6 border"><i class="bi bi-star-fill me-1"></i>Silver</span></td>
+                                        <td>500+ PLN</td>
+                                        <td><strong class="text-success">5%</strong></td>
+                                        <td>@(L["Account_VIP_FreeShipping"] ?? "Free shipping on orders over 100 PLN")</td>
+                                    </tr>
+                                    <tr class="@(Model.VIPStatus.TierName == "Gold" ? "table-active" : "")">
+                                        <td><span class="badge bg-warning text-dark fs-6"><i class="bi bi-gem me-1"></i>Gold</span></td>
+                                        <td>1,500+ PLN</td>
+                                        <td><strong class="text-success">8%</strong></td>
+                                        <td>@(L["Account_VIP_EarlyAccess"] ?? "Early access to new products & sales")</td>
+                                    </tr>
+                                    <tr class="@(Model.VIPStatus.TierName == "Platinum" ? "table-active" : "")">
+                                        <td><span class="badge bg-info text-white fs-6"><i class="bi bi-gem me-1"></i>Platinum</span></td>
+                                        <td>5,000+ PLN</td>
+                                        <td><strong class="text-success">12%</strong></td>
+                                        <td>@(L["Account_VIP_AllBenefits"] ?? "All benefits + birthday gift + priority support")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== BUSINESS TAB ==================== -->
+            <div class="tab-pane fade" id="business" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        @if (Model.BusinessProfile == null)
+                        {
+                            <!-- NIP Verification Form -->
+                            <div class="card shadow-sm border-0">
+                                <div class="card-header bg-primary text-white py-3">
+                                    <h5 class="mb-0"><i class="bi bi-building-check me-2"></i>@(L["Account_Business_Verify"] ?? "Verify Your Business")</h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <p class="text-muted mb-4">@(L["Account_Business_VerifyDesc"] ?? "Enter your company's NIP number to unlock B2B features and special pricing.")</p>
+                                    
+                                    <div id="verificationResult" class="alert d-none mb-3"></div>
+                                    
+                                    <div class="input-group input-group-lg mb-3">
+                                        <span class="input-group-text bg-light"><i class="bi bi-building"></i></span>
+                                        <input type="text" class="form-control" id="nipInput" placeholder="XXX-XXX-XX-XX" maxlength="13">
+                                        <button class="btn btn-primary" type="button" id="verifyNipBtn" onclick="verifyNIP()">
+                                            <i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")
+                                        </button>
+                                    </div>
+                                    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>@(L["Account_Business_NIPFormat"] ?? "Enter 10-digit NIP number (with or without dashes)")</small>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Business Profile Display -->
+                            <div class="card shadow-sm border-0 mb-4">
+                                <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="bi bi-building-check me-2"></i>@(L["Account_Business_Profile"] ?? "Business Profile")</h5>
+                                    @if (Model.BusinessProfile.IsVerified)
+                                    {
+                                        <span class="badge bg-white text-success"><i class="bi bi-patch-check-fill me-1"></i>@(L["Account_Business_Verified"] ?? "Verified")</span>
+                                    }
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small">@(L["Account_Business_CompanyName"] ?? "Company Name")</label>
+                                            <p class="fw-bold mb-0">@Model.BusinessProfile.CompanyName</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small">NIP</label>
+                                            <p class="fw-bold mb-0">@Model.BusinessProfile.NIP</p>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.REGON))
+                                        {
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted small">REGON</label>
+                                                <p class="mb-0">@Model.BusinessProfile.REGON</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.KRS))
+                                        {
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted small">KRS</label>
+                                                <p class="mb-0">@Model.BusinessProfile.KRS</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.ResidenceAddress))
+                                        {
+                                            <div class="col-12">
+                                                <label class="form-label text-muted small">@(L["Account_Business_Address"] ?? "Address")</label>
+                                                <p class="mb-0">@Model.BusinessProfile.ResidenceAddress</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.BusinessProfile.IsVerified)
+                            {
+                                <!-- Shopping Mode Toggle -->
+                                <div class="card shadow-sm border-0">
+                                    <div class="card-header bg-white border-0 py-3">
+                                        <h5 class="mb-0 fw-semibold"><i class="bi bi-toggles text-primary me-2"></i>@(L["Account_Business_ShoppingMode"] ?? "Shopping Mode")</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                                            <div>
+                                                <div id="currentModeLabel" class="fw-bold mb-1">
+                                                    @if (Model.BusinessProfile.IsBusinessModeActive)
+                                                    {
+                                                        <i class="bi bi-building text-primary me-1"></i><span>@(L["Account_Business_B2BMode"] ?? "B2B Mode Active")</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-person text-secondary me-1"></i><span>@(L["Account_Business_RetailMode"] ?? "Retail Mode Active")</span>
+                                                    }
+                                                </div>
+                                                <small id="currentModeDescription" class="text-muted">
+                                                    @if (Model.BusinessProfile.IsBusinessModeActive)
+                                                    {
+                                                        @(L["Account_Business_B2BModeDesc"] ?? "You can see business-only products and special B2B pricing")
+                                                    }
+                                                    else
+                                                    {
+                                                        @(L["Account_Business_RetailModeDesc"] ?? "You are shopping as a regular customer")
+                                                    }
+                                                </small>
+                                            </div>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="businessModeToggle" 
+                                                       @(Model.BusinessProfile.IsBusinessModeActive ? "checked" : "") onchange="toggleBusinessMode()">
+                                                <label class="form-check-label" id="toggleLabel" for="businessModeToggle">
+                                                    @(Model.BusinessProfile.IsBusinessModeActive ? "B2B" : "Retail")
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Benefits Sidebar -->
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm border-0 bg-primary text-white">
+                            <div class="card-body p-4">
+                                <h5 class="mb-4"><i class="bi bi-star-fill me-2"></i>@(L["Account_Business_Benefits"] ?? "B2B Benefits")</h5>
+                                <ul class="list-unstyled mb-0">
+                                    <li class="d-flex align-items-start mb-3">
+                                        <i class="bi bi-check-circle-fill me-2 mt-1"></i>
+                                        <span>@(L["Account_Business_Benefit1"] ?? "Special wholesale pricing")</span>
+                                    </li>
+                                    <li class="d-flex align-items-start mb-3">
+                                        <i class="bi bi-check-circle-fill me-2 mt-1"></i>
+                                        <span>@(L["Account_Business_Benefit2"] ?? "Net payment terms available")</span>
+                                    </li>
+                                    <li class="d-flex align-items-start mb-3">
+                                        <i class="bi bi-check-circle-fill me-2 mt-1"></i>
+                                        <span>@(L["Account_Business_Benefit3"] ?? "VAT invoices automatically")</span>
+                                    </li>
+                                    <li class="d-flex align-items-start mb-3">
+                                        <i class="bi bi-check-circle-fill me-2 mt-1"></i>
+                                        <span>@(L["Account_Business_Benefit4"] ?? "Dedicated account manager")</span>
+                                    </li>
+                                    <li class="d-flex align-items-start">
+                                        <i class="bi bi-check-circle-fill me-2 mt-1"></i>
+                                        <span>@(L["Account_Business_Benefit5"] ?? "Priority shipping & support")</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== SETTINGS TAB ==================== -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Personal Information -->
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-primary text-white py-3">
+                                <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>@(L["Account_Settings_PersonalInfo"] ?? "Personal Information")</h5>
+                            </div>
+                            <div class="card-body">
+                                <form asp-action="UpdateProfile" method="post">
+                                    @Html.AntiForgeryToken()
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="FirstName" class="form-label">@(L["Account_Settings_FirstName"] ?? "First Name")</label>
+                                            <input type="text" class="form-control" id="FirstName" name="FirstName" value="@Model.FirstName" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="LastName" class="form-label">@(L["Account_Settings_LastName"] ?? "Last Name")</label>
+                                            <input type="text" class="form-control" id="LastName" name="LastName" value="@Model.LastName" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="PhoneNumber" class="form-label">@(L["Account_Settings_Phone"] ?? "Phone Number")</label>
+                                            <input type="tel" class="form-control" id="PhoneNumber" name="PhoneNumber" value="@Model.PhoneNumber" placeholder="+48 XXX XXX XXX">
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <hr class="my-2">
+                                            <label class="form-label fw-semibold"><i class="bi bi-geo-alt me-1"></i>@(L["Account_Settings_DefaultAddress"] ?? "Default Shipping Address")</label>
+                                        </div>
+                                        
+                                        <div class="col-12">
+                                            <label for="DefaultAddress" class="form-label">@(L["Account_Settings_Address"] ?? "Street Address")</label>
+                                            <input type="text" class="form-control" id="DefaultAddress" name="DefaultAddress" value="@Model.DefaultAddress" placeholder="ul. Example 123/45">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="DefaultCity" class="form-label">@(L["Account_Settings_City"] ?? "City")</label>
+                                            <input type="text" class="form-control" id="DefaultCity" name="DefaultCity" value="@Model.DefaultCity" placeholder="Warsaw">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="DefaultPostalCode" class="form-label">@(L["Account_Settings_PostalCode"] ?? "Postal Code")</label>
+                                            <input type="text" class="form-control" id="DefaultPostalCode" name="DefaultPostalCode" value="@Model.DefaultPostalCode" placeholder="00-000">
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="DefaultCountry" class="form-label">@(L["Account_Settings_Country"] ?? "Country")</label>
+                                            <select class="form-select" id="DefaultCountry" name="DefaultCountry">
+                                                <option value="">-- @(L["Select"] ?? "Select") --</option>
+                                                @{
+                                                    var countries = new[] {
+                                                        ("Poland", "🇵🇱 Poland"),
+                                                        ("Germany", "🇩🇪 Germany"),
+                                                        ("France", "🇫🇷 France"),
+                                                        ("Italy", "🇮🇹 Italy"),
+                                                        ("Spain", "🇪🇸 Spain"),
+                                                        ("Netherlands", "🇳🇱 Netherlands"),
+                                                        ("Belgium", "🇧🇪 Belgium"),
+                                                        ("Austria", "🇦🇹 Austria"),
+                                                        ("Czech Republic", "🇨🇿 Czech Republic"),
+                                                        ("United Kingdom", "🇬🇧 United Kingdom")
+                                                    };
+                                                    foreach (var (value, display) in countries)
+                                                    {
+                                                        if (Model.DefaultCountry == value)
+                                                        {
+                                                            <option value="@value" selected>@display</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@value">@display</option>
+                                                        }
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary w-100 mt-4">
+                                        <i class="bi bi-check-lg me-2"></i>@(L["Account_Settings_SaveChanges"] ?? "Save Changes")
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security & Account -->
+                    <div class="col-lg-6">
+                        <!-- Security -->
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-secondary text-white py-3">
+                                <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>@(L["Account_Settings_Security"] ?? "Security")</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">@(L["Account_Settings_SecurityDesc"] ?? "Keep your account secure by using a strong password.")</p>
+                                <a asp-action="ChangePassword" class="btn btn-outline-secondary w-100">
+                                    <i class="bi bi-key me-2"></i>@(L["Account_Settings_ChangePassword"] ?? "Change Password")
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Account Info -->
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-info text-white py-3">
+                                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>@(L["Account_Settings_AccountInfo"] ?? "Account Info")</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">@(L["Account_Settings_Email"] ?? "Email")</small>
+                                        <strong>@Model.Email</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">@(L["Account_Settings_MemberSince"] ?? "Member Since")</small>
+                                        <strong>@Model.CreatedAt.ToString("MMMM yyyy")</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">@(L["Account_Settings_LastLogin"] ?? "Last Login")</small>
+                                        <strong>@(Model.LastLoginAt?.ToString("dd MMM yyyy") ?? "-")</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">@(L["Account_Settings_AccountID"] ?? "Account ID")</small>
+                                        <strong class="text-truncate d-block" style="max-width: 150px;" title="@Model.UserId">@Model.UserId.Substring(0, Math.Min(8, Model.UserId.Length))...</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="card shadow-sm border-0 border-danger">
+                            <div class="card-header bg-danger text-white py-3">
+                                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>@(L["Account_Settings_DangerZone"] ?? "Danger Zone")</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">@(L["Account_Settings_DeleteAccountWarning"] ?? "Once you delete your account, there is no going back. Please be certain.")</p>
+                                <button type="button" class="btn btn-outline-danger w-100" onclick="confirmDeleteAccount()">
+                                    <i class="bi bi-trash me-2"></i>@(L["Account_Settings_DeleteAccount"] ?? "Delete Account")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Custom Styles -->
+<style>
+    /* Hero Section */
+    .account-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin-top: -24px;
+    }
+    .avatar-wrapper { position: relative; }
+    .avatar-circle {
+        width: 80px; height: 80px; border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem; font-weight: bold; color: white;
+        border: 3px solid rgba(255,255,255,0.3);
+    }
+    .vip-badge { position: absolute; bottom: -5px; right: -5px; font-size: 0.65rem; }
+
+    /* Tab Navigation */
+    .nav-tabs-wrapper {
+        background: white; border-radius: 12px;
+        padding: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    }
+    .nav-pills .nav-link {
+        border-radius: 8px; padding: 12px 20px;
+        color: #6c757d; font-weight: 500;
+        white-space: nowrap; transition: all 0.2s ease;
+    }
+    .nav-pills .nav-link:hover { background: #f8f9fa; color: #667eea; }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    /* Quick Actions */
+    .quick-actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+    .quick-action-card {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 1.5rem; background: white; border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        text-decoration: none; color: inherit; transition: all 0.2s ease;
+    }
+    .quick-action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 25px rgba(0,0,0,0.1); color: #667eea;
+    }
+    .quick-action-card .icon {
+        width: 60px; height: 60px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-bottom: 0.75rem;
+    }
+    .quick-action-card span { font-weight: 500; font-size: 0.9rem; }
+
+    /* Stat Cards Modern */
+    .stat-card-modern {
+        border-radius: 12px; padding: 1.25rem;
+        display: flex; align-items: center; gap: 1rem;
+    }
+    .stat-card-modern .stat-icon { font-size: 2rem; opacity: 0.8; }
+    .stat-card-modern .stat-number { font-size: 1.5rem; font-weight: bold; }
+    .stat-card-modern .stat-label { font-size: 0.8rem; opacity: 0.9; }
+    .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .bg-gradient-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .bg-gradient-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .bg-gradient-info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+    /* Order Card */
+    .order-card {
+        padding: 1.25rem; border-bottom: 1px solid #eee;
+        transition: background 0.2s ease;
+    }
+    .order-card:hover { background: #f8f9fa; }
+    .order-card.order-cancelled { opacity: 0.7; background: #f8f9fa; }
+    .status-circle {
+        width: 48px; height: 48px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 1.25rem;
+    }
+    .order-number:hover { color: #667eea !important; }
+
+    /* Items Preview */
+    .items-preview { display: flex; gap: 4px; }
+    .item-thumb {
+        width: 45px; height: 45px; border-radius: 8px;
+        overflow: hidden; position: relative; border: 2px solid #eee;
+    }
+    .item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .item-thumb .qty-badge {
+        position: absolute; bottom: -2px; right: -2px;
+        background: #333; color: white;
+        font-size: 0.6rem; padding: 1px 4px; border-radius: 4px;
+    }
+    .item-thumb.more-items {
+        background: #f0f0f0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .item-thumb.more-items span { font-size: 0.75rem; font-weight: 600; color: #666; }
+
+    /* Benefit Card */
+    .benefit-card {
+        display: flex; align-items: center;
+        padding: 1rem; background: #f8f9fa;
+        border-radius: 10px; position: relative;
+        transition: all 0.2s ease;
+    }
+    .benefit-card.unlocked { background: #e8f5e9; border: 1px solid #c8e6c9; }
+    .benefit-card.locked { opacity: 0.6; }
+    .benefit-icon {
+        width: 50px; height: 50px; border-radius: 10px;
+        background: white; display: flex;
+        align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-right: 1rem; color: #667eea;
+    }
+    .benefit-card.locked .benefit-icon { color: #999; }
+    .locked-badge, .unlocked-badge { position: absolute; top: 10px; right: 10px; }
+    .locked-badge { color: #999; }
+    .unlocked-badge { color: #4caf50; }
+
+    /* VIP Tiers Table */
+    .vip-tiers-table tr.table-active {
+        background: linear-gradient(90deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .quick-actions-grid { grid-template-columns: repeat(2, 1fr); }
+        .avatar-circle { width: 60px; height: 60px; font-size: 1.25rem; }
+        .stat-card-modern { flex-direction: column; text-align: center; gap: 0.5rem; }
+    }
+</style>
+
 @section Scripts {
     <script>
-        // Load wishlist when tab is clicked
-        document.getElementById('wishlist-tab')?.addEventListener('click', function() {
-            loadWishlist();
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+
+        // Load wishlist when tab is clicked
+        document.getElementById('wishlist-tab')?.addEventListener('click', function() { loadWishlist(); });
 
         function loadWishlist() {
             const container = document.getElementById('wishlistContainer');
@@ -478,124 +1206,191 @@
                         data.forEach(item => {
                             html += `
                                 <div class="col-md-6 col-lg-4">
-                                    <div class="card h-100">
-                                        <img src="/img/ProductImage/${item.imageUrl}" class="card-img-top" alt="${item.productName}" style="height: 200px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        <img src="/img/ProductImage/${item.imageUrl}" class="card-img-top" alt="${item.productName}" style="height: 180px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
                                         <div class="card-body">
-                                            <h6 class="card-title">${item.productName}</h6>
-                                            <p class="card-text">
-                                                <strong>${item.price.toFixed(2)} zl</strong>
-                                            </p>
-                                            <small class="text-muted">${new Date(item.addedAt).toLocaleDateString()}</small>
-                                            <div class="btn-group w-100 mt-2">
-                                                <a href="/Product/Details/${item.productId}" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-eye"></i> @L.GetString(key: "View", resourceName: "Account")
-                                                </a>
-                                                <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(${item.productId})">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                            <h6 class="card-title text-truncate">${item.productName}</h6>
+                                            <p class="card-text fw-bold text-primary">${item.price.toFixed(2)} zł</p>
+                                            <div class="d-flex gap-2">
+                                                <a href="/Product/Details/${item.productId}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View</a>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist(${item.productId})"><i class="bi bi-trash"></i></button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            `;
+                                </div>`;
                         });
                         html += '</div>';
                         container.innerHTML = html;
                     } else {
                         container.innerHTML = `
                             <div class="text-center py-5">
-                                <i class="far fa-heart text-muted" style="font-size: 3rem;"></i>
-                                <p class="text-muted mt-3">@L["Wishlist_Empty"]</p>
-                                <a href="/Product/Index" class="btn btn-primary">@L["Wishlist_StartShopping"]</a>
-                            </div>
-                        `;
+                                <i class="bi bi-heart text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 text-muted">Your wishlist is empty</h5>
+                                <p class="text-muted">Save items you love to your wishlist</p>
+                                <a href="/Product/Index" class="btn btn-primary"><i class="bi bi-bag-plus me-2"></i>Start Shopping</a>
+                            </div>`;
                     }
                 })
                 .catch(error => {
                     console.error('Error loading wishlist:', error);
-                    container.innerHTML = '<div class="alert alert-danger">Error loading wishlist</div>';
+                    container.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error loading wishlist</div>';
                 });
         }
 
         function removeFromWishlist(productId) {
-            if (!confirm('@L["Wishlist_Confirm_Remove"]')) {
-                return;
-            }
-
+            if (!confirm('Remove this item from your wishlist?')) return;
             fetch('/Wishlist/Toggle', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ productId: productId })
             })
             .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadWishlist();
-                    location.reload(); // Reload to update badge count
-                }
-            });
+            .then(data => { if (data.success) { loadWishlist(); setTimeout(() => location.reload(), 500); } });
         }
 
         function cancelOrder(orderId) {
-            if (!confirm('@L["Confirm_Cancel_Order"]')) {
-                return;
-            }
-
+            if (!confirm('Are you sure you want to cancel this order?')) return;
             const form = new FormData();
             form.append('id', orderId);
-
             fetch('@Url.Action("CancelOrder", "Account")', {
                 method: 'POST',
-                headers: {
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
+                headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' },
                 body: form
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.message || '@L["Account_Order_CancelError"]');
-                }
+                if (data.success) { showToast('success', 'Order cancelled successfully'); setTimeout(() => location.reload(), 1000); }
+                else { showToast('danger', data.message || 'Failed to cancel order'); }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('@L["Account_Order_CancelError"]');
-            });
+            .catch(error => { console.error('Error:', error); showToast('danger', 'Failed to cancel order'); });
         }
 
         function confirmDeleteAccount() {
-            if (!confirm('@L["Account_Delete_ConfirmMessage"]')) {
-                return;
-            }
-
-            if (!confirm('@L["Account_Settings_DeleteAccountWarning"]')) {
-                return;
-            }
-
+            if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+            if (!confirm('This is your last chance! All your data will be permanently deleted. Continue?')) return;
             fetch('@Url.Action("DeleteAccount", "Account")', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 }
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    alert('@L["Account_Delete_Success"]');
-                    window.location.href = data.redirectUrl || '/';
-                } else {
-                    alert(data.message || '@L["Account_Delete_Error"]');
-                }
+                if (data.success) { showToast('success', 'Account deleted successfully'); setTimeout(() => window.location.href = data.redirectUrl || '/', 1500); }
+                else { showToast('danger', data.message || 'Failed to delete account'); }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('@L["Account_Delete_Error"]');
-            });
+            .catch(error => { console.error('Error:', error); showToast('danger', 'Failed to delete account'); });
         }
+
+        async function verifyNIP() {
+            const nipInput = document.getElementById('nipInput');
+            const resultDiv = document.getElementById('verificationResult');
+            const verifyBtn = document.getElementById('verifyNipBtn');
+            if (!nipInput || !nipInput.value.trim()) { showAlert(resultDiv, 'danger', 'Please enter a NIP number'); return; }
+            const nip = nipInput.value.replace(/[\s\-]/g, '').trim();
+            if (!/^\d{10}$/.test(nip)) { showAlert(resultDiv, 'danger', 'NIP must be exactly 10 digits'); return; }
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+            resultDiv.classList.add('d-none');
+            try {
+                const canVerifyResponse = await fetch('@Url.Action("CanVerifyNIP", "Account")');
+                const canVerifyData = await canVerifyResponse.json();
+                if (!canVerifyData.success || !canVerifyData.canAttempt) {
+                    showAlert(resultDiv, 'warning', canVerifyData.waitMessage || 'Please wait before trying again');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Verify NIP';
+                    return;
+                }
+                const response = await fetch('@Url.Action("VerifyNIP", "Account")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ nip: nip })
+                });
+                const data = await response.json();
+                if (data.success) { showAlert(resultDiv, 'success', data.message); setTimeout(() => window.location.reload(), 2000); }
+                else { showAlert(resultDiv, 'danger', data.message); verifyBtn.disabled = false; verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Verify NIP'; }
+            } catch (error) {
+                console.error('Error verifying NIP:', error);
+                showAlert(resultDiv, 'danger', 'An error occurred during verification. Please try again.');
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Verify NIP';
+            }
+        }
+
+        async function toggleBusinessMode() {
+            const toggle = document.getElementById('businessModeToggle');
+            const modeLabel = document.getElementById('currentModeLabel');
+            const modeDescription = document.getElementById('currentModeDescription');
+            const toggleLabel = document.getElementById('toggleLabel');
+            toggle.disabled = true;
+            try {
+                const response = await fetch('@Url.Action("ToggleBusinessMode", "Account")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    if (data.isBusinessModeActive) {
+                        modeLabel.innerHTML = '<i class="bi bi-building text-primary me-1"></i><span>B2B Mode Active</span>';
+                        modeDescription.textContent = 'You can see business-only products and special B2B pricing';
+                        toggleLabel.textContent = 'B2B';
+                        toggle.checked = true;
+                    } else {
+                        modeLabel.innerHTML = '<i class="bi bi-person text-secondary me-1"></i><span>Retail Mode Active</span>';
+                        modeDescription.textContent = 'You are shopping as a regular customer';
+                        toggleLabel.textContent = 'Retail';
+                        toggle.checked = false;
+                    }
+                    showToast('success', data.message);
+                } else { toggle.checked = !toggle.checked; showToast('danger', data.message); }
+            } catch (error) { console.error('Error toggling business mode:', error); toggle.checked = !toggle.checked; showToast('danger', 'Failed to change shopping mode'); }
+            finally { toggle.disabled = false; }
+        }
+
+        function showAlert(element, type, message) {
+            element.className = `alert alert-${type} mb-3`;
+            element.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'x-circle'} me-2"></i>${message}`;
+            element.classList.remove('d-none');
+        }
+
+        function showToast(type, message) {
+            const toastHtml = `
+                <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+                    <div class="toast show shadow-lg" role="alert">
+                        <div class="toast-header bg-${type} text-white">
+                            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                            <strong class="me-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">${message}</div>
+                    </div>
+                </div>`;
+            const toastContainer = document.createElement('div');
+            toastContainer.innerHTML = toastHtml;
+            document.body.appendChild(toastContainer);
+            setTimeout(() => toastContainer.remove(), 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const nipInput = document.getElementById('nipInput');
+            if (nipInput) {
+                nipInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    value = value.substring(0, 10);
+                    if (value.length > 3) value = value.substring(0, 3) + '-' + value.substring(3);
+                    if (value.length > 7) value = value.substring(0, 7) + '-' + value.substring(7);
+                    if (value.length > 10) value = value.substring(0, 10) + '-' + value.substring(10);
+                    e.target.value = value;
+                });
+                nipInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); verifyNIP(); } });
+            }
+        });
     </script>
 }

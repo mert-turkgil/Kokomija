@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Kokomija.Controllers
@@ -21,6 +22,9 @@ namespace Kokomija.Controllers
         private readonly IReturnRequestService _returnRequestService;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly INIPValidationService _nipValidationService;
+        private readonly ApplicationDbContext _dbContext;
+        private readonly ILocalizationService _localizationService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -30,7 +34,10 @@ namespace Kokomija.Controllers
             ILogger<AccountController> logger,
             IReturnRequestService returnRequestService,
             IEmailService emailService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            INIPValidationService nipValidationService,
+            ApplicationDbContext dbContext,
+            ILocalizationService localizationService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -40,6 +47,9 @@ namespace Kokomija.Controllers
             _returnRequestService = returnRequestService;
             _emailService = emailService;
             _configuration = configuration;
+            _nipValidationService = nipValidationService;
+            _dbContext = dbContext;
+            _localizationService = localizationService;
         }
 
         #region Login
@@ -583,6 +593,52 @@ namespace Kokomija.Controllers
                 }) ?? Enumerable.Empty<Models.ViewModels.Account.OrderItemViewModel>()
             });
 
+            // Get business profile
+            var businessProfile = await _nipValidationService.GetBusinessProfileAsync(user.Id);
+            var businessProfileViewModel = businessProfile != null ? new Models.ViewModels.Account.BusinessProfileViewModel
+            {
+                Id = businessProfile.Id,
+                NIP = businessProfile.NIP,
+                CompanyName = businessProfile.CompanyName,
+                REGON = businessProfile.REGON,
+                KRS = businessProfile.KRS,
+                VATStatus = businessProfile.VATStatus,
+                ResidenceAddress = businessProfile.ResidenceAddress,
+                WorkingAddress = businessProfile.WorkingAddress,
+                IsVerified = businessProfile.IsVerified,
+                IsBusinessModeActive = businessProfile.IsBusinessModeActive,
+                VerifiedAt = businessProfile.VerifiedAt,
+                CreatedAt = businessProfile.CreatedAt
+            } : null;
+            
+            // Get return requests for user
+            var returnRequests = await _dbContext.ReturnRequests
+                .Where(rr => rr.UserId == user.Id)
+                .OrderByDescending(rr => rr.RequestedAt)
+                .Take(5)
+                .Include(rr => rr.Order)
+                .Include(rr => rr.OrderItem)
+                    .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv!.Product)
+                .ToListAsync();
+            
+            var returnRequestViewModels = returnRequests.Select(rr => new Models.ViewModels.Account.ReturnRequestSummaryViewModel
+            {
+                Id = rr.Id,
+                OrderNumber = rr.Order.OrderNumber,
+                ProductName = rr.OrderItem?.ProductName ?? "Unknown",
+                Status = rr.Status.ToString(),
+                RequestedAmount = rr.RequestedAmount,
+                RefundedAmount = rr.RefundedAmount,
+                RequestedAt = rr.RequestedAt,
+                ReviewedAt = rr.ReviewedAt
+            }).ToList();
+            
+            var pendingReturnRequests = await _dbContext.ReturnRequests
+                .CountAsync(rr => rr.UserId == user.Id && 
+                    (rr.Status == Entity.ReturnRequestStatus.Pending || 
+                     rr.Status == Entity.ReturnRequestStatus.UnderReview));
+
             var viewModel = new Models.ViewModels.Account.AccountIndexViewModel
             {
                 UserId = user.Id,
@@ -594,14 +650,21 @@ namespace Kokomija.Controllers
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 IsAdmin = isAdmin,
+                DefaultAddress = user.DefaultAddress,
+                DefaultCity = user.DefaultCity,
+                DefaultPostalCode = user.DefaultPostalCode,
+                DefaultCountry = user.DefaultCountry,
                 RecentOrders = orderViewModels,
+                RecentReturnRequests = returnRequestViewModels,
                 TotalOrders = totalOrders,
                 PendingOrders = pendingOrders,
                 CompletedOrders = completedOrders,
                 TotalSpent = totalSpent,
                 WishlistCount = wishlistCount,
                 CartItemsCount = cartItemsCount,
-                VIPStatus = vipStatus
+                PendingReturnRequests = pendingReturnRequests,
+                VIPStatus = vipStatus,
+                BusinessProfile = businessProfileViewModel
             };
 
             return View(viewModel);
@@ -809,17 +872,21 @@ namespace Kokomija.Controllers
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
             user.PhoneNumber = model.PhoneNumber;
+            user.DefaultAddress = model.DefaultAddress;
+            user.DefaultCity = model.DefaultCity;
+            user.DefaultPostalCode = model.DefaultPostalCode;
+            user.DefaultCountry = model.DefaultCountry;
 
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
                 _logger.LogInformation("User {UserId} updated profile", user.Id);
-                TempData["SuccessMessage"] = "Profile updated successfully";
+                TempData["SuccessMessage"] = _localizationService["Account_ProfileUpdatedSuccess"];
             }
             else
             {
                 _logger.LogError("Failed to update profile for user {UserId}", user.Id);
-                TempData["ErrorMessage"] = "Failed to update profile";
+                TempData["ErrorMessage"] = _localizationService["Account_ProfileUpdateError"];
             }
 
             return RedirectToAction("Index");
@@ -1132,6 +1199,307 @@ namespace Kokomija.Controllers
             return RedirectToAction("Index");
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ReturnRequestDetails(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", new { returnUrl = $"/Account/ReturnRequestDetails?id={id}" });
+            }
+
+            var returnRequest = await _dbContext.ReturnRequests
+                .Include(rr => rr.Order)
+                .Include(rr => rr.OrderItem)
+                    .ThenInclude(oi => oi!.ProductVariant)
+                        .ThenInclude(pv => pv!.Product)
+                            .ThenInclude(p => p!.Images)
+                .Include(rr => rr.OrderItem)
+                    .ThenInclude(oi => oi!.ProductVariant)
+                        .ThenInclude(pv => pv!.Color)
+                .Include(rr => rr.OrderItem)
+                    .ThenInclude(oi => oi!.ProductVariant)
+                        .ThenInclude(pv => pv!.Size)
+                .Include(rr => rr.StatusHistory)
+                .Include(rr => rr.Images)
+                .FirstOrDefaultAsync(rr => rr.Id == id && rr.UserId == user.Id);
+
+            if (returnRequest == null)
+            {
+                TempData["ErrorMessage"] = _localizationService["return_request_not_found"];
+                return RedirectToAction("Index");
+            }
+
+            var viewModel = new Models.ViewModels.Account.ReturnRequestDetailsViewModel
+            {
+                Id = returnRequest.Id,
+                OrderId = returnRequest.OrderId,
+                OrderNumber = returnRequest.Order?.OrderNumber ?? "N/A",
+                Status = returnRequest.Status.ToString(),
+                Reason = returnRequest.Reason ?? "Not specified",
+                Description = returnRequest.Description,
+                RequestedAmount = returnRequest.RequestedAmount,
+                RefundedAmount = returnRequest.RefundedAmount,
+                RefundTransactionId = returnRequest.StripeRefundId,
+                RequestedAt = returnRequest.RequestedAt,
+                ReviewedAt = returnRequest.ReviewedAt,
+                ReviewedBy = returnRequest.ReviewedBy,
+                ReviewNotes = returnRequest.ReviewNotes,
+                CompletedAt = returnRequest.RefundedAt,
+                OrderItem = returnRequest.OrderItem != null ? new Models.ViewModels.Account.OrderItemViewModel
+                {
+                    Id = returnRequest.OrderItem.Id,
+                    ProductId = returnRequest.OrderItem.ProductVariant?.ProductId ?? 0,
+                    ProductName = returnRequest.OrderItem.ProductName,
+                    ProductImage = returnRequest.OrderItem.ProductVariant?.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                    ColorName = returnRequest.OrderItem.ProductVariant?.Color?.Name ?? returnRequest.OrderItem.Color,
+                    SizeName = returnRequest.OrderItem.ProductVariant?.Size?.Name ?? returnRequest.OrderItem.Size,
+                    Quantity = returnRequest.OrderItem.Quantity,
+                    UnitPrice = returnRequest.OrderItem.UnitPrice,
+                    TotalPrice = returnRequest.OrderItem.TotalPrice
+                } : null,
+                StatusHistory = returnRequest.StatusHistory?
+                    .OrderByDescending(sh => sh.ChangedAt)
+                    .Select(sh => new Models.ViewModels.Account.ReturnStatusHistoryViewModel
+                    {
+                        Id = sh.Id,
+                        PreviousStatus = null, // StatusHistory tracks current status only
+                        NewStatus = sh.Status.ToString(),
+                        ChangedAt = sh.ChangedAt,
+                        ChangedBy = sh.ChangedBy,
+                        Notes = sh.Notes
+                    }).ToList() ?? new List<Models.ViewModels.Account.ReturnStatusHistoryViewModel>(),
+                Images = returnRequest.Images?.Select(img => img.ImageUrl).ToList() ?? new List<string>()
+            };
+
+            return View(viewModel);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelReturnRequest(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var returnRequest = await _dbContext.ReturnRequests
+                .FirstOrDefaultAsync(rr => rr.Id == id && rr.UserId == user.Id);
+
+            if (returnRequest == null)
+            {
+                TempData["ErrorMessage"] = _localizationService["return_request_not_found"];
+                return RedirectToAction("Index");
+            }
+
+            // Only allow cancellation if status is Pending or UnderReview
+            if (returnRequest.Status != Entity.ReturnRequestStatus.Pending && returnRequest.Status != Entity.ReturnRequestStatus.UnderReview)
+            {
+                TempData["ErrorMessage"] = _localizationService["cannot_cancel_return_request"];
+                return RedirectToAction("ReturnRequestDetails", new { id });
+            }
+
+            returnRequest.Status = Entity.ReturnRequestStatus.Cancelled;
+
+            // Add status history
+            var statusHistory = new Entity.ReturnStatusHistory
+            {
+                ReturnRequestId = returnRequest.Id,
+                Status = Entity.ReturnRequestStatus.Cancelled,
+                ChangedAt = DateTime.UtcNow,
+                ChangedBy = user.Id,
+                Notes = "Cancelled by customer"
+            };
+
+            _dbContext.Add(statusHistory);
+            await _dbContext.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = _localizationService["return_request_cancelled"];
+            return RedirectToAction("Index");
+        }
+
+        #endregion
+
+        #region Business Profile
+
+        /// <summary>
+        /// Checks if the current user can attempt NIP verification (rate limiting)
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> CanVerifyNIP()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            var (canAttempt, waitTime) = await _nipValidationService.CanAttemptVerificationAsync(user.Id);
+            
+            return Json(new 
+            { 
+                success = true,
+                canAttempt,
+                waitMinutes = waitTime?.TotalMinutes,
+                waitMessage = waitTime.HasValue 
+                    ? $"Please wait {(int)waitTime.Value.TotalMinutes} minutes before trying again" 
+                    : null
+            });
+        }
+
+        /// <summary>
+        /// Verifies the Polish NIP number with the government API
+        /// </summary>
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyNIP([FromBody] Models.ViewModels.Account.NIPVerificationRequestModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            if (string.IsNullOrWhiteSpace(model?.NIP))
+            {
+                return Json(new { success = false, message = "NIP number is required" });
+            }
+
+            // Get client IP for logging
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            // Check rate limiting
+            var (canAttempt, waitTime) = await _nipValidationService.CanAttemptVerificationAsync(user.Id);
+            if (!canAttempt)
+            {
+                return Json(new 
+                { 
+                    success = false, 
+                    message = $"Too many verification attempts. Please wait {(int)(waitTime?.TotalMinutes ?? 60)} minutes before trying again.",
+                    rateLimited = true,
+                    waitMinutes = waitTime?.TotalMinutes
+                });
+            }
+
+            // Validate NIP with government API
+            var result = await _nipValidationService.ValidateNIPAsync(model.NIP, user.Id, ipAddress);
+
+            if (result.IsValid && result.BusinessProfile != null)
+            {
+                _logger.LogInformation("User {UserId} successfully verified NIP {NIP}", user.Id, model.NIP);
+                
+                return Json(new 
+                { 
+                    success = true, 
+                    message = "NIP verified successfully! Your business profile has been created.",
+                    profile = new
+                    {
+                        nip = result.BusinessProfile.NIP,
+                        companyName = result.BusinessProfile.CompanyName,
+                        regon = result.BusinessProfile.REGON,
+                        krs = result.BusinessProfile.KRS,
+                        vatStatus = result.BusinessProfile.VATStatus,
+                        residenceAddress = result.BusinessProfile.ResidenceAddress,
+                        workingAddress = result.BusinessProfile.WorkingAddress,
+                        isVerified = result.BusinessProfile.IsVerified,
+                        verifiedAt = result.BusinessProfile.VerifiedAt
+                    }
+                });
+            }
+            else
+            {
+                _logger.LogWarning("User {UserId} failed to verify NIP {NIP}: {Error}", user.Id, model.NIP, result.ErrorMessage);
+                
+                return Json(new 
+                { 
+                    success = false, 
+                    message = result.ErrorMessage ?? "Failed to verify NIP. Please check the number and try again."
+                });
+            }
+        }
+
+        /// <summary>
+        /// Gets the current user's business profile
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetBusinessProfile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            var profile = await _nipValidationService.GetBusinessProfileAsync(user.Id);
+            
+            if (profile == null)
+            {
+                return Json(new { success = true, hasProfile = false });
+            }
+
+            return Json(new 
+            { 
+                success = true, 
+                hasProfile = true,
+                profile = new
+                {
+                    id = profile.Id,
+                    nip = profile.NIP,
+                    companyName = profile.CompanyName,
+                    regon = profile.REGON,
+                    krs = profile.KRS,
+                    vatStatus = profile.VATStatus,
+                    residenceAddress = profile.ResidenceAddress,
+                    workingAddress = profile.WorkingAddress,
+                    isVerified = profile.IsVerified,
+                    isBusinessModeActive = profile.IsBusinessModeActive,
+                    verifiedAt = profile.VerifiedAt,
+                    createdAt = profile.CreatedAt
+                }
+            });
+        }
+
+        /// <summary>
+        /// Toggles business mode for shopping (switches between retail and B2B mode)
+        /// </summary>
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleBusinessMode()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            var profile = await _nipValidationService.GetBusinessProfileAsync(user.Id);
+            if (profile == null || !profile.IsVerified)
+            {
+                return Json(new { success = false, message = "You must have a verified business profile to switch to business mode." });
+            }
+
+            var newStatus = await _nipValidationService.ToggleBusinessModeAsync(user.Id);
+            
+            _logger.LogInformation("User {UserId} toggled business mode to {Status}", user.Id, newStatus);
+
+            return Json(new 
+            { 
+                success = true, 
+                isBusinessModeActive = newStatus,
+                message = newStatus 
+                    ? "Business mode activated! You can now see business-only products and prices." 
+                    : "Retail mode activated! You are now shopping as a regular customer."
+            });
+        }
+
         #endregion
 
         #region External Authentication (Google, Facebook, Apple)
@@ -1145,6 +1513,7 @@ namespace Kokomija.Controllers
             // Request a redirect to the external login provider - pass popupMode in state
             var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { ReturnUrl = returnUrl, popupMode });
             _logger.LogInformation("Redirect URL: {RedirectUrl}", redirectUrl);
+            
             
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             _logger.LogInformation("Configured external authentication properties for {Provider}", provider);

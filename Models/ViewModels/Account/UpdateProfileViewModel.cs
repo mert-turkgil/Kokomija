@@ -17,5 +17,22 @@ namespace Kokomija.Models.ViewModels.Account
         [Phone(ErrorMessage = "Invalid phone number")]
         [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
+        
+        // Default Shipping Address
+        [StringLength(255, ErrorMessage = "Address cannot exceed 255 characters")]
+        [Display(Name = "Address")]
+        public string? DefaultAddress { get; set; }
+        
+        [StringLength(100, ErrorMessage = "City cannot exceed 100 characters")]
+        [Display(Name = "City")]
+        public string? DefaultCity { get; set; }
+        
+        [StringLength(20, ErrorMessage = "Postal code cannot exceed 20 characters")]
+        [Display(Name = "Postal Code")]
+        public string? DefaultPostalCode { get; set; }
+        
+        [StringLength(100, ErrorMessage = "Country cannot exceed 100 characters")]
+        [Display(Name = "Country")]
+        public string? DefaultCountry { get; set; }
     }
 }

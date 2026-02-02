@@ -1,0 +1,462 @@
+@model Kokomija.Models.ViewModels.Account.ReturnRequestDetailsViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = L["Return_Request_Details"];
+    var plnCulture = new System.Globalization.CultureInfo("pl-PL");
+    
+    var statusBadgeClass = Model.Status?.ToLower() switch {
+        "pending" => "warning",
+        "underreview" => "info",
+        "approved" => "primary",
+        "rejected" => "danger",
+        "completed" => "success",
+        "cancelled" => "secondary",
+        _ => "secondary"
+    };
+    var statusIcon = Model.Status?.ToLower() switch {
+        "pending" => "hourglass-split",
+        "underreview" => "search",
+        "approved" => "check-circle",
+        "rejected" => "x-circle",
+        "completed" => "check-circle-fill",
+        "cancelled" => "dash-circle",
+        _ => "question-circle"
+    };
+    
+    var canCancel = Model.Status == "Pending" || Model.Status == "UnderReview";
+}
+
+<div class="return-details-page">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="page-header mb-5">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Index">@L["Account_Dashboard"]</a></li>
+                    <li class="breadcrumb-item active">@L["Return_Request"] #@Model.Id</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h1 class="page-title mb-2">
+                        <i class="bi bi-arrow-return-left me-2"></i>@L["Return_Request"] #@Model.Id
+                    </h1>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <span class="badge bg-@statusBadgeClass fs-6">
+                            <i class="bi bi-@statusIcon me-1"></i>@L["ReturnStatus_" + Model.Status]
+                        </span>
+                        <span class="text-muted">|</span>
+                        <span class="text-muted">
+                            <i class="bi bi-calendar3 me-1"></i>@Model.RequestedAt.ToString("dd MMM yyyy, HH:mm")
+                        </span>
+                    </div>
+                </div>
+                <a asp-controller="Account" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>@L["Back_To_Account"]
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column - Details & Timeline -->
+            <div class="col-lg-8">
+                <!-- Return Progress Timeline -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>@L["Status_Timeline"]</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="return-timeline">
+                            @{
+                                var steps = new[] { "Pending", "UnderReview", "Approved", "Completed" };
+                                var currentStepIndex = Array.IndexOf(steps, Model.Status);
+                                if (Model.Status == "Rejected") currentStepIndex = -2;
+                                if (Model.Status == "Cancelled") currentStepIndex = -3;
+                            }
+                            
+                            @if (Model.Status == "Rejected" || Model.Status == "Cancelled")
+                            {
+                                <div class="alert alert-@(Model.Status == "Rejected" ? "danger" : "secondary") d-flex align-items-center">
+                                    <i class="bi bi-@(Model.Status == "Rejected" ? "x-circle-fill" : "dash-circle-fill") fs-3 me-3"></i>
+                                    <div>
+                                        <strong>@L["ReturnStatus_" + Model.Status]</strong>
+                                        @if (!string.IsNullOrEmpty(Model.ReviewNotes))
+                                        {
+                                            <p class="mb-0 mt-1">@Model.ReviewNotes</p>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="timeline-steps">
+                                    @foreach (var (step, index) in steps.Select((s, i) => (s, i)))
+                                    {
+                                        var isCompleted = index < currentStepIndex;
+                                        var isActive = index == currentStepIndex;
+                                        
+                                        <div class="timeline-step @(isCompleted ? "completed" : "") @(isActive ? "active" : "")">
+                                            <div class="step-indicator">
+                                                <div class="step-icon-circle">
+                                                    @if (isCompleted)
+                                                    {
+                                                        <i class="bi bi-check-lg"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@(index + 1)</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="step-content">
+                                                <h6 class="step-title">@L["ReturnStatus_" + step]</h6>
+                                                <small class="text-muted">
+                                                    @switch (step)
+                                                    {
+                                                        case "Pending":
+                                                            @L["Return_Step_Pending_Desc"]
+                                                            break;
+                                                        case "UnderReview":
+                                                            @L["Return_Step_Review_Desc"]
+                                                            break;
+                                                        case "Approved":
+                                                            @L["Return_Step_Approved_Desc"]
+                                                            break;
+                                                        case "Completed":
+                                                            @L["Return_Step_Completed_Desc"]
+                                                            break;
+                                                    }
+                                                </small>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Item Details -->
+                @if (Model.OrderItem != null)
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="bi bi-box me-2"></i>@L["Return_Item_Details"]</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3 mb-md-0">
+                                    @if (!string.IsNullOrEmpty(Model.OrderItem.ProductImage))
+                                    {
+                                        <img src="@Model.OrderItem.ProductImage" alt="@Model.OrderItem.ProductName" class="img-fluid rounded shadow-sm" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                                            <i class="bi bi-image text-muted fs-1"></i>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-9">
+                                    <h5 class="mb-2">@Model.OrderItem.ProductName</h5>
+                                    <div class="mb-3">
+                                        @if (!string.IsNullOrEmpty(Model.OrderItem.ColorName))
+                                        {
+                                            <span class="badge bg-light text-dark me-2">
+                                                <i class="bi bi-palette me-1"></i>@L["Color"]: @Model.OrderItem.ColorName
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.OrderItem.SizeName))
+                                        {
+                                            <span class="badge bg-light text-dark">
+                                                <i class="bi bi-rulers me-1"></i>@L["Size"]: @Model.OrderItem.SizeName
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">@L["Quantity"]</small>
+                                            <strong>@Model.OrderItem.Quantity</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">@L["Unit_Price"]</small>
+                                            <strong>@Model.OrderItem.UnitPrice.ToString("C", plnCulture)</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">@L["Total"]</small>
+                                            <strong class="text-primary">@Model.OrderItem.TotalPrice.ToString("C", plnCulture)</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                <!-- Return Reason -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>@L["Return_Reason"]</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong class="text-muted">@L["Reason"]:</strong>
+                            <p class="mb-0">@Model.Reason</p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <div>
+                                <strong class="text-muted">@L["Description"]:</strong>
+                                <p class="mb-0">@Model.Description</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                <!-- Uploaded Images -->
+                @if (Model.Images != null && Model.Images.Any())
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="bi bi-images me-2"></i>@L["Uploaded_Images"]</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                @foreach (var image in Model.Images)
+                                {
+                                    <div class="col-4 col-md-3">
+                                        <a href="@image" target="_blank" class="d-block">
+                                            <img src="@image" alt="Return image" class="img-fluid rounded" />
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                <!-- Status History -->
+                @if (Model.StatusHistory != null && Model.StatusHistory.Any())
+                {
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>@L["Status_History"]</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-history-list">
+                                @foreach (var history in Model.StatusHistory)
+                                {
+                                    <div class="status-history-item border-bottom pb-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <span class="badge bg-primary me-2">@L["ReturnStatus_" + history.NewStatus]</span>
+                                                @if (!string.IsNullOrEmpty(history.PreviousStatus))
+                                                {
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-arrow-left me-1"></i>@L["From"]: @L["ReturnStatus_" + history.PreviousStatus]
+                                                    </small>
+                                                }
+                                            </div>
+                                            <small class="text-muted">
+                                                @history.ChangedAt.ToString("dd MMM yyyy, HH:mm")
+                                            </small>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(history.Notes))
+                                        {
+                                            <p class="mb-0 mt-2 text-muted fst-italic">@history.Notes</p>
+                                        }
+                                        @if (!string.IsNullOrEmpty(history.ChangedBy))
+                                        {
+                                            <small class="text-muted">@L["By"]: @history.ChangedBy</small>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <!-- Right Column - Summary -->
+            <div class="col-lg-4">
+                <!-- Return Summary Card -->
+                <div class="card shadow-sm mb-4 sticky-top" style="top: 100px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>@L["Return_Summary"]</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">@L["Order_Number"]:</span>
+                                <a asp-action="OrderDetails" asp-route-id="@Model.OrderId" class="text-decoration-none fw-bold">#@Model.OrderNumber</a>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">@L["Return_ID"]:</span>
+                                <strong>#@Model.Id</strong>
+                            </li>
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">@L["Requested_Amount"]:</span>
+                                <strong class="text-primary">@Model.RequestedAmount.ToString("C", plnCulture)</strong>
+                            </li>
+                            @if (Model.RefundedAmount.HasValue && Model.RefundedAmount.Value > 0)
+                            {
+                                <li class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">@L["Refunded_Amount"]:</span>
+                                    <strong class="text-success">@Model.RefundedAmount.Value.ToString("C", plnCulture)</strong>
+                                </li>
+                            }
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">@L["Requested_On"]:</span>
+                                <span>@Model.RequestedAt.ToString("dd MMM yyyy")</span>
+                            </li>
+                            @if (Model.ReviewedAt.HasValue)
+                            {
+                                <li class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">@L["Reviewed_On"]:</span>
+                                    <span>@Model.ReviewedAt.Value.ToString("dd MMM yyyy")</span>
+                                </li>
+                            }
+                            @if (Model.CompletedAt.HasValue)
+                            {
+                                <li class="d-flex justify-content-between py-2 border-bottom">
+                                    <span class="text-muted">@L["Completed_On"]:</span>
+                                    <span>@Model.CompletedAt.Value.ToString("dd MMM yyyy")</span>
+                                </li>
+                            }
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">@L["Status"]:</span>
+                                <span class="badge bg-@statusBadgeClass">@L["ReturnStatus_" + Model.Status]</span>
+                            </li>
+                        </ul>
+                        
+                        @if (!string.IsNullOrEmpty(Model.RefundTransactionId))
+                        {
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                <small>
+                                    <strong>@L["Refund_Transaction"]:</strong><br />
+                                    <code class="user-select-all">@Model.RefundTransactionId</code>
+                                </small>
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (canCancel)
+                    {
+                        <div class="card-footer bg-light">
+                            <form asp-action="CancelReturnRequest" method="post" onsubmit="return confirm('@L["Confirm_Cancel_Return"]');">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-x-circle me-2"></i>@L["Cancel_Return_Request"]
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+                
+                <!-- Help Card -->
+                <div class="card shadow-sm bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-question-circle me-2"></i>@L["Need_Help"]</h6>
+                        <p class="card-text small text-muted">
+                            @L["Return_Help_Text"]
+                        </p>
+                        <a href="mailto:support@kokomija.com" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-envelope me-2"></i>@L["Contact_Support"]
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .return-details-page .page-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+    
+    .timeline-steps {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .timeline-step {
+        display: flex;
+        padding: 1rem 0;
+        position: relative;
+    }
+    
+    .timeline-step:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 19px;
+        top: 45px;
+        height: calc(100% - 25px);
+        width: 2px;
+        background: #e9ecef;
+    }
+    
+    .timeline-step.completed:not(:last-child)::before {
+        background: #198754;
+    }
+    
+    .step-indicator {
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+    
+    .step-icon-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e9ecef;
+        color: #6c757d;
+        font-weight: 600;
+        border: 2px solid #e9ecef;
+    }
+    
+    .timeline-step.completed .step-icon-circle {
+        background: #198754;
+        color: white;
+        border-color: #198754;
+    }
+    
+    .timeline-step.active .step-icon-circle {
+        background: #fff;
+        color: #0d6efd;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+    }
+    
+    .step-content {
+        flex: 1;
+    }
+    
+    .step-title {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    
+    .timeline-step.completed .step-title {
+        color: #198754;
+    }
+    
+    .timeline-step.active .step-title {
+        color: #0d6efd;
+    }
+    
+    .status-history-item:last-child {
+        border-bottom: none !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+</style>

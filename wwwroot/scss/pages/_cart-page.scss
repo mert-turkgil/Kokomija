@@ -20,6 +20,21 @@
             color: #fff;
         }
     }
+    
+    // B2B Business Mode Banner
+    .alert-info {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0a58ca 100%);
+        border: none;
+        color: #fff;
+        
+        strong {
+            color: #fff;
+        }
+        
+        .bi-building-check {
+            color: #fff;
+        }
+    }
 
     h1 {
         color: var(--bs-heading-color);

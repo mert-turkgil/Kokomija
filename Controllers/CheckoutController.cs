@@ -22,6 +22,7 @@ namespace Kokomija.Controllers
         private readonly IConfiguration _configuration;
         private readonly ILogger<CheckoutController> _logger;
         private readonly IShippingService _shippingService;
+        private readonly INIPValidationService _nipValidationService;
 
         private readonly Dictionary<string, string> _currencyMap = new Dictionary<string, string>
         {
@@ -41,7 +42,8 @@ namespace Kokomija.Controllers
             ILocalizationService localizationService,
             IConfiguration configuration,
             ILogger<CheckoutController> logger,
-            IShippingService shippingService)
+            IShippingService shippingService,
+            INIPValidationService nipValidationService)
         {
             _unitOfWork = unitOfWork;
             _context = context;
@@ -51,6 +53,13 @@ namespace Kokomija.Controllers
             _configuration = configuration;
             _logger = logger;
             _shippingService = shippingService;
+            _nipValidationService = nipValidationService;
+        }
+
+        private async Task<bool> IsBusinessModeActiveAsync(string userId)
+        {
+            var businessProfile = await _nipValidationService.GetBusinessProfileAsync(userId);
+            return businessProfile?.IsVerified == true && businessProfile?.IsBusinessModeActive == true;
         }
 
         [HttpPost]
@@ -79,6 +88,10 @@ namespace Kokomija.Controllers
                 {
                     return Json(new { success = false, message = _localizationService["Cart_Empty"] });
                 }
+
+                // Check if user is in business mode
+                bool isBusinessMode = await IsBusinessModeActiveAsync(user.Id);
+                _logger.LogInformation($"Checkout for user {user.Id}: Business Mode = {isBusinessMode}");
 
                 // Calculate VIP discount
                 var vipTier = user.VipTier ?? "None";
@@ -157,14 +170,25 @@ namespace Kokomija.Controllers
                     
                     if (variant == null) continue;
 
+                    // Apply business pricing if in business mode and product has business price
+                    decimal basePrice = variant.Price;
+                    bool isBusinessPrice = false;
+                    
+                    if (isBusinessMode && product.IsAvailableForBusiness && product.BusinessPrice.HasValue)
+                    {
+                        basePrice = product.BusinessPrice.Value;
+                        isBusinessPrice = true;
+                        _logger.LogInformation($"Product {product.Name}: Using B2B price {basePrice} PLN instead of retail {variant.Price} PLN");
+                    }
+
                     // Apply VIP discount to the price (Stripe will handle coupon separately)
-                    decimal originalPrice = variant.Price;
+                    decimal originalPrice = basePrice;
                     decimal discountedPrice = originalPrice * (1 - (vipDiscountPercentage / 100));
                     
                     // Convert to grosze (cents) for Stripe
                     long priceInGrosze = (long)(discountedPrice * 100);
 
-                    _logger.LogInformation($"Product {product.Name}: Original {originalPrice} PLN, VIP Discounted {discountedPrice} PLN ({vipDiscountPercentage}% off)");
+                    _logger.LogInformation($"Product {product.Name}: Base {originalPrice} PLN{(isBusinessPrice ? " (B2B)" : "")}, VIP Discounted {discountedPrice} PLN ({vipDiscountPercentage}% off)");
 
                     // Always use PriceData with PLN currency
                     var lineItem = new SessionLineItemOptions

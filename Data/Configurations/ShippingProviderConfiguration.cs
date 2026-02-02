@@ -20,6 +20,12 @@ namespace Kokomija.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(50);
 
+            builder.Property(sp => sp.ApiKey)
+                .HasMaxLength(2000);
+
+            builder.Property(sp => sp.ApiSecret)
+                .HasMaxLength(2000);
+
             builder.HasIndex(sp => sp.Code)
                 .IsUnique();
 

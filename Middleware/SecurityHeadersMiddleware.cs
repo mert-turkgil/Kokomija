@@ -49,7 +49,7 @@ namespace Kokomija.Middleware
                 "usb=()");
 
             // Content Security Policy (CSP)
-            // NOTE: Adjust based on your actual external resources (CDNs, Stripe, etc.)
+            // NOTE: Adjust based on your actual external resources (CDNs, Stripe, YouTube, etc.)
             // In development, allow HTTP for OAuth callbacks; in production, restrict to HTTPS
             var formActionPolicy = _environment.IsDevelopment() ? "'self' http: https:" : "'self' https:";
             
@@ -59,11 +59,11 @@ namespace Kokomija.Middleware
                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.ckeditor.com; " +
                 "img-src 'self' data: https: blob:; " +
                 "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com https://fonts.googleapis.com; " +
-                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://accounts.google.com https://www.facebook.com https://graph.facebook.com wss://localhost:* ws://localhost:*; " +
-                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com https://accounts.google.com https://www.facebook.com; " +
+                "connect-src 'self' https://api.stripe.com https://challenges.cloudflare.com https://cdn.jsdelivr.net https://cdn.ckeditor.com https://accounts.google.com https://www.facebook.com https://graph.facebook.com wss://localhost:* ws://localhost:*; " +
+                "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com https://accounts.google.com https://www.facebook.com https://www.youtube.com https://youtube.com; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +
-                $"form-action {formActionPolicy} https://accounts.google.com https://www.facebook.com " + // Allow OAuth form submissions in dev and prod
+                $"form-action {formActionPolicy} https://accounts.google.com https://accounts.facebook.com https://appleid.apple.com; " +
                 "frame-ancestors 'self';";
 
             context.Response.Headers.Append("Content-Security-Policy", cspPolicy);

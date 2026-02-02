@@ -33,11 +33,12 @@ public class AdminProductController : Controller
     }
 
     /// <summary>
-    /// GET: Product Management page
+    /// GET: Product Management page with search/filter support
     /// </summary>
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? searchTerm = null, string? searchType = "name", bool? isBusinessOnly = null, int? categoryId = null)
     {
-        _logger.LogInformation("Admin accessed product management");
+        _logger.LogInformation("Admin accessed product management. Search: {SearchTerm}, Type: {SearchType}, BusinessOnly: {BusinessOnly}", 
+            searchTerm, searchType, isBusinessOnly);
 
         var productsList = await _unitOfWork.Repository<Product>()
             .FindAsync(p => true, p => p.Category!.ParentCategory!);
@@ -72,24 +73,101 @@ public class AdminProductController : Controller
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt,
                 StripeProductId = product.StripeProductId,
-                StripePriceId = product.StripePriceId
+                StripePriceId = product.StripePriceId,
+                // Business fields
+                IsBusinessOnly = product.IsBusinessOnly,
+                IsAvailableForBusiness = product.IsAvailableForBusiness,
+                MinBusinessQuantity = product.MinBusinessQuantity,
+                BusinessPrice = product.BusinessPrice,
+                // SKUs for search
+                SKUs = variants.Select(v => v.SKU).ToList()
             });
         }
 
+        // Apply filters
+        var filteredProducts = productDtos.AsEnumerable();
+
+        // Search by term
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchLower = searchTerm.ToLower().Trim();
+            filteredProducts = searchType switch
+            {
+                "sku" => filteredProducts.Where(p => p.SKUs.Any(s => s.ToLower().Contains(searchLower))),
+                "id" => filteredProducts.Where(p => p.Id.ToString() == searchTerm.Trim()),
+                _ => filteredProducts.Where(p => p.Name.ToLower().Contains(searchLower))
+            };
+        }
+
+        // Filter by business only
+        if (isBusinessOnly.HasValue)
+        {
+            filteredProducts = filteredProducts.Where(p => p.IsBusinessOnly == isBusinessOnly.Value);
+        }
+
+        // Filter by category
+        if (categoryId.HasValue)
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(categoryId.Value);
+            if (category != null)
+            {
+                filteredProducts = filteredProducts.Where(p => 
+                    p.CategoryName == category.Name || p.ParentCategoryName == category.Name);
+            }
+        }
+
+        var filteredList = filteredProducts.OrderByDescending(p => p.CreatedAt).ToList();
         var productsArray = productsList.ToList();
 
         var viewModel = new ProductManagementViewModel
         {
-            Products = productDtos.OrderByDescending(p => p.CreatedAt).ToList(),
+            Products = filteredList,
             TotalProducts = productsArray.Count,
             ActiveProducts = productsArray.Count(p => p.IsActive),
             InactiveProducts = productsArray.Count(p => !p.IsActive),
             OutOfStockProducts = productDtos.Count(p => p.TotalStock == 0),
-            TotalInventoryValue = productDtos.Sum(p => p.Price * p.TotalStock)
+            TotalInventoryValue = productDtos.Sum(p => p.Price * p.TotalStock),
+            BusinessOnlyProducts = productsArray.Count(p => p.IsBusinessOnly),
+            // Keep search params for view
+            SearchTerm = searchTerm,
+            SearchType = searchType,
+            IsBusinessOnly = isBusinessOnly,
+            CategoryId = categoryId
         };
+
+        // Load categories for filter dropdown
+        var categories = await _unitOfWork.Categories.GetAllAsync();
+        ViewBag.Categories = categories.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder).ToList();
 
         ViewData["Title"] = "Product Management";
         return View(viewModel);
+    }
+
+    /// <summary>
+    /// API: Search products by SKU for quick lookup
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> SearchBySKU(string sku)
+    {
+        if (string.IsNullOrWhiteSpace(sku))
+            return Json(new { success = false, message = "SKU is required" });
+
+        var skuLower = sku.ToLower().Trim();
+        var variants = await _unitOfWork.Repository<ProductVariant>()
+            .FindAsync(v => v.SKU.ToLower().Contains(skuLower), v => v.Product);
+
+        var results = variants.Select(v => new
+        {
+            variantId = v.Id,
+            productId = v.ProductId,
+            productName = v.Product?.Name,
+            sku = v.SKU,
+            price = v.Price,
+            stock = v.StockQuantity,
+            isActive = v.IsActive
+        }).Take(20).ToList();
+
+        return Json(new { success = true, results });
     }
 
     /// <summary>
@@ -427,6 +505,11 @@ public class AdminProductController : Controller
             IsActive = product.IsActive,
             StripeProductId = product.StripeProductId,
             StripePriceId = product.StripePriceId,
+            // B2B Fields
+            IsBusinessOnly = product.IsBusinessOnly,
+            IsAvailableForBusiness = product.IsAvailableForBusiness,
+            MinBusinessQuantity = product.MinBusinessQuantity,
+            BusinessPrice = product.BusinessPrice,
             ExistingImageUrls = product.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
             Variants = variants.Select(v => new ProductVariantDto
             {
@@ -532,6 +615,12 @@ public class AdminProductController : Controller
             product.StripeTaxCode = model.StripeTaxCode;
             product.IsActive = model.IsActive;
             product.UpdatedAt = DateTime.UtcNow;
+            
+            // Update B2B fields
+            product.IsBusinessOnly = model.IsBusinessOnly;
+            product.IsAvailableForBusiness = model.IsAvailableForBusiness;
+            product.MinBusinessQuantity = model.MinBusinessQuantity;
+            product.BusinessPrice = model.BusinessPrice;
 
             // Update Stripe product
             var stripeProductService = new Stripe.ProductService();

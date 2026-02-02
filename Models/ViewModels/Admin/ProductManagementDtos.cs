@@ -11,6 +11,13 @@ public class ProductManagementViewModel
     public int InactiveProducts { get; set; }
     public int OutOfStockProducts { get; set; }
     public decimal TotalInventoryValue { get; set; }
+    public int BusinessOnlyProducts { get; set; }
+    
+    // Search/filter parameters
+    public string? SearchTerm { get; set; }
+    public string? SearchType { get; set; } // "name", "sku", "id"
+    public bool? IsBusinessOnly { get; set; }
+    public int? CategoryId { get; set; }
 }
 
 public class ProductListItemDto
@@ -31,6 +38,15 @@ public class ProductListItemDto
     public DateTime? UpdatedAt { get; set; }
     public string StripeProductId { get; set; } = string.Empty;
     public string StripePriceId { get; set; } = string.Empty;
+    
+    // Business (B2B) fields
+    public bool IsBusinessOnly { get; set; }
+    public bool IsAvailableForBusiness { get; set; }
+    public int MinBusinessQuantity { get; set; }
+    public decimal? BusinessPrice { get; set; }
+    
+    // SKU info for search
+    public List<string> SKUs { get; set; } = new();
 }
 
 public class ProductCreateDto
@@ -68,6 +84,32 @@ public class ProductCreateDto
     public string? StripeTaxCode { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    // ===== BUSINESS (B2B) FIELDS =====
+    
+    /// <summary>
+    /// If true, only visible to verified business customers
+    /// </summary>
+    public bool IsBusinessOnly { get; set; } = false;
+
+    /// <summary>
+    /// If true, available for both retail and business customers
+    /// </summary>
+    public bool IsAvailableForBusiness { get; set; } = true;
+
+    /// <summary>
+    /// Minimum quantity for business purchases (0 = no minimum)
+    /// </summary>
+    [Range(0, 10000)]
+    public int MinBusinessQuantity { get; set; } = 0;
+
+    /// <summary>
+    /// Special business price (leave empty to use retail price)
+    /// </summary>
+    [Range(0, 999999.99)]
+    public decimal? BusinessPrice { get; set; }
+    
+    // ===== END BUSINESS FIELDS =====
 
     /// <summary>
     /// Custom color hex code if not in the predefined palette
@@ -131,6 +173,37 @@ public class ProductUpdateDto
     public string? StripeTaxCode { get; set; }
 
     public bool IsActive { get; set; }
+
+    // ===== BUSINESS (B2B) FIELDS =====
+    
+    /// <summary>
+    /// If true, only visible to verified business customers
+    /// </summary>
+    public bool IsBusinessOnly { get; set; } = false;
+
+    /// <summary>
+    /// If true, available for both retail and business customers
+    /// </summary>
+    public bool IsAvailableForBusiness { get; set; } = true;
+
+    /// <summary>
+    /// Minimum quantity for business purchases (0 = no minimum)
+    /// </summary>
+    [Range(0, 10000)]
+    public int MinBusinessQuantity { get; set; } = 0;
+
+    /// <summary>
+    /// Special business price (leave empty to use retail price)
+    /// </summary>
+    [Range(0, 999999.99)]
+    public decimal? BusinessPrice { get; set; }
+
+    /// <summary>
+    /// Stripe Price ID for business price
+    /// </summary>
+    public string? BusinessStripePriceId { get; set; }
+    
+    // ===== END BUSINESS FIELDS =====
 
     /// <summary>
     /// Custom color hex code if not in the predefined palette

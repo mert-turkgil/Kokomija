@@ -10,7 +10,22 @@
   <ItemGroup>
     <Watch Include="Resources/**/*.resx" />
   </ItemGroup>
+  
+  <!-- Exclude Blog upload folders from dotnet watch hot reload -->
+  <ItemGroup>
+    <Content Update="wwwroot\img\Blog\**\*">
+      <Watch>false</Watch>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
+  <!-- Explicitly exclude wwwroot image folders from watch -->
+  <ItemGroup>
+    <Watch Remove="wwwroot\img\**\*" />
+    <Watch Remove="wwwroot\img\Blog\**" />
+    <Watch Remove="wwwroot\img\Blog\Temp\**" />
+  </ItemGroup>
+  
   <!-- Include resource files in publish output -->
   <ItemGroup>
     <Content Include="Resources/**/*.resx" CopyToPublishDirectory="PreserveNewest" />

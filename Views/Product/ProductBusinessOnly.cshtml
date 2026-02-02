@@ -1,0 +1,156 @@
+@inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
+
+@{
+    ViewData["Title"] = L["Product_BusinessOnly"];
+    var productName = ViewData["ProductName"] as string ?? L["This_Product"];
+    var alternativeProducts = ViewData["AlternativeProducts"] as List<Kokomija.Entity.Product>;
+    var currentCulture = ViewData["CurrentCulture"] as string ?? "en";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Business Only Product Message -->
+            <div class="product-business-only text-center mb-5">
+                <div class="business-icon mb-4">
+                    <i class="bi bi-building-lock display-1 text-info"></i>
+                </div>
+                
+                <h1 class="display-5 fw-bold mb-3">@L["Product_BusinessOnly"]</h1>
+                <p class="lead text-muted mb-2">
+                    <strong>@productName</strong>
+                </p>
+                <p class="text-muted mb-4">@L["Product_BusinessOnly_Message"]</p>
+                
+                <!-- Business Profile Registration CTA -->
+                <div class="business-cta mb-5" style="max-width: 600px; margin: 0 auto;">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                <i class="bi bi-briefcase me-2"></i>@L["Business_Benefits_Title"]
+                            </h5>
+                            <ul class="list-unstyled text-start mb-4">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>@L["Business_Benefit_ExclusiveProducts"]
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>@L["Business_Benefit_SpecialPricing"]
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>@L["Business_Benefit_BulkOrders"]
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>@L["Business_Benefit_InvoiceSupport"]
+                                </li>
+                            </ul>
+                            
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <a asp-controller="Account" asp-action="BusinessProfile" class="btn btn-info btn-lg">
+                                    <i class="bi bi-building-add me-2"></i>@L["Setup_Business_Profile"]
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login" 
+                                   asp-route-returnUrl="@Context.Request.Path" 
+                                   class="btn btn-info btn-lg">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>@L["Login_To_Setup_Business"]
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alternative Products (non-business-only) -->
+            @if (alternativeProducts != null && alternativeProducts.Any())
+            {
+                <div class="alternative-products">
+                    <h4 class="text-center mb-4">
+                        <i class="bi bi-stars text-warning me-2"></i>@L["Product_Alternatives_Title"]
+                    </h4>
+                    
+                    <div class="row g-4">
+                        @foreach (var product in alternativeProducts.Take(4))
+                        {
+                            var translation = product.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(currentCulture));
+                            var displayName = translation?.Name ?? product.Name;
+                            var slug = translation?.Slug ?? product.Slug ?? product.Id.ToString();
+                            var primaryImage = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+                            var imageUrl = primaryImage != null 
+                                ? Url.Content($"~/img/ProductImage/{primaryImage.ImageUrl}") 
+                                : Url.Content("~/img/logo_black.png");
+                            var productUrl = LocalizedUrl.GetProductUrl(slug);
+
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card h-100 product-card shadow-sm">
+                                    <a href="@productUrl" class="text-decoration-none">
+                                        <img src="@imageUrl" 
+                                             class="card-img-top" 
+                                             alt="@displayName"
+                                             onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');"
+                                             style="height: 200px; object-fit: contain; padding: 1rem;">
+                                    </a>
+                                    <div class="card-body d-flex flex-column">
+                                        <h6 class="card-title">
+                                            <a href="@productUrl" class="text-decoration-none text-dark">@displayName</a>
+                                        </h6>
+                                        <div class="mt-auto">
+                                            <p class="card-text text-primary fw-bold mb-2">@product.Price.ToString("C", new System.Globalization.CultureInfo("pl-PL"))</p>
+                                            <a href="@productUrl" class="btn btn-outline-primary btn-sm w-100">
+                                                @L["View_Product"]
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            
+            <!-- Back to Shopping -->
+            <div class="text-center mt-5">
+                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>@L["Browse_All_Products"]
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-business-only .business-icon {
+        color: var(--bs-info);
+        opacity: 0.8;
+    }
+    
+    .business-cta .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .business-cta .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .product-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .product-card .card-img-top {
+        background-color: #f8f9fa;
+    }
+    
+    .logo-fallback {
+        padding: 2rem !important;
+        background-color: #f8f9fa;
+    }
+</style>

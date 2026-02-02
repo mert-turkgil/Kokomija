@@ -2125,4 +2125,44 @@
   <data name="Login_Loading" xml:space="preserve">
     <value>Completing login...</value>
   </data>
+  <!-- B2B Business Mode -->
+  <data name="Cart_BusinessMode" xml:space="preserve">
+    <value>Business Mode Active</value>
+  </data>
+  <data name="Cart_BusinessModeDescription" xml:space="preserve">
+    <value>You are viewing special business prices for verified business customers.</value>
+  </data>
+  <data name="Product_BusinessPrice" xml:space="preserve">
+    <value>Business Price</value>
+  </data>
+  <data name="Product_RetailPrice" xml:space="preserve">
+    <value>Retail Price</value>
+  </data>
+  <data name="Product_BusinessOnly" xml:space="preserve">
+    <value>Business Only</value>
+  </data>
+  <data name="Product_BusinessOnly_Message" xml:space="preserve">
+    <value>This product is available exclusively for verified business customers. Register your business profile to access exclusive products and special pricing.</value>
+  </data>
+  <data name="Business_Benefits_Title" xml:space="preserve">
+    <value>Benefits of a Business Account</value>
+  </data>
+  <data name="Business_Benefit_ExclusiveProducts" xml:space="preserve">
+    <value>Access to exclusive business-only products</value>
+  </data>
+  <data name="Business_Benefit_SpecialPricing" xml:space="preserve">
+    <value>Special wholesale pricing on all products</value>
+  </data>
+  <data name="Business_Benefit_BulkOrders" xml:space="preserve">
+    <value>Bulk order quantities for resellers</value>
+  </data>
+  <data name="Business_Benefit_InvoiceSupport" xml:space="preserve">
+    <value>Professional invoice support with NIP</value>
+  </data>
+  <data name="Setup_Business_Profile" xml:space="preserve">
+    <value>Set Up Business Profile</value>
+  </data>
+  <data name="Login_To_Setup_Business" xml:space="preserve">
+    <value>Log In to Set Up Business</value>
+  </data>
 </root>
