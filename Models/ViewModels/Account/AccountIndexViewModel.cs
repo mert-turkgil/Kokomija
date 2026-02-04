@@ -7,6 +7,7 @@ namespace Kokomija.Models.ViewModels.Account
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
+        public DateTime? Birthday { get; set; }
         public string? StripeCustomerId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
@@ -38,6 +39,45 @@ namespace Kokomija.Models.ViewModels.Account
         public int WishlistCount { get; set; }
         public int CartItemsCount { get; set; }
         public int PendingReturnRequests { get; set; }
+        
+        // Connected External Logins (Google, Facebook, etc.)
+        public IList<ExternalLoginViewModel> ExternalLogins { get; set; } = new List<ExternalLoginViewModel>();
+        public IList<string> AvailableProviders { get; set; } = new List<string>();
+        public bool HasPassword { get; set; } = true;
+        
+        // Coupons
+        public IList<AccountCouponViewModel> AvailableCoupons { get; set; } = new List<AccountCouponViewModel>();
+        public IList<UsedCouponViewModel> UsedCoupons { get; set; } = new List<UsedCouponViewModel>();
+    }
+    
+    public class AccountCouponViewModel
+    {
+        public int Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string DiscountType { get; set; } = string.Empty; // percentage, fixed_amount
+        public decimal DiscountValue { get; set; }
+        public decimal? MinimumOrderAmount { get; set; }
+        public DateTime? ValidUntil { get; set; }
+        public bool IsNew { get; set; }
+    }
+    
+    public class UsedCouponViewModel
+    {
+        public int Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public decimal DiscountAmount { get; set; }
+        public DateTime UsedAt { get; set; }
+        public int OrderId { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
+    }
+    
+    public class ExternalLoginViewModel
+    {
+        public string LoginProvider { get; set; } = string.Empty;
+        public string ProviderDisplayName { get; set; } = string.Empty;
+        public string ProviderKey { get; set; } = string.Empty;
     }
     
     public class ReturnRequestSummaryViewModel

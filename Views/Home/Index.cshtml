@@ -9,7 +9,6 @@
     string? currentUICulture = CultureInfo.CurrentUICulture.Name;
 }
 
-<!-- Active Coupons Banner -->
 @if (Model.ActiveCoupons.Any())
 {
     <div class="coupon-banner-container">
@@ -19,32 +18,43 @@
                 <div class="container">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center gap-3">
                                 @if (coupon.IsNew)
                                 {
-                                    <span class="badge bg-success me-3 pulse-animation">
-                                        <i class="bi bi-sparkles"></i> NEW
+                                    <span class="badge bg-success flex-shrink-0 pulse-animation">
+                                        <i class="bi bi-sparkles"></i> @L.GetString("New", "Home")
                                     </span>
                                 }
-                                <div>
+                                else
+                                {
+                                    <span class="badge bg-info flex-shrink-0">
+                                        <i class="bi bi-gift"></i> @L.GetString("Available", "Home")
+                                    </span>
+                                }
+                                <div class="flex-grow-1">
                                     <strong class="coupon-code">@coupon.Code</strong>
-                                    <span class="coupon-description">- @coupon.Description</span>
+                                    @if (!string.IsNullOrEmpty(coupon.Description))
+                                    {
+                                        <span class="coupon-description ms-2">- @coupon.Description</span>
+                                    }
                                     @if (coupon.DaysUntilExpiry <= 3)
                                     {
-                                        <span class="badge bg-danger ms-2">
-                                            <i class="bi bi-clock"></i> @coupon.DaysUntilExpiry @L.GetString(key: "Days", resourceName: "Home") left
+                                        <span class="badge bg-danger ms-2 flex-shrink-0">
+                                            <i class="bi bi-hourglass-end"></i> @coupon.DaysUntilExpiry @L.GetString("Days", "Home") @L.GetString("Left", "Home")
                                         </span>
                                     }
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                            <button type="button" class="btn btn-sm btn-light me-2" onclick="copyCouponCode('@coupon.Code')">
-                                <i class="bi bi-clipboard"></i> @L.GetString(key: "Copy", resourceName: "Home")
-                            </button>
-                            <a asp-controller="Checkout" asp-action="Index" class="btn btn-sm btn-primary">
-                                @L.GetString(key: "Shop_Now", resourceName: "Home") <i class="bi bi-arrow-right"></i>
-                            </a>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary" onclick="copyCouponCode('@coupon.Code')">
+                                    <i class="bi bi-clipboard"></i> @L.GetString("Copy", "Home")
+                                </button>
+                                <a asp-controller="Product" asp-action="Index" class="btn btn-primary text-white">
+                                    @L.GetString("Shop_Now", "Home") <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -116,16 +126,16 @@
                     
                     <!-- Search Form -->
                     <div class="hero-search-form mb-4">
-                        <form action="@LocalizedUrl.GetProductsUrl()" method="get" class="d-flex">
+                        <form asp-controller="Product" asp-action="Search" method="get" class="d-flex">
                             <div class="input-group input-group-lg shadow-lg">
                                 <input type="text" 
-                                       name="search" 
+                                       name="q" 
                                        class="form-control" 
                                        placeholder="@L.GetString(key: "SearchPlaceholder", resourceName: "Home")"
                                        aria-label="@L.GetString(key: "SearchProducts", resourceName: "Home")">
-                                <a href="@LocalizedUrl.GetProductsUrl()" class="btn btn-light px-4">
+                                <button type="submit" class="btn btn-light px-4">
                                     <i class="bi bi-search me-2"></i>@L.GetString(key: "Search", resourceName: "Home")
-                                </a>
+                                </button>
                             </div>
                         </form>
                     </div>

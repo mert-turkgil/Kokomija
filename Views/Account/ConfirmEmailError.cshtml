@@ -1,0 +1,55 @@
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = L["ConfirmEmailError_Title"];
+}
+
+<div class="auth-page">
+    <div class="container">
+        <div class="auth-card confirmation-card">
+            <div class="auth-header">
+                <div class="icon-wrapper error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <h2>@L["ConfirmEmailError_Header"]</h2>
+                <p class="subtitle">
+                    @L["ConfirmEmailError_Subtitle"]
+                </p>
+            </div>
+
+            <div class="confirmation-content">
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i>
+                    <p class="mb-0">
+                        @L["ConfirmEmailError_Message"]
+                    </p>
+                </div>
+
+                <div class="instructions">
+                    <h5>@L["ConfirmEmailError_WhatToDo"]</h5>
+                    <ul>
+                        <li>@L["ConfirmEmailError_Reason1"]</li>
+                        <li>@L["ConfirmEmailError_Reason2"]</li>
+                        <li>@L["ConfirmEmailError_Reason3"]</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="auth-links">
+                <a asp-action="Login" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    @L["Common_BackToLogin"]
+                </a>
+                <a asp-action="Register" class="link-primary">
+                    @L["ConfirmEmailError_TryAgain"]
+                </a>
+            </div>
+
+            <div class="auth-footer">
+                <p class="text-muted">
+                    @L["Common_NeedHelp"] <a href="@Url.Action("Index", "Contact")">@L["Common_ContactSupport"]</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

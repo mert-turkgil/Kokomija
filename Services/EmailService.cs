@@ -13,9 +13,11 @@ namespace Kokomija.Services
     {
         Task SendEmailAsync(string to, string subject, string body, bool isHtml = true);
         Task SendEmailAsync(string to, string subject, string body, string? replyTo, bool isHtml = true);
+        Task SendEmailAsync(string to, string subject, string body, SmtpProviderType provider, bool isHtml = true);
         Task SendEmailWithAttachmentAsync(string to, string subject, string body, string attachmentPath, bool isHtml = true);
         Task SendBulkEmailAsync(List<string> recipients, string subject, string body, bool isHtml = true);
         Task<bool> SendOrderConfirmationAsync(string to, OrderEmailData orderData);
+        Task<bool> SendOrderConfirmationAsync(string to, OrderEmailData orderData, string languageCode);
         Task<string> LoadEmailTemplate(string templateName);
         
         // Return Request emails
@@ -24,18 +26,24 @@ namespace Kokomija.Services
         Task SendReturnApprovedEmailAsync(string userId, int returnRequestId, string? customMessage);
         Task SendReturnRejectedEmailAsync(string userId, int returnRequestId, string? customMessage);
         
-        // Developer earnings emails
+        // Developer earnings emails (uses DeveloperSmtp)
         Task SendDeveloperEarningsSummaryAsync(string period, decimal amount);
         Task SendCommissionChangeAlertAsync(decimal oldRate, decimal newRate);
+        Task SendDeveloperAlertAsync(string subject, string message);
         
         // Account management emails
         Task SendPasswordResetAsync(string email, string resetUrl);
+        Task SendPasswordResetAsync(string email, string resetUrl, string languageCode);
+        Task SendEmailVerificationAsync(string email, string verificationUrl, string languageCode);
         Task SendPayoutFailureNotificationAsync(string adminEmail, string payoutId, string errorMessage);
         Task SendPayoutSuccessNotificationAsync(string adminEmail, string payoutId, decimal amount);
         
         // Newsletter emails
         Task SendNewsletterConfirmationAsync(string email, string confirmationUrl);
         Task SendNewsletterWelcomeAsync(string email);
+        
+        // Health check
+        Task SendHealthCheckEmailAsync();
     }
 
     /// <summary>
@@ -113,6 +121,40 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send email to {Email} with subject: {Subject}", to, subject);
+                throw;
+            }
+        }
+
+        public async Task SendEmailAsync(string to, string subject, string body, SmtpProviderType provider, bool isHtml = true)
+        {
+            try
+            {
+                var smtpSettings = GetSmtpSettings(provider);
+
+                using var client = new SmtpClient(smtpSettings.Host, smtpSettings.Port)
+                {
+                    EnableSsl = smtpSettings.EnableSsl,
+                    Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password),
+                    Timeout = smtpSettings.Timeout
+                };
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(smtpSettings.FromEmail, smtpSettings.FromName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = isHtml
+                };
+
+                mailMessage.To.Add(to);
+
+                await client.SendMailAsync(mailMessage);
+
+                _logger.LogInformation("Email sent successfully via {Provider} to {Email} with subject: {Subject}", provider, to, subject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email via {Provider} to {Email} with subject: {Subject}", provider, to, subject);
                 throw;
             }
         }
@@ -201,18 +243,20 @@ namespace Kokomija.Services
             }
         }
 
-        private SmtpSettings GetSmtpSettings()
+        private SmtpSettings GetSmtpSettings(SmtpProviderType provider = SmtpProviderType.Customer)
         {
+            var configSection = provider == SmtpProviderType.Developer ? "Email:DeveloperSmtp" : "Email:CustomerSmtp";
+            
             var settings = new SmtpSettings
             {
-                Host = _configuration["Email:Smtp:Host"] ?? throw new InvalidOperationException("SMTP Host not configured"),
-                Port = _configuration.GetValue<int>("Email:Smtp:Port"),
-                EnableSsl = _configuration.GetValue<bool>("Email:Smtp:EnableSsl", true),
-                Username = _configuration["Email:Smtp:Username"] ?? throw new InvalidOperationException("SMTP Username not configured"),
-                Password = _configuration["Email:Smtp:Password"] ?? throw new InvalidOperationException("SMTP Password not configured"),
-                FromEmail = _configuration["Email:Smtp:FromEmail"] ?? throw new InvalidOperationException("From Email not configured"),
-                FromName = _configuration["Email:Smtp:FromName"] ?? "Kokomija",
-                Timeout = _configuration.GetValue<int>("Email:Smtp:Timeout", 30000)
+                Host = _configuration[$"{configSection}:Host"] ?? throw new InvalidOperationException($"SMTP Host not configured for {provider}"),
+                Port = _configuration.GetValue<int>($"{configSection}:Port"),
+                EnableSsl = _configuration.GetValue<bool>($"{configSection}:EnableSsl", true),
+                Username = _configuration[$"{configSection}:Username"] ?? throw new InvalidOperationException($"SMTP Username not configured for {provider}"),
+                Password = _configuration[$"{configSection}:Password"] ?? throw new InvalidOperationException($"SMTP Password not configured for {provider}"),
+                FromEmail = _configuration[$"{configSection}:FromEmail"] ?? throw new InvalidOperationException($"From Email not configured for {provider}"),
+                FromName = _configuration[$"{configSection}:FromName"] ?? "Kokomija",
+                Timeout = _configuration.GetValue<int>("Email:Timeout", 30000)
             };
 
             return settings;
@@ -277,6 +321,58 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending order confirmation email to {Email} for order {OrderNumber}", 
+                    to, orderData.OrderNumber);
+                return false;
+            }
+        }
+
+        public async Task<bool> SendOrderConfirmationAsync(string to, OrderEmailData orderData, string languageCode)
+        {
+            try
+            {
+                var lang = languageCode.ToLower().Contains("pl") ? "PL" : "EN";
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                
+                // Load the localized order receipt template
+                var template = await LoadEmailTemplate($"OrderReceipt_{lang}");
+
+                // Build order items HTML
+                var orderItemsHtml = orderData.OrderItemsHtml;
+
+                // Get localized subject
+                var subject = lang == "PL" 
+                    ? $"Potwierdzenie zamówienia #{orderData.OrderNumber} - Kokomija"
+                    : $"Order Confirmation #{orderData.OrderNumber} - Kokomija";
+
+                // Replace placeholders with actual data
+                var emailBody = template
+                    .Replace("{{ORDER_NUMBER}}", orderData.OrderNumber)
+                    .Replace("{{ORDER_DATE}}", orderData.OrderDate)
+                    .Replace("{{TOTAL_AMOUNT}}", orderData.TotalAmount.ToString("N2") + " PLN")
+                    .Replace("{{SUBTOTAL}}", orderData.TotalAmount.ToString("N2") + " PLN")
+                    .Replace("{{SHIPPING_COST}}", "0.00 PLN")
+                    .Replace("{{TAX_AMOUNT}}", "0.00 PLN")
+                    .Replace("{{DISCOUNT_ROW}}", "")
+                    .Replace("{{SHIPPING_ADDRESS}}", orderData.ShippingAddress)
+                    .Replace("{{ORDER_ITEMS}}", orderItemsHtml)
+                    .Replace("{{TRACK_ORDER_URL}}", orderData.TrackOrderUrl)
+                    .Replace("{{WEBSITE_URL}}", orderData.WebsiteUrl)
+                    .Replace("{{PRIVACY_URL}}", orderData.PrivacyUrl)
+                    .Replace("{{CONTACT_URL}}", orderData.ContactUrl)
+                    .Replace("{{LOGO_URL}}", $"{baseUrl}/img/logo_black.png")
+                    .Replace("{{YEAR}}", DateTime.Now.Year.ToString());
+
+                // Send the email via customer SMTP
+                await SendEmailAsync(to, subject, emailBody, SmtpProviderType.Customer, isHtml: true);
+
+                _logger.LogInformation("Localized order confirmation ({Lang}) sent to {Email} for order {OrderNumber}", 
+                    lang, to, orderData.OrderNumber);
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending localized order confirmation to {Email} for order {OrderNumber}", 
                     to, orderData.OrderNumber);
                 return false;
             }
@@ -486,155 +582,11 @@ namespace Kokomija.Services
             }
         }
 
-        public async Task SendDeveloperEarningsSummaryAsync(string period, decimal amount)
-        {
-            try
-            {
-                var rootEmail = _configuration["EmailSettings:SmtpUsername"];
-                if (string.IsNullOrEmpty(rootEmail))
-                    return;
+        // SendDeveloperEarningsSummaryAsync and SendCommissionChangeAlertAsync are now defined at the end of the file
+        // with dual SMTP provider support
 
-                var subject = $"Developer Earnings Summary - {period}";
-                var body = $@"
-                    <h2>💰 Developer Earnings Summary</h2>
-                    <p>Here is your earnings summary for <strong>{period}</strong>:</p>
-                    <div style='background-color: #d4edda; padding: 20px; border: 2px solid #28a745; border-radius: 5px; text-align: center;'>
-                        <div style='font-size: 36px; font-weight: bold; color: #28a745;'>{amount:C}</div>
-                        <p style='margin-top: 10px; color: #6c757d;'>Total Developer Commission</p>
-                    </div>
-                    <p>This amount represents your commission from platform transactions during this period.</p>";
-
-                await SendEmailAsync(rootEmail, subject, body, true);
-                _logger.LogInformation("Developer earnings summary sent for period {Period}, amount {Amount}", period, amount);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending developer earnings summary");
-            }
-        }
-
-        public async Task SendCommissionChangeAlertAsync(decimal oldRate, decimal newRate)
-        {
-            try
-            {
-                var rootEmail = _configuration["EmailSettings:SmtpUsername"];
-                if (string.IsNullOrEmpty(rootEmail))
-                    return;
-
-                var subject = "⚠️ Commission Rate Change Detected";
-                var change = newRate - oldRate;
-                var changeSign = change > 0 ? "+" : "";
-                var body = $@"
-                    <h2>⚠️ Commission Rate Change Alert</h2>
-                    <p>A change in the Stripe commission rate has been detected:</p>
-                    <div style='background-color: #f8d7da; padding: 15px; border-left: 4px solid #dc3545;'>
-                        <strong>Previous Rate:</strong> {oldRate}%<br>
-                        <strong>New Rate:</strong> {newRate}%<br>
-                        <strong>Change:</strong> {changeSign}{change}%<br>
-                        <strong>Time:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC
-                    </div>
-                    <p>Please review this change and update your commission settings if necessary.</p>";
-
-                await SendEmailAsync(rootEmail, subject, body, true);
-                _logger.LogInformation("Commission change alert sent: {OldRate}% -> {NewRate}%", oldRate, newRate);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending commission change alert");
-            }
-        }
-
-        public async Task SendPasswordResetAsync(string email, string resetUrl)
-        {
-            try
-            {
-                var subject = "Kokomija - Password Reset Request";
-                var body = $@"
-                    <h2>Password Reset Request</h2>
-                    <p>Hello,</p>
-                    <p>We received a request to reset your password for your Kokomija account.</p>
-                    <p>Click the button below to reset your password:</p>
-                    <p style='margin: 20px 0;'>
-                        <a href='{resetUrl}' style='background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;'>
-                            Reset Password
-                        </a>
-                    </p>
-                    <p>Or copy and paste this link into your browser:</p>
-                    <p style='background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all;'>
-                        {resetUrl}
-                    </p>
-                    <p><strong>This link will expire in 24 hours.</strong></p>
-                    <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
-                    <hr style='margin: 20px 0; border: none; border-top: 1px solid #ddd;'>
-                    <p style='color: #666; font-size: 12px;'>This is an automated email. Please do not reply.</p>";
-
-                await SendEmailAsync(email, subject, body, true);
-                _logger.LogInformation("Password reset email sent to {Email}", email);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending password reset email to {Email}", email);
-            }
-        }
-
-        public async Task SendPayoutFailureNotificationAsync(string adminEmail, string payoutId, string errorMessage)
-        {
-            try
-            {
-                var subject = "⚠️ Kokomija - Automatic Payout Failed";
-                var body = $@"
-                    <div style='background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 20px;'>
-                        <h3 style='color: #721c24; margin: 0;'>Automatic Payout Failed</h3>
-                    </div>
-                    <p><strong>Payout ID:</strong> <code>{payoutId}</code></p>
-                    <p><strong>Error Message:</strong></p>
-                    <div style='background-color: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace;'>
-                        {errorMessage}
-                    </div>
-                    <p><strong>Time:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p>
-                    <p>Please review the developer earnings and manually process the payout if necessary.</p>
-                    <p style='margin-top: 20px;'>
-                        <a href='{_configuration["AppSettings:BaseUrl"]}/Admin/DeveloperEarnings' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>
-                            View Developer Earnings
-                        </a>
-                    </p>";
-
-                await SendEmailAsync(adminEmail, subject, body, true);
-                _logger.LogInformation("Payout failure notification sent to {AdminEmail} for payout {PayoutId}", adminEmail, payoutId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending payout failure notification for {PayoutId}", payoutId);
-            }
-        }
-
-        public async Task SendPayoutSuccessNotificationAsync(string adminEmail, string payoutId, decimal amount)
-        {
-            try
-            {
-                var subject = "✅ Kokomija - Automatic Payout Successful";
-                var body = $@"
-                    <div style='background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin-bottom: 20px;'>
-                        <h3 style='color: #155724; margin: 0;'>Automatic Payout Successful</h3>
-                    </div>
-                    <p><strong>Payout ID:</strong> <code>{payoutId}</code></p>
-                    <p><strong>Amount:</strong> {amount:C2} PLN</p>
-                    <p><strong>Time:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p>
-                    <p>The automatic payout has been successfully processed via Stripe.</p>
-                    <p style='margin-top: 20px;'>
-                        <a href='{_configuration["AppSettings:BaseUrl"]}/Admin/DeveloperEarnings' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;'>
-                            View Developer Earnings
-                        </a>
-                    </p>";
-
-                await SendEmailAsync(adminEmail, subject, body, true);
-                _logger.LogInformation("Payout success notification sent to {AdminEmail} for payout {PayoutId}", adminEmail, payoutId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error sending payout success notification for {PayoutId}", payoutId);
-            }
-        }
+        // SendPasswordResetAsync, SendPayoutFailureNotificationAsync, and SendPayoutSuccessNotificationAsync  
+        // are now defined at the end of the file with template-based emails and dual SMTP provider support
 
         public async Task SendNewsletterConfirmationAsync(string email, string confirmationUrl)
         {
@@ -751,6 +703,239 @@ namespace Kokomija.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending newsletter welcome email to {Email}", email);
+            }
+        }
+
+        public async Task SendPasswordResetAsync(string email, string resetUrl)
+        {
+            await SendPasswordResetAsync(email, resetUrl, "en");
+        }
+
+        public async Task SendPasswordResetAsync(string email, string resetUrl, string languageCode)
+        {
+            try
+            {
+                var lang = languageCode.ToLower().Contains("pl") ? "PL" : "EN";
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                
+                var template = await LoadEmailTemplate($"PasswordReset_{lang}");
+                
+                var subject = lang == "PL" 
+                    ? "🔐 Resetowanie hasła - Kokomija"
+                    : "🔐 Password Reset - Kokomija";
+
+                var emailBody = template
+                    .Replace("{{RESET_URL}}", resetUrl)
+                    .Replace("{{WEBSITE_URL}}", baseUrl)
+                    .Replace("{{PRIVACY_URL}}", $"{baseUrl}/Privacy")
+                    .Replace("{{LOGO_URL}}", $"{baseUrl}/img/logo_black.png")
+                    .Replace("{{YEAR}}", DateTime.Now.Year.ToString());
+
+                await SendEmailAsync(email, subject, emailBody, SmtpProviderType.Customer, isHtml: true);
+                _logger.LogInformation("Password reset email ({Lang}) sent to {Email}", lang, email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending password reset email to {Email}", email);
+                throw;
+            }
+        }
+
+        public async Task SendEmailVerificationAsync(string email, string verificationUrl, string languageCode)
+        {
+            try
+            {
+                var lang = languageCode.ToLower().Contains("pl") ? "PL" : "EN";
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                
+                var template = await LoadEmailTemplate($"EmailVerification_{lang}");
+                
+                var subject = lang == "PL" 
+                    ? "✉️ Potwierdź swój adres email - Kokomija"
+                    : "✉️ Verify Your Email - Kokomija";
+
+                var emailBody = template
+                    .Replace("{{VERIFICATION_URL}}", verificationUrl)
+                    .Replace("{{WEBSITE_URL}}", baseUrl)
+                    .Replace("{{PRIVACY_URL}}", $"{baseUrl}/Privacy")
+                    .Replace("{{LOGO_URL}}", $"{baseUrl}/img/logo_black.png")
+                    .Replace("{{YEAR}}", DateTime.Now.Year.ToString());
+
+                await SendEmailAsync(email, subject, emailBody, SmtpProviderType.Customer, isHtml: true);
+                _logger.LogInformation("Email verification ({Lang}) sent to {Email}", lang, email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending email verification to {Email}", email);
+                throw;
+            }
+        }
+
+        public async Task SendDeveloperEarningsSummaryAsync(string period, decimal amount)
+        {
+            try
+            {
+                var developerEmail = _configuration["Email:DeveloperSmtp:FromEmail"] ?? "notrespond@kokomija.com";
+                var subject = $"💰 Developer Earnings Summary - {period}";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <h2 style='color: #10b981;'>💰 Earnings Summary</h2>
+                        <p><strong>Period:</strong> {period}</p>
+                        <p><strong>Total Earnings:</strong> {amount:N2} PLN</p>
+                        <hr style='border: 1px solid #e2e8f0;'>
+                        <p style='color: #64748b; font-size: 12px;'>This is an automated message from Kokomija system.</p>
+                    </div>";
+
+                await SendEmailAsync(developerEmail, subject, body, SmtpProviderType.Developer, isHtml: true);
+                _logger.LogInformation("Developer earnings summary sent for period {Period}", period);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending developer earnings summary");
+            }
+        }
+
+        public async Task SendCommissionChangeAlertAsync(decimal oldRate, decimal newRate)
+        {
+            try
+            {
+                var developerEmail = _configuration["Email:DeveloperSmtp:FromEmail"] ?? "notrespond@kokomija.com";
+                var subject = "⚠️ Commission Rate Changed - Kokomija";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <h2 style='color: #f59e0b;'>⚠️ Commission Rate Alert</h2>
+                        <p>The commission rate has been changed:</p>
+                        <p><strong>Previous Rate:</strong> {oldRate:P2}</p>
+                        <p><strong>New Rate:</strong> {newRate:P2}</p>
+                        <hr style='border: 1px solid #e2e8f0;'>
+                        <p style='color: #64748b; font-size: 12px;'>Changed at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    </div>";
+
+                await SendEmailAsync(developerEmail, subject, body, SmtpProviderType.Developer, isHtml: true);
+                _logger.LogInformation("Commission change alert sent: {OldRate} -> {NewRate}", oldRate, newRate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending commission change alert");
+            }
+        }
+
+        public async Task SendDeveloperAlertAsync(string subject, string message)
+        {
+            try
+            {
+                var developerEmail = _configuration["Email:DeveloperSmtp:FromEmail"] ?? "notrespond@kokomija.com";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <h2 style='color: #ef4444;'>🚨 Kokomija Alert</h2>
+                        <div style='background-color: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;'>
+                            {message}
+                        </div>
+                        <hr style='border: 1px solid #e2e8f0;'>
+                        <p style='color: #64748b; font-size: 12px;'>Alert generated at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    </div>";
+
+                await SendEmailAsync(developerEmail, subject, body, SmtpProviderType.Developer, isHtml: true);
+                _logger.LogInformation("Developer alert sent: {Subject}", subject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending developer alert: {Subject}", subject);
+            }
+        }
+
+        public async Task SendPayoutFailureNotificationAsync(string adminEmail, string payoutId, string errorMessage)
+        {
+            try
+            {
+                var subject = $"❌ Payout Failed - {payoutId}";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <h2 style='color: #ef4444;'>❌ Payout Failed</h2>
+                        <p><strong>Payout ID:</strong> {payoutId}</p>
+                        <p><strong>Error:</strong> {errorMessage}</p>
+                        <hr style='border: 1px solid #e2e8f0;'>
+                        <p style='color: #64748b; font-size: 12px;'>Failure time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    </div>";
+
+                await SendEmailAsync(adminEmail, subject, body, SmtpProviderType.Developer, isHtml: true);
+                _logger.LogInformation("Payout failure notification sent for {PayoutId}", payoutId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending payout failure notification for {PayoutId}", payoutId);
+            }
+        }
+
+        public async Task SendPayoutSuccessNotificationAsync(string adminEmail, string payoutId, decimal amount)
+        {
+            try
+            {
+                var subject = $"✅ Payout Successful - {payoutId}";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <h2 style='color: #10b981;'>✅ Payout Successful</h2>
+                        <p><strong>Payout ID:</strong> {payoutId}</p>
+                        <p><strong>Amount:</strong> {amount:N2} PLN</p>
+                        <hr style='border: 1px solid #e2e8f0;'>
+                        <p style='color: #64748b; font-size: 12px;'>Processed at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+                    </div>";
+
+                await SendEmailAsync(adminEmail, subject, body, SmtpProviderType.Developer, isHtml: true);
+                _logger.LogInformation("Payout success notification sent for {PayoutId}", payoutId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending payout success notification for {PayoutId}", payoutId);
+            }
+        }
+
+        public async Task SendHealthCheckEmailAsync()
+        {
+            try
+            {
+                var developerEmail = _configuration["Email:HealthCheck:RecipientEmail"] ?? "notrespond@kokomija.com";
+                var subject = "✅ Kokomija Email System Health Check";
+                var body = $@"
+                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                        <div style='background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;'>
+                            <h1 style='color: white; margin: 0;'>✅ System Health Check</h1>
+                        </div>
+                        <div style='padding: 30px; background-color: #f8fafc;'>
+                            <h2 style='color: #1e293b;'>Email System Status: Operational</h2>
+                            <table style='width: 100%; border-collapse: collapse;'>
+                                <tr>
+                                    <td style='padding: 10px; border-bottom: 1px solid #e2e8f0;'><strong>Check Time:</strong></td>
+                                    <td style='padding: 10px; border-bottom: 1px solid #e2e8f0;'>{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</td>
+                                </tr>
+                                <tr>
+                                    <td style='padding: 10px; border-bottom: 1px solid #e2e8f0;'><strong>Customer SMTP:</strong></td>
+                                    <td style='padding: 10px; border-bottom: 1px solid #e2e8f0;'>✅ Connected</td>
+                                </tr>
+                                <tr>
+                                    <td style='padding: 10px; border-bottom: 1px solid #e2e8f0;'><strong>Developer SMTP:</strong></td>
+                                    <td style='padding: 10px; border-bottom: 1px solid #e2e8f0;'>✅ Connected</td>
+                                </tr>
+                                <tr>
+                                    <td style='padding: 10px;'><strong>Next Check:</strong></td>
+                                    <td style='padding: 10px;'>In 30 days</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style='padding: 20px; text-align: center; background-color: #e2e8f0; border-radius: 0 0 8px 8px;'>
+                            <p style='margin: 0; color: #64748b; font-size: 12px;'>
+                                This is an automated health check from the Kokomija email system.
+                            </p>
+                        </div>
+                    </div>";
+
+                await SendEmailAsync(developerEmail, subject, body, SmtpProviderType.Developer, isHtml: true);
+                _logger.LogInformation("Health check email sent successfully at {Time}", DateTime.UtcNow);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending health check email");
+                throw;
             }
         }
 

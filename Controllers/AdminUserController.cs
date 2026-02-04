@@ -226,6 +226,13 @@ public class AdminUserController : Controller
         // Get user roles
         var userRoles = await _userManager.GetRolesAsync(user);
         var allRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
+        
+        // Filter available roles - non-Root users cannot see or assign Root role
+        var availableRoles = allRoles.Where(r => !userRoles.Contains(r));
+        if (!isCurrentUserRoot)
+        {
+            availableRoles = availableRoles.Where(r => r != "Root");
+        }
 
         var viewModel = new UserEditDto
         {
@@ -256,7 +263,7 @@ public class AdminUserController : Controller
                 CreatedAt = businessProfile.CreatedAt
             } : null,
             AssignedRoles = userRoles.ToList(),
-            AvailableRoles = allRoles.Where(r => !userRoles.Contains(r)).ToList(),
+            AvailableRoles = availableRoles.ToList(),
             Reviews = reviews.Select(r => new UserReviewDto
             {
                 Id = r.Id,

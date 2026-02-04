@@ -8,6 +8,7 @@ namespace Kokomija.Data.Abstract
         Task<T?> GetByIdAsync(int id, params Expression<Func<T, object>>[] includes);
         Task<IEnumerable<T>> GetAllAsync();
         Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes);
+        Task<IEnumerable<T>> GetAllAsync(params string[] includes);
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes);
         Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);

@@ -6,6 +6,8 @@ using Kokomija.Models;
 using Kokomija.Models.ViewModels;
 using Kokomija.Data.Abstract;
 using Kokomija.Services;
+using Microsoft.AspNetCore.Identity;
+using Kokomija.Entity;
 
 namespace Kokomija.Controllers;
 
@@ -14,15 +16,21 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILocalizationService _localizationService;
+    private readonly IStripeService _stripeService;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public HomeController(
         ILogger<HomeController> logger, 
         IUnitOfWork unitOfWork,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IStripeService stripeService,
+        UserManager<ApplicationUser> userManager)
     {
         _logger = logger;
         _unitOfWork = unitOfWork;
         _localizationService = localizationService;
+        _stripeService = stripeService;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index(string? culture = null)
@@ -61,8 +69,8 @@ public class HomeController : Controller
 
         // Get featured categories with subcategories and translations
         var allCategories = await _unitOfWork.Categories.GetAllAsync(
-            c => c.SubCategories,
-            c => c.Translations
+            "SubCategories",
+            "Translations"
         );
         
         // Filter and map categories with translated names
@@ -72,9 +80,10 @@ public class HomeController : Controller
             .OrderBy(c => c.DisplayOrder)
             .ToList();
         
-        // Apply translations to categories (in-memory)
+        // Apply translations to categories and subcategories (in-memory)
         foreach (var category in categories)
         {
+            // Apply translation to main category
             var translation = category.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
                            ?? category.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
             
@@ -83,15 +92,31 @@ public class HomeController : Controller
                 category.Name = translation.Name ?? category.Name;
                 category.Description = translation.Description ?? category.Description;
             }
+
+            // Apply translations to subcategories
+            if (category.SubCategories != null)
+            {
+                foreach (var subcategory in category.SubCategories)
+                {
+                    var subTranslation = subcategory.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
+                                      ?? subcategory.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+                    
+                    if (subTranslation != null)
+                    {
+                        subcategory.Name = subTranslation.Name ?? subcategory.Name;
+                        subcategory.Description = subTranslation.Description ?? subcategory.Description;
+                    }
+                }
+            }
         }
         
         model.FeaturedCategories = categories;
 
         // Get featured products (newest, active only)
         var allProducts = await _unitOfWork.Products.GetAllAsync(
-            p => p.Images,
-            p => p.Variants,
-            p => p.Translations
+            "Images",
+            "Variants",
+            "Translations"
         );
         
         var featuredProducts = allProducts
@@ -135,14 +160,57 @@ public class HomeController : Controller
             BackgroundColor = "#2C5F7E"
         };
 
-        // Get active coupons
-        var allCoupons = await _unitOfWork.Coupons.GetAllAsync();
+        // Get active coupons with usage history
+        var allCoupons = await _unitOfWork.Coupons.GetAllAsync(
+            "CouponUsages"
+        );
         var now = DateTime.UtcNow;
-        model.ActiveCoupons = allCoupons
+        var userId = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        var baseCoupons = allCoupons
             .Where(c => c.IsActive && 
-                       c.ValidFrom <= now && 
+                       (!c.ValidFrom.HasValue || c.ValidFrom.Value <= now) && 
                        c.ValidUntil.HasValue &&
-                       c.ValidUntil.Value >= now)
+                       c.ValidUntil.Value >= now &&
+                       (!c.UsageLimit.HasValue || c.UsageCount < c.UsageLimit.Value) &&
+                       (c.UserId == null || c.UserId == userId)) // Only user-specific coupons or general coupons
+            .ToList();
+
+        // If user is logged in, exclude coupons they've already used (check both local DB and Stripe)
+        if (!string.IsNullOrEmpty(userId))
+        {
+            // Get the user to check their Stripe customer ID
+            var user = await _userManager.FindByIdAsync(userId);
+            var stripeUsedPromotionCodes = new List<string>();
+            
+            // If user has a Stripe customer ID, get their used promotion codes from Stripe
+            if (user != null && !string.IsNullOrEmpty(user.StripeCustomerId))
+            {
+                try
+                {
+                    stripeUsedPromotionCodes = await _stripeService.GetCustomerUsedPromotionCodesAsync(user.StripeCustomerId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get Stripe used promotion codes for user {UserId}", userId);
+                }
+            }
+            
+            // Exclude coupons that were used either in local DB or in Stripe
+            baseCoupons = baseCoupons
+                .Where(c => !c.CouponUsages.Any(cu => cu.UserId == userId) && 
+                           (string.IsNullOrEmpty(c.StripePromotionCodeId) || !stripeUsedPromotionCodes.Contains(c.StripePromotionCodeId)))
+                .ToList();
+        }
+        else
+        {
+            // If not logged in, show only new user coupons
+            baseCoupons = baseCoupons
+                .Where(c => c.CouponType == "new_user")
+                .ToList();
+        }
+
+        model.ActiveCoupons = baseCoupons
             .Select(c => new CouponBannerViewModel
             {
                 Id = c.Id,
@@ -198,7 +266,8 @@ public class HomeController : Controller
                 CanonicalUrl = $"{Request.Scheme}://{Request.Host}/{currentCulture}/{routePath}"
             };
             return View(model);
-        }    public IActionResult FAQ()
+        }    
+        public IActionResult FAQ()
     {
         var model = new FAQViewModel
         {

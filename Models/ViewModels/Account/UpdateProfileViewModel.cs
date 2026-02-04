@@ -13,10 +13,9 @@ namespace Kokomija.Models.ViewModels.Account
         [StringLength(100, ErrorMessage = "Last name cannot exceed 100 characters")]
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = string.Empty;
-
-        [Phone(ErrorMessage = "Invalid phone number")]
-        [Display(Name = "Phone Number")]
-        public string? PhoneNumber { get; set; }
+        
+        [Display(Name = "Birthday")]
+        public DateTime? Birthday { get; set; }
         
         // Default Shipping Address
         [StringLength(255, ErrorMessage = "Address cannot exceed 255 characters")]

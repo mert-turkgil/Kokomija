@@ -127,14 +127,18 @@
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
-                        <!-- Phone Number (Optional) -->
+                        <!-- Date of Birth -->
                         <div class="form-group mb-3">
-                            <label asp-for="PhoneNumber" class="form-label">
-                                <i class="bi bi-telephone me-2"></i>@L["Auth_PhoneOptional"]
+                            <label asp-for="DateOfBirth" class="form-label">
+                                <i class="bi bi-calendar-heart me-2"></i>@L["Auth_DateOfBirthOptional"]
                             </label>
-                            <input asp-for="PhoneNumber" class="form-control form-control-lg" 
-                                   placeholder="@L["Auth_PhonePlaceholder"]" autocomplete="tel" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            <input asp-for="DateOfBirth" type="date" class="form-control form-control-lg" 
+                                   max="@DateTime.Now.AddYears(-13).ToString("yyyy-MM-dd")" 
+                                   autocomplete="bday" />
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle me-1"></i>@L["Auth_DateOfBirthHint"]
+                            </small>
+                            <span asp-validation-for="DateOfBirth" class="text-danger d-block"></span>
                         </div>
 
                         <!-- Password -->

@@ -302,6 +302,14 @@ builder.Services.AddHostedService<Kokomija.BackgroundServices.TempFileCleanupWor
 builder.Services.AddHostedService<Kokomija.BackgroundServices.EarningsReportWorker>();
 builder.Services.AddHostedService<Kokomija.BackgroundServices.AutomaticPayoutWorker>();
 
+// Email Template and Protection Services
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+builder.Services.AddScoped<ISmtpProtectionService, SmtpProtectionService>();
+
+// Email Health Check and SMTP Protection Background Workers
+builder.Services.AddHostedService<Kokomija.BackgroundServices.EmailHealthCheckWorker>();
+builder.Services.AddHostedService<SmtpProtectionWorker>();
+
 // Register Cloudflare Turnstile Service
 builder.Services.AddHttpClient(); // Required for TurnstileService
 builder.Services.AddScoped<ITurnstileService, TurnstileService>();

@@ -49,6 +49,8 @@ namespace Kokomija.Data.Concrete
                 .Include(c => c.Translations)
                 .Include(c => c.SubCategories.Where(sc => sc.IsActive))
                     .ThenInclude(sc => sc.Translations)
+                .Include(c => c.ParentCategory!)
+                    .ThenInclude(pc => pc.Translations)
                 .Include(c => c.Products.Where(p => p.IsActive))
                 .FirstOrDefaultAsync(c => c.Slug == slug && c.IsActive);
         }

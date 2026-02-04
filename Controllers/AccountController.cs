@@ -17,6 +17,7 @@ namespace Kokomija.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IStripeCustomerService _stripeCustomerService;
+        private readonly IStripeService _stripeService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AccountController> _logger;
         private readonly IReturnRequestService _returnRequestService;
@@ -30,6 +31,7 @@ namespace Kokomija.Controllers
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IStripeCustomerService stripeCustomerService,
+            IStripeService stripeService,
             IUnitOfWork unitOfWork,
             ILogger<AccountController> logger,
             IReturnRequestService returnRequestService,
@@ -42,6 +44,7 @@ namespace Kokomija.Controllers
             _userManager = userManager;
             _signInManager = signInManager;
             _stripeCustomerService = stripeCustomerService;
+            _stripeService = stripeService;
             _unitOfWork = unitOfWork;
             _logger = logger;
             _returnRequestService = returnRequestService;
@@ -292,7 +295,7 @@ namespace Kokomija.Controllers
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                PhoneNumber = model.PhoneNumber,
+                Birthday = model.DateOfBirth,
                 EmailConfirmed = false, // Will be confirmed via email
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -347,10 +350,10 @@ namespace Kokomija.Controllers
                             await _unitOfWork.Repository<Kokomija.Entity.NewsletterSubscription>().AddAsync(subscription);
                             await _unitOfWork.SaveChangesAsync();
                             
-                            // Send confirmation email
-                            var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
-                            var confirmationUrl = $"{baseUrl}/Newsletter/Confirm?token={confirmationToken}&email={Uri.EscapeDataString(model.Email)}";
-                            await _emailService.SendNewsletterConfirmationAsync(model.Email, confirmationUrl);
+                            // Send newsletter confirmation email
+                            var baseUrlNews = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                            var newsConfirmationUrl = $"{baseUrlNews}/Newsletter/Confirm?token={confirmationToken}&email={Uri.EscapeDataString(model.Email)}";
+                            await _emailService.SendNewsletterConfirmationAsync(model.Email, newsConfirmationUrl);
                             
                             _logger.LogInformation("Newsletter subscription created for user {Email}, confirmation email sent", model.Email);
                         }
@@ -362,9 +365,9 @@ namespace Kokomija.Controllers
                             existingSubscription.UserId = user.Id;
                             await _unitOfWork.SaveChangesAsync();
                             
-                            var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
-                            var confirmationUrl = $"{baseUrl}/Newsletter/Confirm?token={existingSubscription.ConfirmationToken}&email={Uri.EscapeDataString(model.Email)}";
-                            await _emailService.SendNewsletterConfirmationAsync(model.Email, confirmationUrl);
+                            var baseUrlNews = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                            var newsConfirmationUrl = $"{baseUrlNews}/Newsletter/Confirm?token={existingSubscription.ConfirmationToken}&email={Uri.EscapeDataString(model.Email)}";
+                            await _emailService.SendNewsletterConfirmationAsync(model.Email, newsConfirmationUrl);
                         }
                     }
                     catch (Exception ex)
@@ -374,23 +377,31 @@ namespace Kokomija.Controllers
                     }
                 }
 
-                // Auto sign-in after registration
-                await _signInManager.SignInAsync(user, isPersistent: false);
+                // Generate email confirmation token and send verification email
+                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
+                var verificationUrl = Url.Action("ConfirmEmail", "Account", 
+                    new { userId = user.Id, code = emailConfirmationToken }, Request.Scheme);
+                
+                // Detect user's language preference
+                var culture = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName;
+                
+                if (!string.IsNullOrEmpty(verificationUrl))
+                {
+                    await _emailService.SendEmailVerificationAsync(model.Email, verificationUrl, culture);
+                    _logger.LogInformation("Email verification sent to {Email}", model.Email);
+                }
 
-                TempData["SuccessMessage"] = "Account created successfully! Welcome to Kokomija.";
+                // Do NOT auto sign-in - user must confirm email first
+                TempData["SuccessMessage"] = _localizationService["Register_ConfirmEmailSent"];
                 
                 if (model.SubscribeToNewsletter)
                 {
-                    TempData["SuccessMessage"] += " Please check your email to confirm your newsletter subscription.";
+                    TempData["InfoMessage"] = _localizationService["Register_NewsletterConfirmationSent"];
                 }
 
-                // Redirect to return URL or home
-                if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-                {
-                    return Redirect(model.ReturnUrl);
-                }
-
-                return RedirectToAction("Index", "Home");
+                // Redirect to registration confirmation page
+                return RedirectToAction("RegisterConfirmation", new { email = model.Email });
             }
 
             // If we got here, something went wrong
@@ -400,6 +411,85 @@ namespace Kokomija.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult RegisterConfirmation(string? email = null)
+        {
+            ViewData["Email"] = email;
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.LogWarning("Email confirmation failed: user {UserId} not found", userId);
+                return NotFound($"Unable to load user with ID '{userId}'.");
+            }
+
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("Email confirmed for user {Email}", user.Email);
+                TempData["SuccessMessage"] = _localizationService["ConfirmEmail_Success"];
+                
+                // Sign in the user after email confirmation
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                
+                return RedirectToAction("Index", "Home");
+            }
+
+            _logger.LogWarning("Email confirmation failed for user {Email}", user.Email);
+            TempData["ErrorMessage"] = _localizationService["ConfirmEmail_Failed"];
+            return View("ConfirmEmailError");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ResendEmailConfirmation(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                TempData["ErrorMessage"] = "Email is required.";
+                return RedirectToAction("Login");
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                TempData["SuccessMessage"] = _localizationService["ResendConfirmation_Sent"];
+                return RedirectToAction("RegisterConfirmation", new { email });
+            }
+
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                TempData["InfoMessage"] = _localizationService["ResendConfirmation_AlreadyConfirmed"];
+                return RedirectToAction("Login");
+            }
+
+            // Generate new confirmation token and send email
+            var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var verificationUrl = Url.Action("ConfirmEmail", "Account", 
+                new { userId = user.Id, code = emailConfirmationToken }, Request.Scheme);
+            
+            var culture = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName;
+            
+            if (!string.IsNullOrEmpty(verificationUrl))
+            {
+                await _emailService.SendEmailVerificationAsync(email, verificationUrl, culture);
+                _logger.LogInformation("Email verification resent to {Email}", email);
+            }
+
+            TempData["SuccessMessage"] = _localizationService["ResendConfirmation_Sent"];
+            return RedirectToAction("RegisterConfirmation", new { email });
         }
 
         #endregion
@@ -639,6 +729,107 @@ namespace Kokomija.Controllers
                     (rr.Status == Entity.ReturnRequestStatus.Pending || 
                      rr.Status == Entity.ReturnRequestStatus.UnderReview));
 
+            // Get external logins for the user
+            var userLogins = await _userManager.GetLoginsAsync(user);
+            var externalLogins = userLogins.Select(l => new Models.ViewModels.Account.ExternalLoginViewModel
+            {
+                LoginProvider = l.LoginProvider,
+                ProviderDisplayName = l.ProviderDisplayName ?? l.LoginProvider,
+                ProviderKey = l.ProviderKey
+            }).ToList();
+            
+            // Get available authentication schemes (providers)
+            var schemes = await _signInManager.GetExternalAuthenticationSchemesAsync();
+            var currentProviders = userLogins.Select(l => l.LoginProvider).ToList();
+            var availableProviders = schemes
+                .Where(s => !currentProviders.Contains(s.Name))
+                .Select(s => s.DisplayName ?? s.Name)
+                .ToList();
+            
+            // Check if user has a password set
+            var hasPassword = await _userManager.HasPasswordAsync(user);
+
+            // Load coupons - check both local DB and Stripe for used coupons
+            var now = DateTime.UtcNow;
+            var allCoupons = await _unitOfWork.Coupons.GetAllAsync("CouponUsages");
+            
+            // Get used promotion codes from Stripe
+            var stripeUsedPromotionCodes = new List<string>();
+            if (!string.IsNullOrEmpty(user.StripeCustomerId))
+            {
+                try
+                {
+                    stripeUsedPromotionCodes = await _stripeService.GetCustomerUsedPromotionCodesAsync(user.StripeCustomerId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get Stripe used promotion codes for user {UserId}", user.Id);
+                }
+            }
+            
+            // Get locally tracked coupon usages
+            var localUsedCouponIds = allCoupons
+                .SelectMany(c => c.CouponUsages)
+                .Where(cu => cu.UserId == user.Id)
+                .Select(cu => cu.CouponId)
+                .ToList();
+            
+            // Available coupons: active, valid dates, not used locally AND not used in Stripe
+            var availableCoupons = allCoupons
+                .Where(c => c.IsActive && 
+                           (!c.ValidFrom.HasValue || c.ValidFrom.Value <= now) &&
+                           (!c.ValidUntil.HasValue || c.ValidUntil.Value >= now) &&
+                           (!c.UsageLimit.HasValue || c.UsageCount < c.UsageLimit.Value) &&
+                           (c.UserId == null || c.UserId == user.Id) &&
+                           !localUsedCouponIds.Contains(c.Id) &&
+                           (string.IsNullOrEmpty(c.StripePromotionCodeId) || !stripeUsedPromotionCodes.Contains(c.StripePromotionCodeId)))
+                .Select(c => new AccountCouponViewModel
+                {
+                    Id = c.Id,
+                    Code = c.Code,
+                    Description = c.Description ?? string.Empty,
+                    DiscountType = c.DiscountType,
+                    DiscountValue = c.DiscountValue,
+                    MinimumOrderAmount = c.MinimumOrderAmount,
+                    ValidUntil = c.ValidUntil,
+                    IsNew = c.CreatedAt >= DateTime.UtcNow.AddDays(-7)
+                })
+                .ToList();
+            
+            // Used coupons: from local database (CouponUsages)
+            var usedCouponsFromDb = allCoupons
+                .SelectMany(c => c.CouponUsages.Where(cu => cu.UserId == user.Id).Select(cu => new { Coupon = c, Usage = cu }))
+                .Select(x => new UsedCouponViewModel
+                {
+                    Id = x.Coupon.Id,
+                    Code = x.Coupon.Code,
+                    Description = x.Coupon.Description ?? string.Empty,
+                    DiscountAmount = x.Usage.DiscountAmount,
+                    UsedAt = x.Usage.UsedAt,
+                    OrderId = x.Usage.OrderId,
+                    OrderNumber = x.Usage.Order?.OrderNumber ?? $"#{x.Usage.OrderId}"
+                })
+                .ToList();
+            
+            // Also include coupons used in Stripe but not in local DB (for cases where DB was rebuilt)
+            var stripOnlyUsedCoupons = allCoupons
+                .Where(c => !string.IsNullOrEmpty(c.StripePromotionCodeId) && 
+                           stripeUsedPromotionCodes.Contains(c.StripePromotionCodeId) &&
+                           !localUsedCouponIds.Contains(c.Id))
+                .Select(c => new UsedCouponViewModel
+                {
+                    Id = c.Id,
+                    Code = c.Code,
+                    Description = c.Description ?? string.Empty,
+                    DiscountAmount = c.DiscountType == "percentage" ? 0 : c.DiscountValue, // We don't know exact amount
+                    UsedAt = DateTime.UtcNow, // We don't know exact date from Stripe in this call
+                    OrderId = 0,
+                    OrderNumber = "(Used via Stripe)"
+                })
+                .ToList();
+            
+            var allUsedCoupons = usedCouponsFromDb.Concat(stripOnlyUsedCoupons).ToList();
+
             var viewModel = new Models.ViewModels.Account.AccountIndexViewModel
             {
                 UserId = user.Id,
@@ -646,6 +837,7 @@ namespace Kokomija.Controllers
                 FirstName = user.FirstName ?? string.Empty,
                 LastName = user.LastName ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
+                Birthday = user.Birthday,
                 StripeCustomerId = user.StripeCustomerId,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
@@ -664,7 +856,12 @@ namespace Kokomija.Controllers
                 CartItemsCount = cartItemsCount,
                 PendingReturnRequests = pendingReturnRequests,
                 VIPStatus = vipStatus,
-                BusinessProfile = businessProfileViewModel
+                BusinessProfile = businessProfileViewModel,
+                ExternalLogins = externalLogins,
+                AvailableProviders = availableProviders,
+                HasPassword = hasPassword,
+                AvailableCoupons = availableCoupons,
+                UsedCoupons = allUsedCoupons
             };
 
             return View(viewModel);
@@ -871,7 +1068,7 @@ namespace Kokomija.Controllers
 
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
-            user.PhoneNumber = model.PhoneNumber;
+            user.Birthday = model.Birthday;
             user.DefaultAddress = model.DefaultAddress;
             user.DefaultCity = model.DefaultCity;
             user.DefaultPostalCode = model.DefaultPostalCode;
@@ -1803,6 +2000,98 @@ namespace Kokomija.Controllers
             }
             
             return LocalRedirect(returnUrl);
+        }
+
+        #endregion
+
+        #region Link/Unlink External Logins
+
+        /// <summary>
+        /// Link a new external login provider to the current user's account
+        /// </summary>
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public IActionResult LinkLogin(string provider)
+        {
+            // Request a redirect to the external login provider to link a login for the current user
+            var redirectUrl = Url.Action(nameof(LinkLoginCallback), "Account");
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl, _userManager.GetUserId(User));
+            return new ChallengeResult(provider, properties);
+        }
+
+        /// <summary>
+        /// Callback after linking external login
+        /// </summary>
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> LinkLoginCallback()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound($"Unable to load user.");
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync(user.Id);
+            if (info == null)
+            {
+                TempData["ErrorMessage"] = "Error loading external login information.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _userManager.AddLoginAsync(user, info);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = $"Failed to link {info.ProviderDisplayName}. It may already be linked to another account.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
+            TempData["SuccessMessage"] = $"Successfully linked {info.ProviderDisplayName} to your account!";
+            _logger.LogInformation("User {UserId} linked {Provider} login.", user.Id, info.LoginProvider);
+            
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Unlink an external login provider from the current user's account
+        /// </summary>
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnlinkLogin(string loginProvider, string providerKey)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound($"Unable to load user.");
+            }
+
+            // Check if user has a password or another login method
+            var hasPassword = await _userManager.HasPasswordAsync(user);
+            var logins = await _userManager.GetLoginsAsync(user);
+            
+            if (!hasPassword && logins.Count <= 1)
+            {
+                TempData["ErrorMessage"] = "You cannot remove your only login method. Please set a password first or link another account.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _userManager.RemoveLoginAsync(user, loginProvider, providerKey);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = $"Failed to unlink {loginProvider}.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["SuccessMessage"] = $"Successfully unlinked {loginProvider} from your account.";
+            _logger.LogInformation("User {UserId} unlinked {Provider} login.", user.Id, loginProvider);
+            
+            return RedirectToAction(nameof(Index));
         }
 
         #endregion

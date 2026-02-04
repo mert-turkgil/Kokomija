@@ -24,6 +24,8 @@ namespace Kokomija.Services
         Task<PromotionCode?> GetStripePromotionCodeAsync(string promotionCodeId);
         Task<(int TimesRedeemed, bool Valid, long? RedeemBy)?> GetStripeCouponInfoAsync(string couponId);
         Task<(int TimesRedeemed, bool IsActive)?> SyncCouponUsageFromStripeAsync(Entity.Coupon coupon);
+        Task<bool> HasCustomerUsedPromotionCodeAsync(string stripeCustomerId, string promotionCodeId);
+        Task<List<string>> GetCustomerUsedPromotionCodesAsync(string stripeCustomerId);
         Task<IEnumerable<Stripe.Coupon>> ListAllStripeCouponsAsync(int limit = 100);
         Task<IEnumerable<PromotionCode>> ListAllStripePromotionCodesAsync(int limit = 100);
         Task<Stripe.Checkout.Session> CreateCheckoutSessionAsync(List<Stripe.Checkout.SessionLineItemOptions> lineItems, string successUrl, string cancelUrl, string? customerId = null, Dictionary<string, string>? metadata = null);
@@ -637,6 +639,97 @@ namespace Kokomija.Services
             {
                 _logger.LogWarning(ex, "Failed to sync coupon {Code} usage from Stripe", coupon.Code);
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Check if a customer has used a specific promotion code in Stripe
+        /// </summary>
+        public async Task<bool> HasCustomerUsedPromotionCodeAsync(string stripeCustomerId, string promotionCodeId)
+        {
+            if (string.IsNullOrEmpty(stripeCustomerId) || string.IsNullOrEmpty(promotionCodeId))
+                return false;
+
+            try
+            {
+                // Get customer's checkout sessions that were completed
+                var sessionService = new Stripe.Checkout.SessionService();
+                var sessions = await sessionService.ListAsync(new Stripe.Checkout.SessionListOptions
+                {
+                    Customer = stripeCustomerId,
+                    Limit = 100,
+                    Expand = new List<string> { "data.total_details.breakdown" }
+                });
+
+                // Check if any session used this promotion code
+                foreach (var session in sessions.Data)
+                {
+                    if (session.Status == "complete" && session.TotalDetails?.Breakdown?.Discounts != null)
+                    {
+                        foreach (var discount in session.TotalDetails.Breakdown.Discounts)
+                        {
+                            // PromotionCode is an object, compare by Id
+                            var promoCodeId = discount.Discount?.PromotionCode?.Id ?? discount.Discount?.PromotionCodeId;
+                            if (promoCodeId == promotionCodeId)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogWarning(ex, "Failed to check promotion code usage for customer {CustomerId}", stripeCustomerId);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get list of all promotion codes used by a customer from Stripe
+        /// </summary>
+        public async Task<List<string>> GetCustomerUsedPromotionCodesAsync(string stripeCustomerId)
+        {
+            var usedPromotionCodes = new List<string>();
+            
+            if (string.IsNullOrEmpty(stripeCustomerId))
+                return usedPromotionCodes;
+
+            try
+            {
+                // Get customer's completed checkout sessions
+                var sessionService = new Stripe.Checkout.SessionService();
+                var sessions = await sessionService.ListAsync(new Stripe.Checkout.SessionListOptions
+                {
+                    Customer = stripeCustomerId,
+                    Limit = 100,
+                    Expand = new List<string> { "data.total_details.breakdown" }
+                });
+
+                foreach (var session in sessions.Data)
+                {
+                    if (session.Status == "complete" && session.TotalDetails?.Breakdown?.Discounts != null)
+                    {
+                        foreach (var discount in session.TotalDetails.Breakdown.Discounts)
+                        {
+                            // PromotionCode is an object, get the Id
+                            var promoCodeId = discount.Discount?.PromotionCode?.Id ?? discount.Discount?.PromotionCodeId;
+                            if (!string.IsNullOrEmpty(promoCodeId))
+                            {
+                                usedPromotionCodes.Add(promoCodeId);
+                            }
+                        }
+                    }
+                }
+
+                return usedPromotionCodes.Distinct().ToList();
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogWarning(ex, "Failed to get used promotion codes for customer {CustomerId}", stripeCustomerId);
+                return usedPromotionCodes;
             }
         }
 

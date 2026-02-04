@@ -50,6 +50,18 @@ namespace Kokomija.Data.Concrete
             return await query.ToListAsync();
         }
 
+        public virtual async Task<IEnumerable<T>> GetAllAsync(params string[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            return await query.ToListAsync();
+        }
+
         public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {
             return await _dbSet.Where(predicate).ToListAsync();

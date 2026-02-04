@@ -79,11 +79,30 @@ namespace Kokomija.Controllers
                 var isBusinessMode = await IsBusinessModeActiveAsync();
                 ViewBag.IsBusinessMode = isBusinessMode;
 
-                // Get all active products with their primary images
-                var products = await _unitOfWork.Products.GetActiveProductsAsync();
+                // Get all active products with their details and translations
+                var products = await _unitOfWork.Products.GetAllAsync(
+                    "Images",
+                    "Variants",
+                    "Translations",
+                    "Category"
+                );
+                
+                // Load category translations separately
+                foreach (var product in products)
+                {
+                    if (product.Category != null)
+                    {
+                        product.Category = await _unitOfWork.Categories.GetByIdAsync(product.Category.Id);
+                    }
+                }
+                
+                // Filter active products only
+                var activeProducts = products
+                    .Where(p => p.IsActive)
+                    .ToList();
                 
                 // Filter products based on business mode
-                var filteredProducts = FilterProductsForBusinessMode(products, isBusinessMode);
+                var filteredProducts = FilterProductsForBusinessMode(activeProducts, isBusinessMode);
                 
                 return View(filteredProducts);
             }
@@ -330,7 +349,7 @@ namespace Kokomija.Controllers
         {
             try
             {
-                // Get category by slug with all products
+                // Get category by slug with all translations
                 var category = await _unitOfWork.Categories.GetCategoryBySlugAsync(slug);
 
                 if (category == null)
@@ -342,10 +361,29 @@ namespace Kokomija.Controllers
                 var isBusinessMode = await IsBusinessModeActiveAsync();
                 ViewBag.IsBusinessMode = isBusinessMode;
 
-                var products = await _unitOfWork.Products.GetProductsByCategoryAsync(category.Id);
+                // Get products in this category with translations
+                var products = await _unitOfWork.Products.GetAllAsync(
+                    "Translations",
+                    "Category",
+                    "Images",
+                    "Variants"
+                );
+                
+                // Load category translations separately
+                foreach (var product in products)
+                {
+                    if (product.Category != null)
+                    {
+                        product.Category = await _unitOfWork.Categories.GetByIdAsync(product.Category.Id);
+                    }
+                }
+
+                var categoryProducts = products
+                    .Where(p => p.CategoryId == category.Id && p.IsActive)
+                    .ToList();
                 
                 // Filter products based on business mode
-                var filteredProducts = FilterProductsForBusinessMode(products, isBusinessMode);
+                var filteredProducts = FilterProductsForBusinessMode(categoryProducts, isBusinessMode);
                 
                 ViewBag.Category = category;
                 return View("Index", filteredProducts);
@@ -371,7 +409,33 @@ namespace Kokomija.Controllers
                 var isBusinessMode = await IsBusinessModeActiveAsync();
                 ViewBag.IsBusinessMode = isBusinessMode;
 
-                var products = await _unitOfWork.Products.SearchProductsAsync(q);
+                // Get all products with translations for search
+                var allProducts = await _unitOfWork.Products.GetAllAsync(
+                    "Translations",
+                    "Category",
+                    "Images",
+                    "Variants"
+                );
+                
+                // Load category translations separately
+                foreach (var product in allProducts)
+                {
+                    if (product.Category != null)
+                    {
+                        product.Category = await _unitOfWork.Categories.GetByIdAsync(product.Category.Id);
+                    }
+                }
+
+                // Search in product names and translations
+                var searchQuery = q.ToLowerInvariant();
+                var products = allProducts
+                    .Where(p => p.IsActive && (
+                        p.Name.ToLowerInvariant().Contains(searchQuery) ||
+                        p.Description != null && p.Description.ToLowerInvariant().Contains(searchQuery) ||
+                        p.Translations.Any(t => t.Name.ToLowerInvariant().Contains(searchQuery) ||
+                                              (t.Description != null && t.Description.ToLowerInvariant().Contains(searchQuery)))
+                    ))
+                    .ToList();
                 
                 // Filter products based on business mode
                 var filteredProducts = FilterProductsForBusinessMode(products, isBusinessMode);
@@ -598,8 +662,11 @@ namespace Kokomija.Controllers
         {
             try
             {
+                var currentCulture = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+                var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "en" ? "en-US" : "en-US";
+                
                 #pragma warning disable CS8604 // ToListAsync never returns null
-                var categories = await _unitOfWork.Categories.GetAllAsync(c => c.ParentCategory!) ?? Enumerable.Empty<Kokomija.Entity.Category>();
+                var categories = await _unitOfWork.Categories.GetAllAsync("ParentCategory", "Translations") ?? Enumerable.Empty<Kokomija.Entity.Category>();
                 #pragma warning restore CS8604
                 
                 if (!categories.Any())
@@ -617,12 +684,12 @@ namespace Kokomija.Controllers
                     .Select(c => new
                     {
                         id = c.Id,
-                        name = !string.IsNullOrEmpty(c.NameKey) ? _localizationService[c.NameKey] : c.Name,
+                        name = GetCategoryNameFromTranslation(c, currentCultureCode),
                         slug = c.Slug,
                         parentId = c.ParentCategoryId,
-                        parentName = c.ParentCategory != null && !string.IsNullOrEmpty(c.ParentCategory.NameKey) 
-                            ? _localizationService[c.ParentCategory.NameKey] 
-                            : (c.ParentCategory?.Name ?? "Other"),
+                        parentName = c.ParentCategory != null 
+                            ? GetCategoryNameFromTranslation(c.ParentCategory, currentCultureCode)
+                            : "Other",
                         isParent = !c.ParentCategoryId.HasValue // Indicates if this is a top-level category
                     })
                     .ToList();
@@ -634,6 +701,17 @@ namespace Kokomija.Controllers
                 _logger.LogError(ex, "Error retrieving categories");
                 return BadRequest();
             }
+        }
+
+        // Helper method to get category name from database translations
+        private string GetCategoryNameFromTranslation(Kokomija.Entity.Category category, string currentCultureCode)
+        {
+            if (category == null) return "";
+            
+            var translation = category.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)
+                           ?? category.Translations?.FirstOrDefault(t => t.CultureCode == "pl-PL");
+            
+            return translation?.Name ?? category.Name;
         }
 
         // Helper method to load related products for a product

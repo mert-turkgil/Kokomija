@@ -31,9 +31,9 @@ namespace Kokomija.Models.ViewModels.Account
         [Compare("Password", ErrorMessage = "Passwords do not match")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Display(Name = "Phone Number (Optional)")]
-        [Phone(ErrorMessage = "Invalid phone number")]
-        public string? PhoneNumber { get; set; }
+        [DataType(DataType.Date)]
+        [Display(Name = "Date of Birth (Optional)")]
+        public DateTime? DateOfBirth { get; set; }
 
         [Display(Name = "I agree to the Terms & Conditions")]
         [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the terms and conditions")]

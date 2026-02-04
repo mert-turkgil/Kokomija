@@ -1,0 +1,70 @@
+@inject Kokomija.Services.ILocalizationService L
+
+@{
+    ViewData["Title"] = L["RegisterConfirmation_Title"];
+    var email = ViewData["Email"] as string;
+}
+
+<div class="auth-page">
+    <div class="container">
+        <div class="auth-card confirmation-card">
+            <div class="auth-header">
+                <div class="icon-wrapper success">
+                    <i class="bi bi-envelope-paper"></i>
+                </div>
+                <h2>@L["RegisterConfirmation_Header"]</h2>
+                <p class="subtitle">
+                    @L["RegisterConfirmation_Subtitle"]
+                </p>
+            </div>
+
+            <div class="confirmation-content">
+                <div class="alert alert-success">
+                    <i class="bi bi-envelope-check"></i>
+                    <p class="mb-0">
+                        @L["RegisterConfirmation_EmailSent"]
+                        @if (!string.IsNullOrEmpty(email))
+                        {
+                            <strong>@email</strong>
+                        }
+                    </p>
+                </div>
+
+                <div class="instructions">
+                    <h5>@L["RegisterConfirmation_NextSteps"]</h5>
+                    <ol>
+                        <li>@L["RegisterConfirmation_Step1"]</li>
+                        <li>@L["RegisterConfirmation_Step2"]</li>
+                        <li>@L["RegisterConfirmation_Step3"]</li>
+                    </ol>
+                </div>
+
+                <div class="help-section">
+                    <p class="text-muted">
+                        <i class="bi bi-clock"></i>
+                        @L["RegisterConfirmation_LinkExpiry"]
+                    </p>
+                </div>
+            </div>
+
+            <div class="auth-links">
+                <a asp-action="Login" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    @L["RegisterConfirmation_BackToLogin"]
+                </a>
+                @if (!string.IsNullOrEmpty(email))
+                {
+                    <a asp-action="ResendEmailConfirmation" asp-route-email="@email" class="link-primary">
+                        @L["RegisterConfirmation_ResendEmail"]
+                    </a>
+                }
+            </div>
+
+            <div class="auth-footer">
+                <p class="text-muted">
+                    @L["Common_NeedHelp"] <a href="@Url.Action("Index", "Contact")">@L["Common_ContactSupport"]</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
