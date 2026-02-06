@@ -156,6 +156,240 @@
             color: #ee5a24;
             font-weight: 700;
         }
+        
+        /* B2B Pricing Card */
+        .b2b-pricing-card {
+            border: 2px solid #0d6efd;
+            border-radius: 12px;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(13,110,253,0.05), rgba(13,110,253,0.02));
+        }
+        .b2b-card-header {
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            color: white;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .b2b-card-body {
+            padding: 12px 14px;
+            font-size: 0.85rem;
+        }
+        .b2b-min-qty-alert {
+            background: rgba(13,202,240,0.1);
+            border: 1px solid rgba(13,202,240,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #0dcaf0;
+        }
+        [data-bs-theme="dark"] .b2b-pricing-card {
+            background: linear-gradient(135deg, rgba(13,110,253,0.15), rgba(13,110,253,0.05));
+        }
+        [data-bs-theme="dark"] .b2b-min-qty-alert {
+            background: rgba(13,202,240,0.15);
+        }
+        .b2b-savings {
+            font-size: 0.85rem;
+        }
+
+        /* Wishlist Button Styles */
+        .btn-wishlist {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-wishlist i {
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-wishlist:hover,
+        .btn-wishlist.active {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: white;
+        }
+        
+        .btn-wishlist:hover i,
+        .btn-wishlist.active i,
+        .btn-wishlist i.fas.fa-heart {
+            color: #ef4444;
+        }
+        
+        .btn-wishlist:hover i.fas.fa-heart,
+        .btn-wishlist.active i {
+            color: white;
+        }
+        
+        /* Dark theme wishlist button */
+        [data-bs-theme="dark"] .btn-wishlist {
+            border-color: #475569;
+            color: #e2e8f0;
+        }
+        
+        [data-bs-theme="dark"] .btn-wishlist:hover,
+        [data-bs-theme="dark"] .btn-wishlist.active {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: white;
+        }
+        
+        [data-bs-theme="dark"] .btn-wishlist i.fas.fa-heart {
+            color: #ef4444;
+        }
+        
+        [data-bs-theme="dark"] .btn-wishlist:hover i,
+        [data-bs-theme="dark"] .btn-wishlist.active i {
+            color: white;
+        }
+        
+        /* Pack Switcher Enhanced Styles */
+        .pack-switcher {
+            margin: 1.5rem 0;
+        }
+        
+        .pack-options {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .pack-option {
+            position: relative;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--bs-border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--bs-body-color);
+            text-align: center;
+            min-width: 120px;
+            transition: all 0.3s ease;
+            background: var(--bs-body-bg);
+        }
+        
+        .pack-option:hover {
+            border-color: var(--bs-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .pack-option.active {
+            border-color: var(--bs-primary);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .pack-option.best-value {
+            border-color: #22c55e;
+        }
+        
+        .pack-option.best-value.active {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+        
+        .best-value-tag {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .pack-count {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--bs-body-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .pack-price {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--bs-primary);
+        }
+        
+        .pack-unit-price {
+            font-size: 0.75rem;
+            color: var(--bs-secondary);
+        }
+        
+        /* Single Product Indicator */
+        .single-product-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .collection-info {
+            background: var(--bs-tertiary-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .collection-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--bs-body-color);
+            margin-bottom: 0.75rem;
+        }
+        
+        .collection-products {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .collection-product-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .collection-product-link:hover {
+            border-color: var(--bs-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .collection-product-link.current {
+            background: var(--bs-primary);
+            border-color: var(--bs-primary);
+            color: white;
+        }
     </style>
 }
 
@@ -621,10 +855,11 @@
                         }
                     </div>
 
-                    <!-- Pack Size Switcher -->
+                    <!-- Pack Size Switcher / Collection Variants -->
                     @{
                         var hasRelatedProducts = relatedProducts.Any();
                         var allPackOptions = new List<Kokomija.Entity.Product>();
+                        var isSingleProduct = Model.PackSize == 1;
                         
                         if (Model.ProductGroupId.HasValue)
                         {
@@ -633,35 +868,74 @@
                             allPackOptions.Add(Model);
                             allPackOptions = allPackOptions.OrderBy(p => p.PackSize).ToList();
                         }
+                        
+                        var hasSingleInGroup = allPackOptions.Any(p => p.PackSize == 1);
+                        var hasPacksInGroup = allPackOptions.Any(p => p.PackSize > 1);
+                    }
+                    
+                    @* Show single product indicator if this is a single item from a collection *@
+                    @if (isSingleProduct && allPackOptions.Any() && hasPacksInGroup)
+                    {
+                        <div class="single-product-badge">
+                            <i class="fas fa-cube"></i>
+                            <span>@L["Product_SingleItem"]</span>
+                        </div>
                     }
                     
                     @if (allPackOptions.Any())
                     {
                         <div class="pack-switcher">
-                            <label class="section-label">@L.GetString("PackSize", "Product")</label>
+                            <label class="section-label">
+                                <i class="fas fa-boxes-stacked me-2"></i>@L["Product_AvailableOptions"]
+                            </label>
                             <div class="pack-options">
                                 @foreach (var pack in allPackOptions)
                                 {
                                     var isCurrentProduct = pack.Id == Model.Id;
                                     var packSize = pack.PackSize;
                                     var perPiecePrice = pack.Price / packSize;
-                                    var isBestValue = packSize == allPackOptions.Max(p => p.PackSize);
+                                    var isBestValue = packSize == allPackOptions.Max(p => p.PackSize) && packSize > 1;
+                                    var isSingleItem = packSize == 1;
                                     
                                     var packTranslation = pack.Translations?.FirstOrDefault(t => t.CultureCode.StartsWith(currentCulture));
                                     var packSlug = packTranslation?.Slug ?? pack.Slug ?? pack.Id.ToString();
                                     
                                     <a asp-controller="Product" asp-action="DetailsBySlug" asp-route-culture="@currentCulture" asp-route-slug="@packSlug" 
-                                       class="pack-option @(isCurrentProduct ? "active" : "") @(isBestValue ? "best-value" : "")">
+                                       class="pack-option @(isCurrentProduct ? "active" : "") @(isBestValue ? "best-value" : "") @(isSingleItem ? "single-item" : "")">
                                         @if (isBestValue)
                                         {
                                             <span class="best-value-tag">@L.GetString("BestValue", "Product")</span>
                                         }
-                                        <div class="pack-count">@packSize @L.GetString("Pack", "Product")</div>
+                                        @if (isSingleItem)
+                                        {
+                                            <div class="pack-count"><i class="fas fa-cube me-1"></i>@L["Product_Single"]</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="pack-count"><i class="fas fa-box me-1"></i>@packSize @L.GetString("Pack", "Product")</div>
+                                        }
                                         <div class="pack-price">@pack.Price.ToString("N2") zł</div>
-                                        <div class="pack-unit-price">@perPiecePrice.ToString("N2") zł/@L.GetString("Piece", "Product")</div>
+                                        @if (!isSingleItem)
+                                        {
+                                            <div class="pack-unit-price">@perPiecePrice.ToString("N2") zł/@L.GetString("Piece", "Product")</div>
+                                        }
                                     </a>
                                 }
                             </div>
+                            @if (hasPacksInGroup && hasSingleInGroup)
+                            {
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-info-circle me-1"></i>@L["Product_PackSavingsHint"]
+                                </small>
+                            }
+                        </div>
+                    }
+                    else if (isSingleProduct && !Model.ProductGroupId.HasValue)
+                    {
+                        @* Standalone single product - no pack options available *@
+                        <div class="single-product-badge">
+                            <i class="fas fa-cube"></i>
+                            <span>@L["Product_SingleItem"]</span>
                         </div>
                     }
 
@@ -702,6 +976,40 @@
                         </div>
                     }
 
+                    @* B2B Business Pricing Info Card *@
+                    @if (hasBusinessPrice)
+                    {
+                        <div class="b2b-pricing-card mb-3">
+                            <div class="b2b-card-header">
+                                <i class="bi bi-building-fill-check"></i>
+                                <strong>@(L["Product_BusinessPricing"] ?? "Business Pricing")</strong>
+                            </div>
+                            <div class="b2b-card-body">
+                                <p class="mb-1">@(L["Product_BusinessPriceNote"] ?? "This is the business (B2B) price for this product. You can place a business order at this price.")</p>
+                                @if (Model.MinBusinessQuantity > 0)
+                                {
+                                    <div class="b2b-min-qty-alert">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                        <span>@(L["Product_MinBusinessQty"] ?? "Minimum order quantity for business"): <strong>@Model.MinBusinessQuantity</strong></span>
+                                    </div>
+                                }
+                                <div class="b2b-savings mt-2">
+                                    <span class="text-success fw-bold">
+                                        <i class="bi bi-piggy-bank"></i>
+                                        @(L["Product_YouSave"] ?? "You save"): @((Model.Price - effectivePrice).ToString("N2")) zł
+                                        (@(((Model.Price - effectivePrice) / Model.Price * 100).ToString("N0"))%)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (isBusinessMode && Model.IsAvailableForBusiness && !hasBusinessPrice)
+                    {
+                        <div class="alert alert-secondary mb-3 py-2">
+                            <small><i class="bi bi-info-circle me-1"></i>@(L["Product_NoBizPriceSet"] ?? "No special business price is set for this product. Regular pricing applies.")</small>
+                        </div>
+                    }
+
                     <!-- Quantity Selector -->
                     <div class="quantity-selector">
                         <label class="section-label">@L.GetString("Quantity", "Product")</label>
@@ -709,7 +1017,12 @@
                             <button type="button" class="qty-btn minus" id="qtyMinus">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="number" class="qty-input" id="quantity" value="1" min="1" max="99" readonly />
+                            <input type="number" class="qty-input" id="quantity" 
+                                   value="@(hasBusinessPrice && Model.MinBusinessQuantity > 0 ? Model.MinBusinessQuantity : 1)" 
+                                   min="@(hasBusinessPrice && Model.MinBusinessQuantity > 0 ? Model.MinBusinessQuantity : 1)" 
+                                   max="99" readonly 
+                                   data-min-business="@(Model.MinBusinessQuantity)" 
+                                   data-is-business="@(hasBusinessPrice ? "true" : "false")" />
                             <button type="button" class="qty-btn plus" id="qtyPlus">
                                 <i class="fas fa-plus"></i>
                             </button>
@@ -717,13 +1030,26 @@
                         <span class="stock-info" id="stockInfo">
                             <i class="fas fa-box"></i> @L.GetString("InStock", "Product")
                         </span>
+                        @if (hasBusinessPrice && Model.MinBusinessQuantity > 0)
+                        {
+                            <small class="text-info d-block mt-1">
+                                <i class="bi bi-box-seam"></i> @(L["Product_MinQtyBusiness"] ?? "Min. quantity for B2B order"): @Model.MinBusinessQuantity
+                            </small>
+                        }
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="product-actions">
                         <button class="btn btn-primary btn-add-cart" id="addToCartBtn" @(Model.Variants == null || !Model.Variants.Any() ? "" : "disabled")>
                             <i class="fas fa-shopping-cart"></i>
-                            @L.GetString("AddToCart", "Product")
+                            @if (hasBusinessPrice)
+                            {
+                                @(L["Product_AddToCartBusiness"] ?? "Add to Cart (B2B)")
+                            }
+                            else
+                            {
+                                @L.GetString("AddToCart", "Product")
+                            }
                         </button>
                         <button class="btn btn-outline-secondary btn-wishlist" id="addToWishlistBtn">
                             <i class="far fa-heart"></i>
@@ -997,7 +1323,8 @@
         document.getElementById('qtyMinus').onclick = function() {
             var input = document.getElementById('quantity');
             var val = parseInt(input.value) || 1;
-            if (val > 1) input.value = val - 1;
+            var minQty = parseInt(input.min) || 1;
+            if (val > minQty) input.value = val - 1;
         };
         
         // Quantity plus

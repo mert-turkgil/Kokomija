@@ -2596,4 +2596,27 @@
   <data name="Common_ContactSupport" xml:space="preserve">
     <value>Skontaktuj się z Pomocą</value>
   </data>
+  <!-- Product Search Resources -->
+  <data name="Products_SearchByName" xml:space="preserve">
+    <value>Wyszukaj po nazwie</value>
+  </data>
+  <data name="Products_EnterProductName" xml:space="preserve">
+    <value>Chcesz wyszukać według nazwy?</value>
+  </data>
+  <!-- Product Details Resources -->
+  <data name="Product_SingleItem" xml:space="preserve">
+    <value>Pojedyncza Sztuka</value>
+  </data>
+  <data name="Product_Single" xml:space="preserve">
+    <value>Sztuka</value>
+  </data>
+  <data name="Product_AvailableOptions" xml:space="preserve">
+    <value>Dostępne Opcje</value>
+  </data>
+  <data name="Product_PackSavingsHint" xml:space="preserve">
+    <value>Kup więcej, oszczędź więcej! Wielopaki oferują lepszą cenę za sztukę.</value>
+  </data>
+  <data name="Review_MustPurchaseFirst" xml:space="preserve">
+    <value>Możesz oceniać tylko produkty, które kupiłeś.</value>
+  </data>
 </root>

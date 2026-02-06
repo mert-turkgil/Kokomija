@@ -2590,4 +2590,27 @@
   <data name="Common_ContactSupport" xml:space="preserve">
     <value>Contact Support</value>
   </data>
+  <!-- Product Search Resources -->
+  <data name="Products_SearchByName" xml:space="preserve">
+    <value>Search by Name</value>
+  </data>
+  <data name="Products_EnterProductName" xml:space="preserve">
+    <value>Wanna find by name?</value>
+  </data>
+  <!-- Product Details Resources -->
+  <data name="Product_SingleItem" xml:space="preserve">
+    <value>Single Item</value>
+  </data>
+  <data name="Product_Single" xml:space="preserve">
+    <value>Single</value>
+  </data>
+  <data name="Product_AvailableOptions" xml:space="preserve">
+    <value>Available Options</value>
+  </data>
+  <data name="Product_PackSavingsHint" xml:space="preserve">
+    <value>Buy more, save more! Multi-packs offer better value per piece.</value>
+  </data>
+  <data name="Review_MustPurchaseFirst" xml:space="preserve">
+    <value>You can only review products you have purchased.</value>
+  </data>
 </root>

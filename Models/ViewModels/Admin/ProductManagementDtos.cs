@@ -256,9 +256,11 @@ public class ProductVariantDto
     [StringLength(50)]
     public string SKU { get; set; } = string.Empty;
     
-    [Required]
-    [Range(0.01, 999999.99)]
-    public decimal Price { get; set; }
+    /// <summary>
+    /// Variant price. If null or 0, defaults to product's BasePrice
+    /// </summary>
+    [Range(0, 999999.99)]
+    public decimal? Price { get; set; }
 }
 
 public class ProductReviewManagementDto
@@ -344,4 +346,29 @@ public class ProductPriceHistoryDto
     public string? Reason { get; set; }
     public DateTime ChangedAt { get; set; }
     public string? ChangedBy { get; set; }
+}
+
+/// <summary>
+/// Request model for auto-translation API
+/// </summary>
+public class TranslateContentRequest
+{
+    public string SourceLanguage { get; set; } = "en";
+    public string TargetLanguage { get; set; } = "pl";
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? MetaDescription { get; set; }
+    public string? MetaKeywords { get; set; }
+}
+
+/// <summary>
+/// Response model for auto-translation API
+/// </summary>
+public class TranslateContentResponse
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Slug { get; set; }
+    public string? MetaDescription { get; set; }
+    public string? MetaKeywords { get; set; }
 }

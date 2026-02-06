@@ -93,6 +93,23 @@ namespace Kokomija.Controllers
                 bool isBusinessMode = await IsBusinessModeActiveAsync(user.Id);
                 _logger.LogInformation($"Checkout for user {user.Id}: Business Mode = {isBusinessMode}");
 
+                // Enforce minimum business quantity
+                if (isBusinessMode)
+                {
+                    foreach (var cartItem in cartItems)
+                    {
+                        var prod = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
+                        if (prod != null && prod.IsAvailableForBusiness && prod.BusinessPrice.HasValue 
+                            && prod.MinBusinessQuantity > 0 && cartItem.Quantity < prod.MinBusinessQuantity)
+                        {
+                            return Json(new { 
+                                success = false, 
+                                message = $"Product '{prod.Name}' requires a minimum quantity of {prod.MinBusinessQuantity} for business orders. Current quantity: {cartItem.Quantity}."
+                            });
+                        }
+                    }
+                }
+
                 // Calculate VIP discount
                 var vipTier = user.VipTier ?? "None";
                 decimal vipDiscountPercentage = vipTier switch

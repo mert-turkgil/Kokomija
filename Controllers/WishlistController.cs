@@ -18,18 +18,11 @@ public class WishlistController : Controller
         _logger = logger;
     }
 
-    // View wishlist page
+    // View wishlist page - redirects to Account page wishlist tab
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return RedirectToAction("Login", "Account");
-        }
-
-        var wishlistItems = await _unitOfWork.Wishlists.GetByUserIdAsync(userId);
-        return View(wishlistItems);
+        return RedirectToAction("Index", "Account", new { }, "wishlist");
     }
 
     // Toggle wishlist (add or remove)

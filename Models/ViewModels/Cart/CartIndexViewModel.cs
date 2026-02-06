@@ -70,6 +70,9 @@ namespace Kokomija.Models.ViewModels.Cart
         // B2B Pricing
         public bool IsBusinessPrice { get; set; }
         public decimal? OriginalPrice { get; set; } // Original retail price when business price is applied
+        public int MinBusinessQuantity { get; set; } // Minimum quantity for B2B order
+        public bool IsAvailableForBusiness { get; set; } // Product is available for business purchase
+        public bool IsBelowMinBusinessQty => IsBusinessPrice && MinBusinessQuantity > 0 && Quantity < MinBusinessQuantity;
     }
     
     public class ApplyCouponRequest

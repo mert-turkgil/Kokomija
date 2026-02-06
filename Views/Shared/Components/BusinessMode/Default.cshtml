@@ -1,0 +1,168 @@
+@model Kokomija.ViewComponents.BusinessModeViewModel
+@inject Kokomija.Services.ILocalizationService L
+
+@* B2B/Retail Mode Floating Toggle - Only shown for verified business users *@
+<div id="businessModeFloating" class="business-mode-floating @(Model.IsBusinessModeActive ? "b2b-active" : "retail-active")">
+    <button class="business-mode-toggle-btn" id="businessModeFloatingBtn" 
+            onclick="toggleBusinessModeGlobal()" 
+            title="@(Model.IsBusinessModeActive ? (L["Business_SwitchToRetail"] ?? "Switch to Retail Mode") : (L["Business_SwitchToB2B"] ?? "Switch to B2B Mode"))">
+        <div class="toggle-content">
+            @if (Model.IsBusinessModeActive)
+            {
+                <i class="bi bi-building-fill"></i>
+                <span class="toggle-label">B2B</span>
+            }
+            else
+            {
+                <i class="bi bi-person-fill"></i>
+                <span class="toggle-label">@(L["Retail"] ?? "Retail")</span>
+            }
+        </div>
+        <div class="toggle-company-name" title="@Model.CompanyName">
+            @(Model.CompanyName.Length > 20 ? Model.CompanyName.Substring(0, 17) + "..." : Model.CompanyName)
+        </div>
+    </button>
+</div>
+
+<style>
+    .business-mode-floating {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 1050;
+        transition: all 0.3s ease;
+    }
+
+    .business-mode-toggle-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 10px 16px;
+        border: 2px solid;
+        border-radius: 16px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+        min-width: 70px;
+    }
+
+    .business-mode-toggle-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+    }
+
+    .toggle-content {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .toggle-content i {
+        font-size: 1.1rem;
+    }
+
+    .toggle-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .toggle-company-name {
+        font-size: 0.6rem;
+        font-weight: 400;
+        opacity: 0.8;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* B2B Active State */
+    .b2b-active .business-mode-toggle-btn {
+        background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+        color: white;
+        border-color: #0b5ed7;
+    }
+
+    /* Retail Active State */
+    .retail-active .business-mode-toggle-btn {
+        background: white;
+        color: #6c757d;
+        border-color: #dee2e6;
+    }
+
+    [data-bs-theme="dark"] .retail-active .business-mode-toggle-btn {
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        border-color: var(--bs-border-color);
+    }
+
+    /* Loading state */
+    .business-mode-toggle-btn.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .business-mode-toggle-btn.loading .toggle-content i {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .business-mode-floating {
+            bottom: 70px;
+            right: 12px;
+        }
+        .business-mode-toggle-btn {
+            padding: 8px 12px;
+            min-width: 60px;
+        }
+        .toggle-company-name {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    async function toggleBusinessModeGlobal() {
+        const btn = document.getElementById('businessModeFloatingBtn');
+        const container = document.getElementById('businessModeFloating');
+        if (!btn || btn.classList.contains('loading')) return;
+
+        btn.classList.add('loading');
+
+        try {
+            const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenEl ? tokenEl.value : '';
+
+            const response = await fetch('/Account/ToggleBusinessMode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                // Reload the page to reflect new pricing everywhere
+                window.location.reload();
+            } else {
+                alert(data.message || 'Failed to change mode');
+            }
+        } catch (error) {
+            console.error('Error toggling business mode:', error);
+            alert('@(L["Business_ToggleError"] ?? "Failed to change shopping mode. Please try again.")');
+        } finally {
+            btn.classList.remove('loading');
+        }
+    }
+</script>

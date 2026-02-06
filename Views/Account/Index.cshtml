@@ -517,9 +517,9 @@
                         <h5 class="mb-0 fw-semibold">
                             <i class="bi bi-heart-fill text-danger me-2"></i>@(L["Account_Wishlist_Title"] ?? "My Wishlist")
                         </h5>
-                        <a asp-controller="Wishlist" asp-action="Index" class="btn btn-sm btn-primary">
-                            <i class="bi bi-box-arrow-up-right me-1"></i>@(L["Account_ViewFullWishlist"] ?? "View Full Wishlist")
-                        </a>
+                        <button class="btn btn-sm btn-outline-danger" onclick="loadWishlist()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>@(L["Account_Wishlist_Refresh"] ?? "Refresh")
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="wishlistContainer">
@@ -896,24 +896,105 @@
                     <div class="col-lg-8">
                         @if (Model.BusinessProfile == null)
                         {
-                            <!-- NIP Verification Form -->
-                            <div class="card shadow-sm">
+                            <!-- Country Selector -->
+                            <div class="card shadow-sm mb-4">
                                 <div class="card-header bg-primary text-white py-3">
                                     <h5 class="mb-0"><i class="bi bi-building-check me-2"></i>@(L["Account_Business_Verify"] ?? "Verify Your Business")</h5>
                                 </div>
                                 <div class="card-body p-4">
-                                    <p class="text-body-secondary mb-4">@(L["Account_Business_VerifyDesc"] ?? "Enter your company's NIP number to unlock B2B features and special pricing.")</p>
+                                    <p class="text-body-secondary mb-3">@(L["Account_Business_VerifyDesc"] ?? "Enter your company's NIP number to unlock B2B features and special pricing.")</p>
                                     
-                                    <div id="verificationResult" class="alert d-none mb-3"></div>
-                                    
-                                    <div class="input-group input-group-lg mb-3">
-                                        <span class="input-group-text"><i class="bi bi-building"></i></span>
-                                        <input type="text" class="form-control" id="nipInput" placeholder="XXX-XXX-XX-XX" maxlength="13">
-                                        <button class="btn btn-primary" type="button" id="verifyNipBtn" onclick="verifyNIP()">
-                                            <i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")
-                                        </button>
+                                    <!-- Country selection -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold">@(L["Account_Business_Country"] ?? "Country")</label>
+                                        <select class="form-select" id="businessCountrySelect" onchange="onBusinessCountryChange()">
+                                            <option value="PL" selected>🇵🇱 Polska (Poland)</option>
+                                            <option value="DE">🇩🇪 Deutschland (Germany)</option>
+                                            <option value="CZ">🇨🇿 Česko (Czech Republic)</option>
+                                            <option value="SK">🇸🇰 Slovensko (Slovakia)</option>
+                                            <option value="LT">🇱🇹 Lietuva (Lithuania)</option>
+                                            <option value="OTHER">🌍 @(L["Account_Business_OtherCountry"] ?? "Other Country")</option>
+                                        </select>
                                     </div>
-                                    <small class="text-body-secondary"><i class="bi bi-info-circle me-1"></i>@(L["Account_Business_NIPFormat"] ?? "Enter 10-digit NIP number (with or without dashes)")</small>
+
+                                    <!-- Polish NIP Verification (default visible) -->
+                                    <div id="nipVerificationSection">
+                                        <div id="verificationResult" class="alert d-none mb-3"></div>
+                                        
+                                        <h6 class="fw-bold mb-3"><i class="bi bi-1-circle me-2"></i>@(L["Account_Business_Step1_NIP"] ?? "Step 1: Verify NIP Number")</h6>
+                                        <div class="input-group input-group-lg mb-3">
+                                            <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                            <input type="text" class="form-control" id="nipInput" placeholder="XXX-XXX-XX-XX" maxlength="13">
+                                            <button class="btn btn-primary" type="button" id="verifyNipBtn" onclick="verifyNIP()">
+                                                <i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")
+                                            </button>
+                                        </div>
+                                        <small class="text-body-secondary d-block mb-3"><i class="bi bi-info-circle me-1"></i>@(L["Account_Business_NIPFormat"] ?? "Enter 10-digit NIP number (with or without dashes)")</small>
+                                        
+                                        <hr class="my-3" />
+                                        
+                                        <h6 class="fw-bold mb-3"><i class="bi bi-2-circle me-2"></i>@(L["Account_Business_Step2_Info"] ?? "Step 2: Company Contact Information")</h6>
+                                        <p class="text-body-secondary small mb-3">
+                                            <i class="bi bi-info-circle me-1"></i>@(L["Account_Business_CompanyInfoNote"] ?? "Company name and address will be automatically retrieved from the government registry. Please provide the following contact details for your business account.")
+                                        </p>
+                                        
+                                        <!-- Company contact fields -->
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">@(L["Account_Business_Phone"] ?? "Company Phone Number") <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                                    <input type="tel" class="form-control" id="businessPhoneInput" placeholder="+48 XXX XXX XXX" required>
+                                                </div>
+                                                <small class="text-body-secondary">@(L["Account_Business_PhoneRequired"] ?? "Required for business order communication")</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">@(L["Account_Business_Email"] ?? "Company Email")</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                                    <input type="email" class="form-control" id="businessEmailInput" placeholder="firma@example.com">
+                                                </div>
+                                                <small class="text-body-secondary">@(L["Account_Business_EmailNote"] ?? "Optional business email for invoices")</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">@(L["Account_Business_ContactPerson"] ?? "Contact Person")</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                                    <input type="text" class="form-control" id="businessContactPersonInput" placeholder="@(L["Account_Business_ContactPersonPlaceholder"] ?? "Full name of contact person")">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-semibold">@(L["Account_Business_Position"] ?? "Position / Role")</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
+                                                    <input type="text" class="form-control" id="businessPositionInput" placeholder="@(L["Account_Business_PositionPlaceholder"] ?? "e.g. Purchasing Manager")">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert alert-light mt-3 mb-0 border">
+                                            <i class="bi bi-shield-check text-success me-1"></i>
+                                            <small>@(L["Account_Business_NIPNote2"] ?? "After verification, your company name, REGON, KRS, VAT status, and registered address will be automatically populated from the Polish government Biała Lista registry.")</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Coming Soon for other countries -->
+                                    <div id="comingSoonSection" class="d-none">
+                                        <div class="text-center py-5">
+                                            <div class="mb-4">
+                                                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+                                            <h4 class="text-body-secondary mb-2">@(L["Account_Business_ComingSoon"] ?? "Coming Soon!")</h4>
+                                            <p class="text-body-secondary mb-0">@(L["Account_Business_ComingSoonDesc"] ?? "Business verification for this country is currently under development. We're working hard to bring B2B features to more countries. Stay tuned!")</p>
+                                            <div class="mt-4">
+                                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-6">
+                                                    <i class="bi bi-bell me-1"></i>@(L["Account_Business_NotifyMe"] ?? "We'll notify you when available")
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -956,7 +1037,42 @@
                                         {
                                             <div class="col-12">
                                                 <label class="form-label text-body-secondary small">@(L["Account_Business_Address"] ?? "Company Address")</label>
-                                                <p class="mb-0">@Model.BusinessProfile.ResidenceAddress</p>
+                                                <p class="mb-0"><i class="bi bi-geo-alt me-1"></i>@Model.BusinessProfile.ResidenceAddress</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.WorkingAddress) && Model.BusinessProfile.WorkingAddress != Model.BusinessProfile.ResidenceAddress)
+                                        {
+                                            <div class="col-12">
+                                                <label class="form-label text-body-secondary small">@(L["Account_Business_WorkAddress"] ?? "Working Address")</label>
+                                                <p class="mb-0"><i class="bi bi-geo-alt me-1"></i>@Model.BusinessProfile.WorkingAddress</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.Phone))
+                                        {
+                                            <div class="col-md-6">
+                                                <label class="form-label text-body-secondary small">@(L["Account_Business_Phone"] ?? "Phone")</label>
+                                                <p class="mb-0"><i class="bi bi-telephone me-1"></i>@Model.BusinessProfile.Phone</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.CompanyEmail))
+                                        {
+                                            <div class="col-md-6">
+                                                <label class="form-label text-body-secondary small">@(L["Account_Business_Email"] ?? "Company Email")</label>
+                                                <p class="mb-0"><i class="bi bi-envelope me-1"></i>@Model.BusinessProfile.CompanyEmail</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.ContactPerson))
+                                        {
+                                            <div class="col-md-6">
+                                                <label class="form-label text-body-secondary small">@(L["Account_Business_ContactPerson"] ?? "Contact Person")</label>
+                                                <p class="mb-0"><i class="bi bi-person-badge me-1"></i>@Model.BusinessProfile.ContactPerson</p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.BusinessProfile.Position))
+                                        {
+                                            <div class="col-md-6">
+                                                <label class="form-label text-body-secondary small">@(L["Account_Business_Position"] ?? "Position / Role")</label>
+                                                <p class="mb-0"><i class="bi bi-briefcase me-1"></i>@Model.BusinessProfile.Position</p>
                                             </div>
                                         }
                                     </div>
@@ -1517,7 +1633,17 @@
             const nipInput = document.getElementById('nipInput');
             const resultDiv = document.getElementById('verificationResult');
             const verifyBtn = document.getElementById('verifyNipBtn');
+            const phoneInput = document.getElementById('businessPhoneInput');
+            
             if (!nipInput || !nipInput.value.trim()) { showAlert(resultDiv, 'danger', '@(L["Account_NIP_Required"] ?? "Please enter a NIP number")'); return; }
+            
+            // Require phone number
+            if (!phoneInput || !phoneInput.value.trim()) { 
+                showAlert(resultDiv, 'danger', '@(L["Account_Phone_Required"] ?? "Company phone number is required for business registration")'); 
+                phoneInput?.focus();
+                return; 
+            }
+            
             const nip = nipInput.value.replace(/[\s\-]/g, '').trim();
             if (!/^\d{10}$/.test(nip)) { showAlert(resultDiv, 'danger', '@(L["Account_NIP_Invalid"] ?? "NIP must be exactly 10 digits")'); return; }
             verifyBtn.disabled = true;
@@ -1538,16 +1664,41 @@
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                     },
-                    body: JSON.stringify({ nip: nip })
+                    body: JSON.stringify({ 
+                        nip: nip, 
+                        phone: phoneInput.value.trim(),
+                        companyEmail: document.getElementById('businessEmailInput')?.value?.trim() || '',
+                        contactPerson: document.getElementById('businessContactPersonInput')?.value?.trim() || '',
+                        position: document.getElementById('businessPositionInput')?.value?.trim() || ''
+                    })
                 });
                 const data = await response.json();
-                if (data.success) { showAlert(resultDiv, 'success', data.message); setTimeout(() => window.location.reload(), 2000); }
-                else { showAlert(resultDiv, 'danger', data.message); verifyBtn.disabled = false; verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")'; }
+                if (data.success) { 
+                    showAlert(resultDiv, 'success', data.message); 
+                    setTimeout(() => window.location.reload(), 2000); 
+                } else { 
+                    showAlert(resultDiv, 'danger', data.message); 
+                    verifyBtn.disabled = false; 
+                    verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")'; 
+                }
             } catch (error) {
                 console.error('Error verifying NIP:', error);
                 showAlert(resultDiv, 'danger', '@(L["Account_NIP_Error"] ?? "An error occurred during verification. Please try again.")');
                 verifyBtn.disabled = false;
                 verifyBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")';
+            }
+        }
+
+        function onBusinessCountryChange() {
+            const country = document.getElementById('businessCountrySelect')?.value || 'PL';
+            const nipSection = document.getElementById('nipVerificationSection');
+            const comingSection = document.getElementById('comingSoonSection');
+            if (country === 'PL') {
+                nipSection?.classList.remove('d-none');
+                comingSection?.classList.add('d-none');
+            } else {
+                nipSection?.classList.add('d-none');
+                comingSection?.classList.remove('d-none');
             }
         }
 
@@ -1609,6 +1760,35 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Handle active tab from server (e.g., redirect from Orders page)
+            var serverTab = '@(ViewBag.ActiveTab ?? "")';
+            if (serverTab) {
+                const tabId = serverTab + '-tab';
+                const tabElement = document.getElementById(tabId);
+                if (tabElement) {
+                    const tab = new bootstrap.Tab(tabElement);
+                    tab.show();
+                }
+            }
+
+            // Handle URL fragment to activate specific tab
+            const hash = window.location.hash;
+            if (hash) {
+                const tabId = hash.substring(1) + '-tab';
+                const tabElement = document.getElementById(tabId);
+                if (tabElement) {
+                    const tab = new bootstrap.Tab(tabElement);
+                    tab.show();
+                    // Auto-load wishlist data if navigating directly to wishlist tab
+                    if (hash === '#wishlist') { setTimeout(() => loadWishlist(), 200); }
+                }
+            }
+
+            // Initialize country selector visibility
+            if (document.getElementById('businessCountrySelect')) {
+                onBusinessCountryChange();
+            }
+
             const nipInput = document.getElementById('nipInput');
             if (nipInput) {
                 nipInput.addEventListener('input', function(e) {

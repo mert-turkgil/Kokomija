@@ -1,0 +1,3354 @@
+@model Kokomija.Models.ViewModels.Admin.ProductCreateDto
+@{
+    ViewData["Title"] = "Create Product";
+    Layout = "_Layout";
+}
+
+<div class="product-wizard-container">
+    <!-- Progress Header -->
+    <div class="wizard-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="wizard-title">
+                        <i class="bi bi-magic me-2"></i>Product Creation Wizard
+                    </h1>
+                    <p class="wizard-subtitle">Create products step by step with full Stripe integration</p>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
+                </a>
+            </div>
+            
+            <!-- Step Progress Bar -->
+            <div class="wizard-progress">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="step-indicators">
+                    <div class="step-indicator active" data-step="1">
+                        <div class="step-icon">
+                            <i class="bi bi-box2-heart"></i>
+                        </div>
+                        <span class="step-label">Type & Collection</span>
+                    </div>
+                    <div class="step-indicator" data-step="2">
+                        <div class="step-icon">
+                            <i class="bi bi-translate"></i>
+                        </div>
+                        <span class="step-label">Naming & Details</span>
+                    </div>
+                    <div class="step-indicator" data-step="3">
+                        <div class="step-icon">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <span class="step-label">Pricing</span>
+                    </div>
+                    <div class="step-indicator" data-step="4">
+                        <div class="step-icon">
+                            <i class="bi bi-images"></i>
+                        </div>
+                        <span class="step-label">Images</span>
+                    </div>
+                    <div class="step-indicator" data-step="5">
+                        <div class="step-icon">
+                            <i class="bi bi-palette2"></i>
+                        </div>
+                        <span class="step-label">Variants</span>
+                    </div>
+                    <div class="step-indicator" data-step="6">
+                        <div class="step-icon">
+                            <i class="bi bi-rocket-takeoff"></i>
+                        </div>
+                        <span class="step-label">Review & Launch</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wizard Content -->
+    <div class="wizard-content">
+        <div class="container-fluid">
+            <form asp-action="Create" method="post" id="productWizardForm" novalidate>
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
+                
+                <!-- Hidden fields for tracking -->
+                <input type="hidden" asp-for="Name" id="defaultName" />
+                <input type="hidden" asp-for="Description" id="defaultDescription" />
+                <div id="imageHiddenInputsContainer"></div>
+                <input type="hidden" id="tempImageFileNames" name="TempImageFileNamesRaw" />
+
+                <!-- Step 1: Product Type & Collection -->
+                <div class="wizard-step active" data-step="1">
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h2 class="step-title">
+                                <span class="step-number">1</span>
+                                What are you creating?
+                            </h2>
+                            <p class="step-description">Choose whether this is a single item or part of a package collection</p>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Product Type Selection -->
+                            <div class="col-lg-6">
+                                <div class="selection-card" id="typeSelectionCard">
+                                    <h4 class="selection-title">
+                                        <i class="bi bi-box me-2"></i>Product Type
+                                    </h4>
+                                    
+                                    <div class="type-options">
+                                        <label class="type-option selected" data-type="single">
+                                            <input type="radio" name="productType" value="single" checked hidden>
+                                            <div class="type-icon">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                            <div class="type-info">
+                                                <h5>Single Item</h5>
+                                                <p>One individual product unit</p>
+                                            </div>
+                                            <div class="type-check">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="type-option" data-type="pack">
+                                            <input type="radio" name="productType" value="pack" hidden>
+                                            <div class="type-icon pack-icon">
+                                                <i class="bi bi-boxes"></i>
+                                            </div>
+                                            <div class="type-info">
+                                                <h5>Multi-Pack</h5>
+                                                <p>Bundle of multiple items (5-pack, 10-pack, etc.)</p>
+                                            </div>
+                                            <div class="type-check">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <!-- Pack Size Input (shown for packs) -->
+                                    <div class="pack-size-input" id="packSizeContainer" style="display: none;">
+                                        <label class="form-label">
+                                            <i class="bi bi-hash me-1"></i>How many items in this pack?
+                                        </label>
+                                        <div class="pack-size-selector">
+                                            <button type="button" class="pack-btn" data-pack="3">3</button>
+                                            <button type="button" class="pack-btn" data-pack="5">5</button>
+                                            <button type="button" class="pack-btn" data-pack="7">7</button>
+                                            <button type="button" class="pack-btn" data-pack="10">10</button>
+                                            <input type="number" class="form-control pack-custom" id="customPackSize" placeholder="Other" min="2" max="100">
+                                        </div>
+                                        <input type="hidden" asp-for="PackSize" id="packSizeInput" value="1" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Collection Selection -->
+                            <div class="col-lg-6">
+                                <div class="selection-card" id="collectionSelectionCard">
+                                    <h4 class="selection-title">
+                                        <i class="bi bi-collection me-2"></i>Product Collection
+                                        <span class="optional-badge">Optional</span>
+                                    </h4>
+                                    
+                                    <div class="collection-hint">
+                                        <i class="bi bi-lightbulb text-warning"></i>
+                                        <span>Group related products together (e.g., Single + 5-Pack + 10-Pack of same socks)</span>
+                                    </div>
+
+                                    <div class="collection-options">
+                                        <label class="collection-option selected" data-collection="new">
+                                            <input type="radio" name="collectionType" value="new" checked hidden>
+                                            <div class="collection-icon">
+                                                <i class="bi bi-plus-circle"></i>
+                                            </div>
+                                            <div class="collection-info">
+                                                <h5>New Collection</h5>
+                                                <p>Start a fresh product line</p>
+                                            </div>
+                                            <div class="collection-check">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="collection-option" data-collection="existing">
+                                            <input type="radio" name="collectionType" value="existing" hidden>
+                                            <div class="collection-icon existing-icon">
+                                                <i class="bi bi-link-45deg"></i>
+                                            </div>
+                                            <div class="collection-info">
+                                                <h5>Join Existing</h5>
+                                                <p>Add to an existing product group</p>
+                                            </div>
+                                            <div class="collection-check">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <!-- Existing Collection Dropdown -->
+                                    <div class="existing-collection-select" id="existingCollectionContainer" style="display: none;">
+                                        <label class="form-label">Select Collection</label>
+                                        <select asp-for="ProductGroupId" class="form-select form-select-lg" id="productGroupSelect">
+                                            <option value="">Choose a collection...</option>
+                                            @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
+                                            {
+                                                <option value="@group.Id" data-products="@group.Products?.Count">
+                                                    @group.Name (@(group.Products?.Count ?? 0) products)
+                                                </option>
+                                            }
+                                        </select>
+                                        <div class="collection-preview" id="collectionPreview"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Selection -->
+                        <div class="category-selection mt-4">
+                            <div class="selection-card">
+                                <h4 class="selection-title">
+                                    <i class="bi bi-diagram-3 me-2"></i>Category
+                                    <span class="required-badge">Required</span>
+                                </h4>
+                                
+                                <div class="category-search-box">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" class="form-control" id="categorySearch" placeholder="Search categories...">
+                                </div>
+                                
+                                <div class="category-tree" id="categoryTree">
+                                    @foreach (var category in (List<Kokomija.Entity.Category>)ViewBag.Categories)
+                                    {
+                                        <div class="category-node" data-id="@category.Id" data-name="@category.Name">
+                                            <div class="category-item">
+                                                <i class="bi bi-folder2"></i>
+                                                <span>@category.Name</span>
+                                            </div>
+                                            @if (category.SubCategories?.Any() == true)
+                                            {
+                                                <div class="subcategories">
+                                                    @foreach (var sub in category.SubCategories)
+                                                    {
+                                                        <div class="category-node subcategory" data-id="@sub.Id" data-name="@sub.Name" data-parent="@category.Name">
+                                                            <div class="category-item">
+                                                                <i class="bi bi-folder"></i>
+                                                                <span>@sub.Name</span>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <input type="hidden" asp-for="CategoryId" id="selectedCategoryId" required />
+                                <div class="selected-category" id="selectedCategoryDisplay">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>Click a category to select</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Naming & Details -->
+                <div class="wizard-step" data-step="2">
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h2 class="step-title">
+                                <span class="step-number">2</span>
+                                Name & Describe Your Product
+                            </h2>
+                            <p class="step-description">Add multilingual names and descriptions for better SEO</p>
+                        </div>
+
+                        <div class="language-tabs">
+                            <div class="language-tab-list">
+                                <button type="button" class="language-tab active" data-lang="en">
+                                    <span class="flag">🇺🇸</span>
+                                    <span>English</span>
+                                </button>
+                                <button type="button" class="language-tab" data-lang="pl">
+                                    <span class="flag">🇵🇱</span>
+                                    <span>Polski</span>
+                                </button>
+                            </div>
+
+                            <!-- English Content -->
+                            <div class="language-content active" data-lang="en">
+                                <input type="hidden" name="Translations[0].CultureCode" value="en-US" />
+                                
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="nameEn" name="Translations[0].Name" 
+                                           placeholder="Product name" required>
+                                    <label for="nameEn">Product Name (English) *</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <textarea class="form-control" id="descEn" name="Translations[0].Description" 
+                                              style="height: 150px" placeholder="Description" required></textarea>
+                                    <label for="descEn">Description (English) *</label>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="slugEn" name="Translations[0].Slug" 
+                                                   placeholder="slug">
+                                            <label for="slugEn">URL Slug</label>
+                                        </div>
+                                        <small class="text-muted">Leave empty to auto-generate</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="metaDescEn" name="Translations[0].MetaDescription" 
+                                                   placeholder="Meta description">
+                                            <label for="metaDescEn">Meta Description (SEO)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mt-3">
+                                    <input type="text" class="form-control" id="keywordsEn" name="Translations[0].MetaKeywords" 
+                                           placeholder="Keywords">
+                                    <label for="keywordsEn">Meta Keywords (comma separated)</label>
+                                </div>
+                            </div>
+
+                            <!-- Polish Content -->
+                            <div class="language-content" data-lang="pl">
+                                <input type="hidden" name="Translations[1].CultureCode" value="pl-PL" />
+                                
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="namePl" name="Translations[1].Name" 
+                                           placeholder="Nazwa produktu">
+                                    <label for="namePl">Nazwa Produktu (Polski) *</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <textarea class="form-control" id="descPl" name="Translations[1].Description" 
+                                              style="height: 150px" placeholder="Opis"></textarea>
+                                    <label for="descPl">Opis (Polski) *</label>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="slugPl" name="Translations[1].Slug" 
+                                                   placeholder="slug">
+                                            <label for="slugPl">Slug URL</label>
+                                        </div>
+                                        <small class="text-muted">Pozostaw puste dla auto-generacji</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="metaDescPl" name="Translations[1].MetaDescription" 
+                                                   placeholder="Meta opis">
+                                            <label for="metaDescPl">Meta Opis (SEO)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mt-3">
+                                    <input type="text" class="form-control" id="keywordsPl" name="Translations[1].MetaKeywords" 
+                                           placeholder="Słowa kluczowe">
+                                    <label for="keywordsPl">Słowa Kluczowe (rozdzielone przecinkami)</label>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <!-- SEO Analysis Section -->
+                        <div class="seo-analysis-card mt-4" id="seoAnalysis">
+                            <div class="seo-header">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="seo-score-ring" id="seoScoreRing">
+                                        <span id="seoScoreValue">0</span>
+                                        <svg viewBox="0 0 36 36">
+                                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#eee" stroke-width="3" />
+                                            <path id="seoScorePath" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#4ade80" stroke-width="3" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1 fw-bold">SEO Health</h5>
+                                        <p class="mb-0 text-muted small" id="seoStatusText">Improve your content to rank higher</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="seo-body">
+                                <div class="seo-checklist">
+                                    <!-- Checks injected via JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Translation Hint -->
+                        <div class="ai-hint mt-3">
+                            <i class="bi bi-stars text-primary"></i>
+                            <span>Tip: Fill out English first, then we can help translate to Polish!</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-auto" id="autoTranslateBtn" disabled>
+                                <i class="bi bi-translate"></i> Auto-Translate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Pricing -->
+                <div class="wizard-step" data-step="3">
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h2 class="step-title">
+                                <span class="step-number">3</span>
+                                Set Your Pricing
+                            </h2>
+                            <p class="step-description">Configure retail and business prices with Stripe integration</p>
+                        </div>
+
+                        <div class="pricing-layout">
+                            <div class="row g-4">
+                                <!-- Retail Pricing -->
+                                <div class="col-lg-6">
+                                    <div class="pricing-card retail">
+                                        <div class="pricing-header">
+                                            <i class="bi bi-cart3"></i>
+                                            <h4>Retail Price</h4>
+                                            <span class="required-badge">Required</span>
+                                        </div>
+                                        
+                                        <div class="price-input-wrapper">
+                                            <span class="currency">PLN</span>
+                                            <input type="number" class="price-input" id="retailPrice" 
+                                                   asp-for="BasePrice" step="0.01" min="0.01" placeholder="0.00" required>
+                                        </div>
+                                        
+                                        <div class="price-breakdown" id="retailBreakdown">
+                                            <div class="breakdown-row">
+                                                <span>Price per item:</span>
+                                                <strong id="pricePerItem">-</strong>
+                                            </div>
+                                            <div class="breakdown-row">
+                                                <span>VAT (23% included):</span>
+                                                <strong id="vatAmount">-</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="stripe-sync-info">
+                                            <i class="bi bi-stripe"></i>
+                                            <span>Will sync to Stripe on save</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Business Pricing -->
+                                <div class="col-lg-6">
+                                    <div class="pricing-card business">
+                                        <div class="pricing-header">
+                                            <i class="bi bi-building"></i>
+                                            <h4>Business Price</h4>
+                                            <span class="optional-badge">Optional</span>
+                                        </div>
+                                        
+                                        <div class="alert alert-info border-0 py-2 px-3 mb-3" style="background: rgba(13,110,253,0.08); font-size: 0.85rem;">
+                                            <i class="bi bi-lightning-fill text-primary me-1"></i>
+                                            <strong>Auto-Accept:</strong> The business price becomes active immediately after saving. B2B customers can place orders at this price.
+                                        </div>
+                                        
+                                        <div class="business-toggle mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableBusinessPrice" 
+                                                       asp-for="IsAvailableForBusiness">
+                                                <label class="form-check-label" for="enableBusinessPrice">
+                                                    Available for B2B customers
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="business-fields" id="businessFields">
+                                            <div class="price-input-wrapper">
+                                                <span class="currency">PLN</span>
+                                                <input type="number" class="price-input" id="businessPrice" 
+                                                       asp-for="BusinessPrice" step="0.01" min="0" placeholder="Same as retail">
+                                            </div>
+                                            
+                                            <div class="form-floating mt-3">
+                                                <input type="number" class="form-control" id="minBusinessQty" 
+                                                       asp-for="MinBusinessQuantity" min="0" placeholder="0">
+                                                <label for="minBusinessQty">Minimum Order Quantity</label>
+                                            </div>
+
+                                            <div class="form-check mt-3">
+                                                <input class="form-check-input" type="checkbox" id="businessOnly" 
+                                                       asp-for="IsBusinessOnly">
+                                                <label class="form-check-label" for="businessOnly">
+                                                    <i class="bi bi-lock me-1"></i>Business customers only
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="business-savings" id="businessSavings" style="display: none;">
+                                            <i class="bi bi-piggy-bank text-success"></i>
+                                            <span>B2B customers save <strong id="savingsAmount">0%</strong></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Coupon Association -->
+                            <div class="coupon-section mt-4">
+                                <div class="selection-card">
+                                    <h4 class="selection-title">
+                                        <i class="bi bi-ticket-perforated me-2"></i>Product Coupon
+                                        <span class="optional-badge">Optional</span>
+                                    </h4>
+                                    
+                                    <div class="row align-items-end g-3">
+                                        <div class="col-md-8">
+                                            <label class="form-label">Associate Existing Coupon</label>
+                                            <select asp-for="CouponId" class="form-select" id="couponSelect">
+                                                <option value="">No coupon - Regular pricing</option>
+                                                @foreach (var coupon in (List<Kokomija.Entity.Coupon>)ViewBag.Coupons)
+                                                {
+                                                    var displayText = $"{coupon.Code} - ";
+                                                    if (coupon.DiscountType == "percentage")
+                                                    {
+                                                        displayText += $"{coupon.DiscountValue}% off";
+                                                    }
+                                                    else
+                                                    {
+                                                        displayText += $"{coupon.DiscountValue} zł off";
+                                                    }
+                                                    <option value="@coupon.Id">@displayText</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button type="button" class="btn btn-outline-success w-100" id="createCouponBtn">
+                                                <i class="bi bi-plus-circle me-1"></i>Create New Coupon
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="coupon-preview mt-3" id="couponPreview" style="display: none;">
+                                        <!-- Will be filled dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Images -->
+                <div class="wizard-step" data-step="4">
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h2 class="step-title">
+                                <span class="step-number">4</span>
+                                Upload Product Images
+                            </h2>
+                            <p class="step-description">High-quality images increase conversions by up to 40%</p>
+                        </div>
+
+                        <div class="image-upload-section">
+                            <!-- Upload Zone -->
+                            <div class="upload-zone" id="dropZone">
+                                <div class="upload-content">
+                                    <div class="upload-icon">
+                                        <i class="bi bi-cloud-arrow-up"></i>
+                                    </div>
+                                    <h4>Drag & drop images here</h4>
+                                    <p>or click to browse</p>
+                                    <button type="button" class="btn btn-primary" id="browseBtn">
+                                        <i class="bi bi-folder2-open me-1"></i>Browse Files
+                                    </button>
+                                    <input type="file" id="imageUpload" class="d-none" accept=".jpg,.jpeg,.png,.webp" multiple />
+                                </div>
+                                <div class="upload-hints">
+                                    <span><i class="bi bi-check-circle text-success"></i> JPG, PNG, WEBP</span>
+                                    <span><i class="bi bi-check-circle text-success"></i> Max 5MB each</span>
+                                    <span><i class="bi bi-check-circle text-success"></i> Recommended: 1000x1000px</span>
+                                </div>
+                            </div>
+
+                            <!-- Image Grid -->
+                            <div class="image-grid" id="imagePreview">
+                                <!-- Images will be added here -->
+                            </div>
+
+                            <!-- Image Tips -->
+                            <div class="image-tips">
+                                <div class="tip">
+                                    <i class="bi bi-lightbulb text-warning"></i>
+                                    <strong>Pro Tip:</strong> The first image becomes the primary. Click the star to change it.
+                                </div>
+                                <div class="tip">
+                                    <i class="bi bi-info-circle text-info"></i>
+                                    <strong>For Packs:</strong> Show the actual pack contents in images (e.g., 5 socks for a 5-pack).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Variants (Colors, Sizes, SKUs) -->
+                <div class="wizard-step" data-step="5">
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h2 class="step-title">
+                                <span class="step-number">5</span>
+                                Configure Variants
+                            </h2>
+                            <p class="step-description">Set up sizes, colors, and stock levels with unique SKUs</p>
+                        </div>
+
+                        <div class="variants-section">
+                            <div class="row g-4">
+                                <!-- Available Sizes -->
+                                <div class="col-md-6">
+                                    <div class="attribute-card">
+                                        <h4 class="attribute-title">
+                                            <i class="bi bi-rulers me-2"></i>Available Sizes
+                                        </h4>
+                                        <div class="size-grid" id="sizeGrid">
+                                            @foreach (var size in Model.AvailableSizes)
+                                            {
+                                                <label class="size-chip">
+                                                    <input type="checkbox" name="SelectedSizeIds" value="@size.Value" class="size-checkbox">
+                                                    <span>@size.Text</span>
+                                                </label>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Available Colors -->
+                                <div class="col-md-6">
+                                    <div class="attribute-card">
+                                        <h4 class="attribute-title">
+                                            <i class="bi bi-palette me-2"></i>Available Colors
+                                        </h4>
+                                        <div class="color-grid" id="colorGrid">
+                                            @foreach (var color in Model.AvailableColors)
+                                            {
+                                                <label class="color-chip" style="--chip-color: @(color.Value == "1" ? "#000" : "#ccc")">
+                                                    <input type="checkbox" name="SelectedColorIds" value="@color.Value" class="color-checkbox">
+                                                    <span class="color-swatch"></span>
+                                                    <span class="color-name">@color.Text</span>
+                                                </label>
+                                            }
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addCustomColorBtn">
+                                            <i class="bi bi-plus-circle me-1"></i>Add Custom Color
+                                        </button>
+                                        <input type="hidden" asp-for="CustomColorHex" id="customColorHex" />
+                                        <input type="hidden" asp-for="CustomColorName" id="customColorName" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Variants Table -->
+                            <div class="variants-builder mt-4">
+                                <div class="variants-header">
+                                    <h4><i class="bi bi-grid-3x3-gap me-2"></i>Product Variants</h4>
+                                    <div class="variant-actions">
+                                        <button type="button" class="btn btn-primary" id="generateVariantsBtn">
+                                            <i class="bi bi-magic me-1"></i>Auto-Generate Variants
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success" id="addVariantBtn">
+                                            <i class="bi bi-plus-circle me-1"></i>Add Custom Variant
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="variants-info">
+                                    <i class="bi bi-info-circle text-info"></i>
+                                    Select sizes and colors above, then click "Auto-Generate" to create all combinations
+                                </div>
+
+                                <div class="variants-table-wrapper">
+                                    <table class="variants-table" id="variantsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>SKU</th>
+                                                <th>Size</th>
+                                                <th>Color</th>
+                                                <th>Stock</th>
+                                                <th>Price Override</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="variantsContainer">
+                                            <!-- Variants will be added here -->
+                                        </tbody>
+                                    </table>
+                                    <div class="no-variants" id="noVariantsMessage">
+                                        <i class="bi bi-boxes"></i>
+                                        <p>No variants yet. Select sizes/colors and generate, or add manually.</p>
+                                    </div>
+                                </div>
+
+                                <!-- SKU Helper -->
+                                <div class="sku-helper mt-3">
+                                    <h5><i class="bi bi-upc-scan me-2"></i>SKU Format Helper</h5>
+                                    <p>SKUs are auto-generated: <code>PROD-[ID]-[SIZE]-[COLOR]</code></p>
+                                    <div class="sku-example">
+                                        Example: <code>PROD-001-M-BLK</code> = Product 001, Size M, Black
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Review & Launch -->
+                <div class="wizard-step" data-step="6">
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h2 class="step-title">
+                                <span class="step-number">6</span>
+                                Review & Launch
+                            </h2>
+                            <p class="step-description">Double-check everything before syncing with Stripe</p>
+                        </div>
+
+                        <div class="review-section">
+                            <!-- Summary Cards -->
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-box2-heart"></i>
+                                            <h5>Product Type</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-value" id="reviewType">Single Item</div>
+                                            <div class="review-value" id="reviewCategory">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-translate"></i>
+                                            <h5>Naming</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-label">English:</div>
+                                            <div class="review-value" id="reviewNameEn">-</div>
+                                            <div class="review-label mt-2">Polish:</div>
+                                            <div class="review-value" id="reviewNamePl">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-currency-dollar"></i>
+                                            <h5>Pricing</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-value price" id="reviewPrice">- zł</div>
+                                            <div class="review-meta" id="reviewBusinessPrice"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-6">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-images"></i>
+                                            <h5>Images</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-images" id="reviewImages">
+                                                <span class="text-muted">No images uploaded</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-grid-3x3-gap"></i>
+                                            <h5>Variants</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-value" id="reviewVariants">0 variants</div>
+                                            <div class="review-meta" id="reviewStock">Total stock: 0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Toggle -->
+                            <div class="status-section mt-4">
+                                <div class="status-card">
+                                    <div class="status-toggle">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="isActiveSwitch" asp-for="IsActive" checked>
+                                            <label class="form-check-label" for="isActiveSwitch">
+                                                <strong>Active</strong> - Visible to customers immediately
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="status-info">
+                                        <i class="bi bi-info-circle"></i>
+                                        <span>You can also save as draft and activate later</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stripe Sync Notice -->
+                            <div class="stripe-notice mt-4">
+                                <div class="stripe-icon">
+                                    <i class="bi bi-stripe"></i>
+                                </div>
+                                <div class="stripe-info">
+                                    <h5>Stripe Integration</h5>
+                                    <p>This product will be automatically synced to Stripe with:</p>
+                                    <ul>
+                                        <li>Product created in Stripe Dashboard</li>
+                                        <li>Price point(s) configured</li>
+                                        <li>Ready for checkout immediately</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="wizard-navigation">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" id="prevBtn" style="display: none;">
+                        <i class="bi bi-arrow-left me-2"></i>Previous
+                    </button>
+                    <div class="step-counter">
+                        Step <span id="currentStep">1</span> of 6
+                    </div>
+                    <button type="button" class="btn btn-primary btn-lg" id="nextBtn">
+                        Next<i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                    <button type="submit" class="btn btn-success btn-lg" id="submitBtn" style="display: none;">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Create Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Color Modal -->
+<div class="modal fade" id="customColorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-palette me-2"></i>Add Custom Color</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Color Name</label>
+                    <input type="text" class="form-control" id="newColorName" placeholder="e.g., Ocean Blue">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Color Code</label>
+                    <div class="input-group">
+                        <input type="color" class="form-control form-control-color" id="newColorPicker" value="#3498db">
+                        <input type="text" class="form-control" id="newColorHex" value="#3498db" maxlength="7">
+                    </div>
+                </div>
+                <div class="color-preview-box" id="colorPreviewBox" style="background-color: #3498db;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomColor">Add Color</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Coupon Modal -->
+<div class="modal fade" id="createCouponModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-ticket-perforated me-2"></i>Create Product Coupon</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Coupon Code</label>
+                        <input type="text" class="form-control" id="newCouponCode" placeholder="SAVE10" style="text-transform: uppercase;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Discount Type</label>
+                        <select class="form-select" id="newCouponType">
+                            <option value="percentage">Percentage (%)</option>
+                            <option value="fixed">Fixed Amount (zł)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Discount Value</label>
+                        <input type="number" class="form-control" id="newCouponValue" placeholder="10" step="0.01" min="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Valid Until (Optional)</label>
+                        <input type="date" class="form-control" id="newCouponExpiry">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Usage Limit (Optional)</label>
+                        <input type="number" class="form-control" id="newCouponLimit" placeholder="Unlimited" min="1">
+                    </div>
+                </div>
+                <div class="coupon-preview-card mt-4" id="newCouponPreview">
+                    <div class="coupon-code">SAVE10</div>
+                    <div class="coupon-discount">10% OFF</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveCouponBtn">
+                    <i class="bi bi-check-circle me-1"></i>Create Coupon
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* ============================================
+           PRODUCT WIZARD STYLES
+           ============================================ */
+        
+        :root {
+            --wizard-primary: #6366f1;
+            --wizard-primary-light: #818cf8;
+            --wizard-success: #22c55e;
+            --wizard-warning: #f59e0b;
+            --wizard-danger: #ef4444;
+            --wizard-bg: #f8fafc;
+            --wizard-card-bg: #ffffff;
+            --wizard-border: #e2e8f0;
+            --wizard-text: #1e293b;
+            --wizard-text-muted: #64748b;
+            --wizard-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --wizard-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-bs-theme="dark"] {
+            --wizard-bg: #0f172a;
+            --wizard-card-bg: #1e293b;
+            --wizard-border: #334155;
+            --wizard-text: #f1f5f9;
+            --wizard-text-muted: #94a3b8;
+            --wizard-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --wizard-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-wizard-container {
+            min-height: 100vh;
+            background: var(--wizard-bg);
+            padding-bottom: 100px;
+        }
+
+        /* Wizard Header */
+        .wizard-header {
+            background: linear-gradient(135deg, var(--wizard-primary), var(--wizard-primary-light));
+            padding: 2rem 1.5rem;
+            color: white;
+        }
+
+        .wizard-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .wizard-subtitle {
+            opacity: 0.9;
+            margin: 0.5rem 0 0;
+        }
+
+        /* Progress Bar */
+        .wizard-progress {
+            margin-top: 2rem;
+        }
+
+        .progress-track {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            width: 16.66%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .step-indicators {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .step-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .step-indicator.active,
+        .step-indicator.completed {
+            opacity: 1;
+        }
+
+        .step-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-indicator.active .step-icon {
+            background: white;
+            color: var(--wizard-primary);
+            transform: scale(1.1);
+        }
+
+        .step-indicator.completed .step-icon {
+            background: var(--wizard-success);
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            max-width: 80px;
+        }
+
+        /* Wizard Content */
+        .wizard-content {
+            padding: 2rem 1.5rem;
+        }
+
+        .wizard-step {
+            display: none;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        .wizard-step.active {
+            display: block;
+        }
+
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .step-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--wizard-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--wizard-primary);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .step-description {
+            color: var(--wizard-text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Selection Cards */
+        .selection-card {
+            background: var(--wizard-card-bg);
+            border: 1px solid var(--wizard-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .selection-card:hover {
+            box-shadow: var(--wizard-shadow-lg);
+        }
+
+        .selection-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--wizard-text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .optional-badge, .required-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
+
+        .optional-badge {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .required-badge {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        [data-bs-theme="dark"] .optional-badge {
+            background: rgba(79, 70, 229, 0.2);
+            color: #a5b4fc;
+        }
+
+        [data-bs-theme="dark"] .required-badge {
+            background: rgba(180, 83, 9, 0.2);
+            color: #fcd34d;
+        }
+
+        /* Type Options */
+        .type-options, .collection-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .type-option, .collection-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 2px solid var(--wizard-border);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .type-option:hover, .collection-option:hover {
+            border-color: var(--wizard-primary-light);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .type-option.selected, .collection-option.selected {
+            border-color: var(--wizard-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .type-icon, .collection-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            background: var(--wizard-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .type-icon.pack-icon { background: #8b5cf6; }
+        .collection-icon.existing-icon { background: #10b981; }
+
+        .type-info h5, .collection-info h5 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--wizard-text);
+        }
+
+        .type-info p, .collection-info p {
+            margin: 0.25rem 0 0;
+            font-size: 0.85rem;
+            color: var(--wizard-text-muted);
+        }
+
+        .type-check, .collection-check {
+            margin-left: auto;
+            font-size: 1.5rem;
+            color: var(--wizard-primary);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .type-option.selected .type-check,
+        .collection-option.selected .collection-check {
+            opacity: 1;
+            animation: bounceIn 0.3s ease;
+        }
+
+        @@keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Pack Size Selector */
+        .pack-size-input {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--wizard-border);
+            animation: slideDown 0.3s ease;
+        }
+
+        @@keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pack-size-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pack-btn {
+            padding: 0.75rem 1.25rem;
+            border: 2px solid var(--wizard-border);
+            border-radius: 0.5rem;
+            background: transparent;
+            font-weight: 600;
+            color: var(--wizard-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pack-btn:hover {
+            border-color: var(--wizard-primary);
+            color: var(--wizard-primary);
+        }
+
+        .pack-btn.active {
+            background: var(--wizard-primary);
+            border-color: var(--wizard-primary);
+            color: white;
+        }
+
+        .pack-custom {
+            width: 100px;
+        }
+
+        /* Collection Hint */
+        .collection-hint {
+            background: rgba(245, 158, 11, 0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--wizard-text);
+        }
+
+        /* Category Tree */
+        .category-search-box {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .category-search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--wizard-text-muted);
+        }
+
+        .category-search-box input {
+            padding-left: 2.75rem;
+        }
+
+        .category-tree {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--wizard-border);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .category-node {
+            margin: 0.25rem 0;
+        }
+
+        .category-item {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .category-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .category-item.selected {
+            background: var(--wizard-primary);
+            color: white;
+        }
+
+        .subcategories {
+            padding-left: 1.5rem;
+        }
+
+        .selected-category {
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--wizard-text-muted);
+        }
+
+        .selected-category.has-selection {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--wizard-success);
+        }
+
+        /* Language Tabs */
+        .language-tabs {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+        }
+
+        .language-tab-list {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--wizard-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .language-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-weight: 500;
+            color: var(--wizard-text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .language-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--wizard-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .language-tab.active {
+            color: var(--wizard-primary);
+        }
+
+        .language-tab.active::after {
+            transform: scaleX(1);
+        }
+
+        .language-tab .flag {
+            font-size: 1.25rem;
+        }
+
+        .language-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .language-content.active {
+            display: block;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .ai-hint {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Pricing Cards */
+        .pricing-card {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+            height: 100%;
+        }
+
+        .pricing-card.retail {
+            border-top: 4px solid var(--wizard-primary);
+        }
+
+        .pricing-card.business {
+            border-top: 4px solid #10b981;
+        }
+
+        .pricing-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-header i {
+            font-size: 1.5rem;
+            color: var(--wizard-primary);
+        }
+
+        .pricing-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .price-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--wizard-bg);
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .price-input-wrapper .currency {
+            font-weight: 600;
+            color: var(--wizard-text-muted);
+        }
+
+        .price-input {
+            border: none;
+            background: transparent;
+            font-size: 2rem;
+            font-weight: 700;
+            width: 100%;
+            color: var(--wizard-text);
+        }
+
+        .price-input:focus {
+            outline: none;
+        }
+
+        .price-breakdown {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--wizard-border);
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            color: var(--wizard-text-muted);
+        }
+
+        .stripe-sync-info {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--wizard-primary);
+        }
+
+        .business-savings {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 3px dashed var(--wizard-border);
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--wizard-card-bg);
+        }
+
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--wizard-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--wizard-primary);
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @@keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-zone h4 {
+            margin: 0;
+            color: var(--wizard-text);
+        }
+
+        .upload-zone p {
+            color: var(--wizard-text-muted);
+            margin: 0.5rem 0 1rem;
+        }
+
+        .upload-hints {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--wizard-text-muted);
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .image-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: var(--wizard-shadow);
+            animation: scaleIn 0.3s ease;
+        }
+
+        @@keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.5rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-item:hover .image-actions {
+            opacity: 1;
+        }
+
+        .image-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .image-action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .image-action-btn.primary-btn {
+            background: #fbbf24;
+            color: #78350f;
+        }
+
+        .image-action-btn.primary-btn.active {
+            background: #f59e0b;
+        }
+
+        .image-action-btn.delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .primary-badge {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: #fbbf24;
+            color: #78350f;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .image-tips {
+            margin-top: 2rem;
+        }
+
+        .image-tips .tip {
+            padding: 0.75rem 1rem;
+            background: var(--wizard-card-bg);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Variants Section */
+        .attribute-card {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+            height: 100%;
+        }
+
+        .attribute-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--wizard-text);
+        }
+
+        .size-grid, .color-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .size-chip, .color-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--wizard-border);
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .size-chip:has(input:checked), .color-chip:has(input:checked) {
+            border-color: var(--wizard-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .color-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--chip-color, #ccc);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .variants-builder {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+        }
+
+        .variants-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .variants-header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .variants-info {
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .variants-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .variants-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .variants-table th {
+            background: var(--wizard-bg);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--wizard-text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .variants-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--wizard-border);
+        }
+
+        .variants-table input {
+            border: 1px solid var(--wizard-border);
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            width: 100%;
+            max-width: 120px;
+        }
+
+        .no-variants {
+            text-align: center;
+            padding: 3rem;
+            color: var(--wizard-text-muted);
+        }
+
+        .no-variants i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .sku-helper {
+            padding: 1rem;
+            background: var(--wizard-bg);
+            border-radius: 0.5rem;
+        }
+
+        .sku-helper h5 {
+            margin: 0 0 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .sku-example {
+            font-family: monospace;
+            color: var(--wizard-primary);
+        }
+
+        /* Review Section */
+        .review-card {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: var(--wizard-shadow);
+        }
+
+        .review-card-header {
+            padding: 1rem;
+            background: var(--wizard-bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .review-card-header i {
+            font-size: 1.25rem;
+            color: var(--wizard-primary);
+        }
+
+        .review-card-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .review-card-body {
+            padding: 1rem;
+        }
+
+        .review-label {
+            font-size: 0.8rem;
+            color: var(--wizard-text-muted);
+            text-transform: uppercase;
+        }
+
+        .review-value {
+            font-weight: 600;
+            color: var(--wizard-text);
+        }
+
+        .review-value.price {
+            font-size: 1.5rem;
+            color: var(--wizard-primary);
+        }
+
+        .review-meta {
+            font-size: 0.85rem;
+            color: var(--wizard-text-muted);
+        }
+
+        .review-images {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .review-images img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+
+        .status-card {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+        }
+
+        .status-info {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--wizard-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stripe-notice {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #635bff20, #a259ff20);
+            border-radius: 1rem;
+            border: 1px solid #635bff40;
+        }
+
+        .stripe-icon {
+            width: 60px;
+            height: 60px;
+            background: #635bff;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .stripe-info h5 {
+            margin: 0 0 0.5rem;
+            color: #635bff;
+        }
+
+        .stripe-info p {
+            margin: 0 0 0.5rem;
+            color: var(--wizard-text);
+        }
+
+        .stripe-info ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            color: var(--wizard-text-muted);
+        }
+
+        /* Navigation */
+        .wizard-navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--wizard-card-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1050;
+            border-top: 1px solid var(--wizard-border);
+        }
+
+        /* Ensure wizard content doesn't go under navigation */
+        .product-wizard-container {
+            padding-bottom: 100px !important;
+        }
+
+        .wizard-content {
+            padding: 2rem 1.5rem 120px !important;
+        }
+
+        .step-counter {
+            font-weight: 500;
+            color: var(--wizard-text-muted);
+        }
+
+        /* Image Upload Loading States */
+        .image-item.uploading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .image-item.uploading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 32px;
+            height: 32px;
+            margin: -16px 0 0 -16px;
+            border: 3px solid var(--wizard-primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @@keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Dark theme specific fixes */
+        [data-bs-theme="dark"] .wizard-navigation {
+            background: #1e293b;
+            border-top-color: #334155;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-bs-theme="dark"] .upload-zone {
+            border-color: #475569;
+        }
+
+        [data-bs-theme="dark"] .upload-zone:hover,
+        [data-bs-theme="dark"] .upload-zone.drag-over {
+            border-color: var(--wizard-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background-color: #1e293b;
+            border-color: var(--wizard-primary);
+            color: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] .form-floating > label {
+            color: #94a3b8;
+        }
+
+        [data-bs-theme="dark"] .btn-outline-secondary {
+            color: #94a3b8;
+            border-color: #475569;
+        }
+
+        [data-bs-theme="dark"] .btn-outline-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] .modal-content {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        [data-bs-theme="dark"] .modal-header {
+            border-bottom-color: #334155;
+        }
+
+        [data-bs-theme="dark"] .modal-footer {
+            border-top-color: #334155;
+        }
+
+        [data-bs-theme="dark"] .image-item {
+            background: #1e293b;
+        }
+
+        [data-bs-theme="dark"] .primary-badge {
+            background: #f59e0b;
+            color: #78350f;
+        }
+
+        /* Modals */
+        .color-preview-box {
+            height: 60px;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .coupon-preview-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            color: white;
+            text-align: center;
+        }
+
+        .coupon-code {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+
+        .coupon-discount {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .step-label { display: none; }
+            .step-icon { width: 36px; height: 36px; font-size: 1rem; }
+            .wizard-navigation { padding: 0.75rem 1rem; }
+        }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        $(document).ready(function() {
+            // === STORAGE KEYS ===
+            const STORAGE_KEY = 'product_wizard_data';
+            const IMAGE_STORAGE_KEY = 'product_wizard_images';
+
+            // === STATE ===
+            let currentStep = 1;
+            const totalSteps = 6;
+            let tempImageFileNames = [];
+            let primaryImageFileName = null;
+            let variantIndex = 0;
+
+            // === FORM PERSISTENCE (like blog) ===
+            function saveFormToStorage() {
+                const formData = {
+                    step: currentStep,
+                    productType: $('input[name="productType"]:checked').val(),
+                    packSize: $('#packSizeInput').val(),
+                    collectionType: $('input[name="collectionType"]:checked').val(),
+                    productGroupId: $('#productGroupSelect').val(),
+                    categoryId: $('#selectedCategoryId').val(),
+                    categoryDisplay: $('#selectedCategoryDisplay').html(),
+                    nameEn: $('#nameEn').val(),
+                    descEn: $('#descEn').val(),
+                    slugEn: $('#slugEn').val(),
+                    metaDescEn: $('#metaDescEn').val(),
+                    keywordsEn: $('#keywordsEn').val(),
+                    namePl: $('#namePl').val(),
+                    descPl: $('#descPl').val(),
+                    slugPl: $('#slugPl').val(),
+                    metaDescPl: $('#metaDescPl').val(),
+                    keywordsPl: $('#keywordsPl').val(),
+                    retailPrice: $('#retailPrice').val(),
+                    businessPrice: $('#businessPrice').val(),
+                    minBusinessQty: $('#minBusinessQty').val(),
+                    isAvailableForBusiness: $('#enableBusinessPrice').is(':checked'),
+                    isBusinessOnly: $('#businessOnly').is(':checked'),
+                    couponId: $('#couponSelect').val(),
+                    selectedSizes: $('input[name="SelectedSizeIds"]:checked').map(function() { return $(this).val(); }).get(),
+                    selectedColors: $('input[name="SelectedColorIds"]:checked').map(function() { return $(this).val(); }).get(),
+                    isActive: $('#isActiveSwitch').is(':checked'),
+                    timestamp: new Date().toISOString()
+                };
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+                console.log('📦 Product wizard data saved to storage');
+            }
+
+            function saveImagesToStorage() {
+                const imageData = {
+                    fileNames: tempImageFileNames,
+                    primaryFileName: primaryImageFileName,
+                    timestamp: new Date().toISOString()
+                };
+                sessionStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(imageData));
+                console.log('🖼️ Images saved to storage:', tempImageFileNames.length);
+            }
+
+            function loadFromStorage() {
+                try {
+                    const savedData = sessionStorage.getItem(STORAGE_KEY);
+                    if (!savedData) return false;
+
+                    const data = JSON.parse(savedData);
+                    
+                    // Only restore if saved within last hour
+                    const savedTime = new Date(data.timestamp);
+                    const hourAgo = new Date(Date.now() - 3600000);
+                    if (savedTime < hourAgo) {
+                        clearStorage();
+                        return false;
+                    }
+
+                    console.log('📂 Restoring product wizard from storage...');
+
+                    // Restore step 1
+                    if (data.productType) {
+                        $(`.type-option[data-type="${data.productType}"]`).click();
+                    }
+                    if (data.packSize) {
+                        $('#packSizeInput').val(data.packSize);
+                        if (data.packSize > 1) {
+                            $('#packSizeContainer').show();
+                            $(`.pack-btn[data-pack="${data.packSize}"]`).addClass('active');
+                        }
+                    }
+                    if (data.collectionType) {
+                        $(`.collection-option[data-collection="${data.collectionType}"]`).click();
+                    }
+                    if (data.productGroupId) {
+                        $('#productGroupSelect').val(data.productGroupId);
+                    }
+                    if (data.categoryId) {
+                        $('#selectedCategoryId').val(data.categoryId);
+                        $(`.category-node[data-id="${data.categoryId}"] .category-item`).addClass('selected');
+                    }
+                    if (data.categoryDisplay) {
+                        $('#selectedCategoryDisplay').html(data.categoryDisplay).addClass('has-selection');
+                    }
+
+                    // Restore step 2
+                    if (data.nameEn) $('#nameEn').val(data.nameEn);
+                    if (data.descEn) $('#descEn').val(data.descEn);
+                    if (data.slugEn) $('#slugEn').val(data.slugEn);
+                    if (data.metaDescEn) $('#metaDescEn').val(data.metaDescEn);
+                    if (data.keywordsEn) $('#keywordsEn').val(data.keywordsEn);
+                    if (data.namePl) $('#namePl').val(data.namePl);
+                    if (data.descPl) $('#descPl').val(data.descPl);
+                    if (data.slugPl) $('#slugPl').val(data.slugPl);
+                    if (data.metaDescPl) $('#metaDescPl').val(data.metaDescPl);
+                    if (data.keywordsPl) $('#keywordsPl').val(data.keywordsPl);
+
+                    // Restore step 3
+                    if (data.retailPrice) $('#retailPrice').val(data.retailPrice);
+                    if (data.businessPrice) $('#businessPrice').val(data.businessPrice);
+                    if (data.minBusinessQty) $('#minBusinessQty').val(data.minBusinessQty);
+                    if (data.isAvailableForBusiness) {
+                        $('#enableBusinessPrice').prop('checked', true);
+                        $('#businessFields').show();
+                    }
+                    if (data.isBusinessOnly) $('#businessOnly').prop('checked', true);
+                    if (data.couponId) $('#couponSelect').val(data.couponId);
+
+                    // Restore step 5
+                    if (data.selectedSizes) {
+                        data.selectedSizes.forEach(sizeId => {
+                            $(`input[name="SelectedSizeIds"][value="${sizeId}"]`).prop('checked', true);
+                        });
+                    }
+                    if (data.selectedColors) {
+                        data.selectedColors.forEach(colorId => {
+                            $(`input[name="SelectedColorIds"][value="${colorId}"]`).prop('checked', true);
+                        });
+                    }
+
+                    // Restore step 6
+                    if (data.isActive !== undefined) {
+                        $('#isActiveSwitch').prop('checked', data.isActive);
+                    }
+
+                    // Restore images
+                    loadImagesFromStorage();
+
+                    return true;
+                } catch (e) {
+                    console.error('Error loading from storage:', e);
+                    return false;
+                }
+            }
+
+            function loadImagesFromStorage() {
+                try {
+                    const savedImages = sessionStorage.getItem(IMAGE_STORAGE_KEY);
+                    if (!savedImages) return;
+
+                    const data = JSON.parse(savedImages);
+                    if (data.fileNames && data.fileNames.length > 0) {
+                        // Filter out invalid filenames (fixing previous null bug issues)
+                        const validNames = data.fileNames.filter(f => f && f !== 'null' && f !== 'undefined');
+                        
+                        // Ensure Uniqueness
+                        tempImageFileNames = [...new Set(validNames)];
+                        primaryImageFileName = data.primaryFileName || tempImageFileNames[0];
+
+                        // Clear existing previews to prevent duplication
+                        $('#imagePreview').empty();
+                        
+                        // Rebuild image previews
+                        tempImageFileNames.forEach(fileName => {
+                            const url = `/img/Products/temp/${fileName}`;
+                            addImagePreview(url, fileName);
+                        });
+                        
+                        updateHiddenInput();
+                        console.log('🖼️ Restored', tempImageFileNames.length, 'images from storage');
+                    }
+                } catch (e) {
+                    console.error('Error loading images from storage:', e);
+                }
+            }
+
+            function clearStorage() {
+                sessionStorage.removeItem(STORAGE_KEY);
+                sessionStorage.removeItem(IMAGE_STORAGE_KEY);
+                console.log('🗑️ Storage cleared');
+            }
+
+            // Auto-save on form changes
+            function setupAutoSave() {
+                // Debounce save
+                let saveTimeout;
+                const debouncedSave = () => {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(saveFormToStorage, 1000);
+                };
+
+                // Track all input changes
+                $('input, select, textarea').on('change input', debouncedSave);
+            }
+
+            // === STEP NAVIGATION ===
+            function updateProgress() {
+                const progressPercent = (currentStep / totalSteps) * 100;
+                $('#progressFill').css('width', progressPercent + '%');
+                $('#currentStep').text(currentStep);
+
+                // Update step indicators
+                $('.step-indicator').each(function() {
+                    const step = $(this).data('step');
+                    $(this).removeClass('active completed');
+                    if (step < currentStep) {
+                        $(this).addClass('completed');
+                    } else if (step === currentStep) {
+                        $(this).addClass('active');
+                    }
+                });
+
+                // Update navigation buttons
+                $('#prevBtn').toggle(currentStep > 1);
+                $('#nextBtn').toggle(currentStep < totalSteps);
+                $('#submitBtn').toggle(currentStep === totalSteps);
+            }
+
+            function goToStep(step) {
+                if (step < 1 || step > totalSteps) return;
+                
+                // Validate current step before moving forward
+                if (step > currentStep && !validateStep(currentStep)) {
+                    return;
+                }
+
+                // Animate out current step
+                $(`.wizard-step[data-step="${currentStep}"]`).removeClass('active');
+                
+                // Update current step
+                currentStep = step;
+                
+                // Animate in new step
+                setTimeout(() => {
+                    $(`.wizard-step[data-step="${currentStep}"]`).addClass('active');
+                    updateProgress();
+                    
+                    // Update review section if on last step
+                    if (currentStep === 6) {
+                        updateReviewSection();
+                    }
+                }, 50);
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            function validateStep(step) {
+                switch(step) {
+                    case 1:
+                        if (!$('#selectedCategoryId').val()) {
+                            showToast('Please select a category', 'warning');
+                            return false;
+                        }
+                        return true;
+                    case 2:
+                        const nameEn = $('#nameEn').val().trim();
+                        const descEn = $('#descEn').val().trim();
+                        if (!nameEn || !descEn) {
+                            showToast('Please fill in the English name and description', 'warning');
+                            return false;
+                        }
+                        // Set default values
+                        $('#defaultName').val(nameEn);
+                        $('#defaultDescription').val(descEn);
+                        return true;
+                    case 3:
+                        const price = parseFloat($('#retailPrice').val());
+                        if (!price || price <= 0) {
+                            showToast('Please enter a valid price', 'warning');
+                            return false;
+                        }
+                        return true;
+                    case 4:
+                        if (tempImageFileNames.length === 0) {
+                            showToast('No images uploaded — you can still create the product', 'info');
+                        }
+                        return true;
+                    default:
+                        return true;
+                }
+            }
+
+            function showToast(message, type = 'info') {
+                // Simple toast notification
+                const toast = $(`<div class="toast-notification ${type}">${message}</div>`);
+                $('body').append(toast);
+                setTimeout(() => toast.addClass('show'), 10);
+                setTimeout(() => {
+                    toast.removeClass('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            $('#nextBtn').click(() => goToStep(currentStep + 1));
+            $('#prevBtn').click(() => goToStep(currentStep - 1));
+            
+            // Allow clicking on step indicators
+            $('.step-indicator').click(function() {
+                const step = $(this).data('step');
+                if (step <= currentStep + 1) {
+                    goToStep(step);
+                }
+            });
+
+            // === STEP 1: TYPE & COLLECTION ===
+            $('.type-option').click(function() {
+                $('.type-option').removeClass('selected');
+                $(this).addClass('selected');
+                $(this).find('input[type="radio"]').prop('checked', true);
+                
+                const type = $(this).data('type');
+                if (type === 'pack') {
+                    $('#packSizeContainer').slideDown(300);
+                    $('#packSizeInput').val(3); // Default pack size
+                    $('.pack-btn[data-pack="3"]').addClass('active');
+                } else {
+                    $('#packSizeContainer').slideUp(300);
+                    $('#packSizeInput').val(1);
+                }
+            });
+
+            // Pack size buttons
+            $('.pack-btn').click(function() {
+                $('.pack-btn').removeClass('active');
+                $(this).addClass('active');
+                $('#packSizeInput').val($(this).data('pack'));
+                $('#customPackSize').val('');
+            });
+
+            $('#customPackSize').on('input', function() {
+                const val = $(this).val();
+                if (val) {
+                    $('.pack-btn').removeClass('active');
+                    $('#packSizeInput').val(val);
+                }
+            });
+
+            // Collection options
+            $('.collection-option').click(function() {
+                $('.collection-option').removeClass('selected');
+                $(this).addClass('selected');
+                $(this).find('input[type="radio"]').prop('checked', true);
+                
+                const type = $(this).data('collection');
+                if (type === 'existing') {
+                    $('#existingCollectionContainer').slideDown(300);
+                } else {
+                    $('#existingCollectionContainer').slideUp(300);
+                    $('#productGroupSelect').val('');
+                }
+            });
+
+            // Category selection
+            $('.category-item').click(function(e) {
+                e.stopPropagation();
+                $('.category-item').removeClass('selected');
+                $(this).addClass('selected');
+                
+                const node = $(this).closest('.category-node');
+                const id = node.data('id');
+                const name = node.data('name');
+                const parent = node.data('parent');
+                
+                $('#selectedCategoryId').val(id);
+                
+                const displayName = parent ? `${parent} > ${name}` : name;
+                $('#selectedCategoryDisplay')
+                    .addClass('has-selection')
+                    .html(`<i class="bi bi-check-circle text-success"></i> <span>${displayName}</span>`);
+            });
+
+            // Category search
+            $('#categorySearch').on('input', function() {
+                const search = $(this).val().toLowerCase();
+                $('.category-node').each(function() {
+                    const name = $(this).data('name').toLowerCase();
+                    $(this).toggle(name.includes(search));
+                });
+            });
+
+            // === STEP 2: NAMING ===
+            $('.language-tab').click(function() {
+                const lang = $(this).data('lang');
+                $('.language-tab').removeClass('active');
+                $(this).addClass('active');
+                $('.language-content').removeClass('active');
+                $(`.language-content[data-lang="${lang}"]`).addClass('active');
+            });
+
+            // Auto-slug generation and Button Enable
+            $('#nameEn, #namePl').on('input', function() {
+                const id = $(this).attr('id');
+                const lang = id.replace('name', ''); // En or Pl
+                const name = $(this).val();
+                
+                // Only generate slug if it's English (or maybe Polish too? standard allows both but usually English slugs are preferred)
+                // Keeping original slug logic for English
+                if (id === 'nameEn') {
+                    const slug = name.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-|-$/g, '');
+                    $('#slugEn').attr('placeholder', slug);
+                }
+
+                // Enable translate button if current tab's name is filled
+                const activeTab = $('.language-tab.active').data('lang');
+                const currentNameVal = activeTab === 'en' ? $('#nameEn').val() : $('#namePl').val();
+                
+                if (currentNameVal && currentNameVal.trim()) {
+                    $('#autoTranslateBtn').prop('disabled', false);
+                }
+            });
+
+            // Update button text on tab switch
+            $('.language-tab').click(function() {
+                const lang = $(this).data('lang');
+                $('.language-tab').removeClass('active');
+                $(this).addClass('active');
+                $('.language-content').removeClass('active');
+                $(`.language-content[data-lang="${lang}"]`).addClass('active');
+                
+                // Update button state based on new tab
+                const currentNameVal = lang === 'en' ? $('#nameEn').val() : $('#namePl').val();
+                
+                const btnText = lang === 'en' ? 'Auto-Translate to Polish' : 'Auto-Translate to English';
+                $('#autoTranslateBtn').html(`<i class="bi bi-translate me-1"></i> ${btnText}`);
+                
+                if (currentNameVal && currentNameVal.trim()) {
+                    $('#autoTranslateBtn').prop('disabled', false);
+                } else {
+                    $('#autoTranslateBtn').prop('disabled', true);
+                }
+            });
+
+            // === AUTO-TRANSLATE FUNCTIONALITY (BI-DIRECTIONAL) ===
+            $('#autoTranslateBtn').click(async function() {
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                
+                // Determine direction based on active tab
+                const activeLang = $('.language-tab.active').data('lang') || 'en'; // active tab determines TARGET
+                const isEnAcc = activeLang === 'en'; // English tab active -> We want to translate TO the OTHER tab (Polish)
+                
+                // Use auto-detection for source language to handle mixed content (e.g. typing Polish in English tab)
+                const sourceLangCode = 'autodetect'; 
+                const targetLangCode = isEnAcc ? 'pl' : 'en'; // Target is always the OTHER language based on tab structure
+                
+                const sourcePrefix = isEnAcc ? 'En' : 'Pl';
+                const targetPrefix = isEnAcc ? 'Pl' : 'En';
+
+                // Get Source Values
+                const nameVal = $(`#name${sourcePrefix}`).val()?.trim();
+                const descVal = $(`#desc${sourcePrefix}`).val()?.trim();
+                const metaDescVal = $(`#metaDesc${sourcePrefix}`).val()?.trim();
+                const keywordsVal = $(`#keywords${sourcePrefix}`).val()?.trim();
+                
+                if (!nameVal) {
+                    showToast(`Please enter ${isEnAcc ? 'English' : 'Polish'} name first`, 'warning');
+                    return;
+                }
+                
+                // Show loading state
+                $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Translating...');
+                
+                try {
+                    const response = await fetch('@Url.Action("TranslateContent", "AdminProduct")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        body: JSON.stringify({
+                            sourceLanguage: sourceLangCode,
+                            targetLanguage: targetLangCode,
+                            name: nameVal,
+                            description: descVal,
+                            metaDescription: metaDescVal,
+                            metaKeywords: keywordsVal
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.translations) {
+                        // Fill in Target fields
+                        if (data.translations.name) {
+                            $(`#name${targetPrefix}`).val(data.translations.name);
+                        }
+                        if (data.translations.description) {
+                            $(`#desc${targetPrefix}`).val(data.translations.description);
+                        }
+                        if (data.translations.slug) {
+                             $(`#slug${targetPrefix}`).val(data.translations.slug);
+                        }
+                        if (data.translations.metaDescription) {
+                            $(`#metaDesc${targetPrefix}`).val(data.translations.metaDescription);
+                        }
+                        if (data.translations.metaKeywords) {
+                            $(`#keywords${targetPrefix}`).val(data.translations.metaKeywords);
+                        }
+                        
+                        const targetNameStr = isEnAcc ? 'Polish' : 'English';
+                        showToast(`Translation to ${targetNameStr} completed!`, 'success');
+                        
+                        // Switch to Target tab to show results
+                        $(`.language-tab[data-lang="${targetLangCode}"]`).click();
+                    } else {
+                        showToast(data.message || 'Translation failed.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    showToast('Translation service unavailable.', 'error');
+                } finally {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+
+            // === SEO ANALYSIS ===
+            function updateSEOAnalysis() {
+                const activeTab = $('.language-tab.active').data('lang') || 'en';
+                const suffix = activeTab === 'en' ? 'En' : 'Pl';
+                
+                const name = $(`#name${suffix}`).val() || '';
+                const desc = $(`#desc${suffix}`).val() || '';
+                const slug = $(`#slug${suffix}`).val() || '';
+                const metaDesc = $(`#metaDesc${suffix}`).val() || '';
+                const keywords = $(`#keywords${suffix}`).val() || '';
+                
+                let score = 0;
+                let maxScore = 5; // 5 checks
+                let checks = [];
+
+                // 1. Title Length (10-60 chars)
+                if (name.length >= 10 && name.length <= 60) {
+                    score++;
+                    checks.push({ status: 'pass', msg: 'Product Name length is optimal (10-60 chars)' });
+                } else if (name.length > 60) {
+                    checks.push({ status: 'warn', msg: 'Product Name is too long (> 60 chars). It may be truncated in search results.' });
+                } else {
+                    checks.push({ status: 'fail', msg: 'Product Name is too short. Use descriptive keywords.' });
+                }
+
+                // 2. Description Length (> 100 chars)
+                if (desc.length >= 100) {
+                    score++;
+                    checks.push({ status: 'pass', msg: 'Description provides good detail' });
+                } else {
+                    checks.push({ status: 'warn', msg: 'Description is too short. Detailed content ranks better.' });
+                }
+
+                // 3. Slug Format
+                if (slug && /^[a-z0-9-]+$/.test(slug)) {
+                    score++;
+                    checks.push({ status: 'pass', msg: 'URL Slug format is correct' });
+                } else if (!slug) {
+                    checks.push({ status: 'warn', msg: 'URL Slug is empty (will be auto-generated)' });
+                } else {
+                    checks.push({ status: 'fail', msg: 'URL Slug contains invalid characters. Use lowercase letters, numbers, and dashes.' });
+                }
+
+                // 4. Meta Description (120-160 chars)
+                if (metaDesc.length >= 120 && metaDesc.length <= 160) {
+                    score++;
+                    checks.push({ status: 'pass', msg: 'Meta Description length is perfect' });
+                } else if (metaDesc.length > 160) {
+                    checks.push({ status: 'warn', msg: 'Meta Description is too long (> 160 chars)' });
+                } else {
+                    checks.push({ status: 'warn', msg: 'Meta Description is missing or too short' });
+                }
+
+                // 5. Keyword in Title/Desc
+                const keywordList = keywords.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
+                if (keywordList.length > 0) {
+                    const hasKeywordInTitle = keywordList.some(k => name.toLowerCase().includes(k));
+                    const hasKeywordInDesc = keywordList.some(k => desc.toLowerCase().includes(k));
+                    
+                    if (hasKeywordInTitle && hasKeywordInDesc) {
+                        score++;
+                        checks.push({ status: 'pass', msg: 'Keywords found in both Name and Description' });
+                    } else if (hasKeywordInTitle || hasKeywordInDesc) {
+                        score += 0.5;
+                        checks.push({ status: 'warn', msg: 'Keywords found in one field. Include them in both for better SEO.' });
+                    } else {
+                        checks.push({ status: 'fail', msg: 'Keywords not found in Name or Description' });
+                    }
+                } else {
+                     checks.push({ status: 'warn', msg: 'No Meta Keywords defined' });
+                }
+
+                // Calculate Score Percentage
+                const percentage = Math.round((score / maxScore) * 100);
+                
+                // Update UI
+                $('#seoScoreValue').text(percentage);
+                const dashOffset = 100 - percentage;
+                $('#seoScorePath').css('stroke-dashoffset', dashOffset);
+                
+                // Update Color
+                let color = '#ef4444'; // Red
+                let text = 'Poor optimization';
+                
+                if (percentage >= 80) {
+                    color = '#10b981'; // Green
+                    text = 'Excellent optimization!';
+                } else if (percentage >= 50) {
+                    color = '#f59e0b'; // Amber
+                    text = 'Good start, needs improvement';
+                }
+                
+                $('#seoScorePath').attr('stroke', color);
+                $('#seoStatusText').text(text).css('color', color);
+
+                // Render Checks
+                const checklistHtml = checks.map(c => {
+                    let icon = 'bi-check-circle-fill';
+                    if (c.status === 'warn') icon = 'bi-exclamation-circle-fill';
+                    if (c.status === 'fail') icon = 'bi-x-circle-fill';
+                    
+                    return `
+                        <div class="seo-check-item ${c.status}">
+                            <i class="bi ${icon}"></i>
+                            <span>${c.msg}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                $('.seo-checklist').html(checklistHtml);
+            }
+
+            // Bind SEO events
+            const seoInputs = '#nameEn, #descEn, #slugEn, #metaDescEn, #keywordsEn, #namePl, #descPl, #slugPl, #metaDescPl, #keywordsPl';
+            $(document).on('input change', seoInputs, updateSEOAnalysis);
+            $('.language-tab').on('click', function() { setTimeout(updateSEOAnalysis, 50); });
+
+            // Initial run
+            updateSEOAnalysis();
+
+            function updatePriceBreakdown() {
+                const price = parseFloat($('#retailPrice').val()) || 0;
+                const packSize = parseInt($('#packSizeInput').val()) || 1;
+                
+                const pricePerItem = (price / packSize).toFixed(2);
+                const vatAmount = (price * 0.23 / 1.23).toFixed(2);
+                
+                $('#pricePerItem').text(pricePerItem + ' zł');
+                $('#vatAmount').text(vatAmount + ' zł');
+                
+                // Business savings
+                const businessPrice = parseFloat($('#businessPrice').val()) || 0;
+                if (businessPrice && businessPrice < price) {
+                    const savings = ((1 - businessPrice / price) * 100).toFixed(0);
+                    $('#savingsAmount').text(savings + '%');
+                    $('#businessSavings').show();
+                } else {
+                    $('#businessSavings').hide();
+                }
+            }
+
+            $('#retailPrice, #packSizeInput, #businessPrice').on('input', updatePriceBreakdown);
+
+            $('#enableBusinessPrice').change(function() {
+                $('#businessFields').toggle(this.checked);
+            });
+
+            // Coupon preview
+            $('#couponSelect').change(function() {
+                const selected = $(this).find('option:selected');
+                if (selected.val()) {
+                    $('#couponPreview').html(`
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-ticket-perforated me-2"></i>
+                            Coupon <strong>${selected.text()}</strong> will be associated with this product
+                        </div>
+                    `).show();
+                } else {
+                    $('#couponPreview').hide();
+                }
+            });
+
+            $('#createCouponBtn').click(() => $('#createCouponModal').modal('show'));
+
+            // === STEP 4: IMAGES ===
+            const dropZone = document.getElementById('dropZone');
+            const imageUpload = document.getElementById('imageUpload');
+            const browseBtn = document.getElementById('browseBtn');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'));
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'));
+            });
+
+            dropZone.addEventListener('drop', e => {
+                const files = e.dataTransfer.files;
+                handleFiles(files);
+            });
+
+            browseBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                imageUpload.click();
+            });
+
+            dropZone.addEventListener('click', () => imageUpload.click());
+
+            imageUpload.addEventListener('change', e => {
+                handleFiles(e.target.files);
+                e.target.value = '';
+            });
+
+            async function handleFiles(files) {
+                for (const file of files) {
+                    await uploadFile(file);
+                }
+            }
+
+            async function uploadFile(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/AdminProduct/UploadImage', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        tempImageFileNames.push(result.tempFileName);
+                        if (!primaryImageFileName) {
+                            primaryImageFileName = result.tempFileName;
+                        }
+                        addImagePreview(result.tempUrl, result.tempFileName);
+                        updateHiddenInput();
+                        saveImagesToStorage(); // Save to session storage
+                    } else {
+                        showToast('Failed to upload: ' + result.message, 'error');
+                    }
+                } catch (error) {
+                    showToast('Upload error: ' + error.message, 'error');
+                }
+            }
+
+            function addImagePreview(url, fileName) {
+                const isPrimary = fileName === primaryImageFileName;
+                const html = `
+                    <div class="image-item" data-filename="${fileName}">
+                        ${isPrimary ? '<span class="primary-badge">PRIMARY</span>' : ''}
+                        <img src="${url}" alt="Product image">
+                        <div class="image-actions">
+                            <button type="button" class="image-action-btn primary-btn ${isPrimary ? 'active' : ''}" 
+                                    onclick="setPrimaryImage('${fileName}')" title="Set as primary">
+                                <i class="bi bi-star-fill"></i>
+                            </button>
+                            <button type="button" class="image-action-btn delete-btn" 
+                                    onclick="removeImage('${fileName}')" title="Remove">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                $('#imagePreview').append(html);
+            }
+
+            window.removeImage = async function(fileName) {
+                try {
+                    await fetch('/AdminProduct/CancelUpload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        body: JSON.stringify({ tempFileName: fileName })
+                    });
+                } catch (e) {}
+
+                tempImageFileNames = tempImageFileNames.filter(f => f !== fileName);
+                if (primaryImageFileName === fileName) {
+                    primaryImageFileName = tempImageFileNames[0] || null;
+                }
+                $(`.image-item[data-filename="${fileName}"]`).remove();
+                updateHiddenInput();
+                saveImagesToStorage(); // Update session storage
+            };
+
+            window.setPrimaryImage = function(fileName) {
+                primaryImageFileName = fileName;
+                rebuildImagePreviews();
+                saveImagesToStorage(); // Update session storage
+            };
+
+            function rebuildImagePreviews() {
+                const items = $('#imagePreview .image-item');
+                items.each(function() {
+                    const fileName = $(this).data('filename');
+                    const isPrimary = fileName === primaryImageFileName;
+                    
+                    $(this).find('.primary-badge').remove();
+                    if (isPrimary) {
+                        $(this).prepend('<span class="primary-badge">PRIMARY</span>');
+                    }
+                    $(this).find('.primary-btn').toggleClass('active', isPrimary);
+                });
+            }
+
+            function updateHiddenInput() {
+                // Reorder so primary is first
+                const orderedFiles = [primaryImageFileName, ...tempImageFileNames.filter(f => f !== primaryImageFileName)].filter(Boolean);
+                $('#tempImageFileNames').val(orderedFiles.join(','));
+                // Also create individual hidden inputs for List<string> model binding
+                const container = document.getElementById('imageHiddenInputsContainer');
+                if (container) {
+                    container.innerHTML = '';
+                    orderedFiles.forEach(fn => {
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden'; inp.name = 'TempImageFileNames'; inp.value = fn;
+                        container.appendChild(inp);
+                    });
+                }
+            }
+
+            // === STEP 5: VARIANTS ===
+            $('#generateVariantsBtn').click(function() {
+                const selectedSizes = [];
+                const selectedColors = [];
+                
+                $('input[name="SelectedSizeIds"]:checked').each(function() {
+                    selectedSizes.push({
+                        id: $(this).val(),
+                        name: $(this).closest('label').text().trim()
+                    });
+                });
+                
+                $('input[name="SelectedColorIds"]:checked').each(function() {
+                    selectedColors.push({
+                        id: $(this).val(),
+                        name: $(this).closest('label').find('.color-name').text().trim()
+                    });
+                });
+
+                if (selectedSizes.length === 0 && selectedColors.length === 0) {
+                    showToast('Please select at least one size or color', 'warning');
+                    return;
+                }
+
+                // Clear existing variants
+                $('#variantsContainer').empty();
+                variantIndex = 0;
+                
+                // Generate combinations
+                if (selectedSizes.length === 0) selectedSizes.push({ id: '', name: 'Default' });
+                if (selectedColors.length === 0) selectedColors.push({ id: '', name: 'Default' });
+                
+                selectedSizes.forEach(size => {
+                    selectedColors.forEach(color => {
+                        addVariantRow(size, color);
+                    });
+                });
+                
+                $('#noVariantsMessage').hide();
+                $('#variantsTable').show();
+            });
+
+            $('#addVariantBtn').click(function() {
+                addVariantRow({ id: '', name: '' }, { id: '', name: '' });
+                $('#noVariantsMessage').hide();
+                $('#variantsTable').show();
+            });
+
+            function addVariantRow(size, color) {
+                const sku = generateSKU(size.name, color.name);
+                const html = `
+                    <tr data-variant-index="${variantIndex}">
+                        <td>
+                            <input type="text" name="Variants[${variantIndex}].SKU" value="${sku}" class="form-control">
+                        </td>
+                        <td>
+                            <select name="Variants[${variantIndex}].SizeId" class="form-select">
+                                <option value="">No size</option>
+                                ${$('.size-checkbox').map(function() {
+                                    const id = $(this).val();
+                                    const name = $(this).closest('label').text().trim();
+                                    const selected = id === size.id ? 'selected' : '';
+                                    return `<option value="${id}" ${selected}>${name}</option>`;
+                                }).get().join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="Variants[${variantIndex}].ColorId" class="form-select">
+                                <option value="">No color</option>
+                                ${$('.color-checkbox').map(function() {
+                                    const id = $(this).val();
+                                    const name = $(this).closest('label').find('.color-name').text().trim();
+                                    const selected = id === color.id ? 'selected' : '';
+                                    return `<option value="${id}" ${selected}>${name}</option>`;
+                                }).get().join('')}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="Variants[${variantIndex}].StockQuantity" value="10" min="0" class="form-control">
+                        </td>
+                        <td>
+                            <input type="number" name="Variants[${variantIndex}].Price" step="0.01" min="0.01" placeholder="Same as base" class="form-control">
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariant(${variantIndex})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <input type="hidden" name="Variants[${variantIndex}].IsActive" value="true">
+                        </td>
+                    </tr>
+                `;
+                $('#variantsContainer').append(html);
+                variantIndex++;
+            }
+
+            function generateSKU(sizeName, colorName) {
+                const sizeCode = sizeName ? sizeName.substring(0, 3).toUpperCase() : 'STD';
+                const colorCode = colorName ? colorName.substring(0, 3).toUpperCase() : 'STD';
+                const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                return `PROD-${randomNum}-${sizeCode}-${colorCode}`;
+            }
+
+            window.removeVariant = function(index) {
+                $(`tr[data-variant-index="${index}"]`).remove();
+                if ($('#variantsContainer tr').length === 0) {
+                    $('#noVariantsMessage').show();
+                }
+            };
+
+            // === STEP 6: REVIEW ===
+            function updateReviewSection() {
+                // Type
+                const isSingle = $('input[name="productType"]:checked').val() === 'single';
+                const packSize = $('#packSizeInput').val();
+                $('#reviewType').text(isSingle ? 'Single Item' : `${packSize}-Pack`);
+                
+                // Category
+                $('#reviewCategory').text($('#selectedCategoryDisplay span').text() || '-');
+                
+                // Names
+                $('#reviewNameEn').text($('#nameEn').val() || '-');
+                $('#reviewNamePl').text($('#namePl').val() || '-');
+                
+                // Price
+                const price = parseFloat($('#retailPrice').val()) || 0;
+                $('#reviewPrice').text(price.toFixed(2) + ' zł');
+                
+                const isB2B = $('#enableBusinessPrice').is(':checked');
+                const businessPriceInput = parseFloat($('#businessPrice').val());
+                
+                if (isB2B) {
+                    if (businessPriceInput) {
+                        $('#reviewBusinessPrice').text('B2B: ' + businessPriceInput.toFixed(2) + ' zł');
+                    } else {
+                        $('#reviewBusinessPrice').text('B2B: ' + price.toFixed(2) + ' zł (Same as retail)');
+                    }
+                } else {
+                    $('#reviewBusinessPrice').text('');
+                }
+                
+                // Images
+                const imageHtml = tempImageFileNames.map((f, i) => {
+                    const url = `/img/Products/temp/${f}`;
+                    return `<img src="${url}" alt="Image ${i+1}">`;
+                }).join('');
+                $('#reviewImages').html(imageHtml || '<span class="text-muted">No images uploaded</span>');
+                
+                // Variants
+                const variantCount = $('#variantsContainer tr').length;
+                let totalStock = 0;
+                $('input[name$=".StockQuantity"]').each(function() {
+                    totalStock += parseInt($(this).val()) || 0;
+                });
+                $('#reviewVariants').text(variantCount + ' variant' + (variantCount !== 1 ? 's' : ''));
+                $('#reviewStock').text('Total stock: ' + totalStock);
+            }
+
+            // === CUSTOM COLOR MODAL ===
+            $('#newColorPicker').on('input', function() {
+                const color = $(this).val();
+                $('#newColorHex').val(color);
+                $('#colorPreviewBox').css('background-color', color);
+            });
+
+            $('#newColorHex').on('input', function() {
+                let color = $(this).val();
+                if (!color.startsWith('#')) color = '#' + color;
+                if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                    $('#newColorPicker').val(color);
+                    $('#colorPreviewBox').css('background-color', color);
+                }
+            });
+
+            $('#saveCustomColor').click(function() {
+                const name = $('#newColorName').val().trim();
+                const hex = $('#newColorHex').val();
+                
+                if (!name) {
+                    showToast('Please enter a color name', 'warning');
+                    return;
+                }
+                
+                $('#customColorHex').val(hex);
+                $('#customColorName').val(name);
+                
+                // Add to color grid
+                const html = `
+                    <label class="color-chip" style="--chip-color: ${hex}">
+                        <input type="checkbox" name="CustomColors[]" value="${hex}" class="color-checkbox" checked>
+                        <span class="color-swatch" style="background-color: ${hex}"></span>
+                        <span class="color-name">${name}</span>
+                    </label>
+                `;
+                $('#colorGrid').append(html);
+                
+                $('#customColorModal').modal('hide');
+                $('#newColorName').val('');
+                showToast('Custom color added!', 'success');
+            });
+
+            $('#addCustomColorBtn').click(() => $('#customColorModal').modal('show'));
+
+            // === COUPON MODAL ===
+            function updateCouponPreview() {
+                const code = $('#newCouponCode').val().toUpperCase() || 'CODE';
+                const type = $('#newCouponType').val();
+                const value = $('#newCouponValue').val() || '0';
+                
+                const discount = type === 'percentage' ? `${value}% OFF` : `${value} zł OFF`;
+                
+                $('#newCouponPreview .coupon-code').text(code);
+                $('#newCouponPreview .coupon-discount').text(discount);
+            }
+
+            $('#newCouponCode, #newCouponType, #newCouponValue').on('input change', updateCouponPreview);
+
+            $('#saveCouponBtn').click(function() {
+                const code = $('#newCouponCode').val().toUpperCase();
+                const type = $('#newCouponType').val();
+                const value = $('#newCouponValue').val();
+                
+                if (!code || !value) {
+                    showToast('Please fill in all required fields', 'warning');
+                    return;
+                }
+                
+                // In a real app, this would make an API call
+                showToast('Coupon will be created with the product', 'success');
+                $('#createCouponModal').modal('hide');
+                
+                // Add to dropdown
+                const displayText = type === 'percentage' ? `${code} - ${value}% off` : `${code} - ${value} zł off`;
+                $('#couponSelect').append(`<option value="new_${code}" selected>${displayText}</option>`);
+            });
+
+            // === FORM SUBMISSION ===
+            $('#productWizardForm').submit(function(e) {
+                // Final validation
+                for (let step = 1; step <= totalSteps; step++) {
+                    if (!validateStep(step)) {
+                        e.preventDefault();
+                        goToStep(step);
+                        return false;
+                    }
+                }
+
+                // Sync hidden inputs before submit
+                updateHiddenInput();
+                var enName = $('input[name="Translations[0].Name"]').val() || '';
+                var enDesc = $('textarea[name="Translations[0].Description"]').val() || $('input[name="Translations[0].Description"]').val() || '';
+                $('#defaultName').val(enName);
+                $('#defaultDescription').val(enDesc);
+                
+                // Show loading state
+                $('#submitBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Creating...');
+                
+                // Clear storage on successful submit
+                clearStorage();
+            });
+
+            // Clear storage button (optional - add to UI if needed)
+            $(document).on('click', '.btn-clear-draft', function() {
+                if (confirm('Clear all saved draft data?')) {
+                    clearStorage();
+                    location.reload();
+                }
+            });
+
+            // Initialize
+            updateProgress();
+            loadFromStorage();
+            setupAutoSave();
+        });
+    </script>
+    
+    <style>
+        /* Modern Toast Notifications */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(17, 24, 39, 0.85); /* Slate-900 with opacity */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1050;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            max-width: 400px;
+        }
+        
+        .toast-notification.show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Type indicators */
+        .toast-notification::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .toast-notification.info::before { background: #60a5fa; box-shadow: 0 0 12px #60a5fa; }
+        .toast-notification.success::before { background: #4ade80; box-shadow: 0 0 12px #4ade80; }
+        .toast-notification.warning::before { background: #facc15; box-shadow: 0 0 12px #facc15; }
+        .toast-notification.error::before { background: #f87171; box-shadow: 0 0 12px #f87171; }
+
+        /* Step Validation Errors - Modernized */
+        .step-error-container {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            margin-bottom: 1rem;
+        }
+
+        @@keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* SEO Analysis Card */
+        .seo-analysis-card {
+            background: var(--wizard-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--wizard-shadow);
+            border: 1px solid var(--wizard-border);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .seo-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .seo-score-ring {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .seo-score-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(180deg);
+        }
+        
+        .seo-score-ring span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--wizard-text);
+        }
+
+        .seo-checklist {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .seo-check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--wizard-text-muted);
+            padding: 0.75rem;
+            background: rgba(0,0,0,0.02);
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .seo-check-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .seo-check-item i {
+            margin-top: 2px;
+            font-size: 1.1rem;
+        }
+
+        [data-bs-theme="dark"] .seo-check-item {
+             background: rgba(255,255,255,0.03);
+        }
+
+        .seo-check-item.pass i { color: #10b981; }
+        .seo-check-item.warn i { color: #f59e0b; }
+        .seo-check-item.fail i { color: #ef4444; }
+        
+        [data-bs-theme="dark"] .seo-analysis-card {
+             background: #1e293b;
+             border-color: #334155;
+        }
+    </style>
+}

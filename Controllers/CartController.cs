@@ -518,7 +518,9 @@ namespace Kokomija.Controllers
                     MaxQuantity = variant?.StockQuantity ?? 10,
                     PackSize = cartItem.Product.PackSize,
                     IsBusinessPrice = isBusinessPrice,
-                    OriginalPrice = isBusinessPrice ? basePrice : null
+                    OriginalPrice = isBusinessPrice ? basePrice : null,
+                    MinBusinessQuantity = cartItem.Product.MinBusinessQuantity,
+                    IsAvailableForBusiness = cartItem.Product.IsAvailableForBusiness
                 };
 
                 items.Add(itemViewModel);

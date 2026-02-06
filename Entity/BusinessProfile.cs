@@ -101,6 +101,30 @@ namespace Kokomija.Entity
         /// </summary>
         public string? RawApiResponse { get; set; }
 
+        /// <summary>
+        /// Company phone number (provided by user)
+        /// </summary>
+        [MaxLength(30)]
+        public string? Phone { get; set; }
+
+        /// <summary>
+        /// Company email for invoices (provided by user)
+        /// </summary>
+        [MaxLength(200)]
+        public string? CompanyEmail { get; set; }
+
+        /// <summary>
+        /// Contact person name (provided by user)
+        /// </summary>
+        [MaxLength(200)]
+        public string? ContactPerson { get; set; }
+
+        /// <summary>
+        /// Contact person's position/role (provided by user)
+        /// </summary>
+        [MaxLength(100)]
+        public string? Position { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
     }

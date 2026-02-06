@@ -36,5 +36,12 @@ namespace Kokomija.Data.Abstract
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
+        
+        /// <summary>
+        /// Executes the given action inside a transaction that is compatible with the
+        /// configured execution strategy (e.g. SqlServerRetryingExecutionStrategy).
+        /// Use this instead of manual BeginTransaction / Commit when retries are enabled.
+        /// </summary>
+        Task ExecuteInTransactionAsync(Func<Task> action);
     }
 }

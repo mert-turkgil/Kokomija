@@ -83,6 +83,18 @@
                         <button class="btn btn-link btn-sm text-danger" id="clearFilters">@L["Products_ClearAll"]</button>
                     </div>
 
+                    <!-- Search by Product Name -->
+                    <div class="filter-section">
+                        <div class="filter-section-header mb-3">
+                            <h6 class="filter-title mb-0">
+                                <i class="bi bi-search me-2"></i>@L["Products_SearchByName"]
+                            </h6>
+                        </div>
+                        <div class="search-filter">
+                            <input type="text" class="form-control form-control-sm" id="productNameSearch" placeholder="@L["Products_EnterProductName"]">
+                        </div>
+                    </div>
+
                     <!-- Categories Filter -->
                     <div class="filter-section">
                         <div class="filter-section-header mb-3">
@@ -237,10 +249,20 @@
                         @foreach (var product in Model)
                         {
                             var isBulkProduct = product.PackSize > 1;
+                            
+                            // Get translated names for search
+                            var translatedNames = new List<string> { product.Name };
+                            if (product.Translations != null && product.Translations.Any())
+                            {
+                                translatedNames.AddRange(product.Translations.Select(t => t.Name));
+                            }
+                            var allNames = string.Join("|", translatedNames.Distinct());
+                            
                             <div class="col-md-6 col-lg-4" 
                                  data-category="@product.CategoryId" 
                                  data-price="@product.Price"
-                                 data-name="@product.Name"
+                                 data-name="@System.Net.WebUtility.HtmlEncode(product.Name)"
+                                 data-translated-names="@System.Net.WebUtility.HtmlEncode(allNames)"
                                  data-created="@product.CreatedAt.Ticks"
                                  data-pack-size="@product.PackSize"
                                  data-is-bulk="@(isBulkProduct ? "true" : "false")">
@@ -266,13 +288,35 @@
                 maxPrice: null,
                 sortBy: 'newest',
                 showDiscountsOnly: false,
-                productType: 'all' // 'all', 'single', 'bulk'
+                productType: 'all', // 'all', 'single', 'bulk'
+                productName: '' // Search by product name
             };
+
+            // Load search parameter from URL if it exists
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('q');
+            if (searchQuery) {
+                $('#productNameSearch').val(searchQuery);
+                filterState.productName = searchQuery.toLowerCase().trim();
+            }
 
             // Load filter options
             loadCategories();
             loadColors();
             loadSizes();
+
+            // Apply filters if URL parameter exists - wait for products to be rendered
+            if (searchQuery) {
+                // Wait for products grid to have items before filtering
+                const checkAndFilter = () => {
+                    if ($('#productsGrid > div').length > 0) {
+                        applyFilters();
+                    } else {
+                        setTimeout(checkAndFilter, 100);
+                    }
+                };
+                checkAndFilter();
+            }
 
             // Filter toggle with overlay
             $('#filterToggle').click(function() {
@@ -325,7 +369,7 @@
                 filterState.sortBy = $('#sortBy').val();
                 filterState.showDiscountsOnly = $('#showDiscountsOnly').prop('checked');
                 filterState.productType = $('input[name="productType"]:checked').val() || 'all';
-
+                filterState.productName = $('#productNameSearch').val().toLowerCase().trim();
                 let $products = $('#productsGrid > div');
                 let visibleCount = 0;
 
@@ -334,6 +378,21 @@
                     const $product = $(this);
                     const productCategory = parseInt($product.data('category'));
                     const productPrice = parseFloat($product.data('price'));
+                    
+                    // Get product names - include all translations for multilingual search
+                    let productName = $product.data('name');
+                    let translatedNames = $product.data('translated-names');
+                    
+                    if (!productName) {
+                        productName = '';
+                    }
+                    
+                    // Combine base name and all translated names for search
+                    let searchableNames = productName.toString().toLowerCase().trim();
+                    if (translatedNames) {
+                        searchableNames = translatedNames.toString().toLowerCase().trim();
+                    }
+                    
                     const packSize = parseInt($product.data('pack-size')) || 1;
                     const isBulk = $product.attr('data-is-bulk') === 'true';
                     const isSingle = !isBulk; // Single = PackSize == 1
@@ -341,18 +400,25 @@
                     
                     let showProduct = true;
 
+                    // Filter by product name - search in all translated names
+                    if (filterState.productName) {
+                        if (!searchableNames || !searchableNames.includes(filterState.productName)) {
+                            showProduct = false;
+                        }
+                    }
+
                     // Filter by category
-                    if (filterState.categories.length > 0 && !filterState.categories.includes(productCategory)) {
+                    if (showProduct && filterState.categories.length > 0 && !filterState.categories.includes(productCategory)) {
                         showProduct = false;
                     }
 
                     // Filter by price
-                    if (productPrice < filterState.minPrice || productPrice > filterState.maxPrice) {
+                    if (showProduct && (productPrice < filterState.minPrice || productPrice > filterState.maxPrice)) {
                         showProduct = false;
                     }
                     
                     // Filter by discount - for non-authenticated users, all products have WELCOME10
-                    if (filterState.showDiscountsOnly && !hasDiscount) {
+                    if (showProduct && filterState.showDiscountsOnly && !hasDiscount) {
                         showProduct = false;
                     }
 
@@ -448,6 +514,31 @@
                 }
             });
 
+            // Product name search with URL updates
+            let searchTimeout;
+            $('#productNameSearch').on('keyup', function() {
+                clearTimeout(searchTimeout);
+                const searchValue = $(this).val().trim();
+                
+                // Trigger filter immediately
+                triggerFilter();
+                
+                // Update URL after a short delay (500ms)
+                searchTimeout = setTimeout(function() {
+                    if (searchValue) {
+                        // Update URL to include search parameter
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('q', searchValue);
+                        window.history.pushState({}, '', newUrl);
+                    } else {
+                        // Remove search parameter if empty
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.delete('q');
+                        window.history.pushState({}, '', newUrl);
+                    }
+                }, 500);
+            });
+
             // Size button toggle
             $(document).on('click', '.size-btn', function() {
                 $(this).toggleClass('active');
@@ -460,6 +551,7 @@
                 $('input[name="productType"][value="all"]').prop('checked', true); // Reset to "All Products"
                 $('.size-btn').removeClass('active');
                 $('#minPrice, #maxPrice').val('');
+                $('#productNameSearch').val('');
                 $('#sortBy').val('newest');
                 $('#showDiscountsOnly').prop('checked', false);
                 
@@ -471,9 +563,23 @@
                 filterState.sortBy = 'newest';
                 filterState.showDiscountsOnly = false;
                 filterState.productType = 'all';
+                filterState.productName = '';
 
-                $('#productsGrid > div').fadeIn(300);
-                $('.products-count').html('<strong>' + $('#productsGrid > div').length + '</strong> @L["Products_ItemsFound_Plural"]');
+                // Clear URL parameters
+                const newUrl = new URL(window.location);
+                newUrl.search = '';
+                window.history.pushState({}, '', newUrl);
+
+                // Show all products - stop any animations and ensure proper display
+                $('#productsGrid > div').stop(true, true).css({
+                    'display': '',
+                    'opacity': '1'
+                }).show();
+                
+                const totalProducts = $('#productsGrid > div').length;
+                $('.products-count').fadeOut(200, function() {
+                    $(this).html('<strong>' + totalProducts + '</strong> @L["Products_ItemsFound_Plural"]').fadeIn(200);
+                });
                 $('.no-products-filter').fadeOut(300, function() { $(this).remove(); });
                 
                 // Scroll to top

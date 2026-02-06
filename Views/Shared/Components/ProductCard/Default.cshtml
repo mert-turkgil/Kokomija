@@ -329,11 +329,37 @@
         transition: all 0.2s ease;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         backdrop-filter: blur(8px);
+        color: #374151;
     }
 
     .quick-action-btn:hover {
         background: white;
         transform: scale(1.1);
+        color: #ef4444;
+    }
+
+    /* Wishlist button - Heart should be red when active */
+    .wishlist-btn i.fas.fa-heart {
+        color: #ef4444;
+    }
+
+    /* Dark theme - wishlist button */
+    [data-bs-theme="dark"] .quick-action-btn,
+    [data-theme="dark"] .quick-action-btn {
+        background: rgba(30, 41, 59, 0.95);
+        color: #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    [data-bs-theme="dark"] .quick-action-btn:hover,
+    [data-theme="dark"] .quick-action-btn:hover {
+        background: #1e293b;
+        color: #ef4444;
+        transform: scale(1.1);
+    }
+
+    [data-bs-theme="dark"] .wishlist-btn i.fas.fa-heart,
+    [data-theme="dark"] .wishlist-btn i.fas.fa-heart {
         color: #ef4444;
     }
 

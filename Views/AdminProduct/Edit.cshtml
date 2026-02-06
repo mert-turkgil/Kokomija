@@ -126,6 +126,19 @@
                             </div>
                             </div>
 
+                            <!-- Auto-Translate Button -->
+                            <div class="mt-3 p-3 bg-light rounded border">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <i class="bi bi-stars text-primary me-2"></i>
+                                        <span class="text-muted">Auto-translate English content to Polish</span>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="autoTranslateBtn">
+                                        <i class="bi bi-translate me-1"></i> Auto-Translate to Polish
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Default Fallback Values (hidden) -->
                             <input type="hidden" asp-for="Name" id="defaultName" />
                             <input type="hidden" asp-for="Description" id="defaultDescription" />
@@ -211,28 +224,113 @@
                                 <label class="form-label">Associate Coupon (Optional)</label>
                                 <select asp-for="CouponId" class="form-select">
                                     <option value="">No coupon - Regular pricing</option>
-                                    @foreach (var coupon in (List<Kokomija.Entity.Coupon>)ViewBag.Coupons)
+                                    @if (ViewBag.Coupons != null)
                                     {
-                                        var displayText = $"{coupon.Code} - ";
-                                        if (coupon.DiscountType == "percentage")
+                                        @foreach (var coupon in (List<Kokomija.Entity.Coupon>)ViewBag.Coupons)
                                         {
-                                            displayText += $"{coupon.DiscountValue}% off";
+                                            var displayText = $"{coupon.Code} - ";
+                                            if (coupon.DiscountType == "percentage")
+                                            {
+                                                displayText += $"{coupon.DiscountValue}% off";
+                                            }
+                                            else
+                                            {
+                                                displayText += $"{coupon.DiscountValue} zł off";
+                                            }
+                                            
+                                            if (coupon.UserId != null)
+                                            {
+                                                displayText += " (User-specific)";
+                                            }
+                                            
+                                            <option value="@coupon.Id">@displayText</option>
                                         }
-                                        else
-                                        {
-                                            displayText += $"{coupon.DiscountValue} zł off";
-                                        }
-                                        
-                                        if (coupon.UserId != null)
-                                        {
-                                            displayText += " (User-specific)";
-                                        }
-                                        
-                                        <option value="@coupon.Id">@displayText</option>
                                     }
                                 </select>
                                 <small class="text-muted">Automatically apply discount to this product</small>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Business (B2B) Pricing Section -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-building"></i> Business (B2B) Pricing
+                            </h5>
+                            
+                            <div class="alert alert-info border-0 mb-3" style="background: linear-gradient(135deg, rgba(13,110,253,0.08), rgba(102,126,234,0.08));">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-info-circle-fill text-primary me-2 mt-1"></i>
+                                    <div>
+                                        <strong>Auto-Accept Pricing</strong>
+                                        <p class="mb-0 small text-body-secondary">When you set a business price and save, it becomes the active B2B price immediately. Business customers will see this price and can place orders at this rate. No additional approval is needed.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            @if (Model.BusinessPrice.HasValue && Model.BusinessPrice.Value > 0)
+                            {
+                                <div class="alert alert-success d-flex align-items-center mb-3 py-2">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    <div>
+                                        <strong>B2B Price Active:</strong> @Model.BusinessPrice.Value.ToString("C", new System.Globalization.CultureInfo("pl-PL"))
+                                        @if (Model.MinBusinessQuantity > 0)
+                                        {
+                                            <span class="ms-2 badge bg-primary">Min. qty: @Model.MinBusinessQuantity</span>
+                                        }
+                                        <span class="d-block small text-body-secondary">Business customers can order this product at the B2B price.</span>
+                                    </div>
+                                </div>
+                            }
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input asp-for="IsBusinessOnly" class="form-check-input" type="checkbox" id="isBusinessOnlySwitch" />
+                                        <label class="form-check-label" for="isBusinessOnlySwitch">
+                                            <strong>Business Only</strong> - Only visible to verified business customers
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check form-switch">
+                                        <input asp-for="IsAvailableForBusiness" class="form-check-input" type="checkbox" id="isAvailableForBusinessSwitch" />
+                                        <label class="form-check-label" for="isAvailableForBusinessSwitch">
+                                            <strong>Available for Business</strong> - Show to business customers
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="BusinessPrice" class="form-label">Business Price (zł)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                                        <input asp-for="BusinessPrice" type="number" step="0.01" min="0" class="form-control" placeholder="Leave empty to use retail price" />
+                                    </div>
+                                    <span asp-validation-for="BusinessPrice" class="text-danger"></span>
+                                    <small class="text-muted">Special discounted price for B2B customers</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="MinBusinessQuantity" class="form-label">Minimum Business Quantity</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-boxes"></i></span>
+                                        <input asp-for="MinBusinessQuantity" type="number" min="0" class="form-control" />
+                                    </div>
+                                    <span asp-validation-for="MinBusinessQuantity" class="text-danger"></span>
+                                    <small class="text-muted">Minimum order quantity for B2B (0 = no minimum)</small>
+                                </div>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(Model.BusinessStripePriceId))
+                            {
+                                <div class="alert alert-success mb-0">
+                                    <i class="bi bi-stripe me-2"></i>
+                                    <small>Business Stripe Price ID: @Model.BusinessStripePriceId</small>
+                                </div>
+                            }
                         </div>
                     </div>
 
@@ -317,7 +415,14 @@
                             
                             <div class="mb-3">
                                 <label class="form-label">Upload New Images (Max 5MB each)</label>
-                                <input type="file" id="imageUpload" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple />
+                                <div class="upload-zone" id="dropZone">
+                                    <input type="file" id="imageUpload" class="d-none" accept=".jpg,.jpeg,.png,.webp" multiple />
+                                    <div class="upload-icon">
+                                        <i class="bi bi-cloud-arrow-up"></i>
+                                    </div>
+                                    <h5 class="mb-2">Drop images here or click to browse</h5>
+                                    <p class="text-muted small mb-0">Supports JPG, PNG, WebP (Max 5MB)</p>
+                                </div>
                             </div>
                             
                             <div id="newImagePreview" class="row g-3 mt-2"></div>
@@ -425,9 +530,6 @@
                         </div>
                     </div>
 
-                    <!-- Review Management -->
-                    @if (Model.Reviews.Any())
-                    {
                         <div class="card mb-4">
                             <div class="card-body">
                                 <h5 class="border-bottom pb-2 mb-3">
@@ -464,7 +566,7 @@
                                                     <small class="text-muted">@review.UserEmail</small>
                                                 </td>
                                                 <td>
-                                                    <div class="rating-stars">
+                                                    <div class="rating-stars" id="rating-display-@review.Id">
                                                         @for (int i = 0; i < (int)review.Rating; i++)
                                                         {
                                                             <i class="bi bi-star-fill text-warning"></i>
@@ -476,16 +578,16 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="review-comment">@review.Comment</div>
+                                                    <div class="review-comment" id="comment-display-@review.Id">@review.Comment</div>
                                                 </td>
                                                 <td>
                                                     @if (review.IsVisible)
                                                     {
-                                                        <span class="badge bg-success">Visible</span>
+                                                        <span class="badge bg-success" id="visibility-badge-@review.Id">Visible</span>
                                                     }
                                                     else
                                                     {
-                                                        <span class="badge bg-secondary">Hidden</span>
+                                                        <span class="badge bg-secondary" id="visibility-badge-@review.Id">Hidden</span>
                                                     }
                                                 </td>
                                                 <td>
@@ -493,6 +595,11 @@
                                                 </td>
                                                 <td>
                                                     <div class="btn-group btn-group-sm">
+                                                        <button type="button" class="btn btn-outline-info" 
+                                                                onclick="openEditReviewModal(@review.Id, @((int)review.Rating), '@System.Net.WebUtility.HtmlEncode(review.Comment?.Replace("'", "\\'") ?? "")')" 
+                                                                title="Edit Review">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
                                                         <button type="button" class="btn btn-outline-primary" onclick="toggleReviewVisibility(@review.Id)" title="Toggle Visibility">
                                                             <i class="bi bi-eye"></i>
                                                         </button>
@@ -506,10 +613,11 @@
                                                 </td>
                                             </tr>
                                         }
-                                        </div>
-                                    </div>
-                                </div>
-                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </div>
                 </div>
 
                 <!-- Right Column: Status & Actions -->
@@ -920,6 +1028,31 @@
 
 @section Styles {
     <style>
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--bs-border-color);
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--bs-body-bg);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--bs-primary);
+            background: rgba(var(--bs-primary-rgb), 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--bs-primary);
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+        
+        /* Existing styles */
         .image-preview-item {
             position: relative;
         }
@@ -961,8 +1094,74 @@
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(255, 255, 255, 0.1);
         }
+        
+        /* Edit Review Modal Styles */
+        .star-rating-input {
+            display: flex;
+            gap: 0.5rem;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+        .star-rating-input input {
+            display: none;
+        }
+        .star-rating-input label {
+            cursor: pointer;
+            font-size: 2rem;
+            color: #ccc;
+            transition: color 0.2s;
+        }
+        .star-rating-input label:hover,
+        .star-rating-input label:hover ~ label,
+        .star-rating-input input:checked ~ label {
+            color: #ffc107;
+        }
     </style>
 }
+
+<!-- Edit Review Modal -->
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editReviewModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Review
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editReviewId" />
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Rating</label>
+                    <div class="star-rating-input">
+                        <input type="radio" id="star5" name="editRating" value="5" /><label for="star5" title="5 stars"><i class="bi bi-star-fill"></i></label>
+                        <input type="radio" id="star4" name="editRating" value="4" /><label for="star4" title="4 stars"><i class="bi bi-star-fill"></i></label>
+                        <input type="radio" id="star3" name="editRating" value="3" /><label for="star3" title="3 stars"><i class="bi bi-star-fill"></i></label>
+                        <input type="radio" id="star2" name="editRating" value="2" /><label for="star2" title="2 stars"><i class="bi bi-star-fill"></i></label>
+                        <input type="radio" id="star1" name="editRating" value="1" /><label for="star1" title="1 star"><i class="bi bi-star-fill"></i></label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="editReviewComment" class="form-label fw-bold">Comment</label>
+                    <textarea class="form-control" id="editReviewComment" rows="4" placeholder="Enter review comment..."></textarea>
+                </div>
+                
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <small>Editing customer reviews may affect trust. Use responsibly for moderation purposes only.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveReviewChanges()">
+                    <i class="bi bi-check-lg me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -1139,9 +1338,39 @@
         }
 
         // Upload new images
-        document.getElementById('imageUpload').addEventListener('change', async function(e) {
-            const files = Array.from(e.target.files);
-            
+        // Upload new images logic
+        const dropZone = document.getElementById('dropZone');
+        const imageUpload = document.getElementById('imageUpload');
+
+        // Drag & Drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'));
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'));
+        });
+
+        dropZone.addEventListener('drop', e => {
+            handleFiles(e.dataTransfer.files);
+        });
+
+        dropZone.addEventListener('click', () => imageUpload.click());
+
+        imageUpload.addEventListener('change', e => {
+            handleFiles(e.target.files);
+            e.target.value = '';
+        });
+
+        async function handleFiles(files) {
+            files = Array.from(files);
             for (const file of files) {
                 if (file.size > 5 * 1024 * 1024) {
                     alert(`File ${file.name} is too large. Max size is 5MB.`);
@@ -1154,7 +1383,10 @@
                 try {
                     const response = await fetch('@Url.Action("UploadImage")', {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        }
                     });
 
                     const result = await response.json();
@@ -1163,14 +1395,15 @@
                         newImageFileNames.push(result.tempFileName);
                         addNewImagePreview(result.tempUrl, result.tempFileName);
                         updateHiddenInputs();
+                    } else {
+                        alert('Failed to upload: ' + (result.message || 'Unknown error'));
                     }
                 } catch (error) {
                     console.error('Upload error:', error);
+                    alert('Upload error occurred');
                 }
             }
-            
-            e.target.value = '';
-        });
+        }
 
         function addNewImagePreview(url, fileName) {
             const html = `
@@ -1210,18 +1443,23 @@
         // Review management functions
         async function toggleReviewVisibility(reviewId) {
             try {
-                const response = await fetch('@Url.Action("ReviewToggleVisibility", "Admin")', {
+                const response = await fetch(`@Url.Action("ReviewToggleVisibility", "AdminUser")?id=${reviewId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: reviewId })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
                 });
 
                 const result = await response.json();
                 if (result.success) {
                     location.reload();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to toggle visibility'));
                 }
             } catch (error) {
                 console.error('Error toggling visibility:', error);
+                alert('Error toggling review visibility');
             }
         }
 
@@ -1229,19 +1467,126 @@
             if (!confirm('Delete this review permanently?')) return;
 
             try {
-                const response = await fetch('@Url.Action("ReviewDelete", "Admin")', {
+                const response = await fetch(`@Url.Action("ReviewDelete", "AdminUser")?id=${reviewId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: reviewId })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
                 });
 
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById(`review-${reviewId}`).remove();
+                    showToast('Review deleted successfully', 'success');
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to delete review'));
                 }
             } catch (error) {
                 console.error('Error deleting review:', error);
+                alert('Error deleting review');
             }
+        }
+
+        // Edit review functions
+        function openEditReviewModal(reviewId, rating, comment) {
+            document.getElementById('editReviewId').value = reviewId;
+            document.getElementById('editReviewComment').value = comment;
+            
+            // Set the rating radio button
+            const ratingInput = document.querySelector(`input[name="editRating"][value="${rating}"]`);
+            if (ratingInput) {
+                ratingInput.checked = true;
+            }
+            
+            // Open modal
+            const modal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+            modal.show();
+        }
+
+        async function saveReviewChanges() {
+            const reviewId = document.getElementById('editReviewId').value;
+            const comment = document.getElementById('editReviewComment').value;
+            const ratingInput = document.querySelector('input[name="editRating"]:checked');
+            
+            if (!ratingInput) {
+                alert('Please select a rating');
+                return;
+            }
+            
+            const rating = parseInt(ratingInput.value);
+            
+            try {
+                const response = await fetch('@Url.Action("ReviewUpdate", "AdminUser")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ 
+                        id: parseInt(reviewId), 
+                        rating: rating, 
+                        comment: comment 
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Update the UI without reloading
+                    const ratingDisplay = document.getElementById(`rating-display-${reviewId}`);
+                    if (ratingDisplay) {
+                        let starsHtml = '';
+                        for (let i = 0; i < rating; i++) {
+                            starsHtml += '<i class="bi bi-star-fill text-warning"></i>';
+                        }
+                        ratingDisplay.innerHTML = starsHtml;
+                    }
+                    
+                    const commentDisplay = document.getElementById(`comment-display-${reviewId}`);
+                    if (commentDisplay) {
+                        commentDisplay.textContent = comment;
+                    }
+                    
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('editReviewModal')).hide();
+                    
+                    // Show success message
+                    showToast('Review updated successfully', 'success');
+                } else {
+                    alert('Failed to update review: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating review:', error);
+                alert('Error updating review');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            // Create toast element if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '1100';
+                document.body.appendChild(toastContainer);
+            }
+            
+            const toastHtml = `
+                <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'primary'} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastEl = toastContainer.lastElementChild;
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+            toast.show();
+            
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
         }
 
         // Sync default Name/Description from English translation for backwards compatibility
@@ -1447,21 +1792,134 @@
 
         // B2B Business Settings Logic
         function updateBusinessFields() {
-            const isBusinessOnly = document.getElementById('isBusinessOnly').checked;
-            const isAvailableForBusiness = document.getElementById('isAvailableForBusiness');
+            const isBusinessOnlyEl = document.getElementById('isBusinessOnlySwitch');
+            const isAvailableForBusinessEl = document.getElementById('isAvailableForBusinessSwitch');
             
-            if (isBusinessOnly) {
-                // If Business Only is checked, it should be available for business
-                isAvailableForBusiness.checked = true;
-                isAvailableForBusiness.disabled = true;
-            } else {
-                isAvailableForBusiness.disabled = false;
+            if (isBusinessOnlyEl && isAvailableForBusinessEl) {
+                if (isBusinessOnlyEl.checked) {
+                    // If Business Only is checked, it should be available for business
+                    isAvailableForBusinessEl.checked = true;
+                    isAvailableForBusinessEl.disabled = true;
+                } else {
+                    isAvailableForBusinessEl.disabled = false;
+                }
             }
         }
+
+        // === AUTO-TRANSLATE FUNCTIONALITY ===
+        document.getElementById('autoTranslateBtn').addEventListener('click', async function() {
+            const btn = document.getElementById('autoTranslateBtn');
+            const originalHtml = btn.innerHTML;
+            
+            // Determine active tab
+            const enTabContent = document.getElementById('en');
+            // Check if English tab is active
+            const isEnActive = enTabContent.classList.contains('active');
+            
+            const sourceContainerId = isEnActive ? 'en' : 'pl';
+            const targetContainerId = isEnActive ? 'pl' : 'en';
+            
+            const sourceLangCode = 'autodetect'; // Auto-detect source language
+            const targetLangCode = isEnActive ? 'pl' : 'en';
+            
+            // Get Source Values
+            const sourceContainer = document.getElementById(sourceContainerId);
+            const nameVal = sourceContainer.querySelector('input[name*=".Name"]').value;
+            const descVal = sourceContainer.querySelector('textarea[name*=".Description"]').value;
+            const metaDescVal = sourceContainer.querySelector('input[name*=".MetaDescription"]').value;
+            const keywordsVal = sourceContainer.querySelector('input[name*=".MetaKeywords"]').value;
+            
+            if (!nameVal) {
+                alert(`Please enter ${isEnActive ? 'English' : 'Polish'} name first.`);
+                return;
+            }
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Translating...';
+            
+            try {
+                const response = await fetch('@Url.Action("TranslateContent", "AdminProduct")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({
+                        sourceLanguage: sourceLangCode,
+                        targetLanguage: targetLangCode,
+                        name: nameVal,
+                        description: descVal,
+                        metaDescription: metaDescVal,
+                        metaKeywords: keywordsVal
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.translations) {
+                    const targetContainer = document.getElementById(targetContainerId);
+                    
+                    // Helper to safely set value
+                    const setValue = (selector, val) => {
+                        const el = targetContainer.querySelector(selector);
+                        if (el && val) el.value = val;
+                    };
+                    
+                    if (data.translations.name) setValue('input[name*=".Name"]', data.translations.name);
+                    if (data.translations.description) setValue('textarea[name*=".Description"]', data.translations.description);
+                    if (data.translations.slug) setValue('input[name*=".Slug"]', data.translations.slug);
+                    if (data.translations.metaDescription) setValue('input[name*=".MetaDescription"]', data.translations.metaDescription);
+                    if (data.translations.metaKeywords) setValue('input[name*=".MetaKeywords"]', data.translations.metaKeywords);
+                    
+                    // Switch to Target tab to show results
+                    const targetTabBtn = document.getElementById(`${targetContainerId}-tab`);
+                    if (targetTabBtn) {
+                        const tab = new bootstrap.Tab(targetTabBtn);
+                        tab.show();
+                    }
+                    
+                    const targetLangName = isEnActive ? 'Polish' : 'English';
+                    alert(`Translation to ${targetLangName} completed!`);
+                } else {
+                    alert(data.message || 'Translation failed.');
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                alert('Translation service unavailable.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        });
+        
+        // Update Button Text on Tab Change
+        const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabEls.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', event => {
+                const targetId = event.target.getAttribute('data-bs-target').replace('#', '');
+                const btn = document.getElementById('autoTranslateBtn');
+                const label = btn.closest('.d-flex').querySelector('span.text-muted');
+                
+                if (targetId === 'en') {
+                    btn.innerHTML = '<i class="bi bi-translate me-1"></i> Auto-Translate to Polish';
+                    if(label) label.textContent = 'Auto-translate English content to Polish';
+                } else if (targetId === 'pl') {
+                    btn.innerHTML = '<i class="bi bi-translate me-1"></i> Auto-Translate to English';
+                    if(label) label.textContent = 'Auto-translate Polish content to English';
+                }
+            });
+        });
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateBusinessFields();
+            
+            // Add listener for business only checkbox
+            const isBusinessOnlyEl = document.getElementById('isBusinessOnlySwitch');
+            if (isBusinessOnlyEl) {
+                isBusinessOnlyEl.addEventListener('change', updateBusinessFields);
+            }
         });
     </script>
 }

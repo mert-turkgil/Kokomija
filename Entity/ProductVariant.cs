@@ -44,6 +44,9 @@ namespace Kokomija.Entity
         [MaxLength(100)]
         public string StripePriceId { get; set; } = string.Empty;
 
+        [MaxLength(100)]
+        public string? BusinessStripePriceId { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

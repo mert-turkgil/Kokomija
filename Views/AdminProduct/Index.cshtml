@@ -22,10 +22,16 @@
                                 <i class="bi bi-arrow-left"></i>
                                 Back to Dashboard
                             </a>
-                            <a asp-action="Create" class="btn btn-primary">
-                                <i class="bi bi-plus-lg"></i>
-                                Add New Product
-                            </a>
+                            <div class="btn-group">
+                                <a asp-action="CreateWizard" class="btn btn-primary">
+                                    <i class="bi bi-magic"></i>
+                                    Wizard
+                                </a>
+                                <a asp-action="Create" class="btn btn-outline-primary">
+                                    <i class="bi bi-plus-lg"></i>
+                                    Basic
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -91,6 +97,77 @@
             </div>
         </div>
 
+        <!-- Quick Filters & Search Bar -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body py-3">
+                        <div class="row g-3 align-items-end">
+                            <!-- Search Input with Type Selector -->
+                            <div class="col-lg-5 col-md-6">
+                                <label class="form-label fw-semibold small text-muted mb-1">Search Products</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="searchType" style="max-width: 120px;">
+                                        <option value="all">All</option>
+                                        <option value="name">Name</option>
+                                        <option value="sku">SKU</option>
+                                        <option value="stripe">Stripe ID</option>
+                                    </select>
+                                    <input type="text" class="form-control" id="customSearch" placeholder="Search by name, SKU, or Stripe ID...">
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch" title="Clear search">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Filters -->
+                            <div class="col-lg-5 col-md-6">
+                                <label class="form-label fw-semibold small text-muted mb-1">Quick Filters</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterAll" value="all" checked>
+                                    <label class="btn btn-outline-secondary" for="filterAll">
+                                        <i class="bi bi-grid"></i> All
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterActive" value="active">
+                                    <label class="btn btn-outline-success" for="filterActive">
+                                        <i class="bi bi-check-circle"></i> Active
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterInactive" value="inactive">
+                                    <label class="btn btn-outline-secondary" for="filterInactive">
+                                        <i class="bi bi-pause-circle"></i> Inactive
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterLowStock" value="low">
+                                    <label class="btn btn-outline-warning" for="filterLowStock">
+                                        <i class="bi bi-exclamation-triangle"></i> Low Stock
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="statusFilter" id="filterOutOfStock" value="out">
+                                    <label class="btn btn-outline-danger" for="filterOutOfStock">
+                                        <i class="bi bi-x-circle"></i> Out
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Export/Actions -->
+                            <div class="col-lg-2 col-md-12 text-end">
+                                <div class="btn-group">
+                                    <button class="btn btn-outline-success" type="button" id="exportExcel" title="Export to Excel">
+                                        <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                                    </button>
+                                    <button class="btn btn-outline-info" type="button" id="refreshTable" title="Refresh">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Products Table -->
         <div class="row">
             <div class="col-12">
@@ -99,7 +176,11 @@
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                             <h5 class="mb-0">
                                 <i class="bi bi-list"></i> All Products
+                                <span class="badge bg-secondary ms-2" id="filteredCount">@Model.Products.Count</span>
                             </h5>
+                            <div class="d-flex align-items-center gap-2">
+                                <small class="text-muted" id="filterInfo">Showing all products</small>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" id="productsTable">
@@ -134,12 +215,19 @@
                                                     </div>
                                                 }
                                             </td>
-                                            <td>
+                                            <td data-search="@product.Name @product.StripeProductId @string.Join(" ", product.SKUs)">
                                                 <strong>@product.Name</strong>
                                                 <br>
                                                 <small class="text-muted">
                                                     <i class="bi bi-stripe"></i> @product.StripeProductId
                                                 </small>
+                                                @if (product.SKUs.Any())
+                                                {
+                                                    <br>
+                                                    <small class="text-info sku-list" data-skus="@string.Join(",", product.SKUs)">
+                                                        <i class="bi bi-upc-scan"></i> @string.Join(", ", product.SKUs.Take(2))@(product.SKUs.Count > 2 ? $" (+{product.SKUs.Count - 2} more)" : "")
+                                                    </small>
+                                                }
                                             </td>
                                             <td>
                                                 @if (!string.IsNullOrEmpty(product.ParentCategoryName))
@@ -320,6 +408,85 @@
         [data-bs-theme="dark"] .text-muted {
             border-color: rgba(255, 255, 255, 0.2) !important;
         }
+        
+        /* Enhanced Filter Buttons */
+        .btn-group .btn-check:checked + .btn-outline-success {
+            background-color: var(--bs-success);
+            color: white;
+        }
+        .btn-group .btn-check:checked + .btn-outline-warning {
+            background-color: var(--bs-warning);
+            color: #000;
+        }
+        .btn-group .btn-check:checked + .btn-outline-danger {
+            background-color: var(--bs-danger);
+            color: white;
+        }
+        .btn-group .btn-check:checked + .btn-outline-secondary {
+            background-color: var(--bs-secondary);
+            color: white;
+        }
+        
+        /* SKU styling */
+        .sku-list {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75rem;
+        }
+        
+        /* Table improvements */
+        #productsTable tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        #productsTable tbody tr:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.05);
+        }
+        
+        /* Pagination styling */
+        .dataTables_paginate .paginate_button {
+            border-radius: 4px !important;
+            margin: 0 2px;
+        }
+        
+        /* Search input group */
+        #customSearch {
+            border-left: 0;
+        }
+        #customSearch:focus {
+            border-color: var(--bs-border-color);
+            box-shadow: none;
+        }
+        #searchType {
+            border-right: 0;
+            background-color: var(--bs-tertiary-bg);
+        }
+        
+        /* Card animation */
+        .stat-card-small {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Action buttons */
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* Filter badge */
+        #filteredCount {
+            font-size: 0.75rem;
+        }
+        
+        /* Dark theme input group */
+        [data-bs-theme="dark"] #searchType {
+            background-color: var(--bs-body-bg);
+            border-color: var(--bs-border-color);
+        }
+        [data-bs-theme="dark"] #customSearch {
+            border-color: var(--bs-border-color);
+        }
     </style>
 }
 
@@ -330,41 +497,204 @@
     <script src="~/lib/datatables/responsive.bootstrap5.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Initialize DataTable with responsive extension
-            $('#productsTable').DataTable({
+            // Store current filter states
+            let currentSearchValue = '';
+            let currentSearchType = 'all';
+            let currentStatusFilter = 'all';
+            
+            // Add custom filter BEFORE initializing DataTable
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex, rowData, counter) {
+                // Only apply to productsTable
+                if (settings.nTable.id !== 'productsTable') return true;
+                
+                const $row = $(settings.aoData[dataIndex].nTr);
+                const status = $row.data('status');
+                const stock = parseInt($row.data('stock')) || 0;
+                
+                // Check status filter
+                let matchesStatus = true;
+                switch(currentStatusFilter) {
+                    case 'active':
+                        matchesStatus = status === 'active';
+                        break;
+                    case 'inactive':
+                        matchesStatus = status === 'inactive';
+                        break;
+                    case 'low':
+                        matchesStatus = stock > 0 && stock < 20;
+                        break;
+                    case 'out':
+                        matchesStatus = stock === 0;
+                        break;
+                    default:
+                        matchesStatus = true;
+                }
+                
+                if (!matchesStatus) return false;
+                
+                // For text search, we rely mostly on DataTables built-in search via table.search()
+                // But if we want to filter by TYPE (SKU only, Name only), we can do it here.
+                if (!currentSearchValue) return true;
+                
+                const searchLower = currentSearchValue.toLowerCase();
+                let matchesSearch = true; // Default to true if allowing default search
+                
+                // We use the data-search attribute content for checking
+                const searchableContent = $row.find('td:eq(1)').data('search') || '';
+                const fullContent = searchableContent.toString().toLowerCase();
+
+                switch(currentSearchType) {
+                    case 'sku':
+                        const skuData = $row.find('.sku-list').data('skus') || '';
+                        matchesSearch = skuData.toString().toLowerCase().includes(searchLower);
+                        break;
+                    case 'stripe':
+                        // Check if stripe ID is in the content (it's in the data-search)
+                        // But strictly stripe ID usually starts with prod_
+                        matchesSearch = fullContent.includes(searchLower); 
+                        break;
+                    case 'name':
+                         // Name is the primary part, simple check
+                        matchesSearch = fullContent.includes(searchLower);
+                        break;
+                    default: // 'all'
+                        // Let DataTables handle it? 
+                        // Actually, if we use table.search(), DataTables does the filtering.
+                        // If we return 'true' here, DataTables still checks its internal search.
+                        // So we should return 'true' and let table.search() do the work?
+                        // NO, table.search() sets the global search term which applies alongside this filter.
+                        // BUT we are implementing our own search box which calls table.draw().
+                        // We are NOT calling table.search(val).draw().
+                        // So we MUST implement text search logic here.
+                        matchesSearch = fullContent.includes(searchLower);
+                }
+                
+                return matchesSearch;
+            });
+            
+            // Initialize DataTable
+            const table = $('#productsTable').DataTable({
                 responsive: true,
-                pageLength: 10,
-                order: [[1, 'asc']], // Sort by Product name ascending
+                pageLength: 25,
+                order: [[1, 'asc']],
+                dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center gap-2"l><"ms-auto">>rtip',
+                // Disable built-in search box since we have a custom one
+                searching: true, 
                 language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search products...",
-                    lengthMenu: "Show _MENU_ products per page",
+                    lengthMenu: "_MENU_ per page",
                     info: "Showing _START_ to _END_ of _TOTAL_ products",
                     infoEmpty: "No products found",
-                    infoFiltered: "(filtered from _MAX_ total products)",
+                    infoFiltered: "(filtered from _MAX_ total)",
                     paginate: {
-                        first: "First",
-                        last: "Last",
-                        next: "Next",
-                        previous: "Previous"
+                        first: '<i class="bi bi-chevron-double-left"></i>',
+                        last: '<i class="bi bi-chevron-double-right"></i>',
+                        next: '<i class="bi bi-chevron-right"></i>',
+                        previous: '<i class="bi bi-chevron-left"></i>'
                     }
                 },
                 columnDefs: [
-                    { responsivePriority: 1, targets: 0 }, // Image - always visible
-                    { responsivePriority: 2, targets: 1 }, // Product name - always visible
-                    { responsivePriority: 3, targets: -1 }, // Actions - always visible
-                    { responsivePriority: 4, targets: 4 }, // Price
-                    { responsivePriority: 5, targets: 6 }, // Stock
-                    { responsivePriority: 6, targets: 9 }, // Status
-                    { orderable: false, targets: [0, -1] } // Disable sorting on Image and Actions columns
+                    { responsivePriority: 1, targets: 0 },
+                    { responsivePriority: 2, targets: 1 },
+                    { responsivePriority: 3, targets: -1 },
+                    { responsivePriority: 4, targets: 4 },
+                    { responsivePriority: 5, targets: 6 },
+                    { responsivePriority: 6, targets: 9 },
+                    { orderable: false, targets: [0, -1] }
                 ],
                 drawCallback: function() {
-                    // Ensure images display properly after redraw
                     $('img.img-thumbnail').on('error', function() {
                         $(this).attr('src', '/img/logo_black.png');
                     });
+                    // Use this.api() to avoid ReferenceError for 'table' during initialization
+                    updateFilteredCount(this.api());
                 }
             });
+            
+            // Apply filters function
+            function applyFilters() {
+                currentSearchValue = $('#customSearch').val().trim();
+                currentSearchType = $('#searchType').val();
+                currentStatusFilter = $('input[name="statusFilter"]:checked').val() || 'all';
+                
+                table.draw();
+                updateFilterInfo();
+            }
+            
+            // Search input handler
+            $('#customSearch').on('input', function() {
+                applyFilters();
+            });
+            
+            // Search type change handler  
+            $('#searchType').on('change', function() {
+                applyFilters();
+            });
+            
+            // Clear search button
+            $('#clearSearch').on('click', function() {
+                $('#customSearch').val('');
+                applyFilters();
+            });
+            
+            // Status filter buttons
+            $('input[name="statusFilter"]').on('change', function() {
+                applyFilters();
+            });
+            
+            function updateFilteredCount(api) {
+                // If api is not provided, try to use the table variable if it's initialized
+                const dt = api || (typeof table !== 'undefined' ? table : null);
+                if (dt) {
+                    const count = dt.rows({ filter: 'applied' }).count();
+                    $('#filteredCount').text(count);
+                }
+            }
+            
+            function updateFilterInfo() {
+                const filterLabels = {
+                    'all': 'Showing all products',
+                    'active': 'Showing active products only',
+                    'inactive': 'Showing inactive products only',
+                    'low': 'Showing products with low stock (<20)',
+                    'out': 'Showing out of stock products'
+                };
+                let info = filterLabels[currentStatusFilter] || 'Showing all products';
+                if (currentSearchValue) {
+                    info += ` matching "${currentSearchValue}"`;
+                }
+                $('#filterInfo').text(info);
+            }
+            
+            // Export to Excel
+            $('#exportExcel').on('click', function() {
+                // Collect client-side filter states
+                const currentSearch = $('#customSearch').val().trim();
+                const currentType = $('#searchType').val();
+                const currentStatus = $('input[name="statusFilter"]:checked').val() || 'all';
+                
+                // Build query string
+                const params = new URLSearchParams();
+                if(currentSearch) params.append('searchTerm', currentSearch);
+                if(currentType) params.append('searchType', currentType);
+                if(currentStatus && currentStatus !== 'all') params.append('statusFilter', currentStatus);
+                
+                // Keep categoryId if it exists in current URL (server-side filter)
+                const urlParams = new URLSearchParams(window.location.search);
+                if(urlParams.has('categoryId')) params.append('categoryId', urlParams.get('categoryId'));
+                if(urlParams.has('isBusinessOnly')) params.append('isBusinessOnly', urlParams.get('isBusinessOnly'));
+
+                // Go to export URL
+                window.location.href = '@Url.Action("ExportToExcel")?' + params.toString();
+            });
+            
+            // Refresh button
+            $('#refreshTable').on('click', function() {
+                location.reload();
+            });
+            
+            // Initialize count on page load
+            // table is initialized now, so we can pass it
+            updateFilteredCount(table);
         });
 
         // Toggle product status

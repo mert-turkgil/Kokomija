@@ -747,6 +747,48 @@ public class AdminUserController : Controller
     }
 
     /// <summary>
+    /// POST: Update review content and rating (JSON body)
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReviewUpdate([FromBody] ReviewUpdateDto dto)
+    {
+        try
+        {
+            var review = await _unitOfWork.Repository<ProductReview>().GetByIdAsync(dto.Id);
+            if (review == null)
+            {
+                return Json(new { success = false, message = "Review not found" });
+            }
+
+            // Update rating if provided (1-5)
+            if (dto.Rating >= 1 && dto.Rating <= 5)
+            {
+                review.Rating = dto.Rating;
+            }
+            
+            // Update comment if provided
+            if (dto.Comment != null)
+            {
+                review.Comment = dto.Comment;
+            }
+            
+            review.UpdatedAt = DateTime.UtcNow;
+            
+            _unitOfWork.Repository<ProductReview>().Update(review);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Review updated: {ReviewId} - Rating: {Rating}", dto.Id, dto.Rating);
+            return Json(new { success = true, message = "Review updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating review {ReviewId}", dto.Id);
+            return Json(new { success = false, message = "Error updating review" });
+        }
+    }
+
+    /// <summary>
     /// POST: Delete review
     /// </summary>
     [HttpPost]
@@ -1393,4 +1435,14 @@ public class UpdateUserCouponDto
     public decimal? MinimumOrderAmount { get; set; }
     public decimal? MaximumDiscountAmount { get; set; }
     public bool IsActive { get; set; } = true;
+}
+
+/// <summary>
+/// DTO for updating review rating and comment
+/// </summary>
+public class ReviewUpdateDto
+{
+    public int Id { get; set; }
+    public int Rating { get; set; }
+    public string? Comment { get; set; }
 }

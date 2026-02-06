@@ -351,6 +351,9 @@ builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 // Register Translation Management Service (Live resx editor)
 builder.Services.AddScoped<ITranslationManagementService, TranslationManagementService>();
 
+// Register Auto Translation Service (Product/content auto-translation)
+builder.Services.AddScoped<IAutoTranslationService, AutoTranslationService>();
+
 // Add session support (required for cart, emergency access, etc.)
 builder.Services.AddSession(options =>
 {

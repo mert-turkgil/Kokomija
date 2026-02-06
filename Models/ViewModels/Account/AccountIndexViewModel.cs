@@ -102,6 +102,10 @@ namespace Kokomija.Models.ViewModels.Account
         public string? VATStatus { get; set; }
         public string? ResidenceAddress { get; set; }
         public string? WorkingAddress { get; set; }
+        public string? Phone { get; set; }
+        public string? CompanyEmail { get; set; }
+        public string? ContactPerson { get; set; }
+        public string? Position { get; set; }
         public bool IsVerified { get; set; }
         public bool IsBusinessModeActive { get; set; }
         public DateTime? VerifiedAt { get; set; }
@@ -111,6 +115,12 @@ namespace Kokomija.Models.ViewModels.Account
     public class NIPVerificationRequestModel
     {
         public string NIP { get; set; } = string.Empty;
+        public string? CompanyName { get; set; }
+        public string? Address { get; set; }
+        public string? Phone { get; set; }
+        public string? CompanyEmail { get; set; }
+        public string? ContactPerson { get; set; }
+        public string? Position { get; set; }
     }
     
     public class OrderViewModel

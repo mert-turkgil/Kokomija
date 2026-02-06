@@ -81,9 +81,9 @@ namespace Kokomija.Data
                 new PackQuantity 
                 { 
                     Id = 2, 
-                    Quantity = 5, 
-                    Name = "5-Pack", 
-                    NameKey = "PackQuantity_5Pack",
+                    Quantity = 3, 
+                    Name = "3-Pack", 
+                    NameKey = "PackQuantity_3Pack",
                     DisplayOrder = 2,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -101,20 +101,10 @@ namespace Kokomija.Data
                 new PackQuantity 
                 { 
                     Id = 4, 
-                    Quantity = 8, 
-                    Name = "8-Pack", 
-                    NameKey = "PackQuantity_8Pack",
-                    DisplayOrder = 4,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new PackQuantity 
-                { 
-                    Id = 5, 
                     Quantity = 10, 
                     Name = "10-Pack", 
                     NameKey = "PackQuantity_10Pack",
-                    DisplayOrder = 5,
+                    DisplayOrder = 4,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 }
@@ -713,54 +703,54 @@ namespace Kokomija.Data
                     CreatedAt = DateTime.UtcNow
                 },
                 
-                // Product 2: Women's Cotton Briefs 5-Pack
+                // Product 2: Women's Cotton Briefs 3-Pack
                 new Product 
                 { 
                     Id = 2, 
-                    Name = "Majtki damskie bawełniane wysokie - 5 pak", 
-                    Slug = "majtki-damskie-bawelniane-wysokie-5-pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    Price = 49.75m,
+                    Name = "Majtki damskie bawełniane wysokie - 3 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-3-pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 3 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Price = 29.85m,
                     StripeProductId = string.Empty,
                     StripePriceId = string.Empty,
                     StripeTaxCode = "txcd_30011000",
-                    PackSize = 5,
+                    PackSize = 3,
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 },
                 
-                // Product 3: Women's Cotton Briefs 7-Pack
+                // Product 3: Women's Cotton Briefs 6-Pack
                 new Product 
                 { 
                     Id = 3, 
-                    Name = "Majtki damskie bawełniane wysokie - 7 pak", 
-                    Slug = "majtki-damskie-bawelniane-wysokie-7-pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 7 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
-                    Price = 69.65m,
+                    Name = "Majtki damskie bawełniane wysokie - 6 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-6-pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.",
+                    Price = 59.70m,
                     StripeProductId = string.Empty,
                     StripePriceId = string.Empty,
                     StripeTaxCode = "txcd_30011000",
-                    PackSize = 7,
+                    PackSize = 6,
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 },
                 
-                // Product 4: Women's Cotton Briefs 8-Pack (Best Value)
+                // Product 4: Women's Cotton Briefs 10-Pack (Best Value)
                 new Product 
                 { 
                     Id = 4, 
-                    Name = "Majtki damskie bawełniane wysokie - 8 pak", 
-                    Slug = "majtki-damskie-bawelniane-wysokie-8-pak",
-                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
-                    Price = 79.60m,
+                    Name = "Majtki damskie bawełniane wysokie - 10 pak", 
+                    Slug = "majtki-damskie-bawelniane-wysokie-10-pak",
+                    Description = "Wysokiej jakości majtki damskie bawełniane w zestawie 10 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.",
+                    Price = 99.50m,
                     StripeProductId = string.Empty,
                     StripePriceId = string.Empty,
                     StripeTaxCode = "txcd_30011000",
-                    PackSize = 8,
+                    PackSize = 10,
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
@@ -806,9 +796,9 @@ namespace Kokomija.Data
             var productData = new[]
             {
                 new { ProductId = 1, PackName = "Single", PackNamePl = "Pojedyncze", PackDesc = "", PackDescPl = "" },
-                new { ProductId = 2, PackName = "5-Pack", PackNamePl = "5 pak", PackDesc = " (5 pieces)", PackDescPl = " (5 sztuk)" },
-                new { ProductId = 3, PackName = "7-Pack", PackNamePl = "7 pak", PackDesc = " (7 pieces)", PackDescPl = " (7 sztuk)" },
-                new { ProductId = 4, PackName = "8-Pack", PackNamePl = "8 pak", PackDesc = " (8 pieces)", PackDescPl = " (8 sztuk)" }
+                new { ProductId = 2, PackName = "3-Pack", PackNamePl = "3 pak", PackDesc = " (3 pieces)", PackDescPl = " (3 sztuki)" },
+                new { ProductId = 3, PackName = "6-Pack", PackNamePl = "6 pak", PackDesc = " (6 pieces)", PackDescPl = " (6 sztuk)" },
+                new { ProductId = 4, PackName = "10-Pack", PackNamePl = "10 pak", PackDesc = " (10 pieces)", PackDescPl = " (10 sztuk)" }
             };
 
             foreach (var product in productData)
@@ -858,9 +848,9 @@ namespace Kokomija.Data
             var productPrices = new Dictionary<int, decimal>
             {
                 { 1, 9.95m },     // Single: 9.95 PLN
-                { 2, 49.75m },    // 5-Pack: 49.75 PLN
-                { 3, 69.65m },    // 7-Pack: 69.65 PLN
-                { 4, 79.60m }     // 8-Pack: 79.60 PLN
+                { 2, 29.85m },    // 3-Pack: 29.85 PLN
+                { 3, 59.70m },    // 6-Pack: 59.70 PLN
+                { 4, 99.50m }     // 10-Pack: 99.50 PLN
             };
 
             // Create 25 variants per product (5 colors × 5 sizes)
@@ -873,9 +863,9 @@ namespace Kokomija.Data
                         string packName = productId switch
                         {
                             1 => "SINGLE",
-                            2 => "5PK",
-                            3 => "7PK",
-                            4 => "8PK",
+                            2 => "3PK",
+                            3 => "6PK",
+                            4 => "10PK",
                             _ => "BULK"
                         };
 

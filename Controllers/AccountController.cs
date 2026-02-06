@@ -615,12 +615,18 @@ namespace Kokomija.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? tab = null)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 return RedirectToAction("Login");
+            }
+
+            // Pass active tab to view
+            if (!string.IsNullOrEmpty(tab))
+            {
+                ViewBag.ActiveTab = tab;
             }
 
             // Get user roles
@@ -695,6 +701,10 @@ namespace Kokomija.Controllers
                 VATStatus = businessProfile.VATStatus,
                 ResidenceAddress = businessProfile.ResidenceAddress,
                 WorkingAddress = businessProfile.WorkingAddress,
+                Phone = businessProfile.Phone,
+                CompanyEmail = businessProfile.CompanyEmail,
+                ContactPerson = businessProfile.ContactPerson,
+                Position = businessProfile.Position,
                 IsVerified = businessProfile.IsVerified,
                 IsBusinessModeActive = businessProfile.IsBusinessModeActive,
                 VerifiedAt = businessProfile.VerifiedAt,
@@ -1000,18 +1010,10 @@ namespace Kokomija.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Orders()
+        public IActionResult Orders()
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return RedirectToAction("Login", new { returnUrl = "/Account/Orders" });
-            }
-
-            // Get orders by user ID using the specialized repository method
-            var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
-
-            return View(orders);
+            // Redirect to Index with orders tab active (no separate Orders view exists)
+            return RedirectToAction("Index", new { tab = "orders" });
         }
 
         [HttpPost]
@@ -1568,6 +1570,12 @@ namespace Kokomija.Controllers
                 return Json(new { success = false, message = "NIP number is required" });
             }
 
+            // Require phone number for business registration
+            if (string.IsNullOrWhiteSpace(model.Phone))
+            {
+                return Json(new { success = false, message = "Company phone number is required for business registration." });
+            }
+
             // Get client IP for logging
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
@@ -1591,6 +1599,25 @@ namespace Kokomija.Controllers
             {
                 _logger.LogInformation("User {UserId} successfully verified NIP {NIP}", user.Id, model.NIP);
                 
+                // Save additional user-provided company contact fields
+                if (!string.IsNullOrWhiteSpace(model.Phone))
+                {
+                    result.BusinessProfile.Phone = model.Phone;
+                }
+                if (!string.IsNullOrWhiteSpace(model.CompanyEmail))
+                {
+                    result.BusinessProfile.CompanyEmail = model.CompanyEmail;
+                }
+                if (!string.IsNullOrWhiteSpace(model.ContactPerson))
+                {
+                    result.BusinessProfile.ContactPerson = model.ContactPerson;
+                }
+                if (!string.IsNullOrWhiteSpace(model.Position))
+                {
+                    result.BusinessProfile.Position = model.Position;
+                }
+                await _unitOfWork.SaveChangesAsync();
+
                 return Json(new 
                 { 
                     success = true, 
@@ -1604,6 +1631,7 @@ namespace Kokomija.Controllers
                         vatStatus = result.BusinessProfile.VATStatus,
                         residenceAddress = result.BusinessProfile.ResidenceAddress,
                         workingAddress = result.BusinessProfile.WorkingAddress,
+                        phone = result.BusinessProfile.Phone,
                         isVerified = result.BusinessProfile.IsVerified,
                         verifiedAt = result.BusinessProfile.VerifiedAt
                     }

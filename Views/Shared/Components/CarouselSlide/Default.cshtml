@@ -145,7 +145,7 @@
                                                             @if (!string.IsNullOrEmpty(slide.LinkUrl))
                                                             {
                                                                 <a href="@slide.LinkUrl" 
-                                                                   class="btn @GetButtonClass(slide) btn-lg carousel-btn"
+                                                                   class="btn @GetButtonClass(slide) btn-lg carousel-btn text-white"
                                                                    aria-label="@slide.ButtonText">
                                                                     @slide.ButtonText
                                                                     <i class="fas fa-arrow-right ms-2"></i>
@@ -156,7 +156,7 @@
                                                                 <a asp-controller="@slide.ControllerName" 
                                                                    asp-action="@slide.ActionName" 
                                                                    asp-area="@slide.AreaName"
-                                                                   class="btn @GetButtonClass(slide) btn-lg carousel-btn"
+                                                                   class="btn @GetButtonClass(slide) btn-lg carousel-btn text-white"
                                                                    aria-label="@slide.ButtonText">
                                                                     @slide.ButtonText
                                                                     <i class="fas fa-arrow-right ms-2"></i>
@@ -164,7 +164,7 @@
                                                             }
                                                             else
                                                             {
-                                                                <button class="btn @GetButtonClass(slide) btn-lg carousel-btn"
+                                                                <button class="btn @GetButtonClass(slide) btn-lg carousel-btn text-white"
                                                                         aria-label="@slide.ButtonText">
                                                                     @slide.ButtonText
                                                                     <i class="fas fa-arrow-right ms-2"></i>

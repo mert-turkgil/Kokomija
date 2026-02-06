@@ -18,6 +18,29 @@
                 <strong>@L["Cart_BusinessMode"]</strong> - @L["Cart_BusinessModeDescription"]
             </div>
         </div>
+        
+        @* Check for items below minimum business quantity *@
+        var itemsBelowMin = Model.Items.Where(i => i.IsBelowMinBusinessQty).ToList();
+        if (itemsBelowMin.Any())
+        {
+            <div class="alert alert-warning d-flex align-items-start mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-4 mt-1"></i>
+                <div>
+                    <strong>@(L["Cart_MinQtyWarning"] ?? "Minimum Quantity Warning")</strong>
+                    <p class="mb-1">@(L["Cart_MinQtyWarningDesc"] ?? "The following items are below the minimum business order quantity. Please increase the quantity to proceed with B2B pricing:")</p>
+                    <ul class="mb-0">
+                        @foreach (var item in itemsBelowMin)
+                        {
+                            <li>
+                                <strong>@item.ProductName.Split("-")[0].Trim()</strong> — 
+                                @(L["Cart_CurrentQty"] ?? "Current"): @item.Quantity, 
+                                @(L["Cart_MinRequired"] ?? "Minimum required"): @item.MinBusinessQuantity
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
     }
 
     @if (!Model.Items.Any())
@@ -97,6 +120,12 @@
                                         else if (item.Quantity >= item.MaxQuantity)
                                         {
                                             <small class="text-warning">Max quantity</small>
+                                        }
+                                        @if (item.IsBelowMinBusinessQty)
+                                        {
+                                            <small class="text-danger d-block mt-1">
+                                                <i class="bi bi-exclamation-triangle"></i> @(L["Cart_MinQty"] ?? "Min"): @item.MinBusinessQuantity
+                                            </small>
                                         }
                                     </div>
                                     <div class="col-md-2 text-end">
@@ -336,9 +365,19 @@
                             <h5 id="totalDisplay">@Model.Total.ToString("C", plnCulture)</h5>
                         </div>
 
-                        <button type="button" id="proceedToCheckout" class="btn btn-primary w-100 mb-2">
+                        <button type="button" id="proceedToCheckout" class="btn btn-primary w-100 mb-2"
+                                @if (Model.IsBusinessMode && Model.Items.Any(i => i.IsBelowMinBusinessQty))
+                                {
+                                    <text>disabled title="@(L["Cart_FixMinQty"] ?? "Please fix minimum quantity requirements before checkout")"</text>
+                                }>
                             <i class="bi bi-lock-fill"></i> Proceed to Secure Checkout
                         </button>
+                        @if (Model.IsBusinessMode && Model.Items.Any(i => i.IsBelowMinBusinessQty))
+                        {
+                            <div class="alert alert-danger py-2 mb-2 text-center">
+                                <small><i class="bi bi-exclamation-triangle me-1"></i>@(L["Cart_FixMinQtyCheckout"] ?? "Increase quantities to meet B2B minimums before checkout")</small>
+                            </div>
+                        }
                         <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary w-100">Continue Shopping</a>
                     </div>
                 </div>
