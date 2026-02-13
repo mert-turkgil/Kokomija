@@ -260,7 +260,11 @@ public class AdminUserController : Controller
                 IsVerified = businessProfile.IsVerified,
                 IsBusinessModeActive = businessProfile.IsBusinessModeActive,
                 VerifiedAt = businessProfile.VerifiedAt,
-                CreatedAt = businessProfile.CreatedAt
+                CreatedAt = businessProfile.CreatedAt,
+                Phone = businessProfile.Phone,
+                CompanyEmail = businessProfile.CompanyEmail,
+                ContactPerson = businessProfile.ContactPerson,
+                Position = businessProfile.Position
             } : null,
             AssignedRoles = userRoles.ToList(),
             AvailableRoles = availableRoles.ToList(),
@@ -1393,6 +1397,181 @@ public class AdminUserController : Controller
         }
     }
 
+    /// <summary>
+    /// POST: Update business profile contact information
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> UpdateBusinessContact([FromBody] UpdateBusinessContactDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found" });
+
+            // Only SECONDARY (user/admin) fields are editable here.
+            // PRIMARY fields (CompanyName, NIP, REGON, KRS, etc.) come from government API only.
+            profile.Phone = dto.Phone?.Trim();
+            profile.CompanyEmail = dto.CompanyEmail?.Trim();
+            profile.ContactPerson = dto.ContactPerson?.Trim();
+            profile.Position = dto.Position?.Trim();
+            profile.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation($"Updated business contact info for user {dto.UserId}");
+            return Json(new { success = true, message = "Business contact information updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating business contact information");
+            return Json(new { success = false, message = "Error updating contact information" });
+        }
+    }
+
+    /// <summary>
+    /// POST: Verify business profile with Polish government API (admin override)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> VerifyWithGovernmentAPI([FromBody] VerifyBusinessDto dto)
+    {
+        try
+        {
+            var profile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (profile == null)
+                return Json(new { success = false, message = "Business profile not found. Please create one first." });
+
+            var nip = profile.NIP;
+            // Use the CompanyName already stored on the profile (from initial creation or previous verification)
+            var existingCompanyName = profile.CompanyName?.ToUpperInvariant().Trim();
+
+            var result = await _nipValidationService.ValidateNIPAsync(nip, dto.UserId, Request.HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsValid)
+            {
+                return Json(new { success = false, message = result.ErrorMessage ?? "Verification failed. NIP not found in government registry." });
+            }
+
+            var governmentCompanyName = result.CompanyName?.ToUpperInvariant().Trim();
+            
+            // Verify that the stored company name matches government data
+            if (!string.IsNullOrWhiteSpace(existingCompanyName) && !string.IsNullOrWhiteSpace(governmentCompanyName))
+            {
+                if (existingCompanyName != governmentCompanyName)
+                {
+                    return Json(new { success = false, message = $"Company name mismatch!\n\nStored: {existingCompanyName}\nGovernment: {governmentCompanyName}\n\nThe company name on the profile does not match government records. Delete this profile and create a new one with the correct name." });
+                }
+            }
+
+            _logger.LogInformation("Admin verified business profile for user {UserId}. Company: {Company}", dto.UserId, governmentCompanyName);
+
+            return Json(new { success = true, message = $"✅ Verification successful!\n\nCompany: {governmentCompanyName}\nNIP: {nip}\nVAT Status: {result.VATStatus}\n\nGovernment data refreshed. Contact information preserved." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error verifying business profile for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "An error occurred during verification." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Create business profile manually (admin only)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> CreateBusinessProfile([FromBody] CreateBusinessProfileDto dto)
+    {
+        try
+        {
+            var existingProfile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (existingProfile != null)
+                return Json(new { success = false, message = "Business profile already exists for this user." });
+
+            var nip = dto.NIP.Trim();
+            if (nip.Length != 10 || !nip.All(char.IsDigit))
+                return Json(new { success = false, message = "Invalid NIP format. Must be exactly 10 digits." });
+
+            var profile = new BusinessProfile
+            {
+                UserId = dto.UserId,
+                NIP = nip,
+                CompanyName = dto.CompanyName.ToUpperInvariant(),
+                Phone = dto.Phone,
+                CompanyEmail = dto.CompanyEmail,
+                ContactPerson = dto.ContactPerson,
+                Position = dto.Position,
+                IsVerified = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.Repository<BusinessProfile>().AddAsync(profile);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Admin created business profile for user {UserId}. NIP: {NIP}", dto.UserId, nip);
+            return Json(new { success = true, message = "Business profile created successfully!" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating business profile for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "Failed to create business profile." });
+        }
+    }
+
+    /// <summary>
+    /// POST: Create business profile and verify with government API
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Root,Admin")]
+    public async Task<IActionResult> CreateAndVerifyBusinessProfile([FromBody] CreateBusinessProfileDto dto)
+    {
+        try
+        {
+            var existingProfile = await _nipValidationService.GetBusinessProfileAsync(dto.UserId);
+            if (existingProfile != null)
+                return Json(new { success = false, message = "Business profile already exists for this user." });
+
+            var nip = dto.NIP.Trim();
+            if (nip.Length != 10 || !nip.All(char.IsDigit))
+                return Json(new { success = false, message = "Invalid NIP format. Must be exactly 10 digits." });
+
+            var result = await _nipValidationService.ValidateNIPAsync(nip, dto.UserId, Request.HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsValid)
+            {
+                return Json(new { success = false, message = result.ErrorMessage ?? "Verification failed. NIP not found in government registry." });
+            }
+
+            var userProvidedCompanyName = dto.CompanyName.ToUpperInvariant().Trim();
+            var governmentCompanyName = result.CompanyName?.ToUpperInvariant().Trim();
+            
+            if (userProvidedCompanyName != governmentCompanyName)
+            {
+                return Json(new { success = false, message = $"Company name mismatch!\n\nProvided: {userProvidedCompanyName}\nGovernment: {governmentCompanyName}\n\nPlease use the exact name from government registry." });
+            }
+
+            var profile = result.BusinessProfile;
+            if (profile != null)
+            {
+                profile.Phone = dto.Phone;
+                profile.CompanyEmail = dto.CompanyEmail;
+                profile.ContactPerson = dto.ContactPerson;
+                profile.Position = dto.Position;
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            _logger.LogInformation("Admin created and verified business profile for user {UserId}. Company: {Company}", dto.UserId, governmentCompanyName);
+
+            return Json(new { success = true, message = $"✅ Business profile created and verified!\n\nCompany: {governmentCompanyName}\nNIP: {nip}\nVAT Status: {result.VATStatus}" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating and verifying business profile for user {UserId}", dto.UserId);
+            return Json(new { success = false, message = "An error occurred during creation and verification." });
+        }
+    }
+
     #endregion
 }
 
@@ -1445,4 +1624,41 @@ public class ReviewUpdateDto
     public int Id { get; set; }
     public int Rating { get; set; }
     public string? Comment { get; set; }
+}
+
+/// <summary>
+/// DTO for updating SECONDARY business contact information.
+/// Only user/admin provided fields (Phone, Email, ContactPerson, Position).
+/// PRIMARY fields (CompanyName, NIP, REGON, etc.) are managed by government API only.
+/// </summary>
+public class UpdateBusinessContactDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string? CompanyEmail { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? Position { get; set; }
+}
+
+/// <summary>
+/// DTO for re-verifying business profile with government API.
+/// Only requires UserId — NIP and CompanyName are read from the existing profile.
+/// </summary>
+public class VerifyBusinessDto
+{
+    public string UserId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO for creating business profile
+/// </summary>
+public class CreateBusinessProfileDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string NIP { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string? CompanyEmail { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? Position { get; set; }
 }

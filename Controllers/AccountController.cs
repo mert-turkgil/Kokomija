@@ -1570,6 +1570,12 @@ namespace Kokomija.Controllers
                 return Json(new { success = false, message = "NIP number is required" });
             }
 
+            // Require company name for verification matching
+            if (string.IsNullOrWhiteSpace(model.CompanyName))
+            {
+                return Json(new { success = false, message = "Company name is required. Enter the full name as it appears in the government registry (uppercase)." });
+            }
+
             // Require phone number for business registration
             if (string.IsNullOrWhiteSpace(model.Phone))
             {
@@ -1592,36 +1598,49 @@ namespace Kokomija.Controllers
                 });
             }
 
-            // Validate NIP with government API
+            // Save existing user-provided fields before verification (they should survive re-verification)
+            var existingProfile = await _nipValidationService.GetBusinessProfileAsync(user.Id);
+            var existingPhone = existingProfile?.Phone;
+            var existingEmail = existingProfile?.CompanyEmail;
+            var existingContact = existingProfile?.ContactPerson;
+            var existingPosition = existingProfile?.Position;
+
+            // Validate NIP with government API (this creates/updates profile with GOV data as PRIMARY)
             var result = await _nipValidationService.ValidateNIPAsync(model.NIP, user.Id, ipAddress);
 
             if (result.IsValid && result.BusinessProfile != null)
             {
-                _logger.LogInformation("User {UserId} successfully verified NIP {NIP}", user.Id, model.NIP);
+                // COMPANY NAME MATCH: compare user-provided name with government name
+                var govCompanyName = result.BusinessProfile.CompanyName?.ToUpperInvariant().Trim();
+                var userCompanyName = model.CompanyName.ToUpperInvariant().Trim();
                 
-                // Save additional user-provided company contact fields
-                if (!string.IsNullOrWhiteSpace(model.Phone))
+                if (govCompanyName != userCompanyName)
                 {
-                    result.BusinessProfile.Phone = model.Phone;
+                    _logger.LogWarning("User {UserId} company name mismatch. Provided: {Provided}, Government: {Government}", 
+                        user.Id, userCompanyName, govCompanyName);
+                    
+                    return Json(new 
+                    { 
+                        success = false, 
+                        message = $"Company name does not match government registry.\n\nYou entered: {userCompanyName}\nGovernment: {govCompanyName}\n\nPlease enter the exact company name as registered."
+                    });
                 }
-                if (!string.IsNullOrWhiteSpace(model.CompanyEmail))
-                {
-                    result.BusinessProfile.CompanyEmail = model.CompanyEmail;
-                }
-                if (!string.IsNullOrWhiteSpace(model.ContactPerson))
-                {
-                    result.BusinessProfile.ContactPerson = model.ContactPerson;
-                }
-                if (!string.IsNullOrWhiteSpace(model.Position))
-                {
-                    result.BusinessProfile.Position = model.Position;
-                }
+
+                _logger.LogInformation("User {UserId} successfully verified NIP {NIP}. Company: {Company}", user.Id, model.NIP, govCompanyName);
+                
+                // Save SECONDARY fields (user-provided contact info)
+                // Priority: new user input > existing saved data
+                result.BusinessProfile.Phone = !string.IsNullOrWhiteSpace(model.Phone) ? model.Phone : existingPhone;
+                result.BusinessProfile.CompanyEmail = !string.IsNullOrWhiteSpace(model.CompanyEmail) ? model.CompanyEmail : existingEmail;
+                result.BusinessProfile.ContactPerson = !string.IsNullOrWhiteSpace(model.ContactPerson) ? model.ContactPerson : existingContact;
+                result.BusinessProfile.Position = !string.IsNullOrWhiteSpace(model.Position) ? model.Position : existingPosition;
+                
                 await _unitOfWork.SaveChangesAsync();
 
                 return Json(new 
                 { 
                     success = true, 
-                    message = "NIP verified successfully! Your business profile has been created.",
+                    message = "NIP and company name verified successfully! All government data has been saved to your business profile.",
                     profile = new
                     {
                         nip = result.BusinessProfile.NIP,

@@ -65,6 +65,13 @@ namespace Kokomija.Entity
         public string? IconCssClass { get; set; }
 
         /// <summary>
+        /// Custom icon image path for subcategories (alternative to Font Awesome icons)
+        /// e.g., /img/category-icons/custom-icon.png
+        /// </summary>
+        [MaxLength(500)]
+        public string? IconImagePath { get; set; }
+
+        /// <summary>
         /// Image path for main/parent categories (e.g., /img/categories/women.jpg)
         /// </summary>
         [MaxLength(500)]

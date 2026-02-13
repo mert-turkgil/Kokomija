@@ -921,15 +921,22 @@
                                     <div id="nipVerificationSection">
                                         <div id="verificationResult" class="alert d-none mb-3"></div>
                                         
-                                        <h6 class="fw-bold mb-3"><i class="bi bi-1-circle me-2"></i>@(L["Account_Business_Step1_NIP"] ?? "Step 1: Verify NIP Number")</h6>
+                                        <h6 class="fw-bold mb-3"><i class="bi bi-1-circle me-2"></i>@(L["Account_Business_Step1_NIP"] ?? "Step 1: Enter NIP & Company Name")</h6>
                                         <div class="input-group input-group-lg mb-3">
                                             <span class="input-group-text"><i class="bi bi-building"></i></span>
                                             <input type="text" class="form-control" id="nipInput" placeholder="XXX-XXX-XX-XX" maxlength="13">
-                                            <button class="btn btn-primary" type="button" id="verifyNipBtn" onclick="verifyNIP()">
-                                                <i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP")
-                                            </button>
                                         </div>
                                         <small class="text-body-secondary d-block mb-3"><i class="bi bi-info-circle me-1"></i>@(L["Account_Business_NIPFormat"] ?? "Enter 10-digit NIP number (with or without dashes)")</small>
+                                        
+                                        <div class="input-group input-group-lg mb-3">
+                                            <span class="input-group-text"><i class="bi bi-building-fill"></i></span>
+                                            <input type="text" class="form-control" id="companyNameInput" placeholder="@(L["Account_Business_CompanyNamePlaceholder"] ?? "COMPANY NAME (as in government registry)")" style="text-transform: uppercase;">
+                                        </div>
+                                        <small class="text-body-secondary d-block mb-3"><i class="bi bi-info-circle me-1"></i>@(L["Account_Business_CompanyNameNote"] ?? "Enter the full company name exactly as registered (uppercase). Must match government registry to verify.")</small>
+                                        
+                                        <button class="btn btn-primary btn-lg w-100 mb-3" type="button" id="verifyNipBtn" onclick="verifyNIP()">
+                                            <i class="bi bi-shield-check me-2"></i>@(L["Account_Business_VerifyNIP"] ?? "Verify NIP & Company Name")
+                                        </button>
                                         
                                         <hr class="my-3" />
                                         
@@ -1631,11 +1638,19 @@
 
         async function verifyNIP() {
             const nipInput = document.getElementById('nipInput');
+            const companyNameInput = document.getElementById('companyNameInput');
             const resultDiv = document.getElementById('verificationResult');
             const verifyBtn = document.getElementById('verifyNipBtn');
             const phoneInput = document.getElementById('businessPhoneInput');
             
             if (!nipInput || !nipInput.value.trim()) { showAlert(resultDiv, 'danger', '@(L["Account_NIP_Required"] ?? "Please enter a NIP number")'); return; }
+            
+            // Require company name
+            if (!companyNameInput || !companyNameInput.value.trim()) { 
+                showAlert(resultDiv, 'danger', '@(L["Account_CompanyName_Required"] ?? "Company name is required. Enter the full name as in government registry (uppercase).")'); 
+                companyNameInput?.focus();
+                return; 
+            }
             
             // Require phone number
             if (!phoneInput || !phoneInput.value.trim()) { 
@@ -1645,6 +1660,7 @@
             }
             
             const nip = nipInput.value.replace(/[\s\-]/g, '').trim();
+            const companyName = companyNameInput.value.trim().toUpperCase();
             if (!/^\d{10}$/.test(nip)) { showAlert(resultDiv, 'danger', '@(L["Account_NIP_Invalid"] ?? "NIP must be exactly 10 digits")'); return; }
             verifyBtn.disabled = true;
             verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>@(L["Account_Verifying"] ?? "Verifying...")';
@@ -1666,6 +1682,7 @@
                     },
                     body: JSON.stringify({ 
                         nip: nip, 
+                        companyName: companyName,
                         phone: phoneInput.value.trim(),
                         companyEmail: document.getElementById('businessEmailInput')?.value?.trim() || '',
                         contactPerson: document.getElementById('businessContactPersonInput')?.value?.trim() || '',

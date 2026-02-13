@@ -13,8 +13,10 @@ namespace Kokomija.Models.ViewModels.Admin
         // For main categories: upload image
         public string? ImageTempFileName { get; set; }
         
-        // For subcategories: Font Awesome icon
+        // For subcategories: Font Awesome icon OR uploaded icon image
         public string? IconCssClass { get; set; }
+        public string? IconImageTempFileName { get; set; }
+        public string? ExistingIconImagePath { get; set; } // Reuse an existing icon from another category
         
         // Styling
         public string? ButtonClass { get; set; }
@@ -37,8 +39,11 @@ namespace Kokomija.Models.ViewModels.Admin
         // Optional new image (only if changing)
         public string? NewImageTempFileName { get; set; }
         
-        // For subcategories: Font Awesome icon
+        // For subcategories: Font Awesome icon OR uploaded icon image
         public string? IconCssClass { get; set; }
+        public string? IconImagePath { get; set; } // Current icon image path
+        public string? NewIconImageTempFileName { get; set; } // New icon upload
+        public string? ExistingIconImagePath { get; set; } // Reuse an existing icon from another category
         
         // Translations (one per language)
         public List<CategoryTranslationDto> Translations { get; set; } = new();
@@ -86,6 +91,7 @@ namespace Kokomija.Models.ViewModels.Admin
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
         public string? IconCssClass { get; set; }
+        public string? IconImagePath { get; set; }
         public int? ParentCategoryId { get; set; }
         public string? ParentCategoryName { get; set; }
         public int DisplayOrder { get; set; }

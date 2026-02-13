@@ -1974,6 +1974,27 @@ public class AdminController : Controller
                 category.ImageUrl = imageUrl;
             }
 
+            // Handle icon image upload for subcategories
+            if (!string.IsNullOrEmpty(model.IconImageTempFileName))
+            {
+                var tempFiles = tempFilesToCleanup.ToList();
+                tempFiles.Add(model.IconImageTempFileName);
+                tempFilesToCleanup = tempFiles.ToArray();
+                
+                var iconImageUrl = await _categoryImageService.MoveTempImageToPermanentAsync(
+                    model.IconImageTempFileName, 
+                    category.Slug + "-icon");
+                category.IconImagePath = iconImageUrl;
+                // Clear IconCssClass if using custom icon
+                category.IconCssClass = null;
+            }
+            // Reuse an existing icon from another category
+            else if (!string.IsNullOrEmpty(model.ExistingIconImagePath))
+            {
+                category.IconImagePath = model.ExistingIconImagePath;
+                category.IconCssClass = null;
+            }
+
             // Add category to database
             await _unitOfWork.Categories.AddAsync(category);
             await _unitOfWork.SaveChangesAsync();
@@ -2040,6 +2061,7 @@ public class AdminController : Controller
             IsActive = category.IsActive,
             ShowInNavbar = category.ShowInNavbar,
             IconCssClass = category.IconCssClass,
+            IconImagePath = category.IconImagePath,
             Translations = category.Translations.Select(t => new CategoryTranslationDto
             {
                 Id = t.Id,
@@ -2144,6 +2166,50 @@ public class AdminController : Controller
                 category.ImageUrl = imageUrl;
             }
 
+            // Handle new icon image upload for subcategories
+            if (!string.IsNullOrEmpty(model.NewIconImageTempFileName))
+            {
+                var tempFiles = tempFilesToCleanup.ToList();
+                tempFiles.Add(model.NewIconImageTempFileName);
+                tempFilesToCleanup = tempFiles.ToArray();
+                
+                // Delete old icon image if not used by others
+                if (!string.IsNullOrEmpty(category.IconImagePath))
+                {
+                    var allCats = await _unitOfWork.Categories.GetAllAsync();
+                    var othersUsingIcon = allCats.Any(c => c.Id != model.Id && c.IconImagePath == category.IconImagePath);
+                    if (!othersUsingIcon)
+                    {
+                        await _categoryImageService.DeleteCategoryImageAsync(category.IconImagePath);
+                    }
+                }
+
+                // Move new icon image to permanent location
+                var newSlug = model.Translations.FirstOrDefault(t => t.CultureCode == "en-US")?.Slug ?? category.Slug;
+                var iconImageUrl = await _categoryImageService.MoveTempImageToPermanentAsync(
+                    model.NewIconImageTempFileName,
+                    newSlug + "-icon");
+                category.IconImagePath = iconImageUrl;
+                // Clear IconCssClass if using custom icon
+                category.IconCssClass = null;
+            }
+            // Reuse an existing icon from another category
+            else if (!string.IsNullOrEmpty(model.ExistingIconImagePath))
+            {
+                // Delete old icon image if not used by others
+                if (!string.IsNullOrEmpty(category.IconImagePath) && category.IconImagePath != model.ExistingIconImagePath)
+                {
+                    var allCats = await _unitOfWork.Categories.GetAllAsync();
+                    var othersUsingIcon = allCats.Any(c => c.Id != model.Id && c.IconImagePath == category.IconImagePath);
+                    if (!othersUsingIcon)
+                    {
+                        await _categoryImageService.DeleteCategoryImageAsync(category.IconImagePath);
+                    }
+                }
+                category.IconImagePath = model.ExistingIconImagePath;
+                category.IconCssClass = null;
+            }
+
             // Update category properties
             category.ParentCategoryId = model.ParentCategoryId;
             category.DisplayOrder = model.DisplayOrder;
@@ -2225,6 +2291,37 @@ public class AdminController : Controller
     }
 
     /// <summary>
+    /// GET: Get all existing custom icon images used by categories (for reuse picker)
+    /// Returns distinct icon image paths with the category names that use them
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetExistingCategoryIcons()
+    {
+        try
+        {
+            var allCategories = await _unitOfWork.Categories.GetAllAsync();
+            var iconImages = allCategories
+                .Where(c => !string.IsNullOrEmpty(c.IconImagePath))
+                .GroupBy(c => c.IconImagePath)
+                .Select(g => new
+                {
+                    path = g.Key,
+                    usedBy = g.Select(c => c.Name).ToList(),
+                    count = g.Count()
+                })
+                .OrderBy(x => x.usedBy.First())
+                .ToList();
+
+            return Json(new { success = true, icons = iconImages });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching existing category icons");
+            return Json(new { success = false, message = "Failed to load icons" });
+        }
+    }
+
+    /// <summary>
     /// POST: Delete category
     /// </summary>
     [HttpPost]
@@ -2244,6 +2341,20 @@ public class AdminController : Controller
             if (!string.IsNullOrEmpty(category.ImageUrl))
             {
                 await _categoryImageService.DeleteCategoryImageAsync(category.ImageUrl);
+            }
+
+            // Delete custom icon image if exists and not used by other categories
+            if (!string.IsNullOrEmpty(category.IconImagePath))
+            {
+                var iconInUseByOthers = await _unitOfWork.Categories
+                    .GetAllAsync();
+                var othersUsingIcon = iconInUseByOthers
+                    .Any(c => c.Id != id && c.IconImagePath == category.IconImagePath);
+                
+                if (!othersUsingIcon)
+                {
+                    await _categoryImageService.DeleteCategoryImageAsync(category.IconImagePath);
+                }
             }
 
             // Delete category (translations will cascade)

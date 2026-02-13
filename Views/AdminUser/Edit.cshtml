@@ -56,12 +56,6 @@
                                 <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
 
-                            <div class="mb-3">
-                                <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" asp-for="PhoneNumber" />
-                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                            </div>
-
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" asp-for="EmailConfirmed" id="emailConfirmed" />
                                 <label class="form-check-label" for="emailConfirmed">
@@ -308,11 +302,16 @@
                             </div>
 
                             <hr />
-                            
+
+                            <!-- PRIMARY: Government Registry Data (Read-Only) -->
+                            <h6 class="mb-3">
+                                <i class="bi bi-shield-check text-success"></i> Government Registry Data
+                                <span class="badge bg-light text-muted ms-1" style="font-size: 0.65em;">PRIMARY - wl-api.mf.gov.pl</span>
+                            </h6>
                             <div class="row g-2 small">
-                                <div class="col-6">
+                                <div class="col-12">
                                     <strong>Company Name:</strong>
-                                    <div>@Model.BusinessProfile.CompanyName</div>
+                                    <div class="fw-bold">@Model.BusinessProfile.CompanyName</div>
                                 </div>
                                 <div class="col-6">
                                     <strong>NIP:</strong>
@@ -352,17 +351,83 @@
                                 {
                                     <div class="col-6">
                                         <strong>Verified At:</strong>
-                                        <div>@Model.BusinessProfile.VerifiedAt.Value.ToString("dd MMM yyyy")</div>
+                                        <div>@Model.BusinessProfile.VerifiedAt.Value.ToString("dd MMM yyyy HH:mm")</div>
                                     </div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.BusinessProfile.ResidenceAddress))
                                 {
                                     <div class="col-12">
-                                        <strong>Address:</strong>
+                                        <strong>Registered Address:</strong>
                                         <div>@Model.BusinessProfile.ResidenceAddress</div>
                                     </div>
                                 }
+                                @if (!string.IsNullOrEmpty(Model.BusinessProfile.WorkingAddress) && Model.BusinessProfile.WorkingAddress != Model.BusinessProfile.ResidenceAddress)
+                                {
+                                    <div class="col-12">
+                                        <strong>Working Address:</strong>
+                                        <div>@Model.BusinessProfile.WorkingAddress</div>
+                                    </div>
+                                }
+                                @if (Model.BusinessProfile.RegistrationLegalDate.HasValue)
+                                {
+                                    <div class="col-6">
+                                        <strong>Registration Date:</strong>
+                                        <div>@Model.BusinessProfile.RegistrationLegalDate.Value.ToString("dd MMM yyyy")</div>
+                                    </div>
+                                }
                             </div>
+                            
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="verifyWithGovernmentAPI('@Model.Id')">
+                                    <i class="bi bi-arrow-repeat"></i> Re-verify with Gov API
+                                </button>
+                            </div>
+
+                            <div id="verificationResult" class="mt-3" style="display: none;">
+                                <div class="alert alert-dismissible fade show" role="alert">
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    <div id="verificationMessage"></div>
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <!-- SECONDARY: User/Admin Provided Contact Info (Editable) -->
+                            <h6 class="mb-3">
+                                <i class="bi bi-pencil text-primary"></i> Contact Information
+                                <span class="badge bg-light text-muted ms-1" style="font-size: 0.65em;">SECONDARY - User/Admin</span>
+                            </h6>
+                            <form id="businessContactForm">
+                                <input type="hidden" id="businessProfileId" value="@Model.BusinessProfile.Id" />
+
+                                <div class="mb-3">
+                                    <label for="companyPhone" class="form-label">Company Phone Number</label>
+                                    <input type="tel" class="form-control form-control-sm" id="companyPhone" 
+                                           value="@Model.BusinessProfile.Phone" placeholder="+48 123 456 789" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="companyEmail" class="form-label">Company Email</label>
+                                    <input type="email" class="form-control form-control-sm" id="companyEmail" 
+                                           value="@Model.BusinessProfile.CompanyEmail" placeholder="company@example.com" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="contactPerson" class="form-label">Contact Person</label>
+                                    <input type="text" class="form-control form-control-sm" id="contactPerson" 
+                                           value="@Model.BusinessProfile.ContactPerson" placeholder="Full Name" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="position" class="form-label">Position / Role</label>
+                                    <input type="text" class="form-control form-control-sm" id="position" 
+                                           value="@Model.BusinessProfile.Position" placeholder="CEO, Manager, etc." />
+                                </div>
+
+                                <button type="button" class="btn btn-sm btn-primary" onclick="updateBusinessContact('@Model.Id')">
+                                    <i class="bi bi-save"></i> Save Contact Info
+                                </button>
+                            </form>
 
                             <hr />
                             
@@ -386,10 +451,89 @@
                         }
                         else
                         {
-                            <div class="text-center py-4">
+                            <div class="text-center py-3">
                                 <i class="bi bi-building text-muted fs-1 mb-2 d-block"></i>
                                 <p class="text-muted mb-3">No business profile found.</p>
-                                <p class="small text-muted">User hasn't verified their NIP number yet.</p>
+                            </div>
+
+                            <hr />
+
+                            <!-- Create Business Profile Form -->
+                            <h6 class="mb-3 text-muted">
+                                <i class="bi bi-plus-circle"></i> Create New Business Profile
+                            </h6>
+                            <form id="createBusinessProfileForm">
+                                <div class="alert alert-info small py-2">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    NIP + Company Name must match Polish government registry. Government data (REGON, KRS, VAT, Addresses) will be saved automatically on verification.
+                                </div>
+
+                                <h6 class="small text-muted fw-bold mb-2">
+                                    <i class="bi bi-shield-check"></i> Verification Fields (must match registry)
+                                </h6>
+                                <div class="mb-3">
+                                    <label for="newNIP" class="form-label">
+                                        NIP (Tax ID) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm" id="newNIP" 
+                                           placeholder="0000000000" maxlength="10" pattern="[0-9]{10}" required />
+                                    <small class="text-muted">10 digits, numbers only</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="newCompanyName" class="form-label">
+                                        Company Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm" id="newCompanyName" 
+                                           placeholder="COMPANY NAME (as in government registry)" style="text-transform: uppercase;" required />
+                                    <small class="text-muted">Must match registry exactly (uppercase)</small>
+                                </div>
+
+                                <hr class="my-2" />
+                                <h6 class="small text-muted fw-bold mb-2">
+                                    <i class="bi bi-pencil"></i> Contact Information (optional, user/admin data)
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="newCompanyPhone" class="form-label">Company Phone Number</label>
+                                    <input type="tel" class="form-control form-control-sm" id="newCompanyPhone" 
+                                           placeholder="+48 123 456 789" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="newCompanyEmail" class="form-label">Company Email</label>
+                                    <input type="email" class="form-control form-control-sm" id="newCompanyEmail" 
+                                           placeholder="company@example.com" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="newContactPerson" class="form-label">Contact Person</label>
+                                    <input type="text" class="form-control form-control-sm" id="newContactPerson" 
+                                           placeholder="Full Name" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="newPosition" class="form-label">Position / Role</label>
+                                    <input type="text" class="form-control form-control-sm" id="newPosition" 
+                                           placeholder="CEO, Manager, etc." />
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="createBusinessProfile('@Model.Id')">
+                                        <i class="bi bi-plus-circle"></i> Create Profile
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-sm btn-info" onclick="createAndVerifyBusinessProfile('@Model.Id')">
+                                        <i class="bi bi-shield-check"></i> Create & Verify with Gov API
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div id="createVerificationResult" class="mt-3" style="display: none;">
+                                <div class="alert alert-dismissible fade show" role="alert">
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    <div id="createVerificationMessage"></div>
+                                </div>
                             </div>
                         }
                     </div>
@@ -1800,6 +1944,215 @@
                 },
                 error: function() {
                     alert('Error deleting business profile');
+                }
+            });
+        }
+
+        function updateBusinessContact(userId) {
+            const phone = $('#companyPhone').val().trim();
+            const email = $('#companyEmail').val().trim();
+            const contactPerson = $('#contactPerson').val().trim();
+            const position = $('#position').val().trim();
+
+            $.ajax({
+                url: '@Url.Action("UpdateBusinessContact")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    userId: userId,
+                    phone: phone,
+                    companyEmail: email,
+                    contactPerson: contactPerson,
+                    position: position
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Business contact information updated successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error updating business contact information');
+                }
+            });
+        }
+
+        function verifyWithGovernmentAPI(userId) {
+            if (!confirm('This will re-verify the company information with the Polish government registry using the existing NIP and Company Name.\\n\\nGovernment data will be refreshed. Contact information will be preserved.\\n\\nContinue?')) {
+                return;
+            }
+
+            // Show loading state
+            const verificationResultDiv = $('#verificationResult');
+            const verificationMessageDiv = $('#verificationMessage');
+            verificationResultDiv.show();
+            verificationMessageDiv.html('<i class="spinner-border spinner-border-sm me-2"></i> Verifying with government API...');
+            verificationResultDiv.find('.alert').removeClass('alert-success alert-danger').addClass('alert-info');
+
+            $.ajax({
+                url: '@Url.Action("VerifyWithGovernmentAPI")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    userId: userId
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        verificationMessageDiv.html(
+                            '<strong><i class="bi bi-check-circle me-2"></i>Verification Successful!</strong><br>' +
+                            '<div class="mt-2" style="white-space: pre-line;">' + response.message + '</div>'
+                        );
+                        verificationResultDiv.find('.alert').removeClass('alert-info alert-danger').addClass('alert-success');
+                        
+                        // Reload page after 3 seconds to show updated data
+                        setTimeout(function() {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        verificationMessageDiv.html(
+                            '<strong><i class="bi bi-x-circle me-2"></i>Verification Failed</strong><br>' +
+                            '<div class="mt-2" style="white-space: pre-line;">' + response.message + '</div>'
+                        );
+                        verificationResultDiv.find('.alert').removeClass('alert-info alert-success').addClass('alert-danger');
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = 'An error occurred during verification. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    verificationMessageDiv.html(
+                        '<strong><i class="bi bi-exclamation-triangle me-2"></i>Error</strong><br>' +
+                        '<div class="mt-2">' + errorMsg + '</div>'
+                    );
+                    verificationResultDiv.find('.alert').removeClass('alert-info alert-success').addClass('alert-danger');
+                }
+            });
+        }
+
+        // ==================== Create Business Profile ====================
+        function createBusinessProfile(userId) {
+            const nip = $('#newNIP').val().trim();
+            const companyName = $('#newCompanyName').val().trim().toUpperCase();
+            const phone = $('#newCompanyPhone').val().trim();
+            const email = $('#newCompanyEmail').val().trim();
+            const contactPerson = $('#newContactPerson').val().trim();
+            const position = $('#newPosition').val().trim();
+
+            if (!nip || nip.length !== 10) {
+                alert('Please enter a valid 10-digit NIP number.');
+                return;
+            }
+
+            if (!companyName) {
+                alert('Please enter a company name.');
+                return;
+            }
+
+            if (!confirm('Create business profile for this user?\\n\\nNIP: ' + nip + '\\nCompany: ' + companyName)) {
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("CreateBusinessProfile")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    userId: userId,
+                    nip: nip,
+                    companyName: companyName,
+                    phone: phone,
+                    companyEmail: email,
+                    contactPerson: contactPerson,
+                    position: position
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Business profile created successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error creating business profile');
+                }
+            });
+        }
+
+        function createAndVerifyBusinessProfile(userId) {
+            const nip = $('#newNIP').val().trim();
+            const companyName = $('#newCompanyName').val().trim().toUpperCase();
+            const phone = $('#newCompanyPhone').val().trim();
+            const email = $('#newCompanyEmail').val().trim();
+            const contactPerson = $('#newContactPerson').val().trim();
+            const position = $('#newPosition').val().trim();
+
+            if (!nip || nip.length !== 10) {
+                alert('Please enter a valid 10-digit NIP number.');
+                return;
+            }
+
+            if (!companyName) {
+                alert('Please enter a company name.');
+                return;
+            }
+
+            if (!confirm('This will create a business profile and verify it with the Polish government registry.\\n\\nNIP: ' + nip + '\\nCompany: ' + companyName + '\\n\\nContinue?')) {
+                return;
+            }
+
+            // Show loading state
+            const verificationResultDiv = $('#createVerificationResult');
+            const verificationMessageDiv = $('#createVerificationMessage');
+            verificationResultDiv.show();
+            verificationMessageDiv.html('<i class="spinner-border spinner-border-sm me-2"></i> Creating profile and verifying with government API...');
+            verificationResultDiv.find('.alert').removeClass('alert-success alert-danger').addClass('alert-info');
+
+            $.ajax({
+                url: '@Url.Action("CreateAndVerifyBusinessProfile")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    userId: userId,
+                    nip: nip,
+                    companyName: companyName,
+                    phone: phone,
+                    companyEmail: email,
+                    contactPerson: contactPerson,
+                    position: position
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        verificationMessageDiv.html(
+                            '<strong><i class="bi bi-check-circle me-2"></i>Success!</strong><br>' +
+                            '<div class="mt-2" style="white-space: pre-line;">' + response.message + '</div>'
+                        );
+                        verificationResultDiv.find('.alert').removeClass('alert-info alert-danger').addClass('alert-success');
+                        
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        verificationMessageDiv.html(
+                            '<strong><i class="bi bi-x-circle me-2"></i>Error</strong><br>' +
+                            '<div class="mt-2" style="white-space: pre-line;">' + response.message + '</div>'
+                        );
+                        verificationResultDiv.find('.alert').removeClass('alert-info alert-success').addClass('alert-danger');
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = 'An error occurred. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    verificationMessageDiv.html(
+                        '<strong><i class="bi bi-exclamation-triangle me-2"></i>Error</strong><br>' +
+                        '<div class="mt-2">' + errorMsg + '</div>'
+                    );
+                    verificationResultDiv.find('.alert').removeClass('alert-info alert-success').addClass('alert-danger');
                 }
             });
         }

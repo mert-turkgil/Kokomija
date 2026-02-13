@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Kokomija.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,6 +67,10 @@ namespace Kokomija.Data.Migrations
                     StripeCustomerId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     DefaultPaymentMethodId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Birthday = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DefaultAddress = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    DefaultCity = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    DefaultPostalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    DefaultCountry = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
@@ -217,8 +221,8 @@ namespace Kokomija.Data.Migrations
                     Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     LogoUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ApiKey = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ApiSecret = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ApiKey = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    ApiSecret = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
                     ApiAccountNumber = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ApiBaseUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ApiVersion = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
@@ -473,6 +477,46 @@ namespace Kokomija.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BusinessProfiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    NIP = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    CompanyName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    REGON = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: true),
+                    KRS = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    VATStatus = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ResidenceAddress = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    WorkingAddress = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    RegistrationLegalDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    CompanyEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    ContactPerson = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Position = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    IsVerified = table.Column<bool>(type: "bit", nullable: false),
+                    IsBusinessModeActive = table.Column<bool>(type: "bit", nullable: false),
+                    VerifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastVerificationAttempt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    VerificationAttempts = table.Column<int>(type: "int", nullable: false),
+                    GovernmentRequestId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    RawApiResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BusinessProfiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BusinessProfiles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CommissionSettings",
                 columns: table => new
                 {
@@ -564,6 +608,31 @@ namespace Kokomija.Data.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NIPVerificationLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    NIP = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    IPAddress = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
+                    WasSuccessful = table.Column<bool>(type: "bit", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ResponseCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    AttemptedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NIPVerificationLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NIPVerificationLogs_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -749,6 +818,11 @@ namespace Kokomija.Data.Migrations
                     StripeTaxCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     PackSize = table.Column<int>(type: "int", nullable: false),
                     ProductGroupId = table.Column<int>(type: "int", nullable: true),
+                    IsBusinessOnly = table.Column<bool>(type: "bit", nullable: false),
+                    IsAvailableForBusiness = table.Column<bool>(type: "bit", nullable: false),
+                    MinBusinessQuantity = table.Column<int>(type: "int", nullable: false),
+                    BusinessPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    BusinessStripePriceId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     CategoryId = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -1161,6 +1235,7 @@ namespace Kokomija.Data.Migrations
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     StockQuantity = table.Column<int>(type: "int", nullable: false),
                     StripePriceId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    BusinessStripePriceId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -1720,27 +1795,27 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "CreatedAt", "Description", "DisplayOrder", "IconUrl", "IsActive", "Language", "MetaDescription", "Name", "ProductCategoryId", "Slug", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4266), "Porady dotyczące zakupów i stylizacji", 1, null, true, "pl", "Porady zakupowe i stylizacyjne dla klientów Kokomija", "Porady", null, "porady", new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4631) },
-                    { 2, new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4968), "Najnowsze produkty i kolekcje", 2, null, true, "pl", "Najnowsze produkty i kolekcje w Kokomija", "Nowości", null, "nowosci", new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4968) },
-                    { 3, new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4971), "Najnowsze trendy w modzie", 3, null, true, "pl", "Najnowsze trendy w modzie i stylizacji", "Trendy", null, "trendy", new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4972) },
-                    { 4, new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4975), "Inspiracje stylizacyjne i lookbooki", 4, null, true, "pl", "Inspiracje stylizacyjne i lookbooki od Kokomija", "Inspiracje", null, "inspiracje", new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4975) },
-                    { 5, new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4978), "Informacje o marce Kokomija", 5, null, true, "pl", "Informacje o marce Kokomija i naszej misji", "O marce", null, "o-marce", new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(4979) }
+                    { 1, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3204), "Porady dotyczące zakupów i stylizacji", 1, null, true, "pl", "Porady zakupowe i stylizacyjne dla klientów Kokomija", "Porady", null, "porady", new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3509) },
+                    { 2, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3800), "Najnowsze produkty i kolekcje", 2, null, true, "pl", "Najnowsze produkty i kolekcje w Kokomija", "Nowości", null, "nowosci", new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3800) },
+                    { 3, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3803), "Najnowsze trendy w modzie", 3, null, true, "pl", "Najnowsze trendy w modzie i stylizacji", "Trendy", null, "trendy", new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3804) },
+                    { 4, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3806), "Inspiracje stylizacyjne i lookbooki", 4, null, true, "pl", "Inspiracje stylizacyjne i lookbooki od Kokomija", "Inspiracje", null, "inspiracje", new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3807) },
+                    { 5, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3809), "Informacje o marce Kokomija", 5, null, true, "pl", "Informacje o marce Kokomija i naszej misji", "O marce", null, "o-marce", new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(3810) }
                 });
 
             migrationBuilder.InsertData(
                 table: "CarouselSlides",
                 columns: new[] { "Id", "AnimationType", "BackgroundColor", "ButtonClass", "ButtonText", "CategoryId", "CreatedAt", "CreatedBy", "CustomCssClass", "DeletedAt", "DeletedBy", "DisplayOrder", "Duration", "EndDate", "ImageAlt", "ImagePath", "IsActive", "LinkUrl", "Location", "MobileImagePath", "RouteName", "RouteParameters", "StartDate", "Subtitle", "TabletImagePath", "TextAlign", "TextColor", "Title", "UpdatedAt", "UpdatedBy" },
-                values: new object[] { 1, "fade", null, "btn-primary", "Carousel_ShopNow", null, new DateTime(2026, 1, 15, 12, 40, 12, 786, DateTimeKind.Utc).AddTicks(9968), null, null, null, null, 1, 5000, null, "New Spring 2025 Collection", "/img/Carousel/1.jpg", true, null, "Home", "/img/Carousel/3.jpg", null, null, new DateTime(2026, 1, 15, 12, 40, 12, 786, DateTimeKind.Utc).AddTicks(9470), "Carousel_NewCollection_Subtitle", "/img/Carousel/2.jpg", "center", null, "Carousel_NewCollection", null, null });
+                values: new object[] { 1, "fade", null, "btn-primary", "Carousel_ShopNow", null, new DateTime(2026, 2, 13, 16, 57, 55, 41, DateTimeKind.Utc).AddTicks(6582), null, null, null, null, 1, 5000, null, "New Spring 2025 Collection", "/img/Carousel/1.jpg", true, null, "Home", "/img/Carousel/3.jpg", null, null, new DateTime(2026, 2, 13, 16, 57, 55, 41, DateTimeKind.Utc).AddTicks(6239), "Carousel_NewCollection_Subtitle", "/img/Carousel/2.jpg", "center", null, "Carousel_NewCollection", null, null });
 
             migrationBuilder.InsertData(
                 table: "Categories",
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Description", "DisplayOrder", "IconCssClass", "ImageUrl", "IsActive", "Name", "NameKey", "ParentCategoryId", "ShowInNavbar", "Slug", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(320), null, "Odzież damska", 1, "fas fa-female", "categories/women.jpg", true, "Damskie", "Category_Women", null, true, "damskie", null, null },
-                    { 2, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(887), null, "Odzież męska", 2, "fas fa-male", "categories/men.jpg", true, "Męskie", "Category_Men", null, true, "meskie", null, null },
-                    { 3, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(895), null, "Kurtki i płaszcze", 3, "fas fa-wind", "categories/outerwear.jpg", true, "Odzież Wierzchnia", "Category_Outerwear", null, true, "odziez-wierzchnia", null, null },
-                    { 4, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(903), null, "Dodatki i akcesoria", 4, "fas fa-shopping-bag", "categories/accessories.jpg", true, "Akcesoria", "Category_Accessories", null, true, "akcesoria", null, null }
+                    { 1, new DateTime(2026, 2, 13, 16, 57, 55, 11, DateTimeKind.Utc).AddTicks(9685), null, "Odzież damska", 1, "fas fa-female", "categories/women.jpg", true, "Damskie", "Category_Women", null, true, "damskie", null, null },
+                    { 2, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(190), null, "Odzież męska", 2, "fas fa-male", "categories/men.jpg", true, "Męskie", "Category_Men", null, true, "meskie", null, null },
+                    { 3, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(193), null, "Kurtki i płaszcze", 3, "fas fa-wind", "categories/outerwear.jpg", true, "Odzież Wierzchnia", "Category_Outerwear", null, true, "odziez-wierzchnia", null, null },
+                    { 4, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(196), null, "Dodatki i akcesoria", 4, "fas fa-shopping-bag", "categories/accessories.jpg", true, "Akcesoria", "Category_Accessories", null, true, "akcesoria", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1748,48 +1823,47 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "CreatedAt", "DisplayName", "DisplayOrder", "HexCode", "IsActive", "Name" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3340), "Black", 1, "#000000", true, "Black" },
-                    { 2, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3662), "White", 2, "#FFFFFF", true, "White" },
-                    { 3, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3665), "Red", 3, "#FF0000", true, "Red" },
-                    { 4, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3667), "Blue", 4, "#0000FF", true, "Blue" },
-                    { 5, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3670), "Green", 5, "#00FF00", true, "Green" },
-                    { 6, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3672), "Yellow", 6, "#FFFF00", true, "Yellow" },
-                    { 7, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3675), "Navy Blue", 7, "#000080", true, "Navy" },
-                    { 8, new DateTime(2026, 1, 15, 12, 40, 12, 745, DateTimeKind.Utc).AddTicks(3677), "Gray", 8, "#808080", true, "Gray" }
+                    { 1, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(7719), "Black", 1, "#000000", true, "Black" },
+                    { 2, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8037), "White", 2, "#FFFFFF", true, "White" },
+                    { 3, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8039), "Red", 3, "#FF0000", true, "Red" },
+                    { 4, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8041), "Blue", 4, "#0000FF", true, "Blue" },
+                    { 5, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8043), "Green", 5, "#00FF00", true, "Green" },
+                    { 6, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8046), "Yellow", 6, "#FFFF00", true, "Yellow" },
+                    { 7, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8048), "Navy Blue", 7, "#000080", true, "Navy" },
+                    { 8, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(8050), "Gray", 8, "#808080", true, "Gray" }
                 });
 
             migrationBuilder.InsertData(
                 table: "Coupons",
                 columns: new[] { "Id", "AccountAgeDays", "AutoGenerationRuleId", "CampaignId", "CampaignName", "CategoryId", "Code", "CouponType", "CreatedAt", "DaysAfterBirthday", "DaysBeforeBirthday", "Description", "DiscountType", "DiscountValue", "IsActive", "IsAutoGenerated", "MaximumDiscountAmount", "MinimumOrderAmount", "ProductId", "StripeCouponId", "StripePromotionCodeId", "UpdatedAt", "UsageLimit", "UsageLimitPerUser", "UserId", "ValidFrom", "ValidUntil", "VipTierRequired" },
-                values: new object[] { 1, null, null, null, null, null, "WELCOME10", "general", new DateTime(2026, 1, 15, 12, 40, 12, 756, DateTimeKind.Utc).AddTicks(7821), null, null, "10% off your first order", "percentage", 10.00m, true, false, 50.00m, 50.00m, null, "", "", null, 1000, 1, null, new DateTime(2026, 1, 15, 12, 40, 12, 756, DateTimeKind.Utc).AddTicks(5848), new DateTime(2026, 7, 15, 12, 40, 12, 756, DateTimeKind.Utc).AddTicks(6206), null });
+                values: new object[] { 1, null, null, null, null, null, "WELCOME10", "general", new DateTime(2026, 2, 13, 16, 57, 55, 18, DateTimeKind.Utc).AddTicks(8734), null, null, "10% off your first order", "percentage", 10.00m, true, false, 50.00m, 50.00m, null, "", "", null, 1000, 1, null, new DateTime(2026, 2, 13, 16, 57, 55, 18, DateTimeKind.Utc).AddTicks(6989), new DateTime(2026, 8, 13, 16, 57, 55, 18, DateTimeKind.Utc).AddTicks(7305), null });
 
             migrationBuilder.InsertData(
                 table: "PackQuantities",
                 columns: new[] { "Id", "CreatedAt", "DisplayOrder", "IsActive", "Name", "NameKey", "Quantity", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 15, 12, 40, 12, 744, DateTimeKind.Utc).AddTicks(4006), 1, true, "Single", "PackQuantity_Single", 1, null },
-                    { 2, new DateTime(2026, 1, 15, 12, 40, 12, 744, DateTimeKind.Utc).AddTicks(4350), 2, true, "5-Pack", "PackQuantity_5Pack", 5, null },
-                    { 3, new DateTime(2026, 1, 15, 12, 40, 12, 744, DateTimeKind.Utc).AddTicks(4352), 3, true, "6-Pack", "PackQuantity_6Pack", 6, null },
-                    { 4, new DateTime(2026, 1, 15, 12, 40, 12, 744, DateTimeKind.Utc).AddTicks(4354), 4, true, "8-Pack", "PackQuantity_8Pack", 8, null },
-                    { 5, new DateTime(2026, 1, 15, 12, 40, 12, 744, DateTimeKind.Utc).AddTicks(4357), 5, true, "10-Pack", "PackQuantity_10Pack", 10, null }
+                    { 1, new DateTime(2026, 2, 13, 16, 57, 55, 9, DateTimeKind.Utc).AddTicks(9935), 1, true, "Single", "PackQuantity_Single", 1, null },
+                    { 2, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(315), 2, true, "3-Pack", "PackQuantity_3Pack", 3, null },
+                    { 3, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(317), 3, true, "6-Pack", "PackQuantity_6Pack", 6, null },
+                    { 4, new DateTime(2026, 2, 13, 16, 57, 55, 10, DateTimeKind.Utc).AddTicks(319), 4, true, "10-Pack", "PackQuantity_10Pack", 10, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "ProductGroups",
                 columns: new[] { "Id", "CreatedAt", "Description", "DescriptionKey", "Name", "NameKey", "UpdatedAt" },
-                values: new object[] { 1, new DateTime(2026, 1, 15, 12, 40, 12, 757, DateTimeKind.Utc).AddTicks(4844), "High-quality women's cotton briefs in various pack sizes", "ProductGroup_WomenBriefs_Description", "Women's Cotton Briefs Pack Collection", "ProductGroup_WomenBriefs_Name", null });
+                values: new object[] { 1, new DateTime(2026, 2, 13, 16, 57, 55, 19, DateTimeKind.Utc).AddTicks(3089), "High-quality women's cotton briefs in various pack sizes", "ProductGroup_WomenBriefs_Description", "Women's Cotton Briefs Pack Collection", "ProductGroup_WomenBriefs_Name", null });
 
             migrationBuilder.InsertData(
                 table: "ShippingProviders",
                 columns: new[] { "Id", "ApiAccountNumber", "ApiBaseUrl", "ApiKey", "ApiSecret", "ApiVersion", "AuthHeaderName", "AuthenticationType", "Code", "CreatedAt", "EstimatedDeliveryDays", "IsActive", "LabelApiEndpoint", "LastApiCallAt", "LastApiCallSuccess", "LastApiError", "LogoUrl", "Name", "OAuthAccessToken", "OAuthTokenExpiry", "OAuthTokenUrl", "Priority", "RatesApiEndpoint", "SandboxApiBaseUrl", "ShipmentApiEndpoint", "SupportedCountries", "SupportsInsurance", "SupportsLabelGeneration", "SupportsPickupScheduling", "SupportsRateCalculation", "SupportsTracking", "SupportsWebhooks", "TrackingApiEndpoint", "TrackingUrlTemplate", "UpdatedAt", "UseSandbox", "WebhookSecret", "WebhookUrl" },
                 values: new object[,]
                 {
-                    { 1, null, null, null, null, null, null, "ApiKey", "inpost", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(5909), 2, true, null, null, true, null, null, "InPost", null, null, null, 100, null, null, null, "[\"PL\"]", false, true, false, true, true, false, null, "https://inpost.pl/sledzenie-przesylek?number={trackingNumber}", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6233), false, null, null },
-                    { 2, null, null, null, null, null, null, "ApiKey", "dhl", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6547), 3, true, null, null, true, null, null, "DHL", null, null, null, 100, null, null, null, "[\"PL\",\"DE\",\"US\",\"GB\"]", false, true, false, true, true, false, null, "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6547), false, null, null },
-                    { 3, null, null, null, null, null, null, "ApiKey", "ups", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6551), 3, true, null, null, true, null, null, "UPS", null, null, null, 100, null, null, null, "[\"PL\",\"DE\",\"US\",\"GB\"]", false, true, false, true, true, false, null, "https://www.ups.com/track?tracknum={trackingNumber}", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6551), false, null, null },
-                    { 4, null, null, null, null, null, null, "ApiKey", "fedex", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6554), 3, true, null, null, true, null, null, "FedEx", null, null, null, 100, null, null, null, "[\"PL\",\"DE\",\"US\",\"GB\"]", false, true, false, true, true, false, null, "https://www.fedex.com/fedextrack/?trknbr={trackingNumber}", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6555), false, null, null },
-                    { 5, null, null, null, null, null, null, "ApiKey", "poczta_polska", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6558), 5, true, null, null, true, null, null, "Poczta Polska", null, null, null, 100, null, null, null, "[\"PL\"]", false, true, false, true, true, false, null, "https://emonitoring.poczta-polska.pl/?numer={trackingNumber}", new DateTime(2026, 1, 15, 12, 40, 12, 753, DateTimeKind.Utc).AddTicks(6559), false, null, null }
+                    { 1, null, null, null, null, null, null, "ApiKey", "inpost_paczkomat", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2098), 2, true, null, null, true, null, null, "InPost Paczkomat", null, null, null, 100, null, null, null, "[\"PL\"]", false, true, false, true, true, false, null, "https://inpost.pl/sledzenie-przesylek?number={trackingNumber}", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2408), false, null, null },
+                    { 2, null, null, null, null, null, null, "ApiKey", "inpost_courier", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2709), 1, true, null, null, true, null, null, "InPost Kurier", null, null, null, 100, null, null, null, "[\"PL\"]", false, true, false, true, true, false, null, "https://inpost.pl/sledzenie-przesylek?number={trackingNumber}", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2709), false, null, null },
+                    { 3, null, null, null, null, null, null, "ApiKey", "dhl_express", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2713), 2, true, null, null, true, null, null, "DHL Express", null, null, null, 100, null, null, null, "[\"PL\",\"DE\",\"US\",\"GB\",\"FR\",\"IT\"]", false, true, false, true, true, false, null, "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2714), false, null, null },
+                    { 4, null, null, null, null, null, null, "ApiKey", "dhl_standard", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2717), 4, true, null, null, true, null, null, "DHL Standard", null, null, null, 100, null, null, null, "[\"PL\",\"DE\",\"US\",\"GB\",\"FR\",\"IT\"]", false, true, false, true, true, false, null, "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2718), false, null, null },
+                    { 5, null, null, null, null, null, null, "ApiKey", "poczta_polska", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2720), 5, true, null, null, true, null, null, "Poczta Polska", null, null, null, 100, null, null, null, "[\"PL\"]", false, true, false, true, true, false, null, "https://emonitoring.poczta-polska.pl/?numer={trackingNumber}", new DateTime(2026, 2, 13, 16, 57, 55, 16, DateTimeKind.Utc).AddTicks(2721), false, null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -1797,17 +1871,17 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "Category", "DataType", "Description", "Key", "UpdatedAt", "UpdatedBy", "Value" },
                 values: new object[,]
                 {
-                    { 1, "Security", "string", "Super admin email for site control and emergency commands", "SuperAdminEmail", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4170), null, "admin@kokomija.com" },
-                    { 2, "Commission", "decimal", "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)", "PlatformCommissionRate", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4709), null, "0.01" },
-                    { 3, "Commission", "decimal", "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)", "StripeProcessingFeeRate", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4716), null, "0.014" },
-                    { 4, "Commission", "decimal", "Stripe fixed fee per transaction in PLN", "StripeFixedFee", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4720), null, "1.00" },
-                    { 5, "Maintenance", "boolean", "Is site currently closed for maintenance", "SiteClosureEnabled", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4722), null, "false" },
-                    { 6, "Maintenance", "string", "Message displayed when site is closed", "SiteClosureMessage", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4725), null, "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji." },
-                    { 7, "Maintenance", "integer", "Automatically reopen site after X days of closure", "AutoReopenAfterDays", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4774), null, "30" },
-                    { 8, "Maintenance", "boolean", "Send daily confirmation emails during site closure", "DailyConfirmationEmailEnabled", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4777), null, "true" },
-                    { 9, "Tax", "decimal", "Tax rate (VAT) applied to orders (decimal, e.g., 0.23 = 23%)", "TaxRate", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4779), null, "0.23" },
-                    { 10, "Shipping", "decimal", "Standard shipping cost in PLN", "ShippingRate", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4781), null, "15.00" },
-                    { 11, "Shipping", "decimal", "Minimum order value for free shipping in PLN", "FreeShippingThreshold", new DateTime(2026, 1, 15, 12, 40, 12, 752, DateTimeKind.Utc).AddTicks(4784), null, "200.00" }
+                    { 1, "Security", "string", "Super admin email for site control and emergency commands", "SuperAdminEmail", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4026), null, "admin@kokomija.com" },
+                    { 2, "Commission", "decimal", "Platform commission rate per product sale (decimal, e.g., 0.01 = 1%)", "PlatformCommissionRate", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4330), null, "0.01" },
+                    { 3, "Commission", "decimal", "Stripe processing fee rate (decimal, e.g., 0.014 = 1.4%)", "StripeProcessingFeeRate", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4333), null, "0.014" },
+                    { 4, "Commission", "decimal", "Stripe fixed fee per transaction in PLN", "StripeFixedFee", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4334), null, "1.00" },
+                    { 5, "Maintenance", "boolean", "Is site currently closed for maintenance", "SiteClosureEnabled", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4336), null, "false" },
+                    { 6, "Maintenance", "string", "Message displayed when site is closed", "SiteClosureMessage", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4339), null, "Przepraszamy, serwis jest tymczasowo niedostępny z powodu konserwacji." },
+                    { 7, "Maintenance", "integer", "Automatically reopen site after X days of closure", "AutoReopenAfterDays", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4341), null, "30" },
+                    { 8, "Maintenance", "boolean", "Send daily confirmation emails during site closure", "DailyConfirmationEmailEnabled", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4343), null, "true" },
+                    { 9, "Tax", "decimal", "Tax rate (VAT) applied to orders (decimal, e.g., 0.23 = 23%)", "TaxRate", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4344), null, "0.23" },
+                    { 10, "Shipping", "decimal", "Standard shipping cost in PLN", "ShippingRate", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4346), null, "15.00" },
+                    { 11, "Shipping", "decimal", "Minimum order value for free shipping in PLN", "FreeShippingThreshold", new DateTime(2026, 2, 13, 16, 57, 55, 15, DateTimeKind.Utc).AddTicks(4348), null, "200.00" }
                 });
 
             migrationBuilder.InsertData(
@@ -1815,46 +1889,46 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "CreatedAt", "DisplayName", "DisplayOrder", "IsActive", "Name", "Region" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 15, 12, 40, 12, 742, DateTimeKind.Utc).AddTicks(3972), "Extra Small", 1, true, "XS", null },
-                    { 2, new DateTime(2026, 1, 15, 12, 40, 12, 742, DateTimeKind.Utc).AddTicks(4508), "Small", 2, true, "S", null },
-                    { 3, new DateTime(2026, 1, 15, 12, 40, 12, 742, DateTimeKind.Utc).AddTicks(4514), "Medium", 3, true, "M", null },
-                    { 4, new DateTime(2026, 1, 15, 12, 40, 12, 742, DateTimeKind.Utc).AddTicks(4516), "Large", 4, true, "L", null },
-                    { 5, new DateTime(2026, 1, 15, 12, 40, 12, 742, DateTimeKind.Utc).AddTicks(4519), "Extra Large", 5, true, "XL", null },
-                    { 6, new DateTime(2026, 1, 15, 12, 40, 12, 742, DateTimeKind.Utc).AddTicks(4521), "2X Large", 6, true, "XXL", null }
+                    { 1, new DateTime(2026, 2, 13, 16, 57, 55, 8, DateTimeKind.Utc).AddTicks(6989), "Extra Small", 1, true, "XS", null },
+                    { 2, new DateTime(2026, 2, 13, 16, 57, 55, 8, DateTimeKind.Utc).AddTicks(7314), "Small", 2, true, "S", null },
+                    { 3, new DateTime(2026, 2, 13, 16, 57, 55, 8, DateTimeKind.Utc).AddTicks(7316), "Medium", 3, true, "M", null },
+                    { 4, new DateTime(2026, 2, 13, 16, 57, 55, 8, DateTimeKind.Utc).AddTicks(7318), "Large", 4, true, "L", null },
+                    { 5, new DateTime(2026, 2, 13, 16, 57, 55, 8, DateTimeKind.Utc).AddTicks(7321), "Extra Large", 5, true, "XL", null },
+                    { 6, new DateTime(2026, 2, 13, 16, 57, 55, 8, DateTimeKind.Utc).AddTicks(7323), "2X Large", 6, true, "XXL", null }
                 });
 
             migrationBuilder.InsertData(
                 table: "SupportedLanguages",
                 columns: new[] { "Id", "CreatedAt", "CultureCode", "DisplayName", "DisplayOrder", "FlagIcon", "IsDefault", "IsEnabled", "NativeName", "TwoLetterIsoCode" },
-                values: new object[] { 1, new DateTime(2026, 1, 15, 12, 40, 12, 748, DateTimeKind.Utc).AddTicks(2484), "pl-PL", "Polski", 1, "🇵🇱", true, true, "Polski", "pl" });
+                values: new object[] { 1, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(5984), "pl-PL", "Polski", 1, "🇵🇱", true, true, "Polski", "pl" });
 
             migrationBuilder.InsertData(
                 table: "SupportedLanguages",
                 columns: new[] { "Id", "CreatedAt", "CultureCode", "DisplayName", "DisplayOrder", "FlagIcon", "NativeName", "TwoLetterIsoCode" },
-                values: new object[] { 2, new DateTime(2026, 1, 15, 12, 40, 12, 748, DateTimeKind.Utc).AddTicks(3047), "en-US", "English", 2, "🇺🇸", "English", "en" });
+                values: new object[] { 2, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(6286), "en-US", "English", 2, "🇺🇸", "English", "en" });
 
             migrationBuilder.InsertData(
                 table: "TaxRates",
                 columns: new[] { "Id", "CountryCode", "CreatedAt", "Description", "IsActive", "IsDefault", "Name", "Rate", "StateCode", "StripeTaxRateId", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, "PL", new DateTime(2026, 1, 15, 12, 40, 12, 755, DateTimeKind.Utc).AddTicks(4414), "Standard VAT rate for Poland", true, true, "VAT 23% (Poland)", 23.00m, null, "txr_placeholder_pl_23", new DateTime(2026, 1, 15, 12, 40, 12, 755, DateTimeKind.Utc).AddTicks(4745) },
-                    { 2, "PL", new DateTime(2026, 1, 15, 12, 40, 12, 755, DateTimeKind.Utc).AddTicks(5133), "Reduced VAT rate for specific products", true, false, "VAT 8% (Poland - Reduced)", 8.00m, null, "txr_placeholder_pl_8", new DateTime(2026, 1, 15, 12, 40, 12, 755, DateTimeKind.Utc).AddTicks(5134) },
-                    { 3, "PL", new DateTime(2026, 1, 15, 12, 40, 12, 755, DateTimeKind.Utc).AddTicks(5137), "Super reduced VAT rate", false, false, "VAT 5% (Poland - Super Reduced)", 5.00m, null, "txr_placeholder_pl_5", new DateTime(2026, 1, 15, 12, 40, 12, 755, DateTimeKind.Utc).AddTicks(5138) }
+                    { 1, "PL", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(8842), "Standard VAT rate for Poland", true, true, "VAT 23% (Poland)", 23.00m, null, "txr_placeholder_pl_23", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(9140) },
+                    { 2, "PL", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(9430), "Reduced VAT rate for specific products", true, false, "VAT 8% (Poland - Reduced)", 8.00m, null, "txr_placeholder_pl_8", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(9430) },
+                    { 3, "PL", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(9433), "Super reduced VAT rate", false, false, "VAT 5% (Poland - Super Reduced)", 5.00m, null, "txr_placeholder_pl_5", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(9434) }
                 });
 
             migrationBuilder.InsertData(
                 table: "Blogs",
                 columns: new[] { "Id", "AllowComments", "AuthorId", "CategoryId", "CreatedAt", "FeaturedImage", "IsPublished", "ProductId", "PublishedDate", "UpdatedAt" },
-                values: new object[] { 1, true, null, 3, new DateTime(2026, 1, 15, 12, 40, 12, 750, DateTimeKind.Utc).AddTicks(1283), "/img/Blog/fashion-trends-2025.jpg", true, null, new DateTime(2026, 1, 15, 12, 40, 12, 749, DateTimeKind.Utc).AddTicks(9854), new DateTime(2026, 1, 15, 12, 40, 12, 750, DateTimeKind.Utc).AddTicks(1595) });
+                values: new object[] { 1, true, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(8812), "/img/Blog/fashion-trends-2025.jpg", true, null, new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(7510), new DateTime(2026, 2, 13, 16, 57, 55, 13, DateTimeKind.Utc).AddTicks(9106) });
 
             migrationBuilder.InsertData(
                 table: "CarouselSlideTranslations",
                 columns: new[] { "Id", "ActionName", "AreaName", "ButtonText", "CarouselSlideId", "ControllerName", "CreatedAt", "CultureCode", "ImageAlt", "LinkUrl", "RouteParameters", "Subtitle", "Title", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, "Index", null, "Shop Now", 1, "Product", new DateTime(2026, 1, 15, 12, 40, 12, 787, DateTimeKind.Utc).AddTicks(9939), "en-US", "Kokomija Spring 2025 Fashion Collection - Premium Women's and Men's Underwear", null, null, "Discover the latest trends in women's and men's fashion", "New Spring 2025 Collection", null },
-                    { 2, "Index", null, "Kup Teraz", 1, "Product", new DateTime(2026, 1, 15, 12, 40, 12, 788, DateTimeKind.Utc).AddTicks(404), "pl-PL", "Kokomija Kolekcja Wiosna 2025 - Wysokiej Jakości Bielizna Damska i Męska", null, null, "Odkryj najnowsze trendy w modzie damskiej i męskiej", "Nowa Kolekcja Wiosna 2025", null }
+                    { 1, "Index", null, "Shop Now", 1, "Product", new DateTime(2026, 2, 13, 16, 57, 55, 42, DateTimeKind.Utc).AddTicks(3528), "en-US", "Kokomija Spring 2025 Fashion Collection - Premium Women's and Men's Underwear", null, null, "Discover the latest trends in women's and men's fashion", "New Spring 2025 Collection", null },
+                    { 2, "Index", null, "Kup Teraz", 1, "Product", new DateTime(2026, 2, 13, 16, 57, 55, 42, DateTimeKind.Utc).AddTicks(3842), "pl-PL", "Kokomija Kolekcja Wiosna 2025 - Wysokiej Jakości Bielizna Damska i Męska", null, null, "Odkryj najnowsze trendy w modzie damskiej i męskiej", "Nowa Kolekcja Wiosna 2025", null }
                 });
 
             migrationBuilder.InsertData(
@@ -1862,25 +1936,25 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Description", "DisplayOrder", "IconCssClass", "ImageUrl", "IsActive", "Name", "NameKey", "ParentCategoryId", "ShowInNavbar", "Slug", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { 5, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1408), null, "Eleganckie sukienki damskie", 1, "fas fa-tshirt", null, true, "Sukienki", "Category_Dresses", 1, true, "damskie-sukienki", null, null },
-                    { 6, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1420), null, "Modne spódnice", 2, "fas fa-tshirt", null, true, "Spódnice", "Category_Skirts", 1, true, "damskie-spodnice", null, null },
-                    { 7, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1424), null, "Eleganckie bluzki damskie", 3, "fas fa-tshirt", null, true, "Bluzki", "Category_Blouses", 1, true, "damskie-bluzki", null, null },
-                    { 8, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1429), null, "Spodnie damskie", 4, "fas fa-tshirt", null, true, "Spodnie", "Category_WomenPants", 1, true, "damskie-spodnie", null, null },
-                    { 9, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1433), null, "Eleganckie koszule męskie", 1, "fas fa-tshirt", null, true, "Koszule", "Category_Shirts", 2, true, "meskie-koszule", null, null },
-                    { 10, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1438), null, "Spodnie męskie", 2, "fas fa-tshirt", null, true, "Spodnie", "Category_MenPants", 2, true, "meskie-spodnie", null, null },
-                    { 11, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1441), null, "Koszulki męskie", 3, "fas fa-tshirt", null, true, "T-Shirty", "Category_TShirts", 2, true, "meskie-tshirty", null, null },
-                    { 12, new DateTime(2026, 1, 15, 12, 40, 12, 747, DateTimeKind.Utc).AddTicks(1445), null, "Bluzy męskie", 4, "fas fa-tshirt", null, true, "Bluzy", "Category_Sweatshirts", 2, true, "meskie-bluzy", null, null }
+                    { 5, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(577), null, "Eleganckie sukienki damskie", 1, "fas fa-tshirt", null, true, "Sukienki", "Category_Dresses", 1, true, "damskie-sukienki", null, null },
+                    { 6, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(583), null, "Modne spódnice", 2, "fas fa-tshirt", null, true, "Spódnice", "Category_Skirts", 1, true, "damskie-spodnice", null, null },
+                    { 7, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(586), null, "Eleganckie bluzki damskie", 3, "fas fa-tshirt", null, true, "Bluzki", "Category_Blouses", 1, true, "damskie-bluzki", null, null },
+                    { 8, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(589), null, "Spodnie damskie", 4, "fas fa-tshirt", null, true, "Spodnie", "Category_WomenPants", 1, true, "damskie-spodnie", null, null },
+                    { 9, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(592), null, "Eleganckie koszule męskie", 1, "fas fa-tshirt", null, true, "Koszule", "Category_Shirts", 2, true, "meskie-koszule", null, null },
+                    { 10, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(595), null, "Spodnie męskie", 2, "fas fa-tshirt", null, true, "Spodnie", "Category_MenPants", 2, true, "meskie-spodnie", null, null },
+                    { 11, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(598), null, "Koszulki męskie", 3, "fas fa-tshirt", null, true, "T-Shirty", "Category_TShirts", 2, true, "meskie-tshirty", null, null },
+                    { 12, new DateTime(2026, 2, 13, 16, 57, 55, 12, DateTimeKind.Utc).AddTicks(601), null, "Bluzy męskie", 4, "fas fa-tshirt", null, true, "Bluzy", "Category_Sweatshirts", 2, true, "meskie-bluzy", null, null }
                 });
 
             migrationBuilder.InsertData(
                 table: "Products",
-                columns: new[] { "Id", "CategoryId", "CreatedAt", "Description", "IsActive", "Name", "PackSize", "Price", "ProductGroupId", "Slug", "StripePriceId", "StripeProductId", "StripeTaxCode", "UpdatedAt" },
+                columns: new[] { "Id", "BusinessPrice", "BusinessStripePriceId", "CategoryId", "CreatedAt", "Description", "IsActive", "IsAvailableForBusiness", "IsBusinessOnly", "MinBusinessQuantity", "Name", "PackSize", "Price", "ProductGroupId", "Slug", "StripePriceId", "StripeProductId", "StripeTaxCode", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2026, 1, 15, 12, 40, 12, 758, DateTimeKind.Utc).AddTicks(7881), "Wysokiej jakości majtki damskie bawełniane. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", true, "Majtki damskie bawełniane wysokie - Single", 1, 9.95m, 1, "majtki-damskie-bawelniane-wysokie-single", "", "", "txcd_30011000", null },
-                    { 2, 1, new DateTime(2026, 1, 15, 12, 40, 12, 758, DateTimeKind.Utc).AddTicks(8193), "Wysokiej jakości majtki damskie bawełniane w zestawie 5 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", true, "Majtki damskie bawełniane wysokie - 5 pak", 5, 49.75m, 1, "majtki-damskie-bawelniane-wysokie-5-pak", "", "", "txcd_30011000", null },
-                    { 3, 1, new DateTime(2026, 1, 15, 12, 40, 12, 758, DateTimeKind.Utc).AddTicks(8197), "Wysokiej jakości majtki damskie bawełniane w zestawie 7 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", true, "Majtki damskie bawełniane wysokie - 7 pak", 7, 69.65m, 1, "majtki-damskie-bawelniane-wysokie-7-pak", "", "", "txcd_30011000", null },
-                    { 4, 1, new DateTime(2026, 1, 15, 12, 40, 12, 758, DateTimeKind.Utc).AddTicks(8201), "Wysokiej jakości majtki damskie bawełniane w zestawie 8 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.", true, "Majtki damskie bawełniane wysokie - 8 pak", 8, 79.60m, 1, "majtki-damskie-bawelniane-wysokie-8-pak", "", "", "txcd_30011000", null }
+                    { 1, null, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(3687), "Wysokiej jakości majtki damskie bawełniane. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", true, true, false, 0, "Majtki damskie bawełniane wysokie - Single", 1, 9.95m, 1, "majtki-damskie-bawelniane-wysokie-single", "", "", "txcd_30011000", null },
+                    { 2, null, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(4054), "Wysokiej jakości majtki damskie bawełniane w zestawie 3 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", true, true, false, 0, "Majtki damskie bawełniane wysokie - 3 pak", 3, 29.85m, 1, "majtki-damskie-bawelniane-wysokie-3-pak", "", "", "txcd_30011000", null },
+                    { 3, null, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(4058), "Wysokiej jakości majtki damskie bawełniane w zestawie 6 sztuk. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", true, true, false, 0, "Majtki damskie bawełniane wysokie - 6 pak", 6, 59.70m, 1, "majtki-damskie-bawelniane-wysokie-6-pak", "", "", "txcd_30011000", null },
+                    { 4, null, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(4061), "Wysokiej jakości majtki damskie bawełniane w zestawie 10 sztuk. Wygodne, przewiewne i trwałe. Najlepszy wybór wartościowy! Dostępne w różnych kolorach i rozmiarach.", true, true, false, 0, "Majtki damskie bawełniane wysokie - 10 pak", 10, 99.50m, 1, "majtki-damskie-bawelniane-wysokie-10-pak", "", "", "txcd_30011000", null }
                 });
 
             migrationBuilder.InsertData(
@@ -1888,11 +1962,11 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "BasePrice", "CountryCode", "CreatedAt", "Description", "FreeShippingThreshold", "IsActive", "MaxDeliveryDays", "MinDeliveryDays", "Name", "PricePerKg", "PricePerKm", "ShippingProviderId", "StripeShippingRateId", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, 9.99m, "PL", new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7155), "Delivery to InPost parcel locker", 100.00m, true, 2, 1, "InPost Paczkomat", null, null, 1, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7465) },
-                    { 2, 14.99m, "PL", new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7772), "Home delivery by InPost courier", 150.00m, true, 2, 1, "InPost Courier", null, null, 1, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7772) },
-                    { 3, 29.99m, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7776), "Standard international delivery", null, true, 5, 3, "DHL Standard", null, null, 2, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7776) },
-                    { 4, 49.99m, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7779), "Express international delivery", null, true, 2, 1, "DHL Express", null, null, 2, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7780) },
-                    { 5, 12.99m, "PL", new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7784), "Standard postal delivery", 120.00m, true, 5, 3, "Poczta Polska Standard", null, null, 5, null, new DateTime(2026, 1, 15, 12, 40, 12, 754, DateTimeKind.Utc).AddTicks(7784) }
+                    { 1, 9.99m, "PL", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(1892), "Delivery to InPost parcel locker", 100.00m, true, 2, 1, "InPost Paczkomat", null, null, 1, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2188) },
+                    { 2, 14.99m, "PL", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2481), "Home delivery by InPost courier", 150.00m, true, 2, 1, "InPost Kurier", null, null, 2, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2481) },
+                    { 3, 49.99m, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2484), "Express international delivery", null, true, 2, 1, "DHL Express", null, null, 3, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2484) },
+                    { 4, 29.99m, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2487), "Standard international delivery", null, true, 5, 3, "DHL Standard", null, null, 4, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2488) },
+                    { 5, 12.99m, "PL", new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2491), "Standard postal delivery", 120.00m, true, 5, 3, "Poczta Polska Standard", null, null, 5, null, new DateTime(2026, 2, 13, 16, 57, 55, 17, DateTimeKind.Utc).AddTicks(2492) }
                 });
 
             migrationBuilder.InsertData(
@@ -1900,170 +1974,170 @@ namespace Kokomija.Data.Migrations
                 columns: new[] { "Id", "BlogId", "Content", "CreatedAt", "CultureCode", "Excerpt", "MetaDescription", "MetaKeywords", "Slug", "Tags", "Title", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, 1, "<p>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish.</p><p>This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</p><p><strong>Key trends:</strong></p><ul><li>Sustainable and eco-friendly materials</li><li>Bold color combinations</li><li>Oversized silhouettes</li><li>Minimalist accessories</li><li>Vintage revival</li></ul><p>Stay tuned for more fashion tips and style inspiration on our blog!</p>", new DateTime(2026, 1, 15, 12, 40, 12, 751, DateTimeKind.Utc).AddTicks(69), "en-US", "Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors.", "Discover the hottest fashion trends for 2025 - sustainable materials, bold colors, and timeless style.", "fashion,trends,2025,style,clothing,sustainable fashion", "fashion-trends-2025", "fashion,trends,2025,style", "Fashion Trends for 2025", new DateTime(2026, 1, 15, 12, 40, 12, 751, DateTimeKind.Utc).AddTicks(494) },
-                    { 2, 1, "<p>Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory, prezentujemy wszystko, co musisz wiedzieć, aby być na czasie.</p><p>Ten sezon przynosi powrót do klasyki z nowoczesnym akcentem - oversize'owe marynarki, midi spódnice i minimalistyczna biżuteria to must-have w każdej garderobie.</p><p><strong>Kluczowe trendy:</strong></p><ul><li>Zrównoważone i ekologiczne materiały</li><li>Odważne kombinacje kolorów</li><li>Oversize'owe sylwetki</li><li>Minimalistyczne akcesoria</li><li>Powrót vintage</li></ul><p>Bądź na bieżąco z naszymi poradami modowymi i inspiracjami stylistycznymi na blogu!</p>", new DateTime(2026, 1, 15, 12, 40, 12, 751, DateTimeKind.Utc).AddTicks(933), "pl-PL", "Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory.", "Odkryj najgorętsze trendy modowe na rok 2025 - zrównoważone materiały, odważne kolory i ponadczasowy styl.", "moda,trendy,2025,styl,odzież,zrównoważona moda", "trendy-modowe-2025", "moda,trendy,2025,styl", "Trendy Modowe na 2025", new DateTime(2026, 1, 15, 12, 40, 12, 751, DateTimeKind.Utc).AddTicks(936) }
+                    { 1, 1, "<p>Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors, we present everything you need to know to stay stylish.</p><p>This season brings a return to classics with a modern twist - oversized blazers, midi skirts, and minimalist accessories are the must-haves in every wardrobe.</p><p><strong>Key trends:</strong></p><ul><li>Sustainable and eco-friendly materials</li><li>Bold color combinations</li><li>Oversized silhouettes</li><li>Minimalist accessories</li><li>Vintage revival</li></ul><p>Stay tuned for more fashion tips and style inspiration on our blog!</p>", new DateTime(2026, 2, 13, 16, 57, 55, 14, DateTimeKind.Utc).AddTicks(5752), "en-US", "Discover the hottest fashion trends that will dominate 2025. From sustainable fabrics to bold colors.", "Discover the hottest fashion trends for 2025 - sustainable materials, bold colors, and timeless style.", "fashion,trends,2025,style,clothing,sustainable fashion", "fashion-trends-2025", "fashion,trends,2025,style", "Fashion Trends for 2025", new DateTime(2026, 2, 13, 16, 57, 55, 14, DateTimeKind.Utc).AddTicks(6165) },
+                    { 2, 1, "<p>Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory, prezentujemy wszystko, co musisz wiedzieć, aby być na czasie.</p><p>Ten sezon przynosi powrót do klasyki z nowoczesnym akcentem - oversize'owe marynarki, midi spódnice i minimalistyczna biżuteria to must-have w każdej garderobie.</p><p><strong>Kluczowe trendy:</strong></p><ul><li>Zrównoważone i ekologiczne materiały</li><li>Odważne kombinacje kolorów</li><li>Oversize'owe sylwetki</li><li>Minimalistyczne akcesoria</li><li>Powrót vintage</li></ul><p>Bądź na bieżąco z naszymi poradami modowymi i inspiracjami stylistycznymi na blogu!</p>", new DateTime(2026, 2, 13, 16, 57, 55, 14, DateTimeKind.Utc).AddTicks(6499), "pl-PL", "Odkryj najgorętsze trendy modowe, które zdominują rok 2025. Od zrównoważonych materiałów po odważne kolory.", "Odkryj najgorętsze trendy modowe na rok 2025 - zrównoważone materiały, odważne kolory i ponadczasowy styl.", "moda,trendy,2025,styl,odzież,zrównoważona moda", "trendy-modowe-2025", "moda,trendy,2025,styl", "Trendy Modowe na 2025", new DateTime(2026, 2, 13, 16, 57, 55, 14, DateTimeKind.Utc).AddTicks(6499) }
                 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
-                values: new object[] { 1, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(3949), 1, "products/briefs/image-1.jpg", true, 1 });
+                values: new object[] { 1, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(8929), 1, "products/briefs/image-1.jpg", true, 1 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
-                values: new object[] { 2, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4285), 2, "products/briefs/image-2.jpg", 1 });
+                values: new object[] { 2, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9257), 2, "products/briefs/image-2.jpg", 1 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
-                values: new object[] { 3, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4288), 1, "products/briefs/image-1.jpg", true, 2 });
+                values: new object[] { 3, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9260), 1, "products/briefs/image-1.jpg", true, 2 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
-                values: new object[] { 4, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4291), 2, "products/briefs/image-2.jpg", 2 });
+                values: new object[] { 4, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9262), 2, "products/briefs/image-2.jpg", 2 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
-                values: new object[] { 5, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4294), 1, "products/briefs/image-1.jpg", true, 3 });
+                values: new object[] { 5, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9265), 1, "products/briefs/image-1.jpg", true, 3 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
-                values: new object[] { 6, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4307), 2, "products/briefs/image-2.jpg", 3 });
+                values: new object[] { 6, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9271), 2, "products/briefs/image-2.jpg", 3 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "IsPrimary", "ProductId" },
-                values: new object[] { 7, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4310), 1, "products/briefs/image-1.jpg", true, 4 });
+                values: new object[] { 7, "Majtki damskie bawełniane wysokie - widok z przodu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9273), 1, "products/briefs/image-1.jpg", true, 4 });
 
             migrationBuilder.InsertData(
                 table: "ProductImages",
                 columns: new[] { "Id", "AltText", "ColorId", "CreatedAt", "DisplayOrder", "ImageUrl", "ProductId" },
-                values: new object[] { 8, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 1, 15, 12, 40, 12, 759, DateTimeKind.Utc).AddTicks(4312), 2, "products/briefs/image-2.jpg", 4 });
+                values: new object[] { 8, "Majtki damskie bawełniane wysokie - szczegóły produktu", null, new DateTime(2026, 2, 13, 16, 57, 55, 20, DateTimeKind.Utc).AddTicks(9275), 2, "products/briefs/image-2.jpg", 4 });
 
             migrationBuilder.InsertData(
                 table: "ProductTranslations",
                 columns: new[] { "Id", "CreatedAt", "CultureCode", "Description", "MetaDescription", "MetaKeywords", "Name", "ProductId", "Slug", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 15, 12, 40, 12, 760, DateTimeKind.Utc).AddTicks(2663), "pl-PL", "Wysokiej jakości majtki damskie bawełniane. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie Pojedyncze. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie Pojedyncze", 1, "majtki-damskie-bawelniane-wysokie-pojedyncze", new DateTime(2026, 1, 15, 12, 40, 12, 760, DateTimeKind.Utc).AddTicks(2664) },
-                    { 2, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(11), "en-US", "High quality women's cotton briefs. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs Single. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs Single", 1, "womens-cotton-briefs-single", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(16) },
-                    { 3, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(1135), "pl-PL", "Wysokiej jakości majtki damskie bawełniane (5 sztuk). Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie 5 pak. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie 5 pak", 2, "majtki-damskie-bawelniane-wysokie-5-pak", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(1136) },
-                    { 4, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4269), "en-US", "High quality women's cotton briefs (5 pieces). Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs 5-Pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs 5-Pack", 2, "womens-cotton-briefs-5-pack", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4270) },
-                    { 5, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4320), "pl-PL", "Wysokiej jakości majtki damskie bawełniane (7 sztuk). Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie 7 pak. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie 7 pak", 3, "majtki-damskie-bawelniane-wysokie-7-pak", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4321) },
-                    { 6, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4405), "en-US", "High quality women's cotton briefs (7 pieces). Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs 7-Pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs 7-Pack", 3, "womens-cotton-briefs-7-pack", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4407) },
-                    { 7, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4415), "pl-PL", "Wysokiej jakości majtki damskie bawełniane (8 sztuk). Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie 8 pak. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie 8 pak", 4, "majtki-damskie-bawelniane-wysokie-8-pak", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4416) },
-                    { 8, new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4422), "en-US", "High quality women's cotton briefs (8 pieces). Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs 8-Pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs 8-Pack", 4, "womens-cotton-briefs-8-pack", new DateTime(2026, 1, 15, 12, 40, 12, 781, DateTimeKind.Utc).AddTicks(4423) }
+                    { 1, new DateTime(2026, 2, 13, 16, 57, 55, 21, DateTimeKind.Utc).AddTicks(7503), "pl-PL", "Wysokiej jakości majtki damskie bawełniane. Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie Pojedyncze. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie Pojedyncze", 1, "majtki-damskie-bawelniane-wysokie-pojedyncze", new DateTime(2026, 2, 13, 16, 57, 55, 21, DateTimeKind.Utc).AddTicks(7507) },
+                    { 2, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(5543), "en-US", "High quality women's cotton briefs. Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs Single. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs Single", 1, "womens-cotton-briefs-single", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(5550) },
+                    { 3, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(6354), "pl-PL", "Wysokiej jakości majtki damskie bawełniane (3 sztuki). Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie 3 pak. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie 3 pak", 2, "majtki-damskie-bawelniane-wysokie-3-pak", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(6354) },
+                    { 4, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7634), "en-US", "High quality women's cotton briefs (3 pieces). Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs 3-Pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs 3-Pack", 2, "womens-cotton-briefs-3-pack", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7635) },
+                    { 5, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7648), "pl-PL", "Wysokiej jakości majtki damskie bawełniane (6 sztuk). Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie 6 pak. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie 6 pak", 3, "majtki-damskie-bawelniane-wysokie-6-pak", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7649) },
+                    { 6, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7667), "en-US", "High quality women's cotton briefs (6 pieces). Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs 6-Pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs 6-Pack", 3, "womens-cotton-briefs-6-pack", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7667) },
+                    { 7, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7672), "pl-PL", "Wysokiej jakości majtki damskie bawełniane (10 sztuk). Wygodne, przewiewne i trwałe. Idealny wybór na co dzień. Dostępne w różnych kolorach i rozmiarach.", "Kup majtki damskie bawełniane wysokie 10 pak. Wygodne, przewiewne i trwałe. Dostawa w Polsce. Najlepsza jakość w przystępnej cenie.", "majtki damskie, bawełna, bielizna damska, majtki wysokie, Kokomija", "Majtki damskie bawełniane wysokie 10 pak", 4, "majtki-damskie-bawelniane-wysokie-10-pak", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7672) },
+                    { 8, new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7678), "en-US", "High quality women's cotton briefs (10 pieces). Comfortable, breathable and durable. Perfect choice for everyday wear. Available in various colors and sizes.", "Buy women's cotton briefs 10-Pack. Comfortable, breathable and durable underwear. Best quality at an affordable price.", "women's briefs, cotton underwear, briefs, Kokomija", "Women's Cotton Briefs 10-Pack", 4, "womens-cotton-briefs-10-pack", new DateTime(2026, 2, 13, 16, 57, 55, 37, DateTimeKind.Utc).AddTicks(7678) }
                 });
 
             migrationBuilder.InsertData(
                 table: "ProductVariants",
-                columns: new[] { "Id", "ColorId", "CreatedAt", "IsActive", "PackQuantityId", "Price", "ProductId", "SKU", "SizeId", "StockQuantity", "StripePriceId", "UpdatedAt" },
+                columns: new[] { "Id", "BusinessStripePriceId", "ColorId", "CreatedAt", "IsActive", "PackQuantityId", "Price", "ProductId", "SKU", "SizeId", "StockQuantity", "StripePriceId", "UpdatedAt" },
                 values: new object[,]
                 {
-                    { 1, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(6860), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S2", 2, 100, "", null },
-                    { 2, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7576), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S3", 3, 100, "", null },
-                    { 3, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7584), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S4", 4, 100, "", null },
-                    { 4, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7589), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S5", 5, 100, "", null },
-                    { 5, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7594), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S6", 6, 100, "", null },
-                    { 6, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7607), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S2", 2, 100, "", null },
-                    { 7, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7611), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S3", 3, 100, "", null },
-                    { 8, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7616), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S4", 4, 100, "", null },
-                    { 9, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7620), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S5", 5, 100, "", null },
-                    { 10, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7626), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S6", 6, 100, "", null },
-                    { 11, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7630), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S2", 2, 100, "", null },
-                    { 12, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7634), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S3", 3, 100, "", null },
-                    { 13, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7639), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S4", 4, 100, "", null },
-                    { 14, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7643), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S5", 5, 100, "", null },
-                    { 15, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7647), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S6", 6, 100, "", null },
-                    { 16, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7682), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S2", 2, 100, "", null },
-                    { 17, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7687), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S3", 3, 100, "", null },
-                    { 18, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7696), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S4", 4, 100, "", null },
-                    { 19, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7700), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S5", 5, 100, "", null },
-                    { 20, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7706), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S6", 6, 100, "", null },
-                    { 21, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7711), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S2", 2, 100, "", null },
-                    { 22, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7715), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S3", 3, 100, "", null },
-                    { 23, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7719), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S4", 4, 100, "", null },
-                    { 24, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7724), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S5", 5, 100, "", null },
-                    { 25, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7728), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S6", 6, 100, "", null },
-                    { 26, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7734), true, null, 49.75m, 2, "BRIEFS-5PK-C1-S2", 2, 100, "", null },
-                    { 27, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7738), true, null, 49.75m, 2, "BRIEFS-5PK-C1-S3", 3, 100, "", null },
-                    { 28, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7743), true, null, 49.75m, 2, "BRIEFS-5PK-C1-S4", 4, 100, "", null },
-                    { 29, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7747), true, null, 49.75m, 2, "BRIEFS-5PK-C1-S5", 5, 100, "", null },
-                    { 30, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7751), true, null, 49.75m, 2, "BRIEFS-5PK-C1-S6", 6, 100, "", null },
-                    { 31, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7760), true, null, 49.75m, 2, "BRIEFS-5PK-C2-S2", 2, 100, "", null },
-                    { 32, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7765), true, null, 49.75m, 2, "BRIEFS-5PK-C2-S3", 3, 100, "", null },
-                    { 33, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7770), true, null, 49.75m, 2, "BRIEFS-5PK-C2-S4", 4, 100, "", null },
-                    { 34, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7776), true, null, 49.75m, 2, "BRIEFS-5PK-C2-S5", 5, 100, "", null },
-                    { 35, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7785), true, null, 49.75m, 2, "BRIEFS-5PK-C2-S6", 6, 100, "", null },
-                    { 36, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7790), true, null, 49.75m, 2, "BRIEFS-5PK-C3-S2", 2, 100, "", null },
-                    { 37, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7794), true, null, 49.75m, 2, "BRIEFS-5PK-C3-S3", 3, 100, "", null },
-                    { 38, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7798), true, null, 49.75m, 2, "BRIEFS-5PK-C3-S4", 4, 100, "", null },
-                    { 39, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7802), true, null, 49.75m, 2, "BRIEFS-5PK-C3-S5", 5, 100, "", null },
-                    { 40, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7806), true, null, 49.75m, 2, "BRIEFS-5PK-C3-S6", 6, 100, "", null },
-                    { 41, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7811), true, null, 49.75m, 2, "BRIEFS-5PK-C4-S2", 2, 100, "", null },
-                    { 42, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7816), true, null, 49.75m, 2, "BRIEFS-5PK-C4-S3", 3, 100, "", null },
-                    { 43, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7820), true, null, 49.75m, 2, "BRIEFS-5PK-C4-S4", 4, 100, "", null },
-                    { 44, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7824), true, null, 49.75m, 2, "BRIEFS-5PK-C4-S5", 5, 100, "", null },
-                    { 45, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7828), true, null, 49.75m, 2, "BRIEFS-5PK-C4-S6", 6, 100, "", null },
-                    { 46, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7832), true, null, 49.75m, 2, "BRIEFS-5PK-C7-S2", 2, 100, "", null },
-                    { 47, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7838), true, null, 49.75m, 2, "BRIEFS-5PK-C7-S3", 3, 100, "", null },
-                    { 48, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7843), true, null, 49.75m, 2, "BRIEFS-5PK-C7-S4", 4, 100, "", null },
-                    { 49, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7848), true, null, 49.75m, 2, "BRIEFS-5PK-C7-S5", 5, 100, "", null },
-                    { 50, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7852), true, null, 49.75m, 2, "BRIEFS-5PK-C7-S6", 6, 100, "", null },
-                    { 51, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7856), true, null, 69.65m, 3, "BRIEFS-7PK-C1-S2", 2, 100, "", null },
-                    { 52, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7863), true, null, 69.65m, 3, "BRIEFS-7PK-C1-S3", 3, 100, "", null },
-                    { 53, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7880), true, null, 69.65m, 3, "BRIEFS-7PK-C1-S4", 4, 100, "", null },
-                    { 54, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7885), true, null, 69.65m, 3, "BRIEFS-7PK-C1-S5", 5, 100, "", null },
-                    { 55, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7890), true, null, 69.65m, 3, "BRIEFS-7PK-C1-S6", 6, 100, "", null },
-                    { 56, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7895), true, null, 69.65m, 3, "BRIEFS-7PK-C2-S2", 2, 100, "", null },
-                    { 57, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7901), true, null, 69.65m, 3, "BRIEFS-7PK-C2-S3", 3, 100, "", null },
-                    { 58, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7905), true, null, 69.65m, 3, "BRIEFS-7PK-C2-S4", 4, 100, "", null },
-                    { 59, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7909), true, null, 69.65m, 3, "BRIEFS-7PK-C2-S5", 5, 100, "", null },
-                    { 60, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7913), true, null, 69.65m, 3, "BRIEFS-7PK-C2-S6", 6, 100, "", null },
-                    { 61, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7918), true, null, 69.65m, 3, "BRIEFS-7PK-C3-S2", 2, 100, "", null },
-                    { 62, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7923), true, null, 69.65m, 3, "BRIEFS-7PK-C3-S3", 3, 100, "", null },
-                    { 63, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7929), true, null, 69.65m, 3, "BRIEFS-7PK-C3-S4", 4, 100, "", null },
-                    { 64, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7934), true, null, 69.65m, 3, "BRIEFS-7PK-C3-S5", 5, 100, "", null },
-                    { 65, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7938), true, null, 69.65m, 3, "BRIEFS-7PK-C3-S6", 6, 100, "", null },
-                    { 66, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7945), true, null, 69.65m, 3, "BRIEFS-7PK-C4-S2", 2, 100, "", null },
-                    { 67, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7950), true, null, 69.65m, 3, "BRIEFS-7PK-C4-S3", 3, 100, "", null },
-                    { 68, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7954), true, null, 69.65m, 3, "BRIEFS-7PK-C4-S4", 4, 100, "", null },
-                    { 69, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7958), true, null, 69.65m, 3, "BRIEFS-7PK-C4-S5", 5, 100, "", null },
-                    { 70, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7965), true, null, 69.65m, 3, "BRIEFS-7PK-C4-S6", 6, 100, "", null },
-                    { 71, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7970), true, null, 69.65m, 3, "BRIEFS-7PK-C7-S2", 2, 100, "", null },
-                    { 72, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7974), true, null, 69.65m, 3, "BRIEFS-7PK-C7-S3", 3, 100, "", null },
-                    { 73, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7978), true, null, 69.65m, 3, "BRIEFS-7PK-C7-S4", 4, 100, "", null },
-                    { 74, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7983), true, null, 69.65m, 3, "BRIEFS-7PK-C7-S5", 5, 100, "", null },
-                    { 75, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7988), true, null, 69.65m, 3, "BRIEFS-7PK-C7-S6", 6, 100, "", null },
-                    { 76, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7993), true, null, 79.60m, 4, "BRIEFS-8PK-C1-S2", 2, 100, "", null },
-                    { 77, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(7998), true, null, 79.60m, 4, "BRIEFS-8PK-C1-S3", 3, 100, "", null },
-                    { 78, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8002), true, null, 79.60m, 4, "BRIEFS-8PK-C1-S4", 4, 100, "", null },
-                    { 79, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8006), true, null, 79.60m, 4, "BRIEFS-8PK-C1-S5", 5, 100, "", null },
-                    { 80, 1, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8010), true, null, 79.60m, 4, "BRIEFS-8PK-C1-S6", 6, 100, "", null },
-                    { 81, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8015), true, null, 79.60m, 4, "BRIEFS-8PK-C2-S2", 2, 100, "", null },
-                    { 82, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8020), true, null, 79.60m, 4, "BRIEFS-8PK-C2-S3", 3, 100, "", null },
-                    { 83, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8024), true, null, 79.60m, 4, "BRIEFS-8PK-C2-S4", 4, 100, "", null },
-                    { 84, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8029), true, null, 79.60m, 4, "BRIEFS-8PK-C2-S5", 5, 100, "", null },
-                    { 85, 2, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8034), true, null, 79.60m, 4, "BRIEFS-8PK-C2-S6", 6, 100, "", null },
-                    { 86, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8039), true, null, 79.60m, 4, "BRIEFS-8PK-C3-S2", 2, 100, "", null },
-                    { 87, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8044), true, null, 79.60m, 4, "BRIEFS-8PK-C3-S3", 3, 100, "", null },
-                    { 88, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8050), true, null, 79.60m, 4, "BRIEFS-8PK-C3-S4", 4, 100, "", null },
-                    { 89, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8069), true, null, 79.60m, 4, "BRIEFS-8PK-C3-S5", 5, 100, "", null },
-                    { 90, 3, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8073), true, null, 79.60m, 4, "BRIEFS-8PK-C3-S6", 6, 100, "", null },
-                    { 91, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8078), true, null, 79.60m, 4, "BRIEFS-8PK-C4-S2", 2, 100, "", null },
-                    { 92, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8082), true, null, 79.60m, 4, "BRIEFS-8PK-C4-S3", 3, 100, "", null },
-                    { 93, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8086), true, null, 79.60m, 4, "BRIEFS-8PK-C4-S4", 4, 100, "", null },
-                    { 94, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8091), true, null, 79.60m, 4, "BRIEFS-8PK-C4-S5", 5, 100, "", null },
-                    { 95, 4, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8095), true, null, 79.60m, 4, "BRIEFS-8PK-C4-S6", 6, 100, "", null },
-                    { 96, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8099), true, null, 79.60m, 4, "BRIEFS-8PK-C7-S2", 2, 100, "", null },
-                    { 97, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8104), true, null, 79.60m, 4, "BRIEFS-8PK-C7-S3", 3, 100, "", null },
-                    { 98, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8108), true, null, 79.60m, 4, "BRIEFS-8PK-C7-S4", 4, 100, "", null },
-                    { 99, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8113), true, null, 79.60m, 4, "BRIEFS-8PK-C7-S5", 5, 100, "", null },
-                    { 100, 7, new DateTime(2026, 1, 15, 12, 40, 12, 785, DateTimeKind.Utc).AddTicks(8118), true, null, 79.60m, 4, "BRIEFS-8PK-C7-S6", 6, 100, "", null }
+                    { 1, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8061), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S2", 2, 100, "", null },
+                    { 2, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8435), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S3", 3, 100, "", null },
+                    { 3, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8440), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S4", 4, 100, "", null },
+                    { 4, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8446), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S5", 5, 100, "", null },
+                    { 5, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8449), true, null, 9.95m, 1, "BRIEFS-SINGLE-C1-S6", 6, 100, "", null },
+                    { 6, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8484), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S2", 2, 100, "", null },
+                    { 7, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8487), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S3", 3, 100, "", null },
+                    { 8, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8490), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S4", 4, 100, "", null },
+                    { 9, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8493), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S5", 5, 100, "", null },
+                    { 10, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8498), true, null, 9.95m, 1, "BRIEFS-SINGLE-C2-S6", 6, 100, "", null },
+                    { 11, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8501), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S2", 2, 100, "", null },
+                    { 12, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8503), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S3", 3, 100, "", null },
+                    { 13, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8506), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S4", 4, 100, "", null },
+                    { 14, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8509), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S5", 5, 100, "", null },
+                    { 15, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8511), true, null, 9.95m, 1, "BRIEFS-SINGLE-C3-S6", 6, 100, "", null },
+                    { 16, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8514), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S2", 2, 100, "", null },
+                    { 17, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8517), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S3", 3, 100, "", null },
+                    { 18, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8521), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S4", 4, 100, "", null },
+                    { 19, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8524), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S5", 5, 100, "", null },
+                    { 20, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8526), true, null, 9.95m, 1, "BRIEFS-SINGLE-C4-S6", 6, 100, "", null },
+                    { 21, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8529), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S2", 2, 100, "", null },
+                    { 22, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8532), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S3", 3, 100, "", null },
+                    { 23, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8534), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S4", 4, 100, "", null },
+                    { 24, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8537), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S5", 5, 100, "", null },
+                    { 25, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8540), true, null, 9.95m, 1, "BRIEFS-SINGLE-C7-S6", 6, 100, "", null },
+                    { 26, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8543), true, null, 29.85m, 2, "BRIEFS-3PK-C1-S2", 2, 100, "", null },
+                    { 27, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8547), true, null, 29.85m, 2, "BRIEFS-3PK-C1-S3", 3, 100, "", null },
+                    { 28, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8550), true, null, 29.85m, 2, "BRIEFS-3PK-C1-S4", 4, 100, "", null },
+                    { 29, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8552), true, null, 29.85m, 2, "BRIEFS-3PK-C1-S5", 5, 100, "", null },
+                    { 30, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8555), true, null, 29.85m, 2, "BRIEFS-3PK-C1-S6", 6, 100, "", null },
+                    { 31, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8558), true, null, 29.85m, 2, "BRIEFS-3PK-C2-S2", 2, 100, "", null },
+                    { 32, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8561), true, null, 29.85m, 2, "BRIEFS-3PK-C2-S3", 3, 100, "", null },
+                    { 33, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8563), true, null, 29.85m, 2, "BRIEFS-3PK-C2-S4", 4, 100, "", null },
+                    { 34, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8568), true, null, 29.85m, 2, "BRIEFS-3PK-C2-S5", 5, 100, "", null },
+                    { 35, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8571), true, null, 29.85m, 2, "BRIEFS-3PK-C2-S6", 6, 100, "", null },
+                    { 36, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8574), true, null, 29.85m, 2, "BRIEFS-3PK-C3-S2", 2, 100, "", null },
+                    { 37, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8577), true, null, 29.85m, 2, "BRIEFS-3PK-C3-S3", 3, 100, "", null },
+                    { 38, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8580), true, null, 29.85m, 2, "BRIEFS-3PK-C3-S4", 4, 100, "", null },
+                    { 39, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8583), true, null, 29.85m, 2, "BRIEFS-3PK-C3-S5", 5, 100, "", null },
+                    { 40, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8599), true, null, 29.85m, 2, "BRIEFS-3PK-C3-S6", 6, 100, "", null },
+                    { 41, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8602), true, null, 29.85m, 2, "BRIEFS-3PK-C4-S2", 2, 100, "", null },
+                    { 42, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8605), true, null, 29.85m, 2, "BRIEFS-3PK-C4-S3", 3, 100, "", null },
+                    { 43, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8608), true, null, 29.85m, 2, "BRIEFS-3PK-C4-S4", 4, 100, "", null },
+                    { 44, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8610), true, null, 29.85m, 2, "BRIEFS-3PK-C4-S5", 5, 100, "", null },
+                    { 45, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8613), true, null, 29.85m, 2, "BRIEFS-3PK-C4-S6", 6, 100, "", null },
+                    { 46, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8616), true, null, 29.85m, 2, "BRIEFS-3PK-C7-S2", 2, 100, "", null },
+                    { 47, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8619), true, null, 29.85m, 2, "BRIEFS-3PK-C7-S3", 3, 100, "", null },
+                    { 48, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8622), true, null, 29.85m, 2, "BRIEFS-3PK-C7-S4", 4, 100, "", null },
+                    { 49, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8624), true, null, 29.85m, 2, "BRIEFS-3PK-C7-S5", 5, 100, "", null },
+                    { 50, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8627), true, null, 29.85m, 2, "BRIEFS-3PK-C7-S6", 6, 100, "", null },
+                    { 51, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8631), true, null, 59.70m, 3, "BRIEFS-6PK-C1-S2", 2, 100, "", null },
+                    { 52, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8633), true, null, 59.70m, 3, "BRIEFS-6PK-C1-S3", 3, 100, "", null },
+                    { 53, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8636), true, null, 59.70m, 3, "BRIEFS-6PK-C1-S4", 4, 100, "", null },
+                    { 54, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8639), true, null, 59.70m, 3, "BRIEFS-6PK-C1-S5", 5, 100, "", null },
+                    { 55, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8642), true, null, 59.70m, 3, "BRIEFS-6PK-C1-S6", 6, 100, "", null },
+                    { 56, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8644), true, null, 59.70m, 3, "BRIEFS-6PK-C2-S2", 2, 100, "", null },
+                    { 57, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8647), true, null, 59.70m, 3, "BRIEFS-6PK-C2-S3", 3, 100, "", null },
+                    { 58, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8650), true, null, 59.70m, 3, "BRIEFS-6PK-C2-S4", 4, 100, "", null },
+                    { 59, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8653), true, null, 59.70m, 3, "BRIEFS-6PK-C2-S5", 5, 100, "", null },
+                    { 60, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8655), true, null, 59.70m, 3, "BRIEFS-6PK-C2-S6", 6, 100, "", null },
+                    { 61, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8658), true, null, 59.70m, 3, "BRIEFS-6PK-C3-S2", 2, 100, "", null },
+                    { 62, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8661), true, null, 59.70m, 3, "BRIEFS-6PK-C3-S3", 3, 100, "", null },
+                    { 63, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8664), true, null, 59.70m, 3, "BRIEFS-6PK-C3-S4", 4, 100, "", null },
+                    { 64, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8666), true, null, 59.70m, 3, "BRIEFS-6PK-C3-S5", 5, 100, "", null },
+                    { 65, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8669), true, null, 59.70m, 3, "BRIEFS-6PK-C3-S6", 6, 100, "", null },
+                    { 66, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8674), true, null, 59.70m, 3, "BRIEFS-6PK-C4-S2", 2, 100, "", null },
+                    { 67, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8676), true, null, 59.70m, 3, "BRIEFS-6PK-C4-S3", 3, 100, "", null },
+                    { 68, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8679), true, null, 59.70m, 3, "BRIEFS-6PK-C4-S4", 4, 100, "", null },
+                    { 69, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8682), true, null, 59.70m, 3, "BRIEFS-6PK-C4-S5", 5, 100, "", null },
+                    { 70, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8685), true, null, 59.70m, 3, "BRIEFS-6PK-C4-S6", 6, 100, "", null },
+                    { 71, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8687), true, null, 59.70m, 3, "BRIEFS-6PK-C7-S2", 2, 100, "", null },
+                    { 72, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8690), true, null, 59.70m, 3, "BRIEFS-6PK-C7-S3", 3, 100, "", null },
+                    { 73, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8693), true, null, 59.70m, 3, "BRIEFS-6PK-C7-S4", 4, 100, "", null },
+                    { 74, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8701), true, null, 59.70m, 3, "BRIEFS-6PK-C7-S5", 5, 100, "", null },
+                    { 75, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8704), true, null, 59.70m, 3, "BRIEFS-6PK-C7-S6", 6, 100, "", null },
+                    { 76, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8707), true, null, 99.50m, 4, "BRIEFS-10PK-C1-S2", 2, 100, "", null },
+                    { 77, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8710), true, null, 99.50m, 4, "BRIEFS-10PK-C1-S3", 3, 100, "", null },
+                    { 78, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8713), true, null, 99.50m, 4, "BRIEFS-10PK-C1-S4", 4, 100, "", null },
+                    { 79, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8716), true, null, 99.50m, 4, "BRIEFS-10PK-C1-S5", 5, 100, "", null },
+                    { 80, null, 1, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8719), true, null, 99.50m, 4, "BRIEFS-10PK-C1-S6", 6, 100, "", null },
+                    { 81, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8721), true, null, 99.50m, 4, "BRIEFS-10PK-C2-S2", 2, 100, "", null },
+                    { 82, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8724), true, null, 99.50m, 4, "BRIEFS-10PK-C2-S3", 3, 100, "", null },
+                    { 83, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8727), true, null, 99.50m, 4, "BRIEFS-10PK-C2-S4", 4, 100, "", null },
+                    { 84, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8729), true, null, 99.50m, 4, "BRIEFS-10PK-C2-S5", 5, 100, "", null },
+                    { 85, null, 2, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8732), true, null, 99.50m, 4, "BRIEFS-10PK-C2-S6", 6, 100, "", null },
+                    { 86, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8735), true, null, 99.50m, 4, "BRIEFS-10PK-C3-S2", 2, 100, "", null },
+                    { 87, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8738), true, null, 99.50m, 4, "BRIEFS-10PK-C3-S3", 3, 100, "", null },
+                    { 88, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8740), true, null, 99.50m, 4, "BRIEFS-10PK-C3-S4", 4, 100, "", null },
+                    { 89, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8743), true, null, 99.50m, 4, "BRIEFS-10PK-C3-S5", 5, 100, "", null },
+                    { 90, null, 3, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8746), true, null, 99.50m, 4, "BRIEFS-10PK-C3-S6", 6, 100, "", null },
+                    { 91, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8748), true, null, 99.50m, 4, "BRIEFS-10PK-C4-S2", 2, 100, "", null },
+                    { 92, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8751), true, null, 99.50m, 4, "BRIEFS-10PK-C4-S3", 3, 100, "", null },
+                    { 93, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8754), true, null, 99.50m, 4, "BRIEFS-10PK-C4-S4", 4, 100, "", null },
+                    { 94, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8757), true, null, 99.50m, 4, "BRIEFS-10PK-C4-S5", 5, 100, "", null },
+                    { 95, null, 4, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8759), true, null, 99.50m, 4, "BRIEFS-10PK-C4-S6", 6, 100, "", null },
+                    { 96, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8762), true, null, 99.50m, 4, "BRIEFS-10PK-C7-S2", 2, 100, "", null },
+                    { 97, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8765), true, null, 99.50m, 4, "BRIEFS-10PK-C7-S3", 3, 100, "", null },
+                    { 98, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8768), true, null, 99.50m, 4, "BRIEFS-10PK-C7-S4", 4, 100, "", null },
+                    { 99, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8770), true, null, 99.50m, 4, "BRIEFS-10PK-C7-S5", 5, 100, "", null },
+                    { 100, null, 7, new DateTime(2026, 2, 13, 16, 57, 55, 40, DateTimeKind.Utc).AddTicks(8773), true, null, 99.50m, 4, "BRIEFS-10PK-C7-S6", 6, 100, "", null }
                 });
 
             migrationBuilder.CreateIndex(
@@ -2251,6 +2325,17 @@ namespace Kokomija.Data.Migrations
                 name: "IX_BlogTranslations_Slug_CultureCode",
                 table: "BlogTranslations",
                 columns: new[] { "Slug", "CultureCode" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessProfiles_NIP",
+                table: "BusinessProfiles",
+                column: "NIP");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BusinessProfiles_UserId",
+                table: "BusinessProfiles",
+                column: "UserId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -2488,6 +2573,16 @@ namespace Kokomija.Data.Migrations
                 name: "IX_NewsletterSubscriptions_UserId",
                 table: "NewsletterSubscriptions",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NIPVerificationLogs_AttemptedAt",
+                table: "NIPVerificationLogs",
+                column: "AttemptedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NIPVerificationLogs_UserId_AttemptedAt",
+                table: "NIPVerificationLogs",
+                columns: new[] { "UserId", "AttemptedAt" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderItems_OrderId",
@@ -2972,6 +3067,9 @@ namespace Kokomija.Data.Migrations
                 name: "BlogTranslations");
 
             migrationBuilder.DropTable(
+                name: "BusinessProfiles");
+
+            migrationBuilder.DropTable(
                 name: "CarouselSlideTranslations");
 
             migrationBuilder.DropTable(
@@ -2997,6 +3095,9 @@ namespace Kokomija.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "NewsletterSubscriptions");
+
+            migrationBuilder.DropTable(
+                name: "NIPVerificationLogs");
 
             migrationBuilder.DropTable(
                 name: "PaymentMethods");

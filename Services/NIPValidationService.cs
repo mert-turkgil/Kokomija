@@ -115,7 +115,13 @@ namespace Kokomija.Services
                     
                     if (existingProfile != null)
                     {
-                        // Update existing profile
+                        // Preserve SECONDARY (user-provided) fields before overwriting with GOV data
+                        var savedPhone = existingProfile.Phone;
+                        var savedEmail = existingProfile.CompanyEmail;
+                        var savedContact = existingProfile.ContactPerson;
+                        var savedPosition = existingProfile.Position;
+
+                        // Update PRIMARY fields from government API
                         existingProfile.NIP = nip;
                         existingProfile.CompanyName = apiResult.Subject.Name ?? "";
                         existingProfile.REGON = apiResult.Subject.Regon;
@@ -124,6 +130,14 @@ namespace Kokomija.Services
                         existingProfile.ResidenceAddress = apiResult.Subject.ResidenceAddress;
                         existingProfile.WorkingAddress = apiResult.Subject.WorkingAddress;
                         existingProfile.RegistrationLegalDate = apiResult.Subject.RegistrationLegalDate;
+                        
+                        // Restore SECONDARY fields (user-provided, not available from gov API)
+                        existingProfile.Phone = savedPhone;
+                        existingProfile.CompanyEmail = savedEmail;
+                        existingProfile.ContactPerson = savedContact;
+                        existingProfile.Position = savedPosition;
+
+                        // Update verification metadata
                         existingProfile.IsVerified = true;
                         existingProfile.VerifiedAt = DateTime.UtcNow;
                         existingProfile.LastVerificationAttempt = DateTime.UtcNow;
@@ -135,7 +149,7 @@ namespace Kokomija.Services
                     }
                     else
                     {
-                        // Create new profile
+                        // Create new profile with PRIMARY (gov) fields only
                         var newProfile = new BusinessProfile
                         {
                             UserId = userId,
@@ -147,6 +161,7 @@ namespace Kokomija.Services
                             ResidenceAddress = apiResult.Subject.ResidenceAddress,
                             WorkingAddress = apiResult.Subject.WorkingAddress,
                             RegistrationLegalDate = apiResult.Subject.RegistrationLegalDate,
+                            // SECONDARY fields left null - will be set by caller
                             IsVerified = true,
                             VerifiedAt = DateTime.UtcNow,
                             LastVerificationAttempt = DateTime.UtcNow,

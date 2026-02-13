@@ -29,7 +29,7 @@
         <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="stat-card-small">
+                <div class="stat-card-small filter-card" data-filter="all" style="cursor: pointer;" onclick="filterUsers('all')" title="Show all users">
                     <div class="stat-icon-small bg-primary">
                         <i class="bi bi-people-fill"></i>
                     </div>
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card-small">
+                <div class="stat-card-small filter-card" data-filter="active" style="cursor: pointer;" onclick="filterUsers('active')" title="Show active users">
                     <div class="stat-icon-small bg-success">
                         <i class="bi bi-check-circle-fill"></i>
                     </div>
@@ -51,7 +51,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card-small" style="cursor: pointer;" onclick="showBannedUsers()" title="Click to view banned users">
+                <div class="stat-card-small filter-card" data-filter="banned" style="cursor: pointer;" onclick="filterUsers('banned')" title="Show banned users">
                     <div class="stat-icon-small bg-danger">
                         <i class="bi bi-shield-fill-exclamation"></i>
                     </div>
@@ -62,7 +62,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card-small">
+                <div class="stat-card-small filter-card" data-filter="new" style="cursor: pointer;" onclick="filterUsers('new')" title="Show new users this month">
                     <div class="stat-icon-small bg-info">
                         <i class="bi bi-person-plus-fill"></i>
                     </div>
@@ -81,8 +81,11 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                             <h5 class="mb-0">
-                                <i class="bi bi-list"></i> All Users
+                                <i class="bi bi-list"></i> <span id="tableTitle">All Users</span>
                             </h5>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearFilterBtn" style="display: none;" onclick="filterUsers('all')">
+                                <i class="bi bi-x-circle"></i> Clear Filter
+                            </button>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" id="usersTable">
@@ -306,6 +309,21 @@
             font-size: 18px;
             text-transform: uppercase;
         }
+        
+        .filter-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .filter-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .filter-card.active {
+            border: 2px solid #0d6efd;
+            box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+        }
     </style>
 }
 @section Scripts {
@@ -315,10 +333,12 @@
     <script src="~/lib/datatables/responsive.bootstrap5.min.js"></script>
     <script>
         let bannedUsersDataTable = null;
+        let usersTable = null;
+        let currentFilter = 'all';
 
         $(document).ready(function() {
             // Initialize DataTable with responsive extension
-            $('#usersTable').DataTable({
+            usersTable = $('#usersTable').DataTable({
                 responsive: true,
                 pageLength: 10,
                 order: [[6, 'desc']], // Sort by Joined date descending
@@ -352,6 +372,68 @@
                 }
             });
         });
+
+        // Filter users based on selected card
+        function filterUsers(filterType) {
+            currentFilter = filterType;
+            
+            // Update active state on cards
+            $('.filter-card').removeClass('active');
+            $('.filter-card[data-filter="' + filterType + '"]').addClass('active');
+            
+            // Update table title and clear filter button
+            let title = 'All Users';
+            let showClearBtn = false;
+            
+            switch(filterType) {
+                case 'all':
+                    title = 'All Users';
+                    usersTable.columns(3).search('').draw();
+                    break;
+                case 'active':
+                    title = 'Active Users';
+                    showClearBtn = true;
+                    // Filter for rows that contain "Active" and NOT "Banned" in status column
+                    usersTable.columns(3).search('^(?!.*Banned).*Active.*$', true, false).draw();
+                    break;
+                case 'banned':
+                    title = 'Banned Users';
+                    showClearBtn = true;
+                    // Filter for rows that contain "Banned" in status column (NOT Active)
+                    usersTable.columns(3).search('Banned', true, false).draw();
+                    break;
+                case 'new':
+                    title = 'New Users This Month';
+                    showClearBtn = true;
+                    // Get current date and one month ago
+                    let oneMonthAgo = new Date();
+                    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                    
+                    // Custom filter function for new users
+                    $.fn.dataTable.ext.search.push(
+                        function(settings, data, dataIndex) {
+                            if (currentFilter !== 'new') return true;
+                            
+                            // Get the joined date from column 6 (index 6)
+                            let joinedDateStr = data[6];
+                            if (!joinedDateStr) return false;
+                            
+                            // Parse the date from the cell
+                            let joinedDate = new Date(joinedDateStr);
+                            return joinedDate >= oneMonthAgo;
+                        }
+                    );
+                    
+                    usersTable.draw();
+                    
+                    // Remove the custom filter after drawing
+                    $.fn.dataTable.ext.search.pop();
+                    break;
+            }
+            
+            $('#tableTitle').text(title);
+            $('#clearFilterBtn').toggle(showClearBtn);
+        }
 
         // Show banned users modal with server-side DataTable
         function showBannedUsers() {

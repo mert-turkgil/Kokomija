@@ -193,6 +193,15 @@ namespace Kokomija.Services
             {
                 _logger.LogInformation("Starting Stripe configuration seeding...");
 
+                // Check if coupons already exist in database - if so, skip coupon seeding
+                var existingDbCoupons = await _unitOfWork.Coupons.GetAllAsync();
+                bool skipCouponSeeding = existingDbCoupons.Any();
+                
+                if (skipCouponSeeding)
+                {
+                    _logger.LogInformation("Coupons already exist in database, skipping coupon seeding to avoid duplicates.");
+                }
+
                 // 1. Create or verify 23% VAT tax rate
                 var taxRateService = new Stripe.TaxRateService();
                 var existingTaxRates = await taxRateService.ListAsync(new Stripe.TaxRateListOptions
@@ -274,83 +283,97 @@ namespace Kokomija.Services
                     _logger.LogInformation($"Standard shipping rate already exists: {standardShipping.Id}");
                 }
 
-                // 3. Create or verify WELCOME10 coupon
-                var couponService = new Stripe.CouponService();
-                Stripe.Coupon? welcomeCoupon = null;
+                // 3. Create or verify WELCOME10 coupon (only if not skipping)
+                if (!skipCouponSeeding)
+                {
+                    var couponService = new Stripe.CouponService();
+                    Stripe.Coupon? welcomeCoupon = null;
 
-                try
-                {
-                    welcomeCoupon = await couponService.GetAsync("WELCOME10");
-                    _logger.LogInformation($"WELCOME10 coupon already exists: {welcomeCoupon.Id}");
-                }
-                catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
-                {
-                    _logger.LogInformation("Creating WELCOME10 coupon...");
-                    var couponOptions = new Stripe.CouponCreateOptions
+                    try
                     {
-                        Id = "WELCOME10",
-                        Name = "Welcome 10% Off",
-                        PercentOff = 10,
-                        Duration = "once",
-                        MaxRedemptions = 1000,
-                        Currency = "pln"
-                    };
-                    welcomeCoupon = await couponService.CreateAsync(couponOptions);
-                    _logger.LogInformation($"Created coupon: {welcomeCoupon.Id}");
-                }
-
-                // 4. Create promotion code for the coupon
-                var promoCodeService = new Stripe.PromotionCodeService();
-                var existingPromoCodes = await promoCodeService.ListAsync(new Stripe.PromotionCodeListOptions
-                {
-                    Coupon = welcomeCoupon.Id,
-                    Active = true,
-                    Limit = 10
-                });
-
-                var welcomePromoCode = existingPromoCodes.Data.FirstOrDefault(p => p.Code == "WELCOME10");
-
-                if (welcomePromoCode == null)
-                {
-                    _logger.LogInformation("Creating WELCOME10 promotion code...");
-                    var promoCodeOptions = new Stripe.PromotionCodeCreateOptions
+                        welcomeCoupon = await couponService.GetAsync("WELCOME10");
+                        _logger.LogInformation($"WELCOME10 coupon already exists: {welcomeCoupon.Id}");
+                    }
+                    catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
                     {
-                        Code = "WELCOME10",
-                        Active = true,
-                        MaxRedemptions = 1000,
-                        Restrictions = new Stripe.PromotionCodeRestrictionsOptions
+                        _logger.LogInformation("Creating WELCOME10 coupon...");
+                        var couponOptions = new Stripe.CouponCreateOptions
                         {
-                            FirstTimeTransaction = true,
-                            MinimumAmount = 5000, // 50.00 PLN in grosze
-                            MinimumAmountCurrency = "pln"
-                        }
-                    };
-                    promoCodeOptions.AddExtraParam("coupon", welcomeCoupon.Id);
-                    welcomePromoCode = await promoCodeService.CreateAsync(promoCodeOptions);
-                    _logger.LogInformation($"Created promotion code: {welcomePromoCode.Id}");
+                            Id = "WELCOME10",
+                            Name = "Welcome 10% Off",
+                            PercentOff = 10,
+                            Duration = "once",
+                            MaxRedemptions = 1000,
+                            Currency = "pln"
+                        };
+                        welcomeCoupon = await couponService.CreateAsync(couponOptions);
+                        _logger.LogInformation($"Created coupon: {welcomeCoupon.Id}");
+                    }
+
+                    // 4. Create promotion code for the coupon
+                    var promoCodeService = new Stripe.PromotionCodeService();
+                    var existingPromoCodes = await promoCodeService.ListAsync(new Stripe.PromotionCodeListOptions
+                    {
+                        Coupon = welcomeCoupon.Id,
+                        Active = true,
+                        Limit = 10
+                    });
+
+                    var welcomePromoCode = existingPromoCodes.Data.FirstOrDefault(p => p.Code == "WELCOME10");
+
+                    if (welcomePromoCode == null)
+                    {
+                        _logger.LogInformation("Creating WELCOME10 promotion code...");
+                        var promoCodeOptions = new Stripe.PromotionCodeCreateOptions
+                        {
+                            Code = "WELCOME10",
+                            Promotion = new Stripe.PromotionCodePromotionOptions
+                            {
+                                Type = "coupon",
+                                Coupon = welcomeCoupon.Id
+                            },
+                            Active = true,
+                            MaxRedemptions = 1000,
+                            Restrictions = new Stripe.PromotionCodeRestrictionsOptions
+                            {
+                                FirstTimeTransaction = true,
+                                MinimumAmount = 5000, // 50.00 PLN in grosze
+                                MinimumAmountCurrency = "pln"
+                            }
+                        };
+                        welcomePromoCode = await promoCodeService.CreateAsync(promoCodeOptions);
+                        _logger.LogInformation($"Created promotion code: {welcomePromoCode.Id}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"WELCOME10 promotion code already exists: {welcomePromoCode.Id}");
+                    }
+
+                    // Update database coupon with Stripe IDs
+                    var dbCoupons = await _unitOfWork.Coupons.GetAllAsync();
+                    var welcomeDbCoupon = dbCoupons.FirstOrDefault(c => c.Code == "WELCOME10");
+                    
+                    if (welcomeDbCoupon != null)
+                    {
+                        welcomeDbCoupon.StripeCouponId = welcomeCoupon.Id;
+                        welcomeDbCoupon.StripePromotionCodeId = welcomePromoCode.Id;
+                        await _unitOfWork.SaveChangesAsync();
+                        _logger.LogInformation("Updated database coupon with Stripe IDs");
+                    }
+
+                    _logger.LogInformation("Stripe configuration seeding completed successfully!");
+                    _logger.LogInformation($"  - VAT Tax Rate: {vat23Rate.Id} (23%)");
+                    _logger.LogInformation($"  - Shipping Rate: {standardShipping.Id} (9.99 PLN)");
+                    _logger.LogInformation($"  - Coupon: {welcomeCoupon.Id}");
+                    _logger.LogInformation($"  - Promotion Code: {welcomePromoCode.Id}");
                 }
                 else
                 {
-                    _logger.LogInformation($"WELCOME10 promotion code already exists: {welcomePromoCode.Id}");
+                    _logger.LogInformation("Stripe configuration seeding completed successfully!");
+                    _logger.LogInformation($"  - VAT Tax Rate: {vat23Rate.Id} (23%)");
+                    _logger.LogInformation($"  - Shipping Rate: {standardShipping.Id} (9.99 PLN)");
+                    _logger.LogInformation("  - Coupon seeding skipped (coupons already exist in database)");
                 }
-
-                // Update database coupon with Stripe IDs
-                var dbCoupons = await _unitOfWork.Coupons.GetAllAsync();
-                var welcomeDbCoupon = dbCoupons.FirstOrDefault(c => c.Code == "WELCOME10");
-                
-                if (welcomeDbCoupon != null)
-                {
-                    welcomeDbCoupon.StripeCouponId = welcomeCoupon.Id;
-                    welcomeDbCoupon.StripePromotionCodeId = welcomePromoCode.Id;
-                    await _unitOfWork.SaveChangesAsync();
-                    _logger.LogInformation("Updated database coupon with Stripe IDs");
-                }
-
-                _logger.LogInformation("Stripe configuration seeding completed successfully!");
-                _logger.LogInformation($"  - VAT Tax Rate: {vat23Rate.Id} (23%)");
-                _logger.LogInformation($"  - Shipping Rate: {standardShipping.Id} (9.99 PLN)");
-                _logger.LogInformation($"  - Coupon: {welcomeCoupon.Id}");
-                _logger.LogInformation($"  - Promotion Code: {welcomePromoCode.Id}");
             }
             catch (Exception ex)
             {
