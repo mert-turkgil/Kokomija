@@ -18,6 +18,14 @@ public class ProductManagementViewModel
     public string? SearchType { get; set; } // "name", "sku", "id"
     public bool? IsBusinessOnly { get; set; }
     public int? CategoryId { get; set; }
+    
+    // Pagination
+    public int CurrentPage { get; set; } = 1;
+    public int PageSize { get; set; } = 25;
+    public int TotalPages { get; set; }
+    public int TotalFilteredProducts { get; set; }
+    public bool HasPreviousPage => CurrentPage > 1;
+    public bool HasNextPage => CurrentPage < TotalPages;
 }
 
 public class ProductListItemDto

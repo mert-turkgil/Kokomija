@@ -38,26 +38,40 @@ public class AdminProductController : Controller
     /// <summary>
     /// GET: Product Management page with search/filter support
     /// </summary>
-    public async Task<IActionResult> Index(string? searchTerm = null, string? searchType = "name", bool? isBusinessOnly = null, int? categoryId = null)
+    public async Task<IActionResult> Index(string? searchTerm = null, string? searchType = "name", bool? isBusinessOnly = null, int? categoryId = null, int page = 1, int pageSize = 25)
     {
         _logger.LogInformation("Admin accessed product management. Search: {SearchTerm}, Type: {SearchType}, BusinessOnly: {BusinessOnly}", 
             searchTerm, searchType, isBusinessOnly);
 
+        // Batch-load all products with category navigation (eliminates N+1)
         var productsList = await _unitOfWork.Repository<Product>()
             .FindAsync(p => true, p => p.Category!.ParentCategory!);
-        
+        var productsArray = productsList.ToList();
+        var productIds = productsArray.Select(p => p.Id).ToList();
+
+        // Batch-load all variants, reviews, and images in single queries
+        var allVariants = (await _unitOfWork.Repository<ProductVariant>()
+            .FindAsync(v => productIds.Contains(v.ProductId))).ToList();
+        var allVisibleReviews = (await _unitOfWork.Repository<ProductReview>()
+            .FindAsync(r => productIds.Contains(r.ProductId) && r.IsVisible)).ToList();
+        var allImages = (await _unitOfWork.Repository<ProductImage>()
+            .FindAsync(i => productIds.Contains(i.ProductId))).ToList();
+
+        // Group by product ID for O(1) lookup
+        var variantsByProduct = allVariants.GroupBy(v => v.ProductId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var reviewsByProduct = allVisibleReviews.GroupBy(r => r.ProductId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var imagesByProduct = allImages.GroupBy(i => i.ProductId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(i => i.DisplayOrder).ToList());
+
         var productDtos = new List<ProductListItemDto>();
         
-        foreach (var product in productsList)
+        foreach (var product in productsArray)
         {
-            var variants = (await _unitOfWork.Repository<ProductVariant>()
-                .FindAsync(v => v.ProductId == product.Id)).ToList();
-            
-            var reviews = (await _unitOfWork.Repository<ProductReview>()
-                .FindAsync(r => r.ProductId == product.Id && r.IsVisible)).ToList();
-            
-            var images = (await _unitOfWork.Repository<ProductImage>()
-                .FindAsync(i => i.ProductId == product.Id)).OrderBy(i => i.DisplayOrder).ToList();
+            var variants = variantsByProduct.GetValueOrDefault(product.Id, new List<ProductVariant>());
+            var reviews = reviewsByProduct.GetValueOrDefault(product.Id, new List<ProductReview>());
+            var images = imagesByProduct.GetValueOrDefault(product.Id, new List<ProductImage>());
 
             productDtos.Add(new ProductListItemDto
             {
@@ -126,11 +140,17 @@ public class AdminProductController : Controller
         }
 
         var filteredList = filteredProducts.OrderByDescending(p => p.CreatedAt).ToList();
-        var productsArray = productsList.ToList();
+
+        // Pagination
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 10, 100);
+        var totalFilteredCount = filteredList.Count;
+        var totalPages = (int)Math.Ceiling(totalFilteredCount / (double)pageSize);
+        var pagedProducts = filteredList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
         var viewModel = new ProductManagementViewModel
         {
-            Products = filteredList,
+            Products = pagedProducts,
             TotalProducts = productsArray.Count,
             ActiveProducts = productsArray.Count(p => p.IsActive),
             InactiveProducts = productsArray.Count(p => !p.IsActive),
@@ -141,7 +161,12 @@ public class AdminProductController : Controller
             SearchTerm = searchTerm,
             SearchType = searchType,
             IsBusinessOnly = isBusinessOnly,
-            CategoryId = categoryId
+            CategoryId = categoryId,
+            // Pagination
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalFilteredProducts = totalFilteredCount
         };
 
         // Load categories for filter dropdown
@@ -397,7 +422,7 @@ public class AdminProductController : Controller
             
             var variantHeaders = new[] {
                 "Product ID", "Product Name", "SKU", 
-                "Size", "Color", "Stock Qty", "Variant Price", 
+                "Size", "Color", "Pack Qty", "Stock Qty", "Variant Price", 
                 "Status"
             };
 
@@ -412,36 +437,33 @@ public class AdminProductController : Controller
             }
             
             vRow++;
-            // Note: retrieving variants is tricky as we currently iterate filtered ProductListViewModel
-            // The view model only has basic SKU strings. For full detail, we'd need to fetch or assumption.
-            // Assuming item.SKUs is a list of strings, we'll list them. 
-            // Better approach if feasible: fetch variants. But for now, we split visually.
-            // If the viewmodel doesn't contain detailed variant objects, we can list the strings.
-            // BUT, item.SKUs is just List<string>.
-            // To do this *properly* in high quality, we should probably fetch variants for the export or use what we have.
-            // Optimization: If performance allows, for export we could fetch details. 
-            // Or simpler: Just list the SKU strings we have line by line.
+            // Batch-fetch all variants with their related data for the filtered product IDs
+            var exportProductIds = results.Select(r => r.Id).ToList();
+            var exportVariants = (await _unitOfWork.Repository<ProductVariant>()
+                .FindAsync(v => exportProductIds.Contains(v.ProductId), v => v.Size!, v => v.Color!, v => v.PackQuantity!)).ToList();
+            var exportVariantsByProduct = exportVariants.GroupBy(v => v.ProductId)
+                .ToDictionary(g => g.Key, g => g.ToList());
             
             foreach (var item in results)
             {
-                if (item.SKUs != null)
+                var itemVariants = exportVariantsByProduct.GetValueOrDefault(item.Id, new List<ProductVariant>());
+                foreach (var variant in itemVariants)
                 {
-                    foreach (var sku in item.SKUs)
-                    {
-                        variantsSheet.Cell(vRow, 1).Value = item.Id;
-                        variantsSheet.Cell(vRow, 2).Value = item.Name;
-                        variantsSheet.Cell(vRow, 3).Value = sku;
-                        
-                        // Metadata placeholder (since we don't have variants loaded in this lightweight list)
-                        variantsSheet.Cell(vRow, 4).Value = "-"; // Size
-                        variantsSheet.Cell(vRow, 5).Value = "-"; // Color
-                        variantsSheet.Cell(vRow, 6).Value = "-"; // Stock
-                        
-                        variantsSheet.Cell(vRow, 7).Value = item.Price; // Fallback
-                        variantsSheet.Cell(vRow, 8).Value = item.IsActive ? "Active" : "Inactive";
-                        
-                        vRow++;
-                    }
+                    variantsSheet.Cell(vRow, 1).Value = item.Id;
+                    variantsSheet.Cell(vRow, 2).Value = item.Name;
+                    variantsSheet.Cell(vRow, 3).Value = variant.SKU;
+                    variantsSheet.Cell(vRow, 4).Value = variant.Size?.Name ?? "-";
+                    variantsSheet.Cell(vRow, 5).Value = variant.Color?.Name ?? "-";
+                    variantsSheet.Cell(vRow, 6).Value = variant.PackQuantity?.Name ?? "-";
+                    variantsSheet.Cell(vRow, 7).Value = variant.StockQuantity;
+                    
+                    variantsSheet.Cell(vRow, 8).Value = variant.Price;
+                    variantsSheet.Cell(vRow, 8).Style.NumberFormat.Format = "_-[$$-en-US]* #,##0.00_-";
+                    
+                    variantsSheet.Cell(vRow, 9).Value = variant.IsActive ? "Active" : "Inactive";
+                    variantsSheet.Cell(vRow, 9).Style.Font.FontColor = variant.IsActive ? ClosedXML.Excel.XLColor.Green : ClosedXML.Excel.XLColor.Red;
+                    
+                    vRow++;
                 }
             }
             variantsSheet.Columns().AdjustToContents();
@@ -1016,6 +1038,7 @@ public class AdminProductController : Controller
                         ProductId = product.Id,
                         SizeId = variantDto.SizeId,
                         ColorId = variantDto.ColorId,
+                        PackQuantityId = variantDto.PackQuantityId,
                         SKU = variantDto.SKU,
                         Price = effectiveVariantPrice,
                         StockQuantity = variantDto.StockQuantity,
@@ -1030,12 +1053,35 @@ public class AdminProductController : Controller
 
             await _unitOfWork.SaveChangesAsync();
 
-            // Associate coupon if specified (nullable - optional)
+            // Save SizeGuide if provided
+            if (model.SizeGuide != null && (!string.IsNullOrWhiteSpace(model.SizeGuide.ChartImageUrl) || !string.IsNullOrWhiteSpace(model.SizeGuide.SizeDataJson) || !string.IsNullOrWhiteSpace(model.SizeGuide.MeasurementInstructions)))
+            {
+                var sizeGuide = new SizeGuide
+                {
+                    ProductId = product.Id,
+                    ChartImageUrl = model.SizeGuide.ChartImageUrl,
+                    SizeDataJson = model.SizeGuide.SizeDataJson,
+                    MeasurementInstructions = model.SizeGuide.MeasurementInstructions,
+                    MeasurementInstructionsKey = model.SizeGuide.MeasurementInstructionsKey,
+                    IsActive = model.SizeGuide.IsActive,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.Repository<SizeGuide>().AddAsync(sizeGuide);
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("SizeGuide created for product {ProductId}", product.Id);
+            }
+
+            // Associate coupon if specified
             if (model.CouponId.HasValue)
             {
-                // Store coupon association in product metadata or create junction table
-                // For now, we log it - you can extend Product entity with CouponId if needed
-                _logger.LogInformation("Product {ProductId} associated with Coupon {CouponId}", product.Id, model.CouponId.Value);
+                var coupon = await _unitOfWork.Repository<Coupon>().GetByIdAsync(model.CouponId.Value);
+                if (coupon != null)
+                {
+                    coupon.ProductId = product.Id;
+                    _unitOfWork.Repository<Coupon>().Update(coupon);
+                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogInformation("Product {ProductId} associated with Coupon {CouponId}", product.Id, model.CouponId.Value);
+                }
             }
 
             _logger.LogInformation("Product created: {ProductId} - {ProductName} (Group: {GroupId}, Coupon: {CouponId})", 
@@ -1110,6 +1156,10 @@ public class AdminProductController : Controller
         var priceHistory = await _unitOfWork.Repository<ProductPriceHistory>()
             .FindAsync(h => h.ProductId == id);
 
+        // Get existing size guide
+        var sizeGuide = await _unitOfWork.Repository<SizeGuide>()
+            .FirstOrDefaultAsync(sg => sg.ProductId == id);
+
         var model = new ProductUpdateDto
         {
             Id = product.Id,
@@ -1175,7 +1225,16 @@ public class AdminProductController : Controller
                 Reason = h.Reason,
                 ChangedAt = h.ChangedAt,
                 ChangedBy = h.ChangedBy
-            }).ToList()
+            }).ToList(),
+            SizeGuide = sizeGuide != null ? new SizeGuideDto
+            {
+                Id = sizeGuide.Id,
+                ChartImageUrl = sizeGuide.ChartImageUrl,
+                SizeDataJson = sizeGuide.SizeDataJson,
+                MeasurementInstructions = sizeGuide.MeasurementInstructions,
+                MeasurementInstructionsKey = sizeGuide.MeasurementInstructionsKey,
+                IsActive = sizeGuide.IsActive
+            } : null
         };
 
         // Populate dropdowns
@@ -1240,7 +1299,7 @@ public class AdminProductController : Controller
             product.PackSize = model.PackSize;
             product.CategoryId = model.CategoryId;
             product.ProductGroupId = model.ProductGroupId;
-            product.StripeTaxCode = model.StripeTaxCode;
+            product.StripeTaxCode = string.IsNullOrWhiteSpace(model.StripeTaxCode) ? null : model.StripeTaxCode;
             product.IsActive = model.IsActive;
             product.UpdatedAt = DateTime.UtcNow;
             
@@ -1263,11 +1322,10 @@ public class AdminProductController : Controller
                     { "pack_size", model.PackSize.ToString() ?? "" }
                 }
             };
-            // Sync tax code if changed
-            if (!string.IsNullOrEmpty(model.StripeTaxCode))
-            {
-                stripeUpdateOptions.TaxCode = model.StripeTaxCode;
-            }
+            // Sync tax code (always sync, including clearing it)
+            stripeUpdateOptions.TaxCode = !string.IsNullOrEmpty(model.StripeTaxCode) 
+                ? model.StripeTaxCode 
+                : "txcd_99999999"; // Reset to general tangible goods default
             await stripeProductService.UpdateAsync(product.StripeProductId, stripeUpdateOptions);
 
             // If base price changed, create new Stripe price and update
@@ -1418,10 +1476,38 @@ public class AdminProductController : Controller
                 var existingVariantIds = existingVariants.Select(v => v.Id).ToList();
                 var submittedVariantIds = model.Variants.Where(v => v.Id.HasValue).Select(v => v.Id!.Value).ToList();
                 
-                // Delete variants that were removed
+                // Delete variants that were removed (deactivate their Stripe prices first)
                 var variantsToDelete = existingVariants.Where(v => !submittedVariantIds.Contains(v.Id)).ToList();
                 foreach (var variantToDelete in variantsToDelete)
                 {
+                    // Deactivate Stripe retail price for this variant
+                    if (!string.IsNullOrEmpty(variantToDelete.StripePriceId))
+                    {
+                        try
+                        {
+                            var stripePriceServiceForDelete = new Stripe.PriceService();
+                            await stripePriceServiceForDelete.UpdateAsync(variantToDelete.StripePriceId, new Stripe.PriceUpdateOptions { Active = false });
+                            _logger.LogInformation("Deactivated Stripe retail price {PriceId} for deleted variant {VariantId}", variantToDelete.StripePriceId, variantToDelete.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to deactivate Stripe retail price {PriceId} for variant {VariantId}", variantToDelete.StripePriceId, variantToDelete.Id);
+                        }
+                    }
+                    // Deactivate Stripe business price for this variant
+                    if (!string.IsNullOrEmpty(variantToDelete.BusinessStripePriceId))
+                    {
+                        try
+                        {
+                            var stripePriceServiceForDelete = new Stripe.PriceService();
+                            await stripePriceServiceForDelete.UpdateAsync(variantToDelete.BusinessStripePriceId, new Stripe.PriceUpdateOptions { Active = false });
+                            _logger.LogInformation("Deactivated Stripe business price {PriceId} for deleted variant {VariantId}", variantToDelete.BusinessStripePriceId, variantToDelete.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to deactivate Stripe business price {PriceId} for variant {VariantId}", variantToDelete.BusinessStripePriceId, variantToDelete.Id);
+                        }
+                    }
                     _unitOfWork.Repository<ProductVariant>().Remove(variantToDelete);
                     _logger.LogInformation("Deleted variant {VariantId} from product {ProductId}", variantToDelete.Id, product.Id);
                 }
@@ -1437,6 +1523,7 @@ public class AdminProductController : Controller
                         {
                             existingVariant.SizeId = variantDto.SizeId;
                             existingVariant.ColorId = variantDto.ColorId;
+                            existingVariant.PackQuantityId = variantDto.PackQuantityId;
                             existingVariant.SKU = variantDto.SKU;
                             existingVariant.StockQuantity = variantDto.StockQuantity;
                             existingVariant.UpdatedAt = DateTime.UtcNow;
@@ -1521,6 +1608,7 @@ public class AdminProductController : Controller
                             ProductId = product.Id,
                             SizeId = variantDto.SizeId,
                             ColorId = variantDto.ColorId,
+                            PackQuantityId = variantDto.PackQuantityId,
                             SKU = variantDto.SKU,
                             Price = newEffectivePrice,
                             StockQuantity = variantDto.StockQuantity,
@@ -1571,6 +1659,56 @@ public class AdminProductController : Controller
             }
 
             await _unitOfWork.SaveChangesAsync();
+
+            // Handle SizeGuide CRUD
+            if (model.SizeGuide != null)
+            {
+                var existingSizeGuide = await _unitOfWork.Repository<SizeGuide>()
+                    .FirstOrDefaultAsync(sg => sg.ProductId == product.Id);
+                
+                bool hasSizeGuideData = !string.IsNullOrWhiteSpace(model.SizeGuide.ChartImageUrl) 
+                    || !string.IsNullOrWhiteSpace(model.SizeGuide.SizeDataJson) 
+                    || !string.IsNullOrWhiteSpace(model.SizeGuide.MeasurementInstructions);
+
+                if (hasSizeGuideData)
+                {
+                    if (existingSizeGuide != null)
+                    {
+                        // Update existing
+                        existingSizeGuide.ChartImageUrl = model.SizeGuide.ChartImageUrl;
+                        existingSizeGuide.SizeDataJson = model.SizeGuide.SizeDataJson;
+                        existingSizeGuide.MeasurementInstructions = model.SizeGuide.MeasurementInstructions;
+                        existingSizeGuide.MeasurementInstructionsKey = model.SizeGuide.MeasurementInstructionsKey;
+                        existingSizeGuide.IsActive = model.SizeGuide.IsActive;
+                        existingSizeGuide.UpdatedAt = DateTime.UtcNow;
+                        _unitOfWork.Repository<SizeGuide>().Update(existingSizeGuide);
+                        _logger.LogInformation("SizeGuide updated for product {ProductId}", product.Id);
+                    }
+                    else
+                    {
+                        // Create new
+                        var sizeGuide = new SizeGuide
+                        {
+                            ProductId = product.Id,
+                            ChartImageUrl = model.SizeGuide.ChartImageUrl,
+                            SizeDataJson = model.SizeGuide.SizeDataJson,
+                            MeasurementInstructions = model.SizeGuide.MeasurementInstructions,
+                            MeasurementInstructionsKey = model.SizeGuide.MeasurementInstructionsKey,
+                            IsActive = model.SizeGuide.IsActive,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _unitOfWork.Repository<SizeGuide>().AddAsync(sizeGuide);
+                        _logger.LogInformation("SizeGuide created for product {ProductId}", product.Id);
+                    }
+                }
+                else if (existingSizeGuide != null)
+                {
+                    // All fields cleared — remove SizeGuide
+                    _unitOfWork.Repository<SizeGuide>().Remove(existingSizeGuide);
+                    _logger.LogInformation("SizeGuide removed for product {ProductId}", product.Id);
+                }
+                await _unitOfWork.SaveChangesAsync();
+            }
 
             // Sync all images to Stripe (after deletions and additions)
             try
