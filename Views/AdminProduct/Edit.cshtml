@@ -398,11 +398,11 @@
                             @if (Model.ExistingImageUrls.Any())
                             {
                                 <div class="mb-3">
-                                    <label class="form-label">Current Images</label>
+                                    <label class="form-label">Current Images <small class="text-muted">(drag to reorder)</small></label>
                                     <div class="row g-3" id="existingImages">
                                         @foreach (var imageUrl in Model.ExistingImageUrls)
                                         {
-                                            <div class="col-md-3 image-preview-item" data-url="@imageUrl">
+                                            <div class="col-md-3 image-preview-item" data-url="@imageUrl" style="cursor: grab;">
                                                 <img src="@imageUrl" alt="Product Image" />
                                                 <button type="button" class="image-remove-btn" onclick="markForDeletion('@imageUrl')">
                                                     <i class="bi bi-x"></i>
@@ -514,6 +514,9 @@
                                 </div>
                                 <button type="button" class="btn btn-success btn-sm" id="addVariantBtn">
                                     <i class="bi bi-plus-circle me-1"></i> Add Variant
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm ms-2" id="autoGenerateVariantsBtn">
+                                    <i class="bi bi-magic me-1"></i> Auto-Generate Missing Variants
                                 </button>
                             }
                             else
@@ -707,6 +710,21 @@
                                     <li>Business-only products are hidden from regular customers</li>
                                     <li>Business price takes priority when customer is in business mode</li>
                                 </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EAN / GTIN Code -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-upc-scan"></i> EAN / GTIN Code</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-0">
+                                <label asp-for="EanCode" class="form-label">EAN / GTIN Barcode</label>
+                                <input asp-for="EanCode" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" />
+                                <small class="text-muted">8, 12, 13, or 14-digit barcode (EAN-8, UPC-A, EAN-13, or GTIN-14)</small>
+                                <span asp-validation-for="EanCode" class="text-danger"></span>
                             </div>
                         </div>
                     </div>
@@ -1056,6 +1074,9 @@
         .image-preview-item {
             position: relative;
         }
+        .image-preview-item.sortable-ghost {
+            opacity: 0.4;
+        }
         .image-preview-item img {
             width: 100%;
             height: 150px;
@@ -1165,10 +1186,35 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
         let newImageFileNames = [];
         let imagesToDelete = [];
+
+        // Initialize drag-drop reorder for existing images
+        (function() {
+            const imageGrid = document.getElementById('existingImages');
+            if (imageGrid) {
+                new Sortable(imageGrid, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: async function() {
+                        const items = imageGrid.querySelectorAll('.image-preview-item');
+                        const imageUrls = Array.from(items).map(item => item.getAttribute('data-url'));
+                        try {
+                            await fetch('@Url.Action("ReorderImages", "AdminProduct")', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ imageUrls: imageUrls })
+                            });
+                        } catch (e) {
+                            console.error('Failed to save image order:', e);
+                        }
+                    }
+                });
+            }
+        })();
 
         async function createCoupon() {
             const form = document.getElementById('createCouponForm');
@@ -1773,6 +1819,78 @@
             }
         }
 
+        // Auto-Generate Missing Variants
+        document.getElementById('autoGenerateVariantsBtn')?.addEventListener('click', function() {
+            const tbody = document.getElementById('variantsTableBody');
+            if (!tbody) return;
+
+            // Collect existing size×color combos from current table rows
+            const existingCombos = new Set();
+            tbody.querySelectorAll('tr').forEach(row => {
+                const sizeSelect = row.querySelector('select[name*=".SizeId"]');
+                const colorSelect = row.querySelector('select[name*=".ColorId"]');
+                const sizeId = sizeSelect ? sizeSelect.value : '';
+                const colorId = colorSelect ? colorSelect.value : '';
+                existingCombos.add(`${sizeId}|${colorId}`);
+            });
+
+            // Generate missing combos
+            let added = 0;
+            const basePrice = @Model.Price;
+            sizes.forEach(s => {
+                colors.forEach(c => {
+                    const key = `${s.value}|${c.value}`;
+                    if (!existingCombos.has(key)) {
+                        const sizeCode = s.text ? s.text.substring(0, 3).toUpperCase() : 'STD';
+                        const colorCode = c.text ? c.text.substring(0, 3).toUpperCase() : 'STD';
+                        const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                        const sku = `PROD-${randomNum}-${sizeCode}-${colorCode}`;
+
+                        const newRow = document.createElement('tr');
+                        newRow.setAttribute('data-variant-index', variantIndex);
+                        newRow.innerHTML = `
+                            <input type="hidden" name="Variants[${variantIndex}].Id" value="" />
+                            <td>
+                                <select name="Variants[${variantIndex}].SizeId" class="form-select form-select-sm">
+                                    <option value="">-- None --</option>
+                                    ${sizes.map(sz => `<option value="${sz.value}" ${sz.value === s.value ? 'selected' : ''}>${sz.text}</option>`).join('')}
+                                </select>
+                            </td>
+                            <td>
+                                <select name="Variants[${variantIndex}].ColorId" class="form-select form-select-sm">
+                                    <option value="">-- None --</option>
+                                    ${colors.map(cl => `<option value="${cl.value}" ${cl.value === c.value ? 'selected' : ''}>${cl.text}</option>`).join('')}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Variants[${variantIndex}].SKU" class="form-control form-control-sm" value="${sku}" required style="width: 100px;" />
+                            </td>
+                            <td>
+                                <input type="number" name="Variants[${variantIndex}].Price" class="form-control form-control-sm" value="${basePrice}" step="0.01" required style="width: 80px;" />
+                            </td>
+                            <td>
+                                <input type="number" name="Variants[${variantIndex}].StockQuantity" class="form-control form-control-sm" value="100" required style="width: 70px;" />
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)" title="Remove variant">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(newRow);
+                        variantIndex++;
+                        added++;
+                    }
+                });
+            });
+
+            if (added > 0) {
+                alert(`Added ${added} new variant(s) for missing size×color combinations.`);
+            } else {
+                alert('All size×color combinations already have variants.');
+            }
+        });
+
         function reindexVariants() {
             const tbody = document.getElementById('variantsTableBody');
             if (!tbody) return;
@@ -1863,14 +1981,18 @@
                     // Helper to safely set value
                     const setValue = (selector, val) => {
                         const el = targetContainer.querySelector(selector);
-                        if (el && val) el.value = val;
+                        if (el) el.value = val || '';
                     };
                     
-                    if (data.translations.name) setValue('input[name*=".Name"]', data.translations.name);
-                    if (data.translations.description) setValue('textarea[name*=".Description"]', data.translations.description);
+                    // Track which fields were translated
+                    let translatedCount = 0;
+                    let totalFields = 0;
+                    
+                    if (nameVal) { totalFields++; if (data.translations.name) { setValue('input[name*=".Name"]', data.translations.name); translatedCount++; } }
+                    if (descVal) { totalFields++; if (data.translations.description) { setValue('textarea[name*=".Description"]', data.translations.description); translatedCount++; } }
                     if (data.translations.slug) setValue('input[name*=".Slug"]', data.translations.slug);
-                    if (data.translations.metaDescription) setValue('input[name*=".MetaDescription"]', data.translations.metaDescription);
-                    if (data.translations.metaKeywords) setValue('input[name*=".MetaKeywords"]', data.translations.metaKeywords);
+                    if (metaDescVal) { totalFields++; if (data.translations.metaDescription) { setValue('input[name*=".MetaDescription"]', data.translations.metaDescription); translatedCount++; } }
+                    if (keywordsVal) { totalFields++; if (data.translations.metaKeywords) { setValue('input[name*=".MetaKeywords"]', data.translations.metaKeywords); translatedCount++; } }
                     
                     // Switch to Target tab to show results
                     const targetTabBtn = document.getElementById(`${targetContainerId}-tab`);
@@ -1880,7 +2002,11 @@
                     }
                     
                     const targetLangName = isEnActive ? 'Polish' : 'English';
-                    alert(`Translation to ${targetLangName} completed!`);
+                    if (translatedCount < totalFields) {
+                        alert(`Translation to ${targetLangName} partially completed (${translatedCount}/${totalFields} fields). Please review and fill in any missing fields.`);
+                    } else {
+                        alert(`Translation to ${targetLangName} completed!`);
+                    }
                 } else {
                     alert(data.message || 'Translation failed.');
                 }

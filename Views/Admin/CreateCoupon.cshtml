@@ -1,0 +1,288 @@
+@model Kokomija.Models.ViewModels.Admin.CreateCouponPageViewModel
+@{
+    ViewData["Title"] = "Create Coupon";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h1>
+                                <i class="bi bi-plus-circle"></i>
+                                Create Coupon
+                            </h1>
+                            <p class="mb-0">Create a new discount coupon. It will be automatically synced with Stripe.</p>
+                        </div>
+                        <div>
+                            <a asp-action="Coupons" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Coupons
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form asp-action="CreateCoupon" method="post">
+                            @Html.AntiForgeryToken()
+
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                            <!-- Basic Info -->
+                            <h5 class="mb-3"><i class="bi bi-info-circle"></i> Basic Information</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.Code" class="form-label">Coupon Code <span class="text-danger">*</span></label>
+                                    <input asp-for="Coupon.Code" class="form-control text-uppercase" placeholder="e.g., WELCOME10" />
+                                    <span asp-validation-for="Coupon.Code" class="text-danger small"></span>
+                                    <div class="form-text">Unique code customers will enter at checkout</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.CouponType" class="form-label">Coupon Type <span class="text-danger">*</span></label>
+                                    <select asp-for="Coupon.CouponType" asp-items="Model.CouponTypes" class="form-select" id="couponType"></select>
+                                    <span asp-validation-for="Coupon.CouponType" class="text-danger small"></span>
+                                    <div class="form-text" id="couponTypeHelpText">Select the purpose of this coupon</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.UsageLimitPerUser" class="form-label">Per User Limit</label>
+                                    <input asp-for="Coupon.UsageLimitPerUser" class="form-control" placeholder="Unlimited" />
+                                    <span asp-validation-for="Coupon.UsageLimitPerUser" class="text-danger small"></span>
+                                    <div class="form-text">How many times each user can use this</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Coupon.Description" class="form-label">Description</label>
+                                <input asp-for="Coupon.Description" class="form-control" placeholder="e.g., 10% off for new users - one time only" />
+                                <span asp-validation-for="Coupon.Description" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Discount Settings -->
+                            <h5 class="mt-4 mb-3"><i class="bi bi-percent"></i> Discount Settings</h5>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.DiscountType" class="form-label">Discount Type <span class="text-danger">*</span></label>
+                                    <select asp-for="Coupon.DiscountType" class="form-select">
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed_amount">Fixed Amount (PLN)</option>
+                                    </select>
+                                    <span asp-validation-for="Coupon.DiscountType" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.DiscountValue" class="form-label">Discount Value <span class="text-danger">*</span></label>
+                                    <input asp-for="Coupon.DiscountValue" type="text" asp-format="{0:0.##}" class="form-control" placeholder="e.g., 10" />
+                                    <span asp-validation-for="Coupon.DiscountValue" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.UsageLimit" class="form-label">Total Usage Limit</label>
+                                    <input asp-for="Coupon.UsageLimit" class="form-control" placeholder="Unlimited" />
+                                    <span asp-validation-for="Coupon.UsageLimit" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.MinimumOrderAmount" class="form-label">Minimum Order Amount (PLN)</label>
+                                    <input asp-for="Coupon.MinimumOrderAmount" type="text" asp-format="{0:0.##}" class="form-control" placeholder="No minimum" />
+                                    <span asp-validation-for="Coupon.MinimumOrderAmount" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.MaximumDiscountAmount" class="form-label">Maximum Discount Amount (PLN)</label>
+                                    <input asp-for="Coupon.MaximumDiscountAmount" type="text" asp-format="{0:0.##}" class="form-control" placeholder="No maximum" />
+                                    <span asp-validation-for="Coupon.MaximumDiscountAmount" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Validity Period -->
+                            <h5 class="mt-4 mb-3"><i class="bi bi-calendar-range"></i> Validity Period</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.ValidFrom" class="form-label">Valid From</label>
+                                    <input asp-for="Coupon.ValidFrom" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="Coupon.ValidFrom" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.ValidUntil" class="form-label">Valid Until</label>
+                                    <input asp-for="Coupon.ValidUntil" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="Coupon.ValidUntil" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Restrictions -->
+                            <h5 class="mt-4 mb-3"><i class="bi bi-filter"></i> Restrictions</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.CategoryId" class="form-label">Category Restriction</label>
+                                    <select asp-for="Coupon.CategoryId" asp-items="Model.Categories" class="form-select">
+                                        <option value="">All Categories</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.ProductId" class="form-label">Product Restriction</label>
+                                    <select asp-for="Coupon.ProductId" asp-items="Model.Products" class="form-select">
+                                        <option value="">All Products</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.VipTierRequired" class="form-label">VIP Tier Required</label>
+                                    <select asp-for="Coupon.VipTierRequired" asp-items="Model.VipTiers" class="form-select"></select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check mt-4">
+                                        <input asp-for="Coupon.IsActive" class="form-check-input" />
+                                        <label asp-for="Coupon.IsActive" class="form-check-label">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Birthday-specific fields -->
+                            <div id="birthdayFields" class="d-none">
+                                <h5 class="mt-4 mb-3"><i class="bi bi-gift"></i> Birthday Settings</h5>
+                                <div class="alert alert-info small mb-3">
+                                    <i class="bi bi-info-circle"></i> Birthday coupons are validated based on the user's birthday. Set the window around their birthday when this coupon is valid.
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Coupon.DaysBeforeBirthday" class="form-label">Days Before Birthday</label>
+                                        <input asp-for="Coupon.DaysBeforeBirthday" class="form-control" />
+                                        <span asp-validation-for="Coupon.DaysBeforeBirthday" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Coupon.DaysAfterBirthday" class="form-label">Days After Birthday</label>
+                                        <input asp-for="Coupon.DaysAfterBirthday" class="form-control" />
+                                        <span asp-validation-for="Coupon.DaysAfterBirthday" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- New user-specific fields -->
+                            <div id="newUserFields" class="d-none">
+                                <h5 class="mt-4 mb-3"><i class="bi bi-person-plus"></i> New User Settings</h5>
+                                <div class="alert alert-info small mb-3">
+                                    <i class="bi bi-info-circle"></i> New user coupons are only valid for recently registered accounts. Set "Per User Limit" to 1 for one-time use.
+                                </div>
+                                <div class="mb-3">
+                                    <label asp-for="Coupon.AccountAgeDays" class="form-label">Account Age (Days)</label>
+                                    <input asp-for="Coupon.AccountAgeDays" class="form-control" />
+                                    <span asp-validation-for="Coupon.AccountAgeDays" class="text-danger small"></span>
+                                    <div class="form-text">Only users with accounts younger than this will be eligible</div>
+                                </div>
+                            </div>
+
+                            <!-- First Purchase specific -->
+                            <div id="firstPurchaseFields" class="d-none">
+                                <div class="alert alert-info small mt-4 mb-3">
+                                    <i class="bi bi-info-circle"></i> First purchase coupons are only valid for customers who haven't made a purchase yet. Automatically limited to 1 use per user.
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted"><i class="bi bi-stripe"></i> Will sync with Stripe automatically on save</small>
+                                <div>
+                                    <a asp-action="Coupons" class="btn btn-secondary me-2">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg"></i> Create Coupon
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Help -->
+            <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6><i class="bi bi-lightbulb"></i> Coupon Types</h6>
+                        <ul class="list-unstyled small mb-0">
+                            <li class="mb-2"><span class="badge bg-primary">General</span> Standard discount for all customers</li>
+                            <li class="mb-2"><span class="badge bg-pink">Birthday</span> Valid near the customer's birthday</li>
+                            <li class="mb-2"><span class="badge bg-info">New User</span> For recently registered accounts</li>
+                            <li class="mb-2"><span class="badge bg-warning">VIP</span> Exclusive to VIP tier members</li>
+                            <li class="mb-2"><span class="badge bg-purple">Category</span> Restricted to a product category</li>
+                            <li class="mb-2"><span class="badge bg-secondary">Product</span> Restricted to a specific product</li>
+                            <li class="mb-2"><span class="badge bg-success">First Purchase</span> First-time buyers only</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-stripe"></i> Stripe Sync</h6>
+                        <p class="small text-muted mb-0">
+                            When you create a coupon, it will be automatically synced with Stripe as a Coupon + Promotion Code. 
+                            If Stripe sync fails, the coupon is still saved locally and can be synced later from the coupon list.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .bg-pink { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .bg-purple { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Allow comma as decimal separator (Polish locale)
+        $.validator.methods.number = function(value, element) {
+            return this.optional(element) || /^-?(?:\d+|\d{1,3}(?:[\s,]\d{3})*)(?:[,.]\d+)?$/.test(value);
+        };
+        $.validator.methods.range = function(value, element, param) {
+            var val = parseFloat(value.replace(',', '.'));
+            return this.optional(element) || (val >= param[0] && val <= param[1]);
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const couponType = document.getElementById('couponType');
+            if (couponType) {
+                toggleTypeFields(couponType.value);
+                couponType.addEventListener('change', function () {
+                    toggleTypeFields(this.value);
+                });
+            }
+        });
+
+        function toggleTypeFields(type) {
+            document.getElementById('birthdayFields').classList.toggle('d-none', type !== 'birthday');
+            document.getElementById('newUserFields').classList.toggle('d-none', type !== 'new_user');
+            document.getElementById('firstPurchaseFields').classList.toggle('d-none', type !== 'first_purchase');
+
+            const helpTexts = {
+                'general': 'A general purpose coupon with no special restrictions',
+                'birthday': 'Validated based on the customer\'s birthday window',
+                'new_user': 'Only valid for newly registered users',
+                'vip': 'Only available to VIP members',
+                'category': 'Restricted to specific product categories',
+                'product': 'Restricted to specific products',
+                'first_purchase': 'Only valid for first-time customers (automatically one-time use)'
+            };
+            document.getElementById('couponTypeHelpText').textContent = helpTexts[type] || 'Select the purpose of this coupon';
+        }
+    </script>
+}

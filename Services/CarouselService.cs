@@ -117,6 +117,33 @@ namespace Kokomija.Services
             return true;
         }
 
+        public async Task<bool> RestoreSlideAsync(int id)
+        {
+            var slide = await _unitOfWork.CarouselSlides.GetByIdAsync(id);
+            if (slide == null || !slide.IsDeleted)
+            {
+                return false;
+            }
+
+            slide.IsDeleted = false;
+            slide.DeletedAt = null;
+            slide.DeletedBy = null;
+            slide.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.CarouselSlides.Update(slide);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Carousel slide '{Title}' restored", slide.Title);
+
+            return true;
+        }
+
+        public async Task<IEnumerable<CarouselSlide>> GetDeletedSlidesAsync()
+        {
+            var allSlides = await _unitOfWork.CarouselSlides.GetAllAsync();
+            return allSlides.Where(s => s.IsDeleted).OrderByDescending(s => s.DeletedAt);
+        }
+
         public async Task<bool> ToggleActiveStatusAsync(int id)
         {
             var slide = await _unitOfWork.CarouselSlides.GetByIdAsync(id);

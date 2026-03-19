@@ -18,6 +18,7 @@ namespace Kokomija.Models.ViewModels.Cart
         public decimal FreeShippingThreshold { get; set; }
         public decimal RemainingForFreeShipping { get; set; }
         public IEnumerable<string> AvailableCoupons { get; set; } = new List<string>();
+        public List<CouponCardViewModel> AvailableCouponCards { get; set; } = new();
         
         // Shipping Options
         public string SelectedShippingOption { get; set; } = "standard";

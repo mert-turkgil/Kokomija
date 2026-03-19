@@ -178,4 +178,13 @@
   <data name="Blog_SEONeedsImprovement" xml:space="preserve"><value>Wymaga Poprawy</value></data>
   <data name="Blog_WordCount" xml:space="preserve"><value>słów</value></data>
   <data name="Blog_ReadingTime" xml:space="preserve"><value>min czytania</value></data>
+    <data name="Admin_Category_Icon" xml:space="preserve">
+    <value>Ikona Kategorii</value>
+  </data>
+  <data name="Admin_Category_IconInfo" xml:space="preserve">
+    <value> Wklej sekcję klasy „Category Icon Info” tutaj.</value>
+  </data>
+  <data name="Admin_Category_SearchIcon" xml:space="preserve">
+    <value> Wklej sekcję klasy „Category Search Icon Info” tutaj.</value>
+  </data>
 </root>

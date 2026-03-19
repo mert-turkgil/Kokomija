@@ -1194,6 +1194,7 @@ public class AdminController : Controller
             // Get carousel slides (exclude soft-deleted)
             var carouselSlides = await _unitOfWork.CarouselSlides.GetAllAsync();
             var activeCarouselSlides = carouselSlides.Where(c => !c.IsDeleted).ToList();
+            var deletedCarouselSlides = carouselSlides.Where(c => c.IsDeleted).ToList();
             var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
             
             viewModel.CarouselSlides = new List<CarouselSlideItemViewModel>();
@@ -1230,11 +1231,31 @@ public class AdminController : Controller
             viewModel.TotalCarouselSlides = activeCarouselSlides.Count();
             viewModel.ActiveCarouselSlides = activeCarouselSlides.Count(c => c.IsActive);
 
+            // Build deleted carousel slides list for restore UI
+            var deletedCarouselViewModels = new List<CarouselSlideItemViewModel>();
+            foreach (var slide in deletedCarouselSlides.OrderByDescending(c => c.DeletedAt))
+            {
+                var translations = (await _unitOfWork.Repository<Entity.CarouselSlideTranslation>()
+                    .FindAsync(t => t.CarouselSlideId == slide.Id)).ToList();
+                var translation = translations.FirstOrDefault(t => t.CultureCode == currentCulture)
+                                ?? translations.FirstOrDefault(t => t.CultureCode == "pl-PL")
+                                ?? translations.FirstOrDefault();
+                deletedCarouselViewModels.Add(new CarouselSlideItemViewModel
+                {
+                    Id = slide.Id,
+                    Title = translation?.Title ?? slide.Title,
+                    ImagePath = slide.ImagePath,
+                    Location = slide.Location,
+                    CreatedAt = slide.CreatedAt
+                });
+            }
+            ViewBag.DeletedCarouselSlides = deletedCarouselViewModels;
+
             // Get categories
             var categories = await _unitOfWork.Categories.GetAllAsync();
             var categoryViewModels = new List<CategoryItemViewModel>();
 
-            foreach (var category in categories.Where(c => c.ParentCategoryId == null).OrderBy(c => c.DisplayOrder))
+            foreach (var category in categories.Where(c => c.ParentCategoryId == null && !c.IsDeleted).OrderBy(c => c.DisplayOrder))
             {
                 var categoryVm = new CategoryItemViewModel
                 {
@@ -1254,7 +1275,7 @@ public class AdminController : Controller
 
                 // Get subcategories
                 categoryVm.Subcategories = categories
-                    .Where(c => c.ParentCategoryId == category.Id)
+                    .Where(c => c.ParentCategoryId == category.Id && !c.IsDeleted)
                     .OrderBy(c => c.DisplayOrder)
                     .Select(sub => new CategoryItemViewModel
                     {
@@ -1277,9 +1298,23 @@ public class AdminController : Controller
             }
 
             viewModel.Categories = categoryViewModels;
-            viewModel.TotalCategories = categories.Count(c => c.ParentCategoryId == null);
-            viewModel.ActiveCategories = categories.Count(c => c.IsActive && c.ParentCategoryId == null);
-            viewModel.TotalSubcategories = categories.Count(c => c.ParentCategoryId != null);
+            viewModel.TotalCategories = categories.Count(c => c.ParentCategoryId == null && !c.IsDeleted);
+            viewModel.ActiveCategories = categories.Count(c => c.IsActive && c.ParentCategoryId == null && !c.IsDeleted);
+            viewModel.TotalSubcategories = categories.Count(c => c.ParentCategoryId != null && !c.IsDeleted);
+
+            // Build deleted categories list for restore UI
+            var deletedCategories = categories.Where(c => c.IsDeleted).OrderByDescending(c => c.DeletedAt)
+                .Select(c => new CategoryItemViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Slug = c.Slug,
+                    ParentCategoryId = c.ParentCategoryId,
+                    ParentCategoryName = c.ParentCategory?.Name,
+                    IsActive = c.IsActive,
+                    ProductCount = c.Products.Count
+                }).ToList();
+            ViewBag.DeletedCategories = deletedCategories;
 
             // Get blog posts
             var blogs = await _unitOfWork.Blogs.GetAllAsync();
@@ -1403,7 +1438,7 @@ public class AdminController : Controller
 
         // Load categories for dropdown
         var categories = await _unitOfWork.Categories.GetAllAsync();
-        ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+        ViewBag.Categories = categories.Where(c => !c.IsDeleted).OrderBy(c => c.DisplayOrder).ToList();
 
         return View(viewModel);
     }
@@ -1510,7 +1545,7 @@ public class AdminController : Controller
             }
 
             var categories = await _unitOfWork.Categories.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+            ViewBag.Categories = categories.Where(c => !c.IsDeleted).OrderBy(c => c.DisplayOrder).ToList();
             TempData["Error"] = _localizationService["Admin_Carousel_ErrorSave"];
             return View(model);
         }
@@ -1581,7 +1616,7 @@ public class AdminController : Controller
 
         // Load categories for dropdown
         var categories = await _unitOfWork.Categories.GetAllAsync();
-        ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+        ViewBag.Categories = categories.Where(c => !c.IsDeleted).OrderBy(c => c.DisplayOrder).ToList();
 
         ViewData["Title"] = _localizationService["Admin_Carousel_EditSlide"];
         return View(viewModel);
@@ -1597,7 +1632,7 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
         {
             var categories = await _unitOfWork.Categories.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+            ViewBag.Categories = categories.Where(c => !c.IsDeleted).OrderBy(c => c.DisplayOrder).ToList();
             TempData["Error"] = _localizationService["Admin_Carousel_ErrorSave"];
             return View(model);
         }
@@ -1739,7 +1774,7 @@ public class AdminController : Controller
             }
 
             var categories = await _unitOfWork.Categories.GetAllAsync();
-            ViewBag.Categories = categories.OrderBy(c => c.DisplayOrder).ToList();
+            ViewBag.Categories = categories.Where(c => !c.IsDeleted).OrderBy(c => c.DisplayOrder).ToList();
             TempData["Error"] = _localizationService["Admin_Carousel_ErrorSave"];
             return View(model);
         }
@@ -1761,40 +1796,48 @@ public class AdminController : Controller
                 return RedirectToAction(nameof(Settings), new { tab = "carousel" });
             }
 
-            _logger.LogInformation("Deleting carousel slide {SlideId}: Desktop={Desktop}, Tablet={Tablet}, Mobile={Mobile}", 
-                id, slide.ImagePath, slide.TabletImagePath, slide.MobileImagePath);
+            _logger.LogInformation("Soft-deleting carousel slide {SlideId}", id);
 
-            // Delete physical image files FIRST before soft delete
-            var imagesToDelete = new List<string>();
-            if (!string.IsNullOrEmpty(slide.ImagePath)) imagesToDelete.Add(slide.ImagePath);
-            if (!string.IsNullOrEmpty(slide.TabletImagePath)) imagesToDelete.Add(slide.TabletImagePath);
-            if (!string.IsNullOrEmpty(slide.MobileImagePath)) imagesToDelete.Add(slide.MobileImagePath);
-
-            foreach (var imagePath in imagesToDelete)
-            {
-                try
-                {
-                    await _carouselImageService.DeletePermanentImagesAsync(imagePath);
-                    _logger.LogInformation("Successfully deleted image: {ImagePath}", imagePath);
-                }
-                catch (Exception imgEx)
-                {
-                    _logger.LogError(imgEx, "Failed to delete image: {ImagePath}", imagePath);
-                    // Continue with other deletions even if one fails
-                }
-            }
-
-            // Delete from database (soft delete)
+            // Soft delete from database (keep images for restore capability)
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
             await _carouselService.DeleteSlideAsync(id, userId);
 
-            _logger.LogInformation("Carousel slide deleted successfully: {SlideId} by user {UserId}", id, userId);
+            _logger.LogInformation("Carousel slide soft-deleted successfully: {SlideId} by user {UserId}", id, userId);
             TempData["Success"] = _localizationService["Admin_Carousel_SuccessDeleted"];
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting carousel slide {SlideId}", id);
             TempData["Error"] = _localizationService["Admin_Carousel_ErrorDeleted"];
+        }
+
+        return RedirectToAction(nameof(Settings), new { tab = "carousel" });
+    }
+
+    /// <summary>
+    /// POST: Restore a soft-deleted carousel slide
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CarouselRestore(int id)
+    {
+        try
+        {
+            var result = await _carouselService.RestoreSlideAsync(id);
+            if (result)
+            {
+                TempData["Success"] = "Carousel slide restored successfully";
+                _logger.LogInformation("Carousel slide restored: {SlideId}", id);
+            }
+            else
+            {
+                TempData["Error"] = "Carousel slide not found or not deleted";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring carousel slide {SlideId}", id);
+            TempData["Error"] = "Error restoring carousel slide";
         }
 
         return RedirectToAction(nameof(Settings), new { tab = "carousel" });
@@ -2337,37 +2380,92 @@ public class AdminController : Controller
                 return RedirectToAction(nameof(Settings));
             }
 
-            // Delete category image if exists
-            if (!string.IsNullOrEmpty(category.ImageUrl))
+            // Check if category has products
+            var productCount = category.Products?.Count ?? 0;
+            if (productCount > 0)
             {
-                await _categoryImageService.DeleteCategoryImageAsync(category.ImageUrl);
+                TempData["Error"] = $"Cannot delete category '{category.Name}' because it has {productCount} products. Remove or reassign them first.";
+                return RedirectToAction(nameof(Settings), new { tab = "categories" });
             }
 
-            // Delete custom icon image if exists and not used by other categories
-            if (!string.IsNullOrEmpty(category.IconImagePath))
+            // Soft delete
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
+            category.IsDeleted = true;
+            category.DeletedAt = DateTime.UtcNow;
+            category.DeletedBy = userId;
+            category.IsActive = false;
+
+            // Also soft-delete subcategories
+            var subcategories = (await _unitOfWork.Categories.GetAllAsync())
+                .Where(c => c.ParentCategoryId == id).ToList();
+            foreach (var sub in subcategories)
             {
-                var iconInUseByOthers = await _unitOfWork.Categories
-                    .GetAllAsync();
-                var othersUsingIcon = iconInUseByOthers
-                    .Any(c => c.Id != id && c.IconImagePath == category.IconImagePath);
-                
-                if (!othersUsingIcon)
-                {
-                    await _categoryImageService.DeleteCategoryImageAsync(category.IconImagePath);
-                }
+                sub.IsDeleted = true;
+                sub.DeletedAt = DateTime.UtcNow;
+                sub.DeletedBy = userId;
+                sub.IsActive = false;
+                _unitOfWork.Categories.Update(sub);
             }
 
-            // Delete category (translations will cascade)
-            _unitOfWork.Categories.Remove(category);
+            _unitOfWork.Categories.Update(category);
             await _unitOfWork.SaveChangesAsync();
 
             TempData["Success"] = _localizationService["Admin_Category_SuccessDelete"];
-            _logger.LogInformation("Category deleted: {CategoryId}", id);
+            _logger.LogInformation("Category soft-deleted: {CategoryId} by {UserId}", id, userId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting category: {CategoryId}", id);
             TempData["Error"] = _localizationService["Admin_Category_ErrorDelete"];
+        }
+
+        return RedirectToAction(nameof(Settings), new { tab = "categories" });
+    }
+
+    /// <summary>
+    /// POST: Restore a soft-deleted category
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CategoryRestore(int id)
+    {
+        try
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
+            if (category == null || !category.IsDeleted)
+            {
+                TempData["Error"] = "Category not found or not deleted";
+                return RedirectToAction(nameof(Settings), new { tab = "categories" });
+            }
+
+            category.IsDeleted = false;
+            category.DeletedAt = null;
+            category.DeletedBy = null;
+            category.UpdatedAt = DateTime.UtcNow;
+            category.UpdatedBy = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Also restore subcategories
+            var subcategories = (await _unitOfWork.Categories.GetAllAsync())
+                .Where(c => c.ParentCategoryId == id && c.IsDeleted).ToList();
+            foreach (var sub in subcategories)
+            {
+                sub.IsDeleted = false;
+                sub.DeletedAt = null;
+                sub.DeletedBy = null;
+                sub.UpdatedAt = DateTime.UtcNow;
+                _unitOfWork.Categories.Update(sub);
+            }
+
+            _unitOfWork.Categories.Update(category);
+            await _unitOfWork.SaveChangesAsync();
+
+            TempData["Success"] = "Category restored successfully";
+            _logger.LogInformation("Category restored: {CategoryId}", id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restoring category: {CategoryId}", id);
+            TempData["Error"] = "Error restoring category";
         }
 
         return RedirectToAction(nameof(Settings), new { tab = "categories" });
@@ -2939,7 +3037,7 @@ public class AdminController : Controller
         try
         {
             var allCoupons = await _unitOfWork.Coupons.GetAllWithRelationsAsync();
-            var categories = await _unitOfWork.Categories.GetAllAsync();
+            var categories = (await _unitOfWork.Categories.GetAllAsync()).Where(c => !c.IsDeleted).ToList();
             var products = await _unitOfWork.Products.GetAllAsync();
 
             // Apply filters
@@ -3114,24 +3212,60 @@ public class AdminController : Controller
     }
 
     /// <summary>
-    /// POST: Create a new coupon
+    /// GET: Create Coupon page
+    /// </summary>
+    public async Task<IActionResult> CreateCoupon()
+    {
+        var categories = (await _unitOfWork.Categories.GetAllAsync()).Where(c => !c.IsDeleted && c.IsActive).ToList();
+        var products = (await _unitOfWork.Products.GetAllAsync()).Where(p => p.IsActive).ToList();
+
+        var viewModel = new Models.ViewModels.Admin.CreateCouponPageViewModel
+        {
+            Categories = categories.Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList(),
+            Products = products.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = p.Id.ToString(), Text = p.Name }).ToList(),
+            VipTiers = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+            {
+                new() { Value = "", Text = "No Requirement" },
+                new() { Value = "Bronze", Text = "Bronze" },
+                new() { Value = "Silver", Text = "Silver" },
+                new() { Value = "Gold", Text = "Gold" },
+                new() { Value = "Platinum", Text = "Platinum" }
+            },
+            CouponTypes = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+            {
+                new() { Value = "general", Text = "General" },
+                new() { Value = "birthday", Text = "Birthday" },
+                new() { Value = "new_user", Text = "New User" },
+                new() { Value = "vip", Text = "VIP Exclusive" },
+                new() { Value = "category", Text = "Category Specific" },
+                new() { Value = "product", Text = "Product Specific" },
+                new() { Value = "first_purchase", Text = "First Purchase" }
+            }
+        };
+
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// POST: Create a new coupon (form POST)
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> CreateCoupon([FromBody] Models.ViewModels.Admin.CreateCouponDto dto)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateCoupon([Bind(Prefix = "Coupon")] Models.ViewModels.Admin.CreateCouponDto dto)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return Json(new { success = false, message = string.Join(", ", errors) });
+                return View(await RebuildCreateCouponViewModel(dto));
             }
 
             // Check if code already exists
             var existingCoupons = await _unitOfWork.Coupons.GetAllAsync();
             if (existingCoupons.Any(c => c.Code.ToUpper() == dto.Code.ToUpper()))
             {
-                return Json(new { success = false, message = "A coupon with this code already exists." });
+                ModelState.AddModelError("Coupon.Code", "A coupon with this code already exists.");
+                return View(await RebuildCreateCouponViewModel(dto));
             }
 
             var coupon = new Coupon
@@ -3144,71 +3278,131 @@ public class AdminController : Controller
                 MinimumOrderAmount = dto.MinimumOrderAmount,
                 MaximumDiscountAmount = dto.MaximumDiscountAmount,
                 UsageLimit = dto.UsageLimit,
-                UsageLimitPerUser = dto.UsageLimitPerUser,
+                UsageLimitPerUser = dto.CouponType == "first_purchase" ? 1 : dto.UsageLimitPerUser,
                 ValidFrom = dto.ValidFrom,
                 ValidUntil = dto.ValidUntil,
                 IsActive = dto.IsActive,
                 UserId = dto.UserId,
                 CategoryId = dto.CategoryId,
                 ProductId = dto.ProductId,
-                VipTierRequired = dto.VipTierRequired,
-                DaysBeforeBirthday = dto.DaysBeforeBirthday,
-                DaysAfterBirthday = dto.DaysAfterBirthday,
-                AccountAgeDays = dto.AccountAgeDays,
+                VipTierRequired = string.IsNullOrEmpty(dto.VipTierRequired) ? null : dto.VipTierRequired,
+                DaysBeforeBirthday = dto.CouponType == "birthday" ? dto.DaysBeforeBirthday : null,
+                DaysAfterBirthday = dto.CouponType == "birthday" ? dto.DaysAfterBirthday : null,
+                AccountAgeDays = dto.CouponType == "new_user" ? dto.AccountAgeDays : null,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Always sync with Stripe
+            // Save first to get the ID assigned
+            await _unitOfWork.Repository<Coupon>().AddAsync(coupon);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Sync with Stripe
             try
             {
-                var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
+                var (stripeCoupon, promoCode) = await _stripeService.SyncCouponToStripeAsync(coupon);
                 coupon.StripeCouponId = stripeCoupon.Id;
-
-                // Use the new method with restrictions for promotion codes
-                var promotionCode = await _stripeService.CreateStripePromotionCodeWithRestrictionsAsync(
-                    stripeCouponId: stripeCoupon.Id, 
-                    code: coupon.Code,
-                    maxRedemptions: coupon.UsageLimit, // Total max redemptions
-                    maxRedemptionsPerCustomer: coupon.UsageLimitPerUser, // Per customer limit (e.g., 1 for one-time)
-                    expiresAt: coupon.ValidUntil,
-                    minimumAmount: coupon.MinimumOrderAmount
-                );
-                coupon.StripePromotionCodeId = promotionCode.Id;
+                coupon.StripePromotionCodeId = promoCode.Id;
+                
+                _unitOfWork.Repository<Coupon>().Update(coupon);
+                await _unitOfWork.SaveChangesAsync();
                 
                 _logger.LogInformation("Coupon {Code} synced with Stripe: CouponId={StripeCouponId}, PromotionCodeId={StripePromotionCodeId}", 
                     coupon.Code, coupon.StripeCouponId, coupon.StripePromotionCodeId);
+                
+                TempData["SuccessMessage"] = $"Coupon '{coupon.Code}' created and synced with Stripe successfully.";
             }
             catch (Exception stripeEx)
             {
                 _logger.LogWarning(stripeEx, "Failed to sync coupon {Code} with Stripe, continuing without sync", coupon.Code);
+                TempData["WarningMessage"] = $"Coupon '{coupon.Code}' created locally, but Stripe sync failed. You can retry from the coupon list.";
             }
 
-            await _unitOfWork.Repository<Coupon>().AddAsync(coupon);
-            await _unitOfWork.SaveChangesAsync();
-
             _logger.LogInformation("Created coupon {Code} by admin", coupon.Code);
-
-            return Json(new { success = true, message = "Coupon created successfully.", couponId = coupon.Id });
+            return RedirectToAction(nameof(Coupons));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating coupon");
-            return Json(new { success = false, message = "Failed to create coupon. Please try again." });
+            TempData["ErrorMessage"] = "Failed to create coupon. Please try again.";
+            return View(await RebuildCreateCouponViewModel(dto));
         }
     }
 
+    private async Task<Models.ViewModels.Admin.CreateCouponPageViewModel> RebuildCreateCouponViewModel(Models.ViewModels.Admin.CreateCouponDto dto)
+    {
+        var categories = (await _unitOfWork.Categories.GetAllAsync()).Where(c => !c.IsDeleted && c.IsActive).ToList();
+        var products = (await _unitOfWork.Products.GetAllAsync()).Where(p => p.IsActive).ToList();
+
+        return new Models.ViewModels.Admin.CreateCouponPageViewModel
+        {
+            Coupon = dto,
+            Categories = categories.Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList(),
+            Products = products.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = p.Id.ToString(), Text = p.Name }).ToList(),
+            VipTiers = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+            {
+                new() { Value = "", Text = "No Requirement" },
+                new() { Value = "Bronze", Text = "Bronze" },
+                new() { Value = "Silver", Text = "Silver" },
+                new() { Value = "Gold", Text = "Gold" },
+                new() { Value = "Platinum", Text = "Platinum" }
+            },
+            CouponTypes = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+            {
+                new() { Value = "general", Text = "General" },
+                new() { Value = "birthday", Text = "Birthday" },
+                new() { Value = "new_user", Text = "New User" },
+                new() { Value = "vip", Text = "VIP Exclusive" },
+                new() { Value = "category", Text = "Category Specific" },
+                new() { Value = "product", Text = "Product Specific" },
+                new() { Value = "first_purchase", Text = "First Purchase" }
+            }
+        };
+    }
+
     /// <summary>
-    /// POST: Update an existing coupon
+    /// GET: Edit Coupon page
     /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> UpdateCoupon(int id, [FromBody] Models.ViewModels.Admin.UpdateCouponDto dto)
+    public async Task<IActionResult> EditCoupon(int id)
     {
         try
         {
             var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
             if (coupon == null)
             {
-                return Json(new { success = false, message = "Coupon not found." });
+                TempData["ErrorMessage"] = "Coupon not found.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            var viewModel = await BuildEditCouponViewModel(coupon);
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading edit coupon page for ID {CouponId}", id);
+            TempData["ErrorMessage"] = "Failed to load coupon for editing.";
+            return RedirectToAction(nameof(Coupons));
+        }
+    }
+
+    /// <summary>
+    /// POST: Update an existing coupon (form POST)
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditCoupon(int id, [Bind(Prefix = "Coupon")] Models.ViewModels.Admin.UpdateCouponDto dto)
+    {
+        try
+        {
+            var coupon = await _unitOfWork.Coupons.GetByIdAsync(id);
+            if (coupon == null)
+            {
+                TempData["ErrorMessage"] = "Coupon not found.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(await BuildEditCouponViewModel(coupon, dto));
             }
 
             coupon.Description = dto.Description;
@@ -3218,63 +3412,127 @@ public class AdminController : Controller
             coupon.UsageLimitPerUser = dto.UsageLimitPerUser;
             coupon.ValidUntil = dto.ValidUntil;
             coupon.IsActive = dto.IsActive;
-            coupon.CategoryId = dto.CategoryId;
-            coupon.ProductId = dto.ProductId;
-            coupon.VipTierRequired = dto.VipTierRequired;
+            coupon.CategoryId = dto.CategoryId == 0 ? null : dto.CategoryId;
+            coupon.ProductId = dto.ProductId == 0 ? null : dto.ProductId;
+            coupon.VipTierRequired = string.IsNullOrEmpty(dto.VipTierRequired) ? null : dto.VipTierRequired;
             coupon.UpdatedAt = DateTime.UtcNow;
 
-            // Sync with Stripe - create if not exists, update if exists
-            if (string.IsNullOrEmpty(coupon.StripeCouponId))
+            // Sync with Stripe
+            try
             {
-                // Create new Stripe coupon and promotion code
-                try
-                {
-                    var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
-                    coupon.StripeCouponId = stripeCoupon.Id;
+                var (stripeCoupon, promoCode) = await _stripeService.SyncCouponToStripeAsync(coupon);
+                coupon.StripeCouponId = stripeCoupon.Id;
+                coupon.StripePromotionCodeId = promoCode.Id;
 
-                    var promotionCode = await _stripeService.CreateStripePromotionCodeAsync(stripeCoupon.Id, coupon.Code);
-                    coupon.StripePromotionCodeId = promotionCode.Id;
-                    
-                    _logger.LogInformation("Coupon {Code} synced with Stripe during update: CouponId={StripeCouponId}", 
-                        coupon.Code, coupon.StripeCouponId);
-                }
-                catch (Exception stripeEx)
-                {
-                    _logger.LogWarning(stripeEx, "Failed to sync coupon {Code} with Stripe during update", coupon.Code);
-                }
+                _logger.LogInformation("Coupon {Code} synced with Stripe during update: CouponId={StripeCouponId}",
+                    coupon.Code, coupon.StripeCouponId);
+
+                TempData["SuccessMessage"] = $"Coupon '{coupon.Code}' updated and synced with Stripe successfully.";
             }
-            else
+            catch (Exception stripeEx)
             {
-                // Update existing Stripe promotion code status
-                try
-                {
-                    await _stripeService.UpdateStripePromotionCodeAsync(coupon.StripePromotionCodeId!, dto.IsActive);
-                    _logger.LogInformation("Updated Stripe promotion code status for coupon {Code} to {IsActive}", 
-                        coupon.Code, dto.IsActive);
-                }
-                catch (Exception stripeEx)
-                {
-                    _logger.LogWarning(stripeEx, "Failed to update Stripe promotion code status for coupon {Code}", coupon.Code);
-                }
+                _logger.LogWarning(stripeEx, "Failed to sync coupon {Code} with Stripe during update", coupon.Code);
+                TempData["WarningMessage"] = $"Coupon '{coupon.Code}' updated locally, but Stripe sync failed. You can retry from the coupon list.";
             }
 
             _unitOfWork.Repository<Coupon>().Update(coupon);
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Updated coupon {Code} by admin", coupon.Code);
-
-            return Json(new { 
-                success = true, 
-                message = "Coupon updated successfully and synced with Stripe.",
-                stripeCouponId = coupon.StripeCouponId,
-                stripePromotionCodeId = coupon.StripePromotionCodeId
-            });
+            return RedirectToAction(nameof(Coupons));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating coupon ID {CouponId}", id);
-            return Json(new { success = false, message = "Failed to update coupon. Please try again." });
+            TempData["ErrorMessage"] = "Failed to update coupon. Please try again.";
+            return RedirectToAction(nameof(EditCoupon), new { id });
         }
+    }
+
+    private async Task<Models.ViewModels.Admin.EditCouponPageViewModel> BuildEditCouponViewModel(Coupon coupon, Models.ViewModels.Admin.UpdateCouponDto? dto = null)
+    {
+        var categories = (await _unitOfWork.Categories.GetAllAsync()).Where(c => !c.IsDeleted && c.IsActive).ToList();
+        var products = (await _unitOfWork.Products.GetAllAsync()).Where(p => p.IsActive).ToList();
+
+        var viewModel = new Models.ViewModels.Admin.EditCouponPageViewModel
+        {
+            Coupon = dto ?? new Models.ViewModels.Admin.UpdateCouponDto
+            {
+                Id = coupon.Id,
+                Description = coupon.Description,
+                MinimumOrderAmount = coupon.MinimumOrderAmount,
+                MaximumDiscountAmount = coupon.MaximumDiscountAmount,
+                UsageLimit = coupon.UsageLimit,
+                UsageLimitPerUser = coupon.UsageLimitPerUser,
+                ValidUntil = coupon.ValidUntil,
+                IsActive = coupon.IsActive,
+                CategoryId = coupon.CategoryId,
+                ProductId = coupon.ProductId,
+                VipTierRequired = coupon.VipTierRequired
+            },
+            Code = coupon.Code,
+            DiscountType = coupon.DiscountType,
+            DiscountValue = coupon.DiscountValue,
+            CouponType = coupon.CouponType,
+            UsageCount = coupon.UsageCount,
+            CreatedAt = coupon.CreatedAt,
+            StripeCouponId = coupon.StripeCouponId,
+            StripePromotionCodeId = coupon.StripePromotionCodeId,
+            Categories = categories.Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList(),
+            Products = products.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = p.Id.ToString(), Text = p.Name }).ToList(),
+            VipTiers = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
+            {
+                new() { Value = "", Text = "No Requirement" },
+                new() { Value = "Bronze", Text = "Bronze" },
+                new() { Value = "Silver", Text = "Silver" },
+                new() { Value = "Gold", Text = "Gold" },
+                new() { Value = "Platinum", Text = "Platinum" }
+            }
+        };
+
+        // Fetch live Stripe data
+        if (!string.IsNullOrEmpty(coupon.StripeCouponId))
+        {
+            try
+            {
+                var stripeInfo = await _stripeService.GetStripeCouponInfoAsync(coupon.StripeCouponId);
+                if (stripeInfo.HasValue)
+                {
+                    viewModel.StripeTimesRedeemed = stripeInfo.Value.TimesRedeemed;
+                    viewModel.StripeIsValid = stripeInfo.Value.Valid;
+                    if (stripeInfo.Value.RedeemBy.HasValue)
+                    {
+                        viewModel.StripeRedeemBy = DateTimeOffset.FromUnixTimeSeconds(stripeInfo.Value.RedeemBy.Value).DateTime.ToString("yyyy-MM-dd HH:mm");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to fetch Stripe coupon data during edit for {CouponId}", coupon.Id);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(coupon.StripePromotionCodeId))
+        {
+            try
+            {
+                var promoCode = await _stripeService.GetStripePromotionCodeAsync(coupon.StripePromotionCodeId);
+                if (promoCode != null)
+                {
+                    viewModel.StripePromotionActive = promoCode.Active;
+                    if (promoCode.Restrictions?.MinimumAmount != null)
+                    {
+                        viewModel.StripeMinimumAmount = promoCode.Restrictions.MinimumAmount / 100m;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to fetch Stripe promotion code data during edit for {CouponId}", coupon.Id);
+            }
+        }
+
+        return viewModel;
     }
 
     /// <summary>
@@ -3589,16 +3847,9 @@ public class AdminController : Controller
                 return Json(new { success = false, message = "Coupon not found." });
             }
 
-            if (!string.IsNullOrEmpty(coupon.StripeCouponId))
-            {
-                return Json(new { success = false, message = "Coupon is already synced with Stripe." });
-            }
-
-            var stripeCoupon = await _stripeService.CreateStripeCouponAsync(coupon);
+            var (stripeCoupon, promoCode) = await _stripeService.SyncCouponToStripeAsync(coupon);
             coupon.StripeCouponId = stripeCoupon.Id;
-
-            var promotionCode = await _stripeService.CreateStripePromotionCodeAsync(stripeCoupon.Id, coupon.Code);
-            coupon.StripePromotionCodeId = promotionCode.Id;
+            coupon.StripePromotionCodeId = promoCode.Id;
             coupon.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Repository<Coupon>().Update(coupon);
@@ -3610,6 +3861,96 @@ public class AdminController : Controller
         {
             _logger.LogError(ex, "Error syncing coupon ID {CouponId} with Stripe", id);
             return Json(new { success = false, message = $"Failed to sync with Stripe: {ex.Message}" });
+        }
+    }
+
+    /// <summary>
+    /// Two-way sync: push all unsynced local coupons to Stripe and import Stripe-only coupons locally.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> SyncAllCouponsWithStripe()
+    {
+        try
+        {
+            var allCoupons = (await _unitOfWork.Coupons.GetAllAsync()).ToList();
+            int synced = 0, imported = 0, errors = 0;
+
+            // Push unsynced local → Stripe
+            foreach (var coupon in allCoupons.Where(c => string.IsNullOrEmpty(c.StripeCouponId)))
+            {
+                try
+                {
+                    var (stripeCoupon, promoCode) = await _stripeService.SyncCouponToStripeAsync(coupon);
+                    coupon.StripeCouponId = stripeCoupon.Id;
+                    coupon.StripePromotionCodeId = promoCode.Id;
+                    coupon.UpdatedAt = DateTime.UtcNow;
+                    _unitOfWork.Repository<Coupon>().Update(coupon);
+                    synced++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to sync coupon {Code} to Stripe", coupon.Code);
+                    errors++;
+                }
+            }
+
+            // Re-sync existing ones; if deleted from Stripe, remove locally
+            int deleted = 0;
+            foreach (var coupon in allCoupons.Where(c => !string.IsNullOrEmpty(c.StripeCouponId)))
+            {
+                try
+                {
+                    // Check if coupon still exists on Stripe
+                    var stillValid = await _stripeService.IsCouponValidOnStripeAsync(coupon.StripeCouponId);
+                    if (!stillValid)
+                    {
+                        _logger.LogWarning("Coupon {Code} (StripeCouponId={StripeCouponId}) no longer exists on Stripe, removing from database",
+                            coupon.Code, coupon.StripeCouponId);
+                        _unitOfWork.Repository<Coupon>().Remove(coupon);
+                        deleted++;
+                        continue;
+                    }
+
+                    var (stripeCoupon, promoCode) = await _stripeService.SyncCouponToStripeAsync(coupon);
+                    coupon.StripeCouponId = stripeCoupon.Id;
+                    coupon.StripePromotionCodeId = promoCode.Id;
+                    coupon.UpdatedAt = DateTime.UtcNow;
+                    _unitOfWork.Repository<Coupon>().Update(coupon);
+                    synced++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to re-sync coupon {Code} to Stripe", coupon.Code);
+                    errors++;
+                }
+            }
+
+            // Pull Stripe → Local
+            var importedCoupons = await _stripeService.ImportCouponsFromStripeAsync(allCoupons);
+            foreach (var newCoupon in importedCoupons)
+            {
+                await _unitOfWork.Repository<Coupon>().AddAsync(newCoupon);
+                imported++;
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Stripe sync complete: {Synced} synced, {Imported} imported, {Deleted} deleted, {Errors} errors", synced, imported, deleted, errors);
+
+            return Json(new
+            {
+                success = true,
+                message = $"Sync complete: {synced} synced to Stripe, {imported} imported from Stripe, {deleted} removed (deleted on Stripe), {errors} errors.",
+                synced,
+                imported,
+                deleted,
+                errors
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during full Stripe coupon sync");
+            return Json(new { success = false, message = $"Sync failed: {ex.Message}" });
         }
     }
 
@@ -4111,7 +4452,7 @@ public class AdminController : Controller
                     startDate = DateTime.UtcNow.AddDays(-7);
                     break;
                 case "month":
-                    startDate = DateTime.UtcNow.AddMonths(-1);
+                    startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                     break;
                 case "year":
                     startDate = DateTime.UtcNow.AddYears(-1);
@@ -4120,11 +4461,11 @@ public class AdminController : Controller
                     startDate = DateTime.MinValue;
                     break;
                 case "custom":
-                    startDate = dateFrom ?? DateTime.UtcNow.AddMonths(-1);
+                    startDate = dateFrom ?? new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                     endDate = dateTo ?? DateTime.UtcNow;
                     break;
                 default:
-                    startDate = DateTime.UtcNow.AddMonths(-1);
+                    startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                     break;
             }
 
@@ -4159,8 +4500,18 @@ public class AdminController : Controller
 
             // Gross Revenue
             summary.GrossRevenue = orders.Sum(o => o.TotalAmount);
-            summary.GrossRevenueThisMonth = orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Sum(o => o.TotalAmount);
-            summary.GrossRevenueToday = orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Sum(o => o.TotalAmount);
+
+            // Calculate "this month" and "today" from full dataset (not period-filtered subset)
+            var calendarMonthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            var todayDate = DateTime.UtcNow.Date;
+
+            var allPaidOrders = await _unitOfWork.Repository<Order>()
+                .FindAsync(o => o.CreatedAt >= calendarMonthStart && o.PaymentStatus == "paid");
+            var monthOrders = allPaidOrders.ToList();
+            var todayOrders = monthOrders.Where(o => o.CreatedAt.Date == todayDate).ToList();
+
+            summary.GrossRevenueThisMonth = monthOrders.Sum(o => o.TotalAmount);
+            summary.GrossRevenueToday = todayOrders.Sum(o => o.TotalAmount);
 
             // Calculate growth
             var previousGross = previousOrders.Sum(o => o.TotalAmount);
@@ -4218,14 +4569,24 @@ public class AdminController : Controller
 
             // Net Revenue (Company perspective)
             summary.NetRevenue = summary.GrossRevenue - summary.TotalStripeFees - summary.TotalDeveloperCommission - summary.TotalRefunds;
-            summary.NetRevenueThisMonth = orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Sum(o => o.TotalAmount) 
-                - commissionsList.Where(c => orders.Where(o => o.CreatedAt >= DateTime.UtcNow.AddMonths(-1)).Select(o => o.Id).Contains(c.OrderId)).Sum(c => c.TotalStripeFees);
+
+            // Net Revenue this month - use independently queried month orders
+            var monthOrderIds = monthOrders.Select(o => o.Id).ToList();
+            var monthCommissions = await _unitOfWork.Repository<AdminCommission>()
+                .FindAsync(ac => monthOrderIds.Contains(ac.OrderId) && ac.Status != "refunded");
+            var monthStripeFees = monthCommissions.Sum(ac => ac.TotalStripeFees);
+            summary.NetRevenueThisMonth = summary.GrossRevenueThisMonth - monthStripeFees;
 
             // Personal Earnings (Admin's actual take-home after platform commission)
             summary.PersonalEarnings = summary.NetRevenue; // For owner, net revenue is personal earnings
             summary.PersonalEarningsThisMonth = summary.NetRevenueThisMonth;
-            summary.PersonalEarningsToday = orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Sum(o => o.TotalAmount)
-                - commissionsList.Where(c => orders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).Select(o => o.Id).Contains(c.OrderId)).Sum(c => c.TotalStripeFees);
+
+            // Today's earnings
+            var todayOrderIds = todayOrders.Select(o => o.Id).ToList();
+            var todayCommissions = await _unitOfWork.Repository<AdminCommission>()
+                .FindAsync(ac => todayOrderIds.Contains(ac.OrderId) && ac.Status != "refunded");
+            var todayStripeFees = todayCommissions.Sum(ac => ac.TotalStripeFees);
+            summary.PersonalEarningsToday = summary.GrossRevenueToday - todayStripeFees;
 
             // Statistics
             summary.AverageOrderValue = orders.Any() ? summary.GrossRevenue / orders.Count : 0;
@@ -4296,14 +4657,14 @@ public class AdminController : Controller
             {
                 case "day": startDate = DateTime.UtcNow.Date; break;
                 case "week": startDate = DateTime.UtcNow.AddDays(-7); break;
-                case "month": startDate = DateTime.UtcNow.AddMonths(-1); break;
+                case "month": startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc); break;
                 case "year": startDate = DateTime.UtcNow.AddYears(-1); break;
                 case "all": startDate = DateTime.MinValue; break;
                 case "custom":
-                    startDate = dateFrom ?? DateTime.UtcNow.AddMonths(-1);
+                    startDate = dateFrom ?? new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                     endDate = dateTo ?? DateTime.UtcNow;
                     break;
-                default: startDate = DateTime.UtcNow.AddMonths(-1); break;
+                default: startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc); break;
             }
 
             var allOrders = await _unitOfWork.Repository<Order>()

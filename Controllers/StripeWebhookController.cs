@@ -95,6 +95,15 @@ namespace Kokomija.Controllers
                         await HandlePayoutPaid(stripeEvent);
                         break;
 
+                    case "coupon.created":
+                    case "coupon.updated":
+                        await HandleCouponCreatedOrUpdated(stripeEvent);
+                        break;
+
+                    case "coupon.deleted":
+                        await HandleCouponDeleted(stripeEvent);
+                        break;
+
                     default:
                         _logger.LogInformation($"Unhandled event type: {stripeEvent.Type}");
                         break;
@@ -150,14 +159,42 @@ namespace Kokomija.Controllers
                     }
                 }
 
-                // Update shipping address if available
+                // Update shipping address from Stripe collected shipping details
+                if (session.CollectedInformation?.ShippingDetails?.Address != null)
+                {
+                    var shipping = session.CollectedInformation.ShippingDetails.Address;
+                    order.ShippingAddress = string.IsNullOrEmpty(shipping.Line2)
+                        ? shipping.Line1
+                        : $"{shipping.Line1}, {shipping.Line2}";
+                    order.ShippingCity = shipping.City;
+                    order.ShippingState = shipping.State;
+                    order.ShippingPostalCode = shipping.PostalCode;
+                    order.ShippingCountry = shipping.Country;
+                }
+                else if (session.CustomerDetails?.Address != null)
+                {
+                    // Fallback: use customer details address if no separate shipping
+                    var addr = session.CustomerDetails.Address;
+                    order.ShippingAddress = string.IsNullOrEmpty(addr.Line2)
+                        ? addr.Line1
+                        : $"{addr.Line1}, {addr.Line2}";
+                    order.ShippingCity = addr.City;
+                    order.ShippingState = addr.State;
+                    order.ShippingPostalCode = addr.PostalCode;
+                    order.ShippingCountry = addr.Country;
+                }
+
+                // Update billing address from customer details
                 if (session.CustomerDetails?.Address != null)
                 {
-                    order.ShippingAddress = session.CustomerDetails.Address.Line1;
-                    order.ShippingCity = session.CustomerDetails.Address.City;
-                    order.ShippingState = session.CustomerDetails.Address.State;
-                    order.ShippingPostalCode = session.CustomerDetails.Address.PostalCode;
-                    order.ShippingCountry = session.CustomerDetails.Address.Country;
+                    var billing = session.CustomerDetails.Address;
+                    order.BillingAddress = string.IsNullOrEmpty(billing.Line2)
+                        ? billing.Line1
+                        : $"{billing.Line1}, {billing.Line2}";
+                    order.BillingCity = billing.City;
+                    order.BillingState = billing.State;
+                    order.BillingPostalCode = billing.PostalCode;
+                    order.BillingCountry = billing.Country;
                 }
 
                 // Update user's total spent and VIP tier
@@ -587,6 +624,75 @@ namespace Kokomija.Controllers
                 {
                     await userManager.AddToRoleAsync(user, newRole);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Handle coupon.created and coupon.updated events from Stripe
+        /// </summary>
+        private async Task HandleCouponCreatedOrUpdated(Event stripeEvent)
+        {
+            var stripeCoupon = stripeEvent.Data.Object as Stripe.Coupon;
+            if (stripeCoupon == null) return;
+
+            _logger.LogInformation("Stripe coupon event {EventType}: {CouponId}", stripeEvent.Type, stripeCoupon.Id);
+
+            // Find local coupon by StripeCouponId
+            var allCoupons = await _unitOfWork.Coupons.GetAllAsync();
+            var localCoupon = allCoupons.FirstOrDefault(c => c.StripeCouponId == stripeCoupon.Id);
+
+            // Also try matching by metadata coupon_id
+            if (localCoupon == null && stripeCoupon.Metadata != null &&
+                stripeCoupon.Metadata.TryGetValue("coupon_id", out var couponIdStr) &&
+                int.TryParse(couponIdStr, out var couponId))
+            {
+                localCoupon = allCoupons.FirstOrDefault(c => c.Id == couponId);
+            }
+
+            if (localCoupon != null)
+            {
+                // Update local coupon with Stripe data
+                localCoupon.StripeCouponId = stripeCoupon.Id;
+                localCoupon.UsageCount = (int)stripeCoupon.TimesRedeemed;
+                localCoupon.IsActive = stripeCoupon.Valid;
+                localCoupon.UpdatedAt = DateTime.UtcNow;
+
+                _unitOfWork.Repository<Entity.Coupon>().Update(localCoupon);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Updated local coupon {Code} from Stripe event", localCoupon.Code);
+            }
+            else
+            {
+                _logger.LogInformation("No local coupon found for Stripe coupon {CouponId}, will be imported on next sync", stripeCoupon.Id);
+            }
+        }
+
+        /// <summary>
+        /// Handle coupon.deleted event from Stripe
+        /// </summary>
+        private async Task HandleCouponDeleted(Event stripeEvent)
+        {
+            var stripeCoupon = stripeEvent.Data.Object as Stripe.Coupon;
+            if (stripeCoupon == null) return;
+
+            _logger.LogInformation("Stripe coupon deleted: {CouponId}", stripeCoupon.Id);
+
+            var allCoupons = await _unitOfWork.Coupons.GetAllAsync();
+            var localCoupon = allCoupons.FirstOrDefault(c => c.StripeCouponId == stripeCoupon.Id);
+
+            if (localCoupon != null)
+            {
+                // Don't delete locally — just deactivate and clear Stripe IDs
+                localCoupon.IsActive = false;
+                localCoupon.StripeCouponId = null;
+                localCoupon.StripePromotionCodeId = null;
+                localCoupon.UpdatedAt = DateTime.UtcNow;
+
+                _unitOfWork.Repository<Entity.Coupon>().Update(localCoupon);
+                await _unitOfWork.SaveChangesAsync();
+
+                _logger.LogInformation("Deactivated local coupon {Code} after Stripe deletion", localCoupon.Code);
             }
         }
     }

@@ -260,7 +260,7 @@
                                                                       asp-controller="Admin"
                                                                       method="post"
                                                                       class="d-inline m-0 p-0 btn btn-outline-danger"        
-                                                                      onsubmit="return confirm('⚠️ Delete slide: @slide.Title?\n\nThis action cannot be undone.');">
+                                                                      onsubmit="return confirm('⚠️ Delete slide: @slide.Title?\n\nYou can restore it later from the deleted slides section.');">
                                                                     <input type="hidden" name="id" value="@slide.Id" />
                                                                     <button 
                                                                         class="btn btn-outline-danger border-0 m-0" 
@@ -286,6 +286,62 @@
                                             <i class="bi bi-plus-lg"></i>
                                             Create First Slide
                                         </a>
+                                    </div>
+                                }
+
+                                @{
+                                    var deletedSlides = ViewBag.DeletedCarouselSlides as List<Kokomija.Models.ViewModels.Admin.CarouselSlideItemViewModel> ?? new List<Kokomija.Models.ViewModels.Admin.CarouselSlideItemViewModel>();
+                                }
+                                @if (deletedSlides.Any())
+                                {
+                                    <div class="mt-4">
+                                        <div class="d-flex align-items-center mb-3 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#deletedSlidesSection" aria-expanded="false">
+                                            <h5 class="mb-0 text-danger">
+                                                <i class="bi bi-trash3"></i> Deleted Slides
+                                                <span class="badge bg-danger ms-2">@deletedSlides.Count</span>
+                                            </h5>
+                                            <i class="bi bi-chevron-down ms-2 text-muted"></i>
+                                        </div>
+                                        <div class="collapse" id="deletedSlidesSection">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Preview</th>
+                                                            <th>Title</th>
+                                                            <th>Location</th>
+                                                            <th width="120">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var slide in deletedSlides)
+                                                        {
+                                                            <tr class="table-danger bg-opacity-10">
+                                                                <td>
+                                                                    <div class="carousel-preview">
+                                                                        <img src="@slide.ImagePath" alt="@slide.Title" class="carousel-thumb" style="opacity: 0.5;">
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <strong class="text-muted">@slide.Title</strong>
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-secondary">@slide.Location</span>
+                                                                </td>
+                                                                <td>
+                                                                    <form asp-action="CarouselRestore" asp-controller="Admin" method="post" class="d-inline">
+                                                                        <input type="hidden" name="id" value="@slide.Id" />
+                                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Restore">
+                                                                            <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                                                        </button>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 }
                             </div>
@@ -394,7 +450,7 @@
                                                             <button class="btn @(category.IsActive ? "btn-outline-warning" : "btn-outline-success")" onclick="toggleCategoryStatus(@category.Id)" title="@(category.IsActive ? "Deactivate" : "Activate")">
                                                                 <i class="bi bi-@(category.IsActive ? "pause" : "play")-circle"></i>
                                                             </button>
-                                                            <form asp-action="CategoryDelete" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('⚠️ Delete category: @category.Name?\n\nThis will also delete all subcategories and cannot be undone.');">
+                                                            <form asp-action="CategoryDelete" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('⚠️ Delete category: @category.Name?\n\nThis will also delete all subcategories. You can restore them later.');">
                                                                 <input type="hidden" name="id" value="@category.Id" />
                                                                 <button type="submit" class="btn btn-outline-danger" title="Delete Category">
                                                                     <i class="bi bi-trash3"></i>
@@ -446,7 +502,7 @@
                                                                             <button class="btn @(sub.IsActive ? "btn-outline-warning" : "btn-outline-success")" onclick="toggleCategoryStatus(@sub.Id)" title="@(sub.IsActive ? "Deactivate" : "Activate")">
                                                                                 <i class="bi bi-@(sub.IsActive ? "pause" : "play")-circle"></i>
                                                                             </button>
-                                                                            <form asp-action="CategoryDelete" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('⚠️ Delete subcategory: @sub.Name?\n\nThis cannot be undone.');">
+                                                                            <form asp-action="CategoryDelete" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('⚠️ Delete subcategory: @sub.Name?\n\nYou can restore it later.');">
                                                                                 <input type="hidden" name="id" value="@sub.Id" />
                                                                                 <button type="submit" class="btn btn-outline-danger" title="Delete Subcategory">
                                                                                     <i class="bi bi-trash3"></i>
@@ -472,6 +528,67 @@
                                             <i class="bi bi-plus-lg"></i>
                                             Create First Category
                                         </a>
+                                    </div>
+                                }
+
+                                @{
+                                    var deletedCats = ViewBag.DeletedCategories as List<Kokomija.Models.ViewModels.Admin.CategoryItemViewModel> ?? new List<Kokomija.Models.ViewModels.Admin.CategoryItemViewModel>();
+                                }
+                                @if (deletedCats.Any())
+                                {
+                                    <div class="mt-4">
+                                        <div class="d-flex align-items-center mb-3 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#deletedCategoriesSection" aria-expanded="false">
+                                            <h5 class="mb-0 text-danger">
+                                                <i class="bi bi-trash3"></i> Deleted Categories
+                                                <span class="badge bg-danger ms-2">@deletedCats.Count</span>
+                                            </h5>
+                                            <i class="bi bi-chevron-down ms-2 text-muted"></i>
+                                        </div>
+                                        <div class="collapse" id="deletedCategoriesSection">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Name</th>
+                                                            <th>Slug</th>
+                                                            <th>Type</th>
+                                                            <th width="120">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var cat in deletedCats)
+                                                        {
+                                                            <tr class="table-danger bg-opacity-10">
+                                                                <td>
+                                                                    <strong class="text-muted">@cat.Name</strong>
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge bg-secondary bg-opacity-10 text-body">@cat.Slug</span>
+                                                                </td>
+                                                                <td>
+                                                                    @if (cat.ParentCategoryId.HasValue)
+                                                                    {
+                                                                        <span class="badge bg-info bg-opacity-10 text-info">Subcategory of @cat.ParentCategoryName</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="badge bg-primary bg-opacity-10 text-primary">Main Category</span>
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    <form asp-action="CategoryRestore" asp-controller="Admin" method="post" class="d-inline">
+                                                                        <input type="hidden" name="id" value="@cat.Id" />
+                                                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Restore">
+                                                                            <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                                                        </button>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 }
                             </div>

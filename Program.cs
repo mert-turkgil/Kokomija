@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Stripe;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -409,6 +412,12 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Seeding Stripe products...");
         await stripeSeeder.SeedProductsToStripeAsync();
         logger.LogInformation("Stripe product seeding completed successfully.");
+        
+        // Ensure VIP tier Stripe coupons exist
+        logger.LogInformation("Ensuring VIP tier Stripe coupons exist...");
+        var stripeService = services.GetRequiredService<IStripeService>();
+        await stripeService.EnsureVipTierCouponsExistAsync();
+        logger.LogInformation("VIP tier coupon seeding completed successfully.");
         
         // Seed demo financial data (only in development, can be removed via admin panel)
         if (builder.Environment.IsDevelopment())

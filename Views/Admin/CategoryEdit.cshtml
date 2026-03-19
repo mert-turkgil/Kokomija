@@ -38,6 +38,10 @@
                 <div class="card shadow-sm border-0 rounded-3">
                     <div class="card-body">
                         <form asp-action="CategoryEdit" method="post" id="categoryForm">
+                            @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div asp-validation-summary="All" class="alert alert-danger"></div>
+                            }
                             <input type="hidden" asp-for="Id" />
                             <input type="hidden" asp-for="NewImageTempFileName" id="imageTempFileName" />
                             <input type="hidden" asp-for="NewIconImageTempFileName" id="iconImageTempFileName" />
@@ -83,6 +87,7 @@
                                                     @Category["Admin_Category_Name"] <span class="text-danger">*</span>
                                                 </label>
                                                 <input asp-for="Translations[i].Name" class="form-control" required />
+                                                <span asp-validation-for="Translations[i].Name" class="text-danger"></span>
                                             </div>
 
                                             <div class="mb-3">
@@ -90,6 +95,7 @@
                                                     @Category["Admin_Category_Slug"] <span class="text-danger">*</span>
                                                 </label>
                                                 <input asp-for="Translations[i].Slug" class="form-control" required />
+                                                <span asp-validation-for="Translations[i].Slug" class="text-danger"></span>
                                                 <small class="text-muted">URL-friendly: lowercase, hyphens only</small>
                                             </div>
 
@@ -653,6 +659,9 @@ $(document).ready(function () {
         const formData = new FormData();
         formData.append('file', file);
 
+        // Save image as base64 for persistence
+        saveImageToStorage(file, 'image');
+
         dropzone.html('<div class="spinner-border text-primary"></div><p class="mt-2">Uploading...</p>');
 
         $.ajax({
@@ -668,6 +677,7 @@ $(document).ready(function () {
                     preview.find('img').attr('src', response.tempPath);
                     dropzone.addClass('d-none');
                     preview.removeClass('d-none');
+                    saveFormToStorage();
                     toastr.success('Image uploaded successfully!');
                 } else {
                     toastr.error(response.message || 'Upload failed');
@@ -685,7 +695,7 @@ $(document).ready(function () {
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ tempFileNames: [tempFileName] }),
-                success: () => { tempFileName = null; $('#imageTempFileName').val(''); resetDropzone(); }
+                success: () => { tempFileName = null; $('#imageTempFileName').val(''); resetDropzone(); sessionStorage.removeItem(IMAGE_KEYS.image); saveFormToStorage(); }
             });
         }
     });
@@ -746,6 +756,9 @@ $(document).ready(function () {
         const formData = new FormData();
         formData.append('file', file);
 
+        // Save icon as base64 for persistence
+        saveImageToStorage(file, 'icon');
+
         iconDropzone.html('<div class="spinner-border spinner-border-sm text-primary"></div><p class="mt-2 small">Uploading...</p>');
 
         $.ajax({
@@ -761,6 +774,7 @@ $(document).ready(function () {
                     iconPreview.find('img').attr('src', response.tempPath);
                     iconDropzone.addClass('d-none');
                     iconPreview.removeClass('d-none');
+                    saveFormToStorage();
                     toastr.success('Icon uploaded successfully!');
                 } else {
                     toastr.error(response.message || 'Upload failed');
@@ -778,7 +792,7 @@ $(document).ready(function () {
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ tempFileNames: [iconTempFileName] }),
-                success: () => { iconTempFileName = null; $('#iconImageTempFileName').val(''); resetIconDropzone(); }
+                success: () => { iconTempFileName = null; $('#iconImageTempFileName').val(''); resetIconDropzone(); sessionStorage.removeItem(IMAGE_KEYS.icon); saveFormToStorage(); }
             });
         }
     });
@@ -866,18 +880,169 @@ $(document).ready(function () {
 
     // Form submit
     $('#categoryForm').on('submit', function(e) {
+        clearFormStorage();
         $('#submitBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
     });
 
-    // Cleanup on page leave
-    window.addEventListener('beforeunload', function() {
-        const filesToClean = [];
-        if (tempFileName) filesToClean.push(tempFileName);
-        if (iconTempFileName) filesToClean.push(iconTempFileName);
-        if (filesToClean.length > 0) {
-            navigator.sendBeacon('@Url.Action("CategoryCancelUpload", "Admin")', JSON.stringify({ tempFileNames: filesToClean }));
-        }
-    });
+    // ============================================
+    // FORM PERSISTENCE (Protection against page refresh)
+    // ============================================
+    const categoryId = '@Model.Id';
+    const STORAGE_KEY = 'category_edit_form_data_' + categoryId;
+    const IMAGE_KEYS = {
+        image: 'category_edit_img_main_' + categoryId,
+        icon: 'category_edit_img_icon_' + categoryId
+    };
+
+    let saveTimer = null;
+    function saveFormToStorage() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(function () {
+            try {
+                const data = {};
+                $('#categoryForm').find('input, select, textarea').each(function () {
+                    const el = $(this);
+                    const name = el.attr('name');
+                    if (!name) return;
+                    if (el.is(':checkbox')) {
+                        data[name] = el.is(':checked');
+                    } else {
+                        data[name] = el.val();
+                    }
+                });
+                // Save icon CSS class and existing icon path
+                data['_iconCssClass'] = $('#iconCssClassInput').val();
+                data['_existingIconImagePath'] = $('#existingIconImagePath').val();
+                data['_iconType'] = $('input[name="iconType"]:checked').val();
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (err) { }
+        }, 500);
+    }
+
+    function saveImageToStorage(file, imageType) {
+        try {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imgData = { base64: e.target.result, name: file.name, type: file.type };
+                sessionStorage.setItem(IMAGE_KEYS[imageType], JSON.stringify(imgData));
+            };
+            reader.readAsDataURL(file);
+        } catch (err) { }
+    }
+
+    function restoreFormFromStorage() {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+            let restored = false;
+
+            $('#categoryForm').find('input, select, textarea').each(function () {
+                const el = $(this);
+                const name = el.attr('name');
+                if (!name || data[name] === undefined) return;
+                if (name === 'Id') return; // Don't overwrite entity ID
+                if (el.is(':checkbox')) {
+                    el.prop('checked', data[name] === true || data[name] === 'true');
+                } else if (el.attr('type') !== 'hidden' || name.indexOf('TempFileName') !== -1 || name === 'ExistingIconImagePath') {
+                    el.val(data[name]);
+                }
+                restored = true;
+            });
+
+            // Restore icon CSS class
+            if (data['_iconCssClass']) {
+                $('#iconCssClassInput').val(data['_iconCssClass']);
+                $('#selectedIconPreview').attr('class', data['_iconCssClass']);
+            }
+            if (data['_existingIconImagePath']) {
+                $('#existingIconImagePath').val(data['_existingIconImagePath']);
+            }
+
+            // Restore icon type toggle
+            if (data['_iconType']) {
+                $('input[name="iconType"][value="' + data['_iconType'] + '"]').prop('checked', true).trigger('change');
+            }
+
+            // Trigger parent category change to show/hide image vs icon section
+            updateVisuals();
+
+            // Restore images from base64
+            restoreImageFromStorage('image');
+            restoreImageFromStorage('icon');
+
+            if (restored) {
+                toastr.info('<i class="bi bi-magic me-2"></i>Form restored! Your previous work has been recovered.', '', { timeOut: 5000 });
+            }
+        } catch (err) { }
+    }
+
+    function restoreImageFromStorage(imageType) {
+        try {
+            const savedImg = sessionStorage.getItem(IMAGE_KEYS[imageType]);
+            if (!savedImg) return;
+
+            const imgData = JSON.parse(savedImg);
+
+            if (imageType === 'image') {
+                preview.find('img').attr('src', imgData.base64);
+                dropzone.addClass('d-none');
+                preview.removeClass('d-none');
+            } else {
+                iconPreview.find('img').attr('src', imgData.base64);
+                iconDropzone.addClass('d-none');
+                iconPreview.removeClass('d-none');
+            }
+
+            // Re-upload to get fresh temp URL
+            reuploadImageFromBase64(imgData, imageType);
+        } catch (err) { }
+    }
+
+    function reuploadImageFromBase64(imgData, imageType) {
+        fetch(imgData.base64)
+            .then(function (r) { return r.blob(); })
+            .then(function (blob) {
+                var file = new File([blob], imgData.name, { type: imgData.type });
+                var formData = new FormData();
+                formData.append('file', file);
+
+                $.ajax({
+                    url: '@Url.Action("CategoryUploadImage", "Admin")',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        if (response.success) {
+                            if (imageType === 'image') {
+                                tempFileName = response.tempFileName;
+                                $('#imageTempFileName').val(response.tempFileName);
+                                preview.find('img').attr('src', response.tempPath);
+                            } else {
+                                iconTempFileName = response.tempFileName;
+                                $('#iconImageTempFileName').val(response.tempFileName);
+                                iconPreview.find('img').attr('src', response.tempPath);
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(function () { });
+    }
+
+    function clearFormStorage() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        Object.values(IMAGE_KEYS).forEach(function (key) { sessionStorage.removeItem(key); });
+    }
+
+    // Auto-save on input changes
+    $('#categoryForm').on('input change', function () { saveFormToStorage(); });
+    window.addEventListener('beforeunload', function () { saveFormToStorage(); });
+
+    // Restore on page load
+    restoreFormFromStorage();
 });
 </script>
 }

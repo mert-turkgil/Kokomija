@@ -120,6 +120,12 @@ public class ProductCreateDto
     // ===== END BUSINESS FIELDS =====
 
     /// <summary>
+    /// EAN/GTIN barcode for product identification
+    /// </summary>
+    [StringLength(14)]
+    public string? EanCode { get; set; }
+
+    /// <summary>
     /// Custom color hex code if not in the predefined palette
     /// </summary>
     [StringLength(7)]
@@ -214,6 +220,12 @@ public class ProductUpdateDto
     // ===== END BUSINESS FIELDS =====
 
     /// <summary>
+    /// EAN/GTIN barcode for product identification
+    /// </summary>
+    [StringLength(14)]
+    public string? EanCode { get; set; }
+
+    /// <summary>
     /// Custom color hex code if not in the predefined palette
     /// </summary>
     [StringLength(7)]
@@ -290,6 +302,11 @@ public class ProductReviewManagementDto
 public class ProductImageCancelDto
 {
     public List<string> TempFileNames { get; set; } = new();
+}
+
+public class ReorderImagesRequest
+{
+    public List<string> ImageUrls { get; set; } = new();
 }
 
 public class SizeGuideDto

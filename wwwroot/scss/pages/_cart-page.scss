@@ -1094,3 +1094,235 @@
         background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.12));
     }
 }
+
+// ===== New cart redesign helpers =====
+
+// Page header + breadcrumb
+.cart-page-header {
+    h1 {
+        font-size: 2rem;
+        font-weight: 800;
+    }
+}
+
+// Empty cart wrapper (replaces .empty-cart)
+.empty-cart-wrapper {
+    .empty-cart-icon {
+        i {
+            font-size: 6rem;
+            color: var(--bs-secondary-color);
+            opacity: 0.4;
+            display: block;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+    }
+    h2 {
+        font-weight: 700;
+    }
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-18px); }
+    }
+}
+
+// Product thumbnail in cart
+.cart-item-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+
+    &:hover { transform: scale(1.05); }
+
+    &.logo-fallback {
+        object-fit: contain;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.05));
+    }
+}
+
+.cart-item-image-link:hover .cart-item-img {
+    transform: scale(1.05);
+}
+
+// Meta chips (color / size / pack)
+.cart-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    padding: 0.2rem 0.55rem;
+    background: var(--bs-tertiary-bg);
+    border-radius: 6px;
+    color: var(--bs-secondary-color);
+
+    .color-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.1);
+        flex-shrink: 0;
+    }
+}
+
+// Quantity control (replaces input-group)
+.qty-control {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1.5px solid var(--bs-border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    width: fit-content;
+    background: var(--bs-body-bg);
+    height: 36px;
+
+    [data-theme="dark"] & {
+        border-color: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.05);
+    }
+}
+
+.qty-btn {
+    background: var(--bs-tertiary-bg);
+    border: none;
+    border-right: 1.5px solid var(--bs-border-color);
+    width: 34px;
+    min-width: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--bs-body-color);
+    font-size: 1rem;
+    line-height: 1;
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+    padding: 0;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+
+    &:last-child {
+        border-right: none;
+        border-left: 1.5px solid var(--bs-border-color);
+    }
+
+    &:hover:not(:disabled) {
+        background: #667eea;
+        color: #fff;
+        border-color: #667eea;
+
+        // keep adjacent input border color consistent
+        & + .qty-input,
+        .qty-input + & {
+            border-color: #667eea;
+        }
+    }
+
+    &:active:not(:disabled) {
+        background: #5a6fd6;
+        color: #fff;
+    }
+
+    &:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    i {
+        font-size: 0.8rem;
+        pointer-events: none;
+        display: block;
+    }
+
+    [data-theme="dark"] & {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.15);
+        color: rgba(255,255,255,0.85);
+
+        &:last-child {
+            border-left-color: rgba(255,255,255,0.15);
+        }
+
+        &:hover:not(:disabled) {
+            background: #667eea;
+            border-color: #667eea;
+            color: #fff;
+        }
+    }
+}
+
+.qty-input {
+    width: 44px;
+    min-width: 44px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--bs-body-color);
+    padding: 0;
+    --moz-appearance: textfield;
+    outline: none;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button { -webkit-appearance: none; }
+    &:focus { outline: none; box-shadow: none; }
+
+    [data-theme="dark"] & { color: #fff; }
+}
+
+// Ghost danger remove button
+.btn-ghost-danger {
+    background: transparent;
+    border: none;
+    color: var(--bs-secondary-color);
+    font-size: 0.85rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(220,53,69,0.1);
+        color: #dc3545;
+    }
+}
+
+// Total savings highlight band
+.savings-highlight {
+    background: linear-gradient(135deg, rgba(72,187,120,0.1), rgba(56,161,105,0.08));
+    border: 1px dashed #48bb78;
+
+    [data-theme="dark"] & {
+        background: linear-gradient(135deg, rgba(72,187,120,0.15), rgba(56,161,105,0.12));
+        border-color: #38a169;
+        color: #86efac;
+    }
+}
+
+// Trust badges in summary card
+.cart-trust-badges {
+    font-size: 0.78rem;
+    opacity: 0.7;
+
+    i { color: var(--bs-secondary-color); }
+    [data-theme="dark"] & { opacity: 0.6; }
+}
+
+// Summary row spacing
+.summary-row {
+    font-size: 0.95rem;
+}
+
+// Shipping option as full-width label
+.shipping-option-label {
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+
+    &:hover { opacity: 0.9; }
+}
+

@@ -57,9 +57,13 @@ namespace Kokomija.Models.ViewModels.Account
         public string Description { get; set; } = string.Empty;
         public string DiscountType { get; set; } = string.Empty; // percentage, fixed_amount
         public decimal DiscountValue { get; set; }
+        public string CouponType { get; set; } = "general";
         public decimal? MinimumOrderAmount { get; set; }
+        public decimal? MaximumDiscountAmount { get; set; }
         public DateTime? ValidUntil { get; set; }
         public bool IsNew { get; set; }
+        public string? CategoryName { get; set; }
+        public string? ProductName { get; set; }
     }
     
     public class UsedCouponViewModel

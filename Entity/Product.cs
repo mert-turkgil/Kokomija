@@ -88,6 +88,12 @@ namespace Kokomija.Entity
 
         // ===== END BUSINESS FEATURES =====
 
+        /// <summary>
+        /// EAN/GTIN barcode for product identification
+        /// </summary>
+        [MaxLength(14)]
+        public string? EanCode { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public int? CategoryId { get; set; }

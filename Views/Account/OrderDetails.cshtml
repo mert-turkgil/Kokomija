@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = L["Account_Order_Details"] + " #" + Model.OrderNumber;
     var plnCulture = new System.Globalization.CultureInfo("pl-PL");
+    var titleCase = System.Globalization.CultureInfo.CurrentCulture.TextInfo;
     
     var paymentBadgeClass = Model.PaymentStatus?.ToLower() switch {
         "paid" => "success",
@@ -35,13 +36,14 @@
         "cancelled" => "x-circle-fill",
         _ => "question-circle"
     };
+    var isCancelledOrder = Model.OrderStatus?.ToLower() == "cancelled";
 }
 
 <div class="order-details-page">
-    <div class="container py-5">
+    <div class="container py-4">
         <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
-            <ol class="breadcrumb">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb small">
                 <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a></li>
                 <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Index">@L["Account_Dashboard"]</a></li>
                 <li class="breadcrumb-item"><a href="@Url.Action("Index", "Account")#orders">@(L["Orders_Title"] ?? "Orders")</a></li>
@@ -49,160 +51,142 @@
             </ol>
         </nav>
 
-        <!-- Header Card -->
-        <div class="order-header-card mb-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h1 class="h3 fw-bold mb-2">
-                        <i class="bi bi-receipt me-2 text-primary"></i>@(L["Order"] ?? "Order") #@Model.OrderNumber
-                    </h1>
-                    <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <span class="badge bg-@orderBadgeClass rounded-pill px-3 py-2">
-                            <i class="bi bi-@orderIcon me-1"></i>@L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.OrderStatus ?? "")]
-                        </span>
-                        <span class="badge bg-@paymentBadgeClass rounded-pill px-3 py-2">
-                            <i class="bi bi-@paymentIcon me-1"></i>@L["Payment_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.PaymentStatus ?? "")]
-                        </span>
-                        <span class="text-body-secondary small ms-2">
-                            <i class="bi bi-calendar3 me-1"></i>@Model.OrderDate.ToString("dd MMM yyyy, HH:mm")
-                        </span>
+        <!-- Hero Header -->
+        <div class="od-hero mb-4">
+            <div class="od-hero-bg"></div>
+            <div class="od-hero-content">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="od-order-number">@(L["Order"] ?? "Order") #@Model.OrderNumber</span>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <span class="od-status-pill od-status-@(Model.OrderStatus?.ToLower())">
+                                <i class="bi bi-@orderIcon"></i>
+                                @(L["Status_" + titleCase.ToTitleCase(Model.OrderStatus ?? "")] ?? Model.OrderStatus)
+                            </span>
+                            <span class="od-status-pill od-payment-@(Model.PaymentStatus?.ToLower())">
+                                <i class="bi bi-@paymentIcon"></i>
+                                @(L["Payment_" + titleCase.ToTitleCase(Model.PaymentStatus ?? "")] ?? Model.PaymentStatus)
+                            </span>
+                            <span class="od-date">
+                                <i class="bi bi-calendar3"></i> @Model.OrderDate.ToString("dd MMM yyyy, HH:mm")
+                            </span>
+                        </div>
                     </div>
+                    <a href="@Url.Action("Index", "Account")#orders" class="btn btn-light btn-sm rounded-pill px-3">
+                        <i class="bi bi-arrow-left me-1"></i>@(L["Back_To_Orders"] ?? "Back to Orders")
+                    </a>
                 </div>
-                <a href="@Url.Action("Index", "Account")#orders" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>@(L["Back_To_Orders"] ?? "Back to Orders")
-                </a>
             </div>
         </div>
 
         <!-- Order Progress Timeline -->
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body p-4">
-                <div class="order-timeline d-flex justify-content-between align-items-start position-relative">
+        @if (!isCancelledOrder)
+        {
+            <div class="od-timeline-card mb-4">
+                <div class="od-timeline-track">
                     @{
                         var steps = new[] { "pending", "processing", "shipped", "delivered" };
                         var currentStepIndex = Array.IndexOf(steps, Model.OrderStatus?.ToLower());
-                        if (currentStepIndex == -1 && Model.OrderStatus?.ToLower() == "cancelled") currentStepIndex = -2;
+                        if (currentStepIndex == -1) currentStepIndex = 0;
+                        var progressPercent = currentStepIndex == 0 ? 0 : (currentStepIndex * 100) / (steps.Length - 1);
                     }
+                    <div class="od-progress-line">
+                        <div class="od-progress-fill" style="width: @(progressPercent)%"></div>
+                    </div>
                     @foreach (var (step, index) in steps.Select((s, i) => (s, i)))
                     {
                         var isCompleted = index < currentStepIndex;
                         var isActive = index == currentStepIndex;
-                        var isCancelled = Model.OrderStatus?.ToLower() == "cancelled" && index == 0;
-                        
-                        <div class="timeline-step text-center flex-fill position-relative">
-                            <div class="step-icon mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center
-                                 @(isCompleted ? "bg-success text-white" : "") 
-                                 @(isActive ? "bg-primary text-white shadow" : "") 
-                                 @(isCancelled ? "bg-danger text-white" : "")
-                                 @(!isCompleted && !isActive && !isCancelled ? "bg-body-secondary text-body-tertiary" : "")"
-                                 style="width: 48px; height: 48px; z-index: 2;">
+                        <div class="od-step @(isCompleted ? "completed" : "") @(isActive ? "active" : "")">
+                            <div class="od-step-dot">
                                 @if (isCompleted)
                                 {
-                                    <i class="bi bi-check-lg fs-5"></i>
-                                }
-                                else if (isCancelled)
-                                {
-                                    <i class="bi bi-x-lg fs-5"></i>
+                                    <i class="bi bi-check-lg"></i>
                                 }
                                 else
                                 {
-                                    @switch(step)
-                                    {
-                                        case "pending":
-                                            <i class="bi bi-hourglass-split"></i>
-                                            break;
-                                        case "processing":
-                                            <i class="bi bi-gear-fill"></i>
-                                            break;
-                                        case "shipped":
-                                            <i class="bi bi-truck"></i>
-                                            break;
-                                        case "delivered":
-                                            <i class="bi bi-house-check-fill"></i>
-                                            break;
-                                    }
+                                    <span class="od-step-num">@(index + 1)</span>
                                 }
                             </div>
-                            <div class="step-label fw-semibold small @(isActive || isCompleted ? "text-body" : "text-body-tertiary")">
-                                @L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(step)]
-                            </div>
+                            <div class="od-step-label">@(L["Status_" + titleCase.ToTitleCase(step)] ?? titleCase.ToTitleCase(step))</div>
                             @if (step == "pending")
                             {
-                                <div class="step-date text-body-secondary" style="font-size: 0.7rem;">@Model.OrderDate.ToString("dd MMM, HH:mm")</div>
+                                <div class="od-step-date">@Model.OrderDate.ToString("dd MMM, HH:mm")</div>
                             }
                             else if (step == "shipped" && Model.ShippedAt.HasValue)
                             {
-                                <div class="step-date text-body-secondary" style="font-size: 0.7rem;">@Model.ShippedAt.Value.ToString("dd MMM, HH:mm")</div>
+                                <div class="od-step-date">@Model.ShippedAt.Value.ToString("dd MMM, HH:mm")</div>
                             }
                             else if (step == "delivered" && Model.DeliveredAt.HasValue)
                             {
-                                <div class="step-date text-body-secondary" style="font-size: 0.7rem;">@Model.DeliveredAt.Value.ToString("dd MMM, HH:mm")</div>
+                                <div class="od-step-date">@Model.DeliveredAt.Value.ToString("dd MMM, HH:mm")</div>
                             }
                         </div>
-                        @if (index < steps.Length - 1)
-                        {
-                            <div class="timeline-connector flex-fill align-self-start" style="margin-top: 24px; height: 3px; z-index: 1;">
-                                <div style="height: 3px; width: 100%; border-radius: 2px;" class="@(isCompleted ? "bg-success" : "bg-body-tertiary bg-opacity-50")"></div>
-                            </div>
-                        }
                     }
                 </div>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="alert alert-danger d-flex align-items-center mb-4 rounded-3 border-0 shadow-sm" role="alert">
+                <div class="od-cancelled-icon me-3">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div>
+                    <strong>@(L["Order_Cancelled"] ?? "Order Cancelled")</strong>
+                    <div class="small opacity-75">@(L["Order_Cancelled_Desc"] ?? "This order has been cancelled and will not be processed.")</div>
+                </div>
+            </div>
+        }
 
         <div class="row g-4">
-            <!-- Left Column - Order Items -->
+            <!-- Left Column -->
             <div class="col-lg-8">
                 <!-- Order Items Card -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-transparent border-bottom py-3">
-                        <h5 class="mb-0 fw-semibold">
-                            <i class="bi bi-bag-check me-2 text-primary"></i>@(L["Order_Items"] ?? "Order Items")
-                            <span class="badge bg-primary-subtle text-primary ms-2">@Model.ItemCount</span>
+                <div class="od-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bag-check"></i> @(L["Order_Items"] ?? "Order Items")
+                            <span class="od-count-badge">@Model.ItemCount</span>
                         </h5>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="od-items-list">
                         @foreach (var item in Model.Items)
                         {
-                            <div class="order-item-row d-flex align-items-center p-3 border-bottom">
-                                <div class="item-img me-3" style="width: 72px; height: 72px; min-width: 72px;">
+                            <div class="od-item">
+                                <div class="od-item-img">
                                     @if (!string.IsNullOrEmpty(item.ProductImage))
                                     {
                                         <img src="@Url.Content($"~/{item.ProductImage}")" 
                                              alt="@item.ProductName"
-                                             class="rounded-3 w-100 h-100"
-                                             style="object-fit: cover;"
                                              onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('p-2');">
                                     }
                                     else
                                     {
-                                        <img src="@Url.Content("~/img/logo_black.png")" 
-                                             alt="Kokomija" 
-                                             class="rounded-3 w-100 h-100 p-2 bg-body-secondary"
-                                             style="object-fit: contain;">
+                                        <img src="@Url.Content("~/img/logo_black.png")" alt="Kokomija" class="p-2 bg-body-secondary">
                                     }
                                 </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 fw-semibold">@item.ProductName</h6>
-                                    <div class="d-flex gap-2 flex-wrap">
+                                <div class="od-item-details">
+                                    <h6 class="od-item-name">@item.ProductName</h6>
+                                    <div class="od-item-meta">
                                         @if (!string.IsNullOrEmpty(item.ColorName))
                                         {
-                                            <span class="badge bg-body-secondary text-body-secondary"><i class="bi bi-palette me-1"></i>@item.ColorName</span>
+                                            <span class="od-meta-tag"><i class="bi bi-palette"></i> @item.ColorName</span>
                                         }
                                         @if (!string.IsNullOrEmpty(item.SizeName))
                                         {
-                                            <span class="badge bg-body-secondary text-body-secondary"><i class="bi bi-rulers me-1"></i>@item.SizeName</span>
+                                            <span class="od-meta-tag"><i class="bi bi-rulers"></i> @item.SizeName</span>
                                         }
+                                        <span class="od-meta-tag"><i class="bi bi-x-lg"></i> @item.Quantity</span>
                                     </div>
                                 </div>
-                                <div class="text-center mx-3">
-                                    <span class="badge bg-body-secondary text-body rounded-pill px-3">x@item.Quantity</span>
-                                </div>
-                                <div class="text-end" style="min-width: 100px;">
-                                    <div class="fw-bold">@item.TotalPrice.ToString("C", plnCulture)</div>
+                                <div class="od-item-price">
+                                    <div class="od-price-main">@item.TotalPrice.ToString("C", plnCulture)</div>
                                     @if (item.Quantity > 1)
                                     {
-                                        <small class="text-body-secondary">@item.UnitPrice.ToString("C", plnCulture) @(L["Each"] ?? "each")</small>
+                                        <div class="od-price-unit">@item.UnitPrice.ToString("C", plnCulture) @(L["Each"] ?? "each")</div>
                                     }
                                 </div>
                             </div>
@@ -210,82 +194,157 @@
                     </div>
                 </div>
 
-                <!-- Refund / Return Section -->
-                @if (Model.CanReturn)
-                {
-                    <div class="card shadow-sm border-0 border-start border-warning border-4 mb-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-start">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-warning bg-opacity-10 p-3">
-                                        <i class="bi bi-arrow-return-left text-warning fs-4"></i>
+                <!-- Shipping & Tracking Card -->
+                <div class="od-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-truck"></i> @(L["Shipping"] ?? "Shipping") & @(L["Tracking_Number"] ?? "Tracking")</h5>
+                    </div>
+                    <div class="od-card-body">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="od-info-block">
+                                    <div class="od-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                                    <div>
+                                        <div class="od-info-label">@(L["Shipping_Address"] ?? "Shipping Address")</div>
+                                        @if (!string.IsNullOrEmpty(Model.ShippingAddress))
+                                        {
+                                            <div class="od-info-value">@Model.ShippingAddress</div>
+                                            <div class="od-info-value">@Model.ShippingPostalCode @Model.ShippingCity</div>
+                                            <div class="od-info-sub">@Model.ShippingCountry</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="od-info-sub">@(L["No_Shipping_Info"] ?? "Not available yet")</div>
+                                        }
                                     </div>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <h5 class="fw-semibold mb-1">@(L["Request_Refund"] ?? "Request a Refund")</h5>
-                                    <p class="text-body-secondary mb-3">@(L["Refund_Description"] ?? "Not satisfied with your order? You can request a return within 30 days of delivery. Our team will review your request and process the refund via Stripe.")</p>
-                                    <div class="d-flex gap-2 align-items-center flex-wrap">
-                                        <a asp-action="ReturnRequest" asp-route-orderId="@Model.Id" class="btn btn-warning">
-                                            <i class="bi bi-arrow-return-left me-2"></i>@(L["Request_Refund"] ?? "Request Refund")
-                                        </a>
-                                        <span class="text-body-secondary small">
-                                            <i class="bi bi-info-circle me-1"></i>@(L["Refund_Timeline"] ?? "Refunds are typically processed within 5-10 business days")
-                                        </span>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="od-info-block">
+                                    <div class="od-info-icon"><i class="bi bi-box-seam-fill"></i></div>
+                                    <div>
+                                        <div class="od-info-label">@(L["Delivery_Info"] ?? "Delivery Info")</div>
+                                        @if (!string.IsNullOrEmpty(Model.ShippingMethod))
+                                        {
+                                            <div class="od-info-value">@Model.ShippingMethod</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.TrackingNumber))
+                                        {
+                                            <div class="od-tracking-box">
+                                                <span class="font-monospace fw-bold">@Model.TrackingNumber</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="od-info-sub">@(L["No_Tracking_Yet"] ?? "Tracking info will appear once shipped")</div>
+                                        }
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                }
+                </div>
+
+                <!-- Help & Actions Section -->
+                <div class="od-card od-actions-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-life-preserver"></i> @(L["Need_Help"] ?? "Need Help?")</h5>
+                    </div>
+                    <div class="od-card-body">
+                        <div class="row g-3">
+                            @if (Model.CanReturn)
+                            {
+                                <div class="col-sm-6">
+                                    <a asp-action="ReturnRequest" asp-route-orderId="@Model.Id" class="od-action-tile od-action-refund">
+                                        <div class="od-action-icon"><i class="bi bi-arrow-return-left"></i></div>
+                                        <div>
+                                            <strong>@(L["Request_Refund"] ?? "Request Refund")</strong>
+                                            <div class="small opacity-75">@(L["Refund_Within_30"] ?? "Return within 30 days of delivery")</div>
+                                        </div>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                </div>
+                            }
+                            @if (Model.CanCancel)
+                            {
+                                <div class="col-sm-6">
+                                    <button type="button" class="od-action-tile od-action-cancel" onclick="cancelOrder(@Model.Id)">
+                                        <div class="od-action-icon"><i class="bi bi-x-circle"></i></div>
+                                        <div>
+                                            <strong>@(L["Cancel_Order"] ?? "Cancel Order")</strong>
+                                            <div class="small opacity-75">@(L["Cancel_Order_Desc"] ?? "Cancel before it's shipped")</div>
+                                        </div>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </button>
+                                </div>
+                            }
+                            <div class="col-sm-6">
+                                <button type="button" class="od-action-tile od-action-edit" data-bs-toggle="modal" data-bs-target="#editRequestModal">
+                                    <div class="od-action-icon"><i class="bi bi-pencil-square"></i></div>
+                                    <div>
+                                        <strong>@(L["Edit_Request"] ?? "Edit Request")</strong>
+                                        <div class="small opacity-75">@(L["Edit_Request_Desc"] ?? "Request address or item changes")</div>
+                                    </div>
+                                    <i class="bi bi-chevron-right ms-auto"></i>
+                                </button>
+                            </div>
+                            @if (Model.PaymentStatus?.ToLower() == "paid")
+                            {
+                                <div class="col-sm-6">
+                                    <a asp-action="DownloadInvoice" asp-route-id="@Model.Id" class="od-action-tile od-action-invoice" target="_blank">
+                                        <div class="od-action-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                                        <div>
+                                            <strong>@(L["Download_Invoice"] ?? "Download Invoice")</strong>
+                                            <div class="small opacity-75">@(L["Invoice_Desc"] ?? "Get your PDF invoice")</div>
+                                        </div>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
 
                 @if (Model.PaymentStatus?.ToLower() == "refunded")
                 {
-                    <div class="card shadow-sm border-0 border-start border-success border-4 mb-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-success bg-opacity-10 p-3">
-                                        <i class="bi bi-check-circle-fill text-success fs-4"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h5 class="fw-semibold mb-1 text-success">@(L["Refund_Processed"] ?? "Refund Processed")</h5>
-                                    <p class="text-body-secondary mb-0">@(L["Refund_Processed_Desc"] ?? "Your refund has been processed via Stripe. The amount should appear in your account within a few business days.")</p>
-                                </div>
-                            </div>
+                    <div class="od-refund-banner mb-4">
+                        <div class="od-refund-icon"><i class="bi bi-check-circle-fill"></i></div>
+                        <div>
+                            <strong>@(L["Refund_Processed"] ?? "Refund Processed")</strong>
+                            <div class="small">@(L["Refund_Processed_Desc"] ?? "Your refund has been processed. The amount should appear in your account within a few business days.")</div>
                         </div>
                     </div>
                 }
             </div>
 
-            <!-- Right Column - Summary & Info -->
+            <!-- Right Column -->
             <div class="col-lg-4">
                 <!-- Order Summary -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-transparent border-bottom py-3">
-                        <h5 class="mb-0 fw-semibold"><i class="bi bi-calculator me-2 text-primary"></i>@(L["Order_Summary"] ?? "Order Summary")</h5>
+                <div class="od-card od-summary-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-receipt-cutoff"></i> @(L["Order_Summary"] ?? "Order Summary")</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-body-secondary">@(L["Subtotal"] ?? "Subtotal")</span>
+                    <div class="od-card-body">
+                        <div class="od-summary-row">
+                            <span>@(L["Subtotal"] ?? "Subtotal")</span>
                             <span>@Model.SubtotalAmount.ToString("C", plnCulture)</span>
                         </div>
                         @if (Model.DiscountAmount > 0)
                         {
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-body-secondary">
-                                    <i class="bi bi-tag-fill me-1 text-success"></i>@(L["Discount"] ?? "Discount")
+                            <div class="od-summary-row od-discount">
+                                <span>
+                                    <i class="bi bi-tag-fill"></i> @(L["Discount"] ?? "Discount")
                                     @if (!string.IsNullOrEmpty(Model.CouponCode))
                                     {
-                                        <span class="badge bg-success-subtle text-success ms-1">@Model.CouponCode</span>
+                                        <span class="od-coupon-tag">@Model.CouponCode</span>
                                     }
                                 </span>
-                                <span class="text-success fw-semibold">-@Model.DiscountAmount.ToString("C", plnCulture)</span>
+                                <span>-@Model.DiscountAmount.ToString("C", plnCulture)</span>
                             </div>
                         }
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-body-secondary">
-                                <i class="bi bi-truck me-1"></i>@(L["Shipping"] ?? "Shipping")
+                        <div class="od-summary-row">
+                            <span>
+                                <i class="bi bi-truck"></i> @(L["Shipping"] ?? "Shipping")
                                 @if (!string.IsNullOrEmpty(Model.ShippingMethod))
                                 {
                                     <small class="text-body-tertiary">(@Model.ShippingMethod)</small>
@@ -295,110 +354,109 @@
                         </div>
                         @if (Model.TaxAmount > 0)
                         {
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-body-secondary">@(L["Tax"] ?? "Tax") (VAT)</span>
+                            <div class="od-summary-row">
+                                <span>@(L["Tax"] ?? "Tax") (VAT)</span>
                                 <span>@Model.TaxAmount.ToString("C", plnCulture)</span>
                             </div>
                         }
-                        <hr class="my-3">
-                        <div class="d-flex justify-content-between">
-                            <span class="fw-bold fs-5">@(L["Cart_Total"] ?? "Total")</span>
-                            <span class="fw-bold fs-5 text-primary">@Model.TotalAmount.ToString("C", plnCulture)</span>
+                        <div class="od-summary-total">
+                            <span>@(L["Cart_Total"] ?? "Total")</span>
+                            <span>@Model.TotalAmount.ToString("C", plnCulture)</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Shipping Information -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-transparent border-bottom py-3">
-                        <h5 class="mb-0 fw-semibold"><i class="bi bi-geo-alt me-2 text-primary"></i>@(L["Shipping_Address"] ?? "Shipping Address")</h5>
+                <!-- Payment Info -->
+                <div class="od-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-credit-card-2-front"></i> @(L["Payment_Details"] ?? "Payment Details")</h5>
                     </div>
-                    <div class="card-body">
-                        @if (!string.IsNullOrEmpty(Model.ShippingAddress))
-                        {
-                            <div class="d-flex align-items-start">
-                                <i class="bi bi-pin-map text-primary me-2 mt-1"></i>
-                                <div>
-                                    <p class="mb-1 fw-medium">@Model.ShippingAddress</p>
-                                    <p class="mb-1">@Model.ShippingPostalCode @Model.ShippingCity</p>
-                                    <p class="mb-0 text-body-secondary">@Model.ShippingCountry</p>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <p class="text-body-secondary mb-0"><i class="bi bi-info-circle me-1"></i>@(L["No_Shipping_Info"] ?? "No shipping information available")</p>
-                        }
-                        
-                        @if (!string.IsNullOrEmpty(Model.TrackingNumber))
-                        {
-                            <hr class="my-3">
-                            <div class="d-flex align-items-center bg-primary bg-opacity-10 rounded-3 p-3">
-                                <i class="bi bi-box-seam text-primary me-2 fs-5"></i>
-                                <div>
-                                    <div class="small text-body-secondary">@(L["Tracking_Number"] ?? "Tracking Number")</div>
-                                    <span class="fw-bold font-monospace">@Model.TrackingNumber</span>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Payment Information -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-transparent border-bottom py-3">
-                        <h5 class="mb-0 fw-semibold"><i class="bi bi-credit-card me-2 text-primary"></i>@(L["Payment_Details"] ?? "Payment Details")</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-body-secondary">@(L["Payment_Method"] ?? "Method")</span>
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-credit-card-2-front text-primary me-1"></i>
-                                @(Model.PaymentMethod ?? "Stripe")
+                    <div class="od-card-body">
+                        <div class="od-detail-row">
+                            <span class="od-detail-label">@(L["Payment_Method"] ?? "Method")</span>
+                            <span class="od-detail-value"><i class="bi bi-stripe text-primary"></i> @(Model.PaymentMethod ?? "Stripe")</span>
+                        </div>
+                        <div class="od-detail-row">
+                            <span class="od-detail-label">@(L["Payment_Status"] ?? "Status")</span>
+                            <span class="badge bg-@paymentBadgeClass rounded-pill">
+                                <i class="bi bi-@paymentIcon me-1"></i>@(L["Payment_" + titleCase.ToTitleCase(Model.PaymentStatus ?? "")] ?? Model.PaymentStatus)
                             </span>
                         </div>
                         @if (Model.PaidAt.HasValue)
                         {
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-body-secondary">@(L["Paid_On"] ?? "Paid On")</span>
-                                <span>@Model.PaidAt.Value.ToString("dd MMM yyyy, HH:mm")</span>
+                            <div class="od-detail-row">
+                                <span class="od-detail-label">@(L["Paid_On"] ?? "Paid On")</span>
+                                <span class="od-detail-value">@Model.PaidAt.Value.ToString("dd MMM yyyy, HH:mm")</span>
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(Model.CustomerEmail))
                         {
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-body-secondary">@(L["Email"] ?? "Email")</span>
-                                <span class="text-truncate ms-2" style="max-width: 180px;" title="@Model.CustomerEmail">@Model.CustomerEmail</span>
+                            <div class="od-detail-row">
+                                <span class="od-detail-label">@(L["Email"] ?? "Email")</span>
+                                <span class="od-detail-value text-truncate" style="max-width: 170px;" title="@Model.CustomerEmail">@Model.CustomerEmail</span>
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(Model.CustomerPhone))
                         {
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-body-secondary">@(L["Phone"] ?? "Phone")</span>
-                                <span>@Model.CustomerPhone</span>
+                            <div class="od-detail-row">
+                                <span class="od-detail-label">@(L["Phone"] ?? "Phone")</span>
+                                <span class="od-detail-value">@Model.CustomerPhone</span>
                             </div>
                         }
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="d-grid gap-2">
-                    @if (Model.CanCancel)
-                    {
-                        <button type="button" class="btn btn-danger" onclick="cancelOrder(@Model.Id)">
-                            <i class="bi bi-x-circle me-2"></i>@(L["Cancel_Order"] ?? "Cancel Order")
-                        </button>
-                    }
-                    @if (Model.PaymentStatus?.ToLower() == "paid")
-                    {
-                        <a asp-action="DownloadInvoice" asp-route-id="@Model.Id" class="btn btn-outline-secondary" target="_blank">
-                            <i class="bi bi-file-earmark-pdf me-2"></i>@(L["Download_Invoice"] ?? "Download Invoice")
+                <!-- Quick Help -->
+                <div class="od-help-card">
+                    <div class="od-help-icon"><i class="bi bi-question-circle"></i></div>
+                    <div>
+                        <strong>@(L["Questions_About_Order"] ?? "Questions about your order?")</strong>
+                        <div class="small text-body-secondary mt-1">@(L["Contact_Support_Desc"] ?? "Our support team is here to help.")</div>
+                        <a href="mailto:kontakt@kokomija.com" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">
+                            <i class="bi bi-envelope me-1"></i> @(L["Contact_Support"] ?? "Contact Support")
                         </a>
-                    }
-                    <a href="@Url.Action("Index", "Account")#orders" class="btn btn-outline-primary">
-                        <i class="bi bi-arrow-left me-2"></i>@(L["Back_To_Orders"] ?? "Back to Orders")
-                    </a>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Request Modal -->
+<div class="modal fade" id="editRequestModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary bg-opacity-10 border-0">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2 text-primary"></i>@(L["Edit_Request"] ?? "Edit Request")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-body-secondary mb-3">@(L["Edit_Request_Info"] ?? "Describe the changes you'd like to make. Our team will review and respond via email.")</p>
+                <form id="editRequestForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">@(L["Request_Type"] ?? "Request Type")</label>
+                        <select id="editRequestType" class="form-select" required>
+                            <option value="">@(L["Select_Type"] ?? "Select type...")</option>
+                            <option value="address_change">@(L["Address_Change"] ?? "Change Shipping Address")</option>
+                            <option value="item_change">@(L["Item_Change"] ?? "Change Item (size/color)")</option>
+                            <option value="add_note">@(L["Add_Note"] ?? "Add Delivery Note")</option>
+                            <option value="other">@(L["Other"] ?? "Other")</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">@(L["Details"] ?? "Details")</label>
+                        <textarea id="editRequestDetails" class="form-control" rows="4" 
+                                  placeholder="@(L["Edit_Request_Placeholder"] ?? "Please describe what you'd like to change...")" 
+                                  required minlength="10" maxlength="500"></textarea>
+                        <div class="form-text"><span id="editCharCount">0</span>/500</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">@(L["Cancel"] ?? "Cancel")</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="submitEditRequest()">
+                    <i class="bi bi-send me-1"></i> @(L["Submit_Request"] ?? "Submit Request")
+                </button>
             </div>
         </div>
     </div>
@@ -408,63 +466,367 @@
 <form id="__AjaxAntiForgeryForm" asp-antiforgery="true" style="display:none;"></form>
 
 <style>
-    .order-details-page {
-        min-height: 80vh;
+    .order-details-page { min-height: 80vh; }
+
+    /* Hero Header */
+    .od-hero {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        padding: 2rem;
     }
-    .order-header-card {
+    .od-hero-bg {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--bs-primary) 0%, #1a3a5c 100%);
+        opacity: 0.95;
+    }
+    .od-hero-content { position: relative; z-index: 1; color: #fff; }
+    .od-order-number { font-size: 1.5rem; font-weight: 700; }
+    .od-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+    }
+    .od-status-pending { background: rgba(255,193,7,0.25); color: #ffc107; }
+    .od-status-processing { background: rgba(13,202,240,0.25); color: #0dcaf0; }
+    .od-status-shipped { background: rgba(13,110,253,0.25); color: #6ea8fe; }
+    .od-status-delivered { background: rgba(25,135,84,0.25); color: #75b798; }
+    .od-status-cancelled { background: rgba(220,53,69,0.25); color: #ea868f; }
+    .od-payment-paid { background: rgba(25,135,84,0.25); color: #75b798; }
+    .od-payment-pending { background: rgba(255,193,7,0.25); color: #ffc107; }
+    .od-payment-failed { background: rgba(220,53,69,0.25); color: #ea868f; }
+    .od-payment-refunded { background: rgba(108,117,125,0.25); color: #adb5bd; }
+    .od-date { font-size: 0.85rem; opacity: 0.8; }
+    .od-date i { margin-right: 0.25rem; }
+
+    /* Timeline */
+    .od-timeline-card {
         background: var(--bs-body-bg);
         border: 1px solid var(--bs-border-color);
         border-radius: 16px;
-        padding: 1.5rem 2rem;
+        padding: 2rem;
         box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
-    .order-item-row {
-        transition: background 0.15s ease;
+    .od-timeline-track {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
     }
-    .order-item-row:hover {
-        background: var(--bs-tertiary-bg);
+    .od-progress-line {
+        position: absolute;
+        top: 18px;
+        left: 40px;
+        right: 40px;
+        height: 4px;
+        background: var(--bs-border-color);
+        border-radius: 2px;
+        z-index: 0;
     }
-    .order-item-row:last-child {
-        border-bottom: none !important;
+    .od-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--bs-success), var(--bs-primary));
+        border-radius: 2px;
+        transition: width 0.6s ease;
     }
-    .order-timeline .timeline-step {
-        min-width: 70px;
+    .od-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        min-width: 80px;
+    }
+    .od-step-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bs-body-bg);
+        border: 3px solid var(--bs-border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--bs-secondary-color);
+        transition: all 0.3s ease;
+    }
+    .od-step.completed .od-step-dot {
+        background: var(--bs-success);
+        border-color: var(--bs-success);
+        color: #fff;
+    }
+    .od-step.active .od-step-dot {
+        background: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.2);
+        animation: od-pulse 2s infinite;
+    }
+    .od-step-label { font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem; color: var(--bs-body-color); }
+    .od-step-date { font-size: 0.7rem; color: var(--bs-secondary-color); margin-top: 0.15rem; }
+    .od-step-num { font-size: 0.75rem; }
+    .od-cancelled-icon { font-size: 2rem; }
+
+    @@keyframes od-pulse {
+        0%, 100% { box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.2); }
+        50% { box-shadow: 0 0 0 8px rgba(var(--bs-primary-rgb), 0.1); }
     }
 
+    /* Cards */
+    .od-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s ease;
+    }
+    .od-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .od-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+    }
+    .od-card-header h5 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--bs-body-color);
+    }
+    .od-card-header h5 i { color: var(--bs-primary); }
+    .od-card-body { padding: 1.25rem; }
+    .od-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 24px;
+        padding: 0 0.5rem;
+        border-radius: 50px;
+        background: var(--bs-primary);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    /* Items */
+    .od-items-list { padding: 0; }
+    .od-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        gap: 1rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        transition: background 0.15s ease;
+    }
+    .od-item:last-child { border-bottom: none; }
+    .od-item:hover { background: var(--bs-tertiary-bg); }
+    .od-item-img {
+        width: 72px;
+        height: 72px;
+        min-width: 72px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .od-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .od-item-details { flex: 1; min-width: 0; }
+    .od-item-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .od-item-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .od-meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        background: var(--bs-tertiary-bg);
+        font-size: 0.75rem;
+        color: var(--bs-secondary-color);
+    }
+    .od-item-price { text-align: right; min-width: 90px; }
+    .od-price-main { font-weight: 700; font-size: 1rem; }
+    .od-price-unit { font-size: 0.75rem; color: var(--bs-secondary-color); }
+
+    /* Info blocks */
+    .od-info-block {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 12px;
+        background: var(--bs-tertiary-bg);
+        height: 100%;
+    }
+    .od-info-icon { font-size: 1.25rem; color: var(--bs-primary); margin-top: 0.1rem; }
+    .od-info-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--bs-secondary-color); margin-bottom: 0.25rem; }
+    .od-info-value { font-weight: 500; font-size: 0.9rem; }
+    .od-info-sub { font-size: 0.8rem; color: var(--bs-secondary-color); }
+    .od-tracking-box {
+        display: inline-block;
+        margin-top: 0.25rem;
+        padding: 0.3rem 0.75rem;
+        background: var(--bs-primary);
+        color: #fff;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+
+    /* Action tiles */
+    .od-action-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-body-bg);
+        text-decoration: none;
+        color: var(--bs-body-color);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        text-align: left;
+    }
+    .od-action-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        border-color: var(--bs-primary);
+        color: var(--bs-body-color);
+        text-decoration: none;
+    }
+    .od-action-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .od-action-refund .od-action-icon { background: rgba(255,193,7,0.15); color: #ffc107; }
+    .od-action-cancel .od-action-icon { background: rgba(220,53,69,0.15); color: #dc3545; }
+    .od-action-edit .od-action-icon { background: rgba(13,110,253,0.15); color: #0d6efd; }
+    .od-action-invoice .od-action-icon { background: rgba(108,117,125,0.15); color: #6c757d; }
+
+    /* Summary */
+    .od-summary-card .od-card-body { padding: 1rem 1.25rem; }
+    .od-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        font-size: 0.9rem;
+        color: var(--bs-body-color);
+    }
+    .od-summary-row.od-discount span:last-child { color: var(--bs-success); font-weight: 600; }
+    .od-coupon-tag {
+        display: inline-block;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        background: rgba(25,135,84,0.1);
+        color: var(--bs-success);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .od-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0 0;
+        margin-top: 0.5rem;
+        border-top: 2px solid var(--bs-border-color);
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+    .od-summary-total span:last-child { color: var(--bs-primary); }
+
+    /* Detail rows */
+    .od-detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid rgba(var(--bs-border-color-rgb), 0.3);
+    }
+    .od-detail-row:last-child { border-bottom: none; }
+    .od-detail-label { font-size: 0.85rem; color: var(--bs-secondary-color); }
+    .od-detail-value { font-size: 0.85rem; font-weight: 500; }
+
+    /* Refund banner */
+    .od-refund-banner {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(25,135,84,0.1), rgba(25,135,84,0.05));
+        border: 1px solid rgba(25,135,84,0.2);
+    }
+    .od-refund-icon { font-size: 2rem; color: var(--bs-success); }
+
+    /* Help card */
+    .od-help-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1.25rem;
+        border-radius: 16px;
+        background: var(--bs-tertiary-bg);
+        border: 1px dashed var(--bs-border-color);
+    }
+    .od-help-icon { font-size: 1.5rem; color: var(--bs-primary); }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .od-hero { padding: 1.25rem; }
+        .od-order-number { font-size: 1.15rem; }
+        .od-item { flex-wrap: wrap; }
+        .od-item-price { width: 100%; text-align: left; margin-top: 0.25rem; }
+        .od-timeline-track { gap: 0.25rem; }
+        .od-step { min-width: 60px; }
+        .od-step-dot { width: 32px; height: 32px; font-size: 0.75rem; border-width: 2px; }
+        .od-step-label { font-size: 0.7rem; }
+        .od-progress-line { top: 14px; left: 28px; right: 28px; }
+    }
     @@media (max-width: 576px) {
-        .order-header-card {
-            padding: 1rem;
-        }
-        .order-item-row {
-            flex-wrap: wrap;
-        }
-        .order-timeline .step-icon {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 0.85rem !important;
-        }
-        .order-timeline .step-label {
-            font-size: 0.7rem !important;
-        }
+        .od-action-tile { padding: 0.75rem; }
+        .od-action-icon { width: 36px; height: 36px; min-width: 36px; font-size: 1rem; }
     }
 </style>
 
 @section Scripts {
     <script>
+        // Character counter for edit request
+        document.getElementById('editRequestDetails')?.addEventListener('input', function () {
+            document.getElementById('editCharCount').textContent = this.value.length;
+        });
+
         function cancelOrder(orderId) {
             Swal.fire({
-                title: '@(L["Confirm_Cancel_Order_Title"] ?? "Cancel Order?")',
-                text: '@(L["Confirm_Cancel_Order"] ?? "Are you sure you want to cancel this order?")',
+                title: '@(L["Cancel_Order_Request_Title"] ?? "Request Cancellation & Refund")',
+                html: '<p class="text-muted mb-2">@(L["Cancel_Order_Request_Desc"] ?? "Your request will be reviewed by our team.")</p>' +
+                      '<textarea id="cancelReason" class="form-control" rows="3" placeholder="@(L["Cancel_Reason_Placeholder"] ?? "Tell us why you want to cancel (optional)...")"></textarea>',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '@(L["Yes_Cancel"] ?? "Yes, Cancel")',
-                cancelButtonText: '@(L["No_Keep"] ?? "No, Keep Order")'
+                confirmButtonText: '@(L["Submit_Cancel_Request"] ?? "Submit Request")',
+                cancelButtonText: '@(L["No_Keep"] ?? "No, Keep Order")',
+                preConfirm: () => {
+                    return document.getElementById('cancelReason').value;
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     const form = new FormData();
                     form.append('id', orderId);
+                    form.append('reason', result.value || '');
                     fetch('@Url.Action("CancelOrder", "Account")', {
                         method: 'POST',
                         headers: {
@@ -476,19 +838,68 @@
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
-                                title: '@(L["Order_Cancelled"] ?? "Order Cancelled")',
+                                title: '@(L["Cancel_Request_Submitted"] ?? "Request Submitted")',
+                                text: data.message,
                                 icon: 'success',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => location.reload());
+                                timer: 4000,
+                                showConfirmButton: true
+                            });
                         } else {
-                            Swal.fire('@(L["Error"] ?? "Error")', data.message || '@(L["Error_Cancelling_Order"] ?? "Failed to cancel order")', 'error');
+                            Swal.fire('@(L["Error"] ?? "Error")', data.message || '@(L["Error_Cancelling_Order"] ?? "Failed to submit request")', 'error');
                         }
                     })
                     .catch(() => {
-                        Swal.fire('@(L["Error"] ?? "Error")', '@(L["Error_Cancelling_Order"] ?? "Failed to cancel order")', 'error');
+                        Swal.fire('@(L["Error"] ?? "Error")', '@(L["Error_Cancelling_Order"] ?? "Failed to submit request")', 'error');
                     });
                 }
+            });
+        }
+
+        function submitEditRequest() {
+            const type = document.getElementById('editRequestType').value;
+            const details = document.getElementById('editRequestDetails').value;
+            
+            if (!type) {
+                Swal.fire('@(L["Error"] ?? "Error")', '@(L["Select_Request_Type"] ?? "Please select a request type")', 'warning');
+                return;
+            }
+            if (!details || details.length < 10) {
+                Swal.fire('@(L["Error"] ?? "Error")', '@(L["Provide_Details"] ?? "Please provide at least 10 characters of detail")', 'warning');
+                return;
+            }
+
+            const form = new FormData();
+            form.append('orderId', '@Model.Id');
+            form.append('requestType', type);
+            form.append('details', details);
+
+            fetch('@Url.Action("SubmitEditRequest", "Account")', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('#__AjaxAntiForgeryForm input[name="__RequestVerificationToken"]').value
+                },
+                body: form
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('editRequestModal'))?.hide();
+                    Swal.fire({
+                        title: '@(L["Request_Submitted"] ?? "Request Submitted")',
+                        text: '@(L["Request_Submitted_Desc"] ?? "We will review your request and contact you via email.")',
+                        icon: 'success',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                    document.getElementById('editRequestType').value = '';
+                    document.getElementById('editRequestDetails').value = '';
+                    document.getElementById('editCharCount').textContent = '0';
+                } else {
+                    Swal.fire('@(L["Error"] ?? "Error")', data.message || '@(L["Request_Failed"] ?? "Failed to submit request")', 'error');
+                }
+            })
+            .catch(() => {
+                Swal.fire('@(L["Error"] ?? "Error")', '@(L["Request_Failed"] ?? "Failed to submit request")', 'error');
             });
         }
     </script>

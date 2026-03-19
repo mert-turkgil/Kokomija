@@ -15,6 +15,7 @@ public interface IBlogService
     Task<(bool Success, int? BlogId, string Message)> CreateBlogAsync(BlogCreateDto dto, string authorId);
     Task<(bool Success, string Message)> UpdateBlogAsync(int id, BlogUpdateDto dto);
     Task<(bool Success, string Message)> DeleteBlogAsync(int id, bool hardDelete = false);
+    Task<(bool Success, string Message)> RestoreBlogAsync(int id);
     Task<(bool Success, string Message)> TogglePublishAsync(int id);
     
     // Translation Operations

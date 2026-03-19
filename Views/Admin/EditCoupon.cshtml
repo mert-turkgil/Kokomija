@@ -1,0 +1,316 @@
+@model Kokomija.Models.ViewModels.Admin.EditCouponPageViewModel
+@{
+    ViewData["Title"] = $"Edit Coupon: {Model.Code}";
+}
+
+<div class="admin-dashboard">
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="welcome-card">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h1>
+                                <i class="bi bi-pencil-square"></i>
+                                Edit Coupon: <code>@Model.Code</code>
+                            </h1>
+                            <p class="mb-0">
+                                <span class="badge bg-@GetCouponTypeBadgeColor(Model.CouponType)">@GetCouponTypeDisplayName(Model.CouponType)</span>
+                                &mdash;
+                                @if (Model.DiscountType == "percentage")
+                                {
+                                    <strong>@Model.DiscountValue%</strong> <text>discount</text>
+                                }
+                                else
+                                {
+                                    <strong>@Model.DiscountValue.ToString("N2") PLN</strong> <text>discount</text>
+                                }
+                                &mdash; Created @Model.CreatedAt.ToString("MMM dd, yyyy")
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="CouponDetails" asp-route-id="@Model.Coupon.Id" class="btn btn-outline-info">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                            <a asp-action="Coupons" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Coupons
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> @TempData["WarningMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form asp-action="EditCoupon" asp-route-id="@Model.Coupon.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="Coupon.Id" />
+
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                            <!-- Read-Only Fields -->
+                            <h5 class="mb-3"><i class="bi bi-lock"></i> Immutable Fields <small class="text-muted">(cannot be changed after creation)</small></h5>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Coupon Code</label>
+                                    <input type="text" class="form-control" value="@Model.Code" disabled />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Discount Type</label>
+                                    <input type="text" class="form-control" value="@(Model.DiscountType == "percentage" ? "Percentage (%)" : "Fixed Amount (PLN)")" disabled />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Discount Value</label>
+                                    <input type="text" class="form-control" value="@(Model.DiscountType == "percentage" ? $"{Model.DiscountValue}%" : $"{Model.DiscountValue:N2} PLN")" disabled />
+                                </div>
+                            </div>
+                            <div class="alert alert-secondary small mb-4">
+                                <i class="bi bi-info-circle"></i> Code, discount type, and discount value cannot be changed because they are immutable in Stripe. To change these, create a new coupon and deactivate this one.
+                            </div>
+
+                            <!-- Editable Fields -->
+                            <h5 class="mt-4 mb-3"><i class="bi bi-pencil"></i> Editable Settings</h5>
+
+                            <div class="mb-3">
+                                <label asp-for="Coupon.Description" class="form-label">Description</label>
+                                <input asp-for="Coupon.Description" class="form-control" placeholder="e.g., 10% off for new users" />
+                                <span asp-validation-for="Coupon.Description" class="text-danger small"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.MinimumOrderAmount" class="form-label">Minimum Order Amount (PLN)</label>
+                                    <input asp-for="Coupon.MinimumOrderAmount" type="text" asp-format="{0:0.##}" class="form-control" placeholder="No minimum" />
+                                    <span asp-validation-for="Coupon.MinimumOrderAmount" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.MaximumDiscountAmount" class="form-label">Maximum Discount Amount (PLN)</label>
+                                    <input asp-for="Coupon.MaximumDiscountAmount" type="text" asp-format="{0:0.##}" class="form-control" placeholder="No maximum" />
+                                    <span asp-validation-for="Coupon.MaximumDiscountAmount" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.UsageLimit" class="form-label">Total Usage Limit</label>
+                                    <input asp-for="Coupon.UsageLimit" class="form-control" placeholder="Unlimited" />
+                                    <span asp-validation-for="Coupon.UsageLimit" class="text-danger small"></span>
+                                    <div class="form-text">Current usage: @Model.UsageCount</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.UsageLimitPerUser" class="form-label">Per User Limit</label>
+                                    <input asp-for="Coupon.UsageLimitPerUser" class="form-control" placeholder="Unlimited" />
+                                    <span asp-validation-for="Coupon.UsageLimitPerUser" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="Coupon.ValidUntil" class="form-label">Valid Until</label>
+                                    <input asp-for="Coupon.ValidUntil" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="Coupon.ValidUntil" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <!-- Restrictions -->
+                            <h5 class="mt-4 mb-3"><i class="bi bi-filter"></i> Restrictions</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.CategoryId" class="form-label">Category Restriction</label>
+                                    <select asp-for="Coupon.CategoryId" asp-items="Model.Categories" class="form-select">
+                                        <option value="">All Categories</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.ProductId" class="form-label">Product Restriction</label>
+                                    <select asp-for="Coupon.ProductId" asp-items="Model.Products" class="form-select">
+                                        <option value="">All Products</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Coupon.VipTierRequired" class="form-label">VIP Tier Required</label>
+                                    <select asp-for="Coupon.VipTierRequired" asp-items="Model.VipTiers" class="form-select"></select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check mt-4">
+                                        <input asp-for="Coupon.IsActive" class="form-check-input" />
+                                        <label asp-for="Coupon.IsActive" class="form-check-label">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted"><i class="bi bi-stripe"></i> Changes will sync with Stripe automatically on save</small>
+                                <div>
+                                    <a asp-action="Coupons" class="btn btn-secondary me-2">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg"></i> Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar: Stripe Status -->
+            <div class="col-lg-4">
+                @if (Model.HasStripeSync)
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6><i class="bi bi-stripe"></i> Stripe Integration <span class="badge bg-success">Synced</span></h6>
+                            <table class="table table-sm table-borderless small mb-0">
+                                <tr>
+                                    <td class="text-muted">Coupon ID</td>
+                                    <td><code class="small">@Model.StripeCouponId</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Promo Code ID</td>
+                                    <td><code class="small">@(Model.StripePromotionCodeId ?? "-")</code></td>
+                                </tr>
+                                @if (Model.StripeTimesRedeemed.HasValue)
+                                {
+                                    <tr>
+                                        <td class="text-muted">Stripe Redemptions</td>
+                                        <td><strong>@Model.StripeTimesRedeemed</strong></td>
+                                    </tr>
+                                }
+                                @if (Model.StripeIsValid.HasValue)
+                                {
+                                    <tr>
+                                        <td class="text-muted">Stripe Status</td>
+                                        <td>
+                                            @if (Model.StripeIsValid.Value)
+                                            {
+                                                <span class="badge bg-success">Valid</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Invalid</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                                @if (Model.StripePromotionActive.HasValue)
+                                {
+                                    <tr>
+                                        <td class="text-muted">Promo Code Status</td>
+                                        <td>
+                                            @if (Model.StripePromotionActive.Value)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.StripeRedeemBy))
+                                {
+                                    <tr>
+                                        <td class="text-muted">Stripe Expiry</td>
+                                        <td>@Model.StripeRedeemBy</td>
+                                    </tr>
+                                }
+                                @if (Model.StripeMinimumAmount.HasValue)
+                                {
+                                    <tr>
+                                        <td class="text-muted">Min Amount (Stripe)</td>
+                                        <td>@Model.StripeMinimumAmount.Value.ToString("N2") PLN</td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6><i class="bi bi-stripe"></i> Stripe Integration <span class="badge bg-warning text-dark">Not Synced</span></h6>
+                            <p class="small text-muted mb-2">This coupon is not yet synced with Stripe. Saving will attempt to sync automatically.</p>
+                        </div>
+                    </div>
+                }
+
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-info-circle"></i> Edit Notes</h6>
+                        <ul class="small text-muted mb-0">
+                            <li class="mb-1">Code, discount type, and discount value are immutable in Stripe and cannot be changed.</li>
+                            <li class="mb-1">To change these values, create a new coupon and deactivate this one.</li>
+                            <li class="mb-1">Changes to restrictions and limits will be synced to Stripe on save.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .bg-pink { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .bg-purple { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Allow comma as decimal separator (Polish locale)
+        $.validator.methods.number = function(value, element) {
+            return this.optional(element) || /^-?(?:\d+|\d{1,3}(?:[\s,]\d{3})*)(?:[,.]\d+)?$/.test(value);
+        };
+        $.validator.methods.range = function(value, element, param) {
+            var val = parseFloat(value.replace(',', '.'));
+            return this.optional(element) || (val >= param[0] && val <= param[1]);
+        };
+    </script>
+}
+
+@functions {
+    string GetCouponTypeBadgeColor(string type) => type switch
+    {
+        "birthday" => "pink",
+        "new_user" => "info",
+        "vip" => "warning",
+        "category" => "purple",
+        "product" => "secondary",
+        "first_purchase" => "success",
+        _ => "primary"
+    };
+
+    string GetCouponTypeDisplayName(string type) => type switch
+    {
+        "birthday" => "Birthday",
+        "new_user" => "New User",
+        "vip" => "VIP",
+        "category" => "Category",
+        "product" => "Product",
+        "first_purchase" => "First Purchase",
+        _ => "General"
+    };
+}

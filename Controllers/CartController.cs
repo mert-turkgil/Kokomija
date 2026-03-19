@@ -18,6 +18,7 @@ namespace Kokomija.Controllers
         private readonly IConfiguration _configuration;
         private readonly IShippingService _shippingService;
         private readonly INIPValidationService _nipValidationService;
+        private readonly IStripeService _stripeService;
 
         public CartController(
             IUnitOfWork unitOfWork,
@@ -26,7 +27,8 @@ namespace Kokomija.Controllers
             UserManager<ApplicationUser> userManager,
             IConfiguration configuration,
             IShippingService shippingService,
-            INIPValidationService nipValidationService)
+            INIPValidationService nipValidationService,
+            IStripeService stripeService)
         {
             _unitOfWork = unitOfWork;
             _localizationService = localizationService;
@@ -35,6 +37,7 @@ namespace Kokomija.Controllers
             _configuration = configuration;
             _shippingService = shippingService;
             _nipValidationService = nipValidationService;
+            _stripeService = stripeService;
         }
 
         #region View Actions
@@ -355,6 +358,19 @@ namespace Kokomija.Controllers
                     return Json(new { success = false, message = _localizationService["Cart_Coupon_Inactive"] });
                 }
 
+                // Verify coupon still exists on Stripe — if deleted there, remove locally
+                if (!string.IsNullOrEmpty(coupon.StripeCouponId))
+                {
+                    var validOnStripe = await _stripeService.IsCouponValidOnStripeAsync(coupon.StripeCouponId);
+                    if (!validOnStripe)
+                    {
+                        _logger.LogWarning("Coupon {Code} no longer valid on Stripe, removing from database", coupon.Code);
+                        _unitOfWork.Repository<Coupon>().Remove(coupon);
+                        await _unitOfWork.SaveChangesAsync();
+                        return Json(new { success = false, message = _localizationService["Cart_Coupon_Invalid"] });
+                    }
+                }
+
                 if (coupon.ValidUntil.HasValue && coupon.ValidUntil.Value < DateTime.UtcNow)
                 {
                     var expiredDate = coupon.ValidUntil.Value.ToString("dd/MM/yyyy");
@@ -373,6 +389,96 @@ namespace Kokomija.Controllers
                 if (coupon.UsageLimitPerUser.HasValue && usageCount >= coupon.UsageLimitPerUser.Value)
                 {
                     return Json(new { success = false, message = _localizationService["Cart_Coupon_AlreadyUsed"] });
+                }
+
+                // Birthday coupon eligibility check
+                if (coupon.CouponType == "birthday")
+                {
+                    var currentUser = await _userManager.FindByIdAsync(userId);
+                    if (currentUser?.Birthday == null)
+                    {
+                        return Json(new { success = false, message = "This coupon is only valid around your birthday. Please set your birthday in your account settings." });
+                    }
+
+                    var today = DateTime.UtcNow.Date;
+                    var birthday = currentUser.Birthday.Value;
+                    // Build this year's birthday date
+                    var thisYearBirthday = new DateTime(today.Year, birthday.Month, birthday.Day);
+                    
+                    var daysBefore = coupon.DaysBeforeBirthday ?? 7;
+                    var daysAfter = coupon.DaysAfterBirthday ?? 7;
+                    var windowStart = thisYearBirthday.AddDays(-daysBefore);
+                    var windowEnd = thisYearBirthday.AddDays(daysAfter);
+
+                    if (today < windowStart || today > windowEnd)
+                    {
+                        return Json(new { success = false, message = "This birthday coupon is only valid around your birthday." });
+                    }
+                }
+
+                // New user coupon eligibility check
+                if (coupon.CouponType == "new_user")
+                {
+                    var currentUser = await _userManager.FindByIdAsync(userId);
+                    if (currentUser != null && coupon.AccountAgeDays.HasValue)
+                    {
+                        var accountAge = (DateTime.UtcNow - currentUser.CreatedAt).TotalDays;
+                        if (accountAge > coupon.AccountAgeDays.Value)
+                        {
+                            return Json(new { success = false, message = $"This coupon is only valid for accounts created within the last {coupon.AccountAgeDays.Value} days." });
+                        }
+                    }
+                }
+
+                // First purchase coupon eligibility check
+                if (coupon.CouponType == "first_purchase")
+                {
+                    var userOrders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(userId);
+                    if (userOrders.Any())
+                    {
+                        return Json(new { success = false, message = "This coupon is only valid for your first purchase." });
+                    }
+                }
+
+                // VIP tier coupon eligibility check
+                if (!string.IsNullOrEmpty(coupon.VipTierRequired))
+                {
+                    var currentUser = await _userManager.FindByIdAsync(userId);
+                    var userTier = currentUser?.VipTier ?? "None";
+                    var tierOrder = new Dictionary<string, int> { { "None", 0 }, { "Bronze", 1 }, { "Silver", 2 }, { "Gold", 3 }, { "Platinum", 4 } };
+                    var userTierLevel = tierOrder.GetValueOrDefault(userTier, 0);
+                    var requiredTierLevel = tierOrder.GetValueOrDefault(coupon.VipTierRequired, 0);
+
+                    if (userTierLevel < requiredTierLevel)
+                    {
+                        return Json(new { success = false, message = $"This coupon requires {coupon.VipTierRequired} VIP tier or higher." });
+                    }
+                }
+
+                // Category restriction check
+                if (coupon.CategoryId.HasValue)
+                {
+                    var cartItemsForCheck = await _unitOfWork.Carts.GetByUserIdAsync(userId);
+                    var hasMatchingCategory = cartItemsForCheck.Any(ci => ci.Product?.CategoryId == coupon.CategoryId.Value);
+                    if (!hasMatchingCategory)
+                    {
+                        var category = await _unitOfWork.Categories.GetByIdAsync(coupon.CategoryId.Value);
+                        var categoryName = category?.Name ?? "the required category";
+                        return Json(new { success = false, message = $"This coupon is only valid for products in the '{categoryName}' category." });
+                    }
+                }
+
+                // Product restriction check
+                if (coupon.ProductId.HasValue)
+                {
+                    var cartItemsForCheck = await _unitOfWork.Carts.GetByUserIdAsync(userId);
+                    var hasMatchingProduct = cartItemsForCheck.Any(ci => ci.ProductId == coupon.ProductId.Value);
+                    if (!hasMatchingProduct)
+                    {
+                        var product = await _unitOfWork.Products.GetByIdAsync(coupon.ProductId.Value);
+                        var productName = product?.Name ?? "the required product";
+                        return Json(new { success = false, message = $"This coupon is only valid for '{productName}'." });
+                    }
                 }
 
                 // Check minimum order amount
@@ -737,6 +843,7 @@ namespace Kokomija.Controllers
             decimal taxAmount = total * (0.23m / 1.23m); // VAT included in total
             // Get available coupons for user
             var availableCoupons = await GetAvailableCouponsForUser();
+            var availableCouponCards = await GetAvailableCouponCardsForUser();
 
             return new CartIndexViewModel
             {
@@ -758,6 +865,7 @@ namespace Kokomija.Controllers
                 FreeShippingThreshold = freeShippingThreshold,
                 RemainingForFreeShipping = remainingForFreeShipping,
                 AvailableCoupons = availableCoupons,
+                AvailableCouponCards = availableCouponCards,
                 SelectedShippingOption = selectedShippingOption,
                 ShippingOptions = shippingOptions,
                 IsBusinessMode = isBusinessMode
@@ -832,9 +940,12 @@ namespace Kokomija.Controllers
             
             // Get current user ID if authenticated
             string? userId = null;
+            ApplicationUser? currentUser = null;
             if (User.Identity?.IsAuthenticated == true)
             {
                 userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                    currentUser = await _userManager.FindByIdAsync(userId);
             }
 
             var availableCouponCodes = new List<string>();
@@ -854,12 +965,16 @@ namespace Kokomija.Controllers
                 {
                     var userUsageCount = await _unitOfWork.Coupons.GetUserUsageCountAsync(coupon.Id, userId);
                     if (userUsageCount >= coupon.UsageLimitPerUser.Value)
-                        continue; // User has already used this coupon the maximum number of times
+                        continue;
                 }
 
                 // Check global usage limit
                 if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
-                    continue; // Coupon has been used the maximum number of times globally
+                    continue;
+
+                // Skip type-specific coupons user isn't eligible for
+                if (!await IsUserEligibleForCouponAsync(coupon, userId, currentUser))
+                    continue;
 
                 // Coupon is available for this user
                 availableCouponCodes.Add(coupon.Code);
@@ -868,6 +983,97 @@ namespace Kokomija.Controllers
             return availableCouponCodes;
         }
         
+        private async Task<List<Models.ViewModels.CouponCardViewModel>> GetAvailableCouponCardsForUser()
+        {
+            var activeCoupons = await _unitOfWork.Coupons.GetActiveCouponsAsync();
+            string? userId = null;
+            ApplicationUser? currentUser = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                    currentUser = await _userManager.FindByIdAsync(userId);
+            }
+
+            var cards = new List<Models.ViewModels.CouponCardViewModel>();
+            foreach (var coupon in activeCoupons)
+            {
+                if (coupon.UserId != null && userId != coupon.UserId) continue;
+                if (!string.IsNullOrEmpty(userId) && coupon.UsageLimitPerUser.HasValue)
+                {
+                    var usage = await _unitOfWork.Coupons.GetUserUsageCountAsync(coupon.Id, userId);
+                    if (usage >= coupon.UsageLimitPerUser.Value) continue;
+                }
+                if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value) continue;
+
+                // Skip type-specific coupons user isn't eligible for
+                if (!await IsUserEligibleForCouponAsync(coupon, userId, currentUser))
+                    continue;
+
+                cards.Add(new Models.ViewModels.CouponCardViewModel
+                {
+                    Id = coupon.Id,
+                    Code = coupon.Code,
+                    Description = coupon.Description,
+                    DiscountType = coupon.DiscountType,
+                    DiscountValue = coupon.DiscountValue,
+                    CouponType = coupon.CouponType,
+                    MinimumOrderAmount = coupon.MinimumOrderAmount,
+                    MaximumDiscountAmount = coupon.MaximumDiscountAmount,
+                    ValidUntil = coupon.ValidUntil,
+                    IsNew = coupon.CreatedAt >= DateTime.UtcNow.AddDays(-7),
+                    CategoryName = coupon.Category?.Name,
+                    ProductName = coupon.Product?.Name
+                });
+            }
+            return cards;
+        }
+
+        /// <summary>
+        /// Checks if user is eligible for a coupon based on its type (birthday, new_user, first_purchase, vip)
+        /// </summary>
+        private async Task<bool> IsUserEligibleForCouponAsync(Coupon coupon, string? userId, ApplicationUser? user)
+        {
+            // Birthday: only show during birthday window
+            if (coupon.CouponType == "birthday")
+            {
+                if (user?.Birthday == null) return false;
+                var today = DateTime.UtcNow.Date;
+                var thisYearBirthday = new DateTime(today.Year, user.Birthday.Value.Month, user.Birthday.Value.Day);
+                var daysBefore = coupon.DaysBeforeBirthday ?? 7;
+                var daysAfter = coupon.DaysAfterBirthday ?? 7;
+                if (today < thisYearBirthday.AddDays(-daysBefore) || today > thisYearBirthday.AddDays(daysAfter))
+                    return false;
+            }
+
+            // New user: only show if account is young enough
+            if (coupon.CouponType == "new_user" && coupon.AccountAgeDays.HasValue)
+            {
+                if (user == null) return false;
+                if ((DateTime.UtcNow - user.CreatedAt).TotalDays > coupon.AccountAgeDays.Value)
+                    return false;
+            }
+
+            // First purchase: only show if user has no orders
+            if (coupon.CouponType == "first_purchase")
+            {
+                if (string.IsNullOrEmpty(userId)) return false;
+                var userOrders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(userId);
+                if (userOrders.Any()) return false;
+            }
+
+            // VIP tier: only show if user meets tier requirement
+            if (!string.IsNullOrEmpty(coupon.VipTierRequired))
+            {
+                var userTier = user?.VipTier ?? "None";
+                var tierOrder = new Dictionary<string, int> { { "None", 0 }, { "Bronze", 1 }, { "Silver", 2 }, { "Gold", 3 }, { "Platinum", 4 } };
+                if (tierOrder.GetValueOrDefault(userTier, 0) < tierOrder.GetValueOrDefault(coupon.VipTierRequired, 0))
+                    return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// Adds business days to a date, skipping weekends
         /// </summary>

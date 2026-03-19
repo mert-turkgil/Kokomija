@@ -469,3 +469,7 @@ $RECYCLE.BIN/
 !README.md
 # Exclude all markdown documentation except README.md
 # This keeps documentation local while allowing README to be public
+# Important for temp files to add on github
+wwwroot/img/temp/*.*
+wwwroot/img/Blog/*.*
+wwwroot/img/Blog/Temp/*.*

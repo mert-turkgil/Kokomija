@@ -79,7 +79,19 @@ public class BlogService : IBlogService
 
         // Handle image from DTO.FeaturedImage (temp upload) or DTO.FeaturedImageFile
         if (!string.IsNullOrEmpty(dto.FeaturedImage))
-            blog.FeaturedImage = dto.FeaturedImage;
+        {
+            // If the URL is a temp path, move it to permanent storage
+            if (dto.FeaturedImage.Contains("/Temp/", StringComparison.OrdinalIgnoreCase))
+            {
+                var tempFileName = Path.GetFileName(dto.FeaturedImage);
+                var move = await _imageService.ProcessAndMoveFromTempAsync(tempFileName);
+                blog.FeaturedImage = move.Success ? move.PermanentUrl : null;
+            }
+            else
+            {
+                blog.FeaturedImage = dto.FeaturedImage;
+            }
+        }
         else if (dto.FeaturedImageFile != null)
         {
             var upload = await _imageService.UploadToTempAsync(dto.FeaturedImageFile);
@@ -131,7 +143,18 @@ public class BlogService : IBlogService
         {
             if (!string.IsNullOrEmpty(blog.FeaturedImage))
                 await _imageService.DeleteImageAsync(blog.FeaturedImage);
-            blog.FeaturedImage = dto.FeaturedImage;
+            
+            // If the URL is a temp path, move it to permanent storage
+            if (dto.FeaturedImage.Contains("/Temp/", StringComparison.OrdinalIgnoreCase))
+            {
+                var tempFileName = Path.GetFileName(dto.FeaturedImage);
+                var move = await _imageService.ProcessAndMoveFromTempAsync(tempFileName);
+                blog.FeaturedImage = move.Success ? move.PermanentUrl : null;
+            }
+            else
+            {
+                blog.FeaturedImage = dto.FeaturedImage;
+            }
         }
         else if (string.IsNullOrEmpty(dto.FeaturedImage) && !string.IsNullOrEmpty(blog.FeaturedImage))
         {
@@ -169,6 +192,20 @@ public class BlogService : IBlogService
 
         await _unitOfWork.SaveChangesAsync();
         return (true, hardDelete ? "Blog permanently deleted" : "Blog deleted successfully");
+    }
+
+    public async Task<(bool Success, string Message)> RestoreBlogAsync(int id)
+    {
+        var blog = await GetByIdAsync(id, includeDeleted: true);
+        if (blog == null) return (false, "Blog not found");
+        if (!blog.IsDeleted) return (false, "Blog is not deleted");
+
+        blog.IsDeleted = false;
+        blog.UpdatedAt = DateTime.UtcNow;
+        _unitOfWork.Blogs.Update(blog);
+
+        await _unitOfWork.SaveChangesAsync();
+        return (true, "Blog restored successfully");
     }
 
     public async Task<(bool Success, string Message)> TogglePublishAsync(int id)

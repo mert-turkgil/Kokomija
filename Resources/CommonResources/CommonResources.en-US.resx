@@ -494,4 +494,13 @@
   <data name="Blog_ReadingTime" xml:space="preserve">
     <value>min read</value>
   </data>
+  <data name="Admin_Category_Icon" xml:space="preserve">
+    <value>Category Icon</value>
+  </data>
+  <data name="Admin_Category_IconInfo" xml:space="preserve">
+    <value> Paste the “Category Icon Info” class section here.</value>
+  </data>
+  <data name="Admin_Category_SearchIcon" xml:space="preserve">
+    <value> Paste the “Category Search Icon Info” class section here.</value>
+  </data>  
 </root>

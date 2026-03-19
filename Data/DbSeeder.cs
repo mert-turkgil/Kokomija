@@ -926,7 +926,7 @@ namespace Kokomija.Data
                     ControllerName = "Product",
                     ActionName = "Index",
                     AreaName = null,
-                    RouteParameters = null,
+                    RouteParameters = "{\"sort\":\"newest\"}",
                     ImageAlt = "Kokomija Spring 2025 Fashion Collection - Premium Women's and Men's Underwear",
                     CreatedAt = DateTime.UtcNow
                 },
@@ -942,7 +942,7 @@ namespace Kokomija.Data
                     ControllerName = "Product",
                     ActionName = "Index",
                     AreaName = null,
-                    RouteParameters = null,
+                    RouteParameters = "{\"sort\":\"newest\"}",
                     ImageAlt = "Kokomija Kolekcja Wiosna 2025 - Wysokiej Jakości Bielizna Damska i Męska",
                     CreatedAt = DateTime.UtcNow
                 }

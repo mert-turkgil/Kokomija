@@ -498,6 +498,22 @@
                                 </div>
                             </div>
 
+                            <!-- EAN / GTIN Code -->
+                            <div class="coupon-section mt-4">
+                                <div class="selection-card">
+                                    <h4 class="selection-title">
+                                        <i class="bi bi-upc-scan me-2"></i>EAN / GTIN Code
+                                        <span class="optional-badge">Optional</span>
+                                    </h4>
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="eanCode"
+                                               asp-for="EanCode" maxlength="14" placeholder="e.g. 5901234123457">
+                                        <label for="eanCode">EAN / GTIN Barcode</label>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">8, 12, 13, or 14-digit barcode</small>
+                                </div>
+                            </div>
+
                             <!-- Coupon Association -->
                             <div class="coupon-section mt-4">
                                 <div class="selection-card">
@@ -632,11 +648,13 @@
                                             <i class="bi bi-palette me-2"></i>Available Colors
                                         </h4>
                                         <div class="color-grid" id="colorGrid">
+                                            @{ var colorHexMap = (Dictionary<string, string>)ViewBag.ColorHexMap; }
                                             @foreach (var color in Model.AvailableColors)
                                             {
-                                                <label class="color-chip" style="--chip-color: @(color.Value == "1" ? "#000" : "#ccc")">
-                                                    <input type="checkbox" name="SelectedColorIds" value="@color.Value" class="color-checkbox">
-                                                    <span class="color-swatch"></span>
+                                                var hex = colorHexMap.ContainsKey(color.Value) ? colorHexMap[color.Value] : "#ccc";
+                                                <label class="color-chip" style="--chip-color: @hex">
+                                                    <input type="checkbox" name="SelectedColorIds" value="@color.Value" class="color-checkbox" data-hex="@hex">
+                                                    <span class="color-swatch" style="background-color: @hex"></span>
                                                     <span class="color-name">@color.Text</span>
                                                 </label>
                                             }
@@ -2138,6 +2156,7 @@
                     minBusinessQty: $('#minBusinessQty').val(),
                     isAvailableForBusiness: $('#enableBusinessPrice').is(':checked'),
                     isBusinessOnly: $('#businessOnly').is(':checked'),
+                    eanCode: $('#eanCode').val(),
                     couponId: $('#couponSelect').val(),
                     selectedSizes: $('input[name="SelectedSizeIds"]:checked').map(function() { return $(this).val(); }).get(),
                     selectedColors: $('input[name="SelectedColorIds"]:checked').map(function() { return $(this).val(); }).get(),
@@ -2221,6 +2240,7 @@
                         $('#businessFields').show();
                     }
                     if (data.isBusinessOnly) $('#businessOnly').prop('checked', true);
+                    if (data.eanCode) $('#eanCode').val(data.eanCode);
                     if (data.couponId) $('#couponSelect').val(data.couponId);
 
                     // Restore step 5

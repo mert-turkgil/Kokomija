@@ -13,9 +13,9 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Category>> GetTopLevelCategoriesAsync()
         {
             return await _dbSet
-                .Where(c => c.ParentCategoryId == null && c.IsActive)
+                .Where(c => c.ParentCategoryId == null && c.IsActive && !c.IsDeleted)
                 .Include(c => c.Translations)
-                .Include(c => c.SubCategories.Where(sc => sc.IsActive))
+                .Include(c => c.SubCategories.Where(sc => sc.IsActive && !sc.IsDeleted))
                 .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
         }
@@ -23,9 +23,9 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Category>> GetCategoriesWithSubCategoriesAsync()
         {
             return await _dbSet
-                .Where(c => c.ParentCategoryId == null && c.IsActive)
+                .Where(c => c.ParentCategoryId == null && c.IsActive && !c.IsDeleted)
                 .Include(c => c.Translations)
-                .Include(c => c.SubCategories.Where(sc => sc.IsActive))
+                .Include(c => c.SubCategories.Where(sc => sc.IsActive && !sc.IsDeleted))
                     .ThenInclude(sc => sc.Translations)
                 .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
@@ -34,9 +34,9 @@ namespace Kokomija.Data.Concrete
         public async Task<IEnumerable<Category>> GetNavbarCategoriesAsync()
         {
             return await _dbSet
-                .Where(c => c.ParentCategoryId == null && c.ShowInNavbar && c.IsActive)
+                .Where(c => c.ParentCategoryId == null && c.ShowInNavbar && c.IsActive && !c.IsDeleted)
                 .Include(c => c.Translations)
-                .Include(c => c.SubCategories.Where(sc => sc.ShowInNavbar && sc.IsActive).OrderBy(sc => sc.DisplayOrder))
+                .Include(c => c.SubCategories.Where(sc => sc.ShowInNavbar && sc.IsActive && !sc.IsDeleted).OrderBy(sc => sc.DisplayOrder))
                     .ThenInclude(sc => sc.Translations)
                 .OrderBy(c => c.DisplayOrder)
                 .Take(2) // Only take the first 2 categories for navbar
@@ -47,18 +47,18 @@ namespace Kokomija.Data.Concrete
         {
             return await _dbSet
                 .Include(c => c.Translations)
-                .Include(c => c.SubCategories.Where(sc => sc.IsActive))
+                .Include(c => c.SubCategories.Where(sc => sc.IsActive && !sc.IsDeleted))
                     .ThenInclude(sc => sc.Translations)
                 .Include(c => c.ParentCategory!)
                     .ThenInclude(pc => pc.Translations)
                 .Include(c => c.Products.Where(p => p.IsActive))
-                .FirstOrDefaultAsync(c => c.Slug == slug && c.IsActive);
+                .FirstOrDefaultAsync(c => c.Slug == slug && c.IsActive && !c.IsDeleted);
         }
 
         public async Task<IEnumerable<Category>> GetSubCategoriesAsync(int parentId)
         {
             return await _dbSet
-                .Where(c => c.ParentCategoryId == parentId && c.IsActive)
+                .Where(c => c.ParentCategoryId == parentId && c.IsActive && !c.IsDeleted)
                 .Include(c => c.Translations)
                 .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
@@ -87,10 +87,10 @@ namespace Kokomija.Data.Concrete
         {
             return await _dbSet
                 .Include(c => c.Translations)
-                .Include(c => c.SubCategories.Where(sc => sc.IsActive))
+                .Include(c => c.SubCategories.Where(sc => sc.IsActive && !sc.IsDeleted))
                     .ThenInclude(sc => sc.Translations)
                 .Include(c => c.Products.Where(p => p.IsActive))
-                .Where(c => c.IsActive)
+                .Where(c => c.IsActive && !c.IsDeleted)
                 .Where(c => c.Translations.Any(t => t.Slug == slug && t.CultureCode == cultureCode) || c.Slug == slug)
                 .FirstOrDefaultAsync();
         }

@@ -195,7 +195,11 @@
                                     @foreach (var subcat in category.SubCategories.Where(s => s.IsActive).OrderBy(s => s.DisplayOrder))
                                     {
                                         <a asp-controller="Product" asp-action="Category" asp-route-slug="@subcat.Slug" class="subcategory-link">
-                                            @if (!string.IsNullOrEmpty(subcat.IconCssClass))
+                                            @if (!string.IsNullOrEmpty(subcat.IconImagePath))
+                                            {
+                                                <img src="@subcat.IconImagePath" alt="@GetCategoryName(subcat)" class="subcategory-icon me-2" style="width: 30px; height: 30px; object-fit: contain;" onerror="this.style.display='none'" />
+                                            }
+                                            else if (!string.IsNullOrEmpty(subcat.IconCssClass))
                                             {
                                                 <i class="@subcat.IconCssClass me-2"></i>
                                             }

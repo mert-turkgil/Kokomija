@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Kokomija.Models.ViewModels.Admin
 {
     /// <summary>
@@ -55,11 +57,25 @@ namespace Kokomija.Models.ViewModels.Admin
     public class CategoryTranslationDto
     {
         public int? Id { get; set; } // Null for new translations
+
+        [Required]
+        [MaxLength(10)]
         public string CultureCode { get; set; } = string.Empty; // e.g., "en-US", "pl-PL"
+
+        [Required(ErrorMessage = "Category name is required")]
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Slug is required")]
+        [MaxLength(100)]
         public string Slug { get; set; } = string.Empty;
+
         public string? Description { get; set; }
+
+        [MaxLength(160)]
         public string? MetaDescription { get; set; }
+
+        [MaxLength(500)]
         public string? MetaKeywords { get; set; }
     }
 

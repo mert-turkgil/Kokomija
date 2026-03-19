@@ -2619,4 +2619,172 @@
   <data name="Review_MustPurchaseFirst" xml:space="preserve">
     <value>Możesz oceniać tylko produkty, które kupiłeś.</value>
   </data>
+  <data name="Coupon_Type_General" xml:space="preserve">
+    <value>Ogólny</value>
+  </data>
+  <data name="Coupon_Type_Birthday" xml:space="preserve">
+    <value>Urodzinowy</value>
+  </data>
+  <data name="Coupon_Type_NewUser" xml:space="preserve">
+    <value>Nowy Użytkownik</value>
+  </data>
+  <data name="Coupon_Type_VIP" xml:space="preserve">
+    <value>VIP</value>
+  </data>
+  <data name="Coupon_Type_Category" xml:space="preserve">
+    <value>Kategoria</value>
+  </data>
+  <data name="Coupon_Type_Product" xml:space="preserve">
+    <value>Produkt</value>
+  </data>
+  <data name="Coupon_Type_FirstPurchase" xml:space="preserve">
+    <value>Pierwszy Zakup</value>
+  </data>
+  <data name="Coupon_CopyCode" xml:space="preserve">
+    <value>Kopiuj Kod</value>
+  </data>
+  <data name="Coupon_New" xml:space="preserve">
+    <value>NOWY</value>
+  </data>
+  <data name="Coupon_MinOrder" xml:space="preserve">
+    <value>Minimalne Zamówienie</value>
+  </data>
+  <data name="Coupon_MaxDiscount" xml:space="preserve">
+    <value>Maksymalny Rabat</value>
+  </data>
+  <data name="Coupon_ForCategory" xml:space="preserve">
+    <value>Dla Kategorii</value>
+  </data>
+  <data name="Coupon_ForProduct" xml:space="preserve">
+    <value>Dla Produktu</value>
+  </data>
+  <data name="Coupon_ExpiresToday" xml:space="preserve">
+    <value>Wygasa dziś!</value>
+  </data>
+  <data name="Coupon_Expires1Day" xml:space="preserve">
+    <value>Pozostał 1 dzień!</value>
+  </data>
+  <data name="Coupon_ExpiresDays" xml:space="preserve">
+    <value>Pozostało {0} dni</value>
+  </data>
+  <data name="Coupon_ValidUntil" xml:space="preserve">
+    <value>Do</value>
+  </data>
+  <data name="Coupon_Apply" xml:space="preserve">
+    <value>Zastosuj</value>
+  </data>
+  <data name="Coupon_Off" xml:space="preserve">
+    <value>ZNIŻKI</value>
+  </data>
+  <data name="Coupon_Min" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="Coupon_Max" xml:space="preserve">
+    <value>Maks</value>
+  </data>
+  <data name="Account_Coupons_ExpiringSoon" xml:space="preserve">
+    <value>Wkrótce Wygasające</value>
+  </data>
+  <data name="Coupon_Copied" xml:space="preserve">
+    <value>Kod skopiowany!</value>
+  </data>
+  <data name="Cart_CouponDiscount" xml:space="preserve">
+    <value>Rabat Kuponowy</value>
+  </data>
+  <data name="Account_Order_Details" xml:space="preserve">
+    <value>Szczegóły Zamówienia</value>
+  </data>
+  <data name="Order_Cancelled_Desc" xml:space="preserve">
+    <value>To zamówienie zostało anulowane i nie będzie realizowane.</value>
+  </data>
+  <data name="Delivery_Info" xml:space="preserve">
+    <value>Informacje o Dostawie</value>
+  </data>
+  <data name="No_Tracking_Yet" xml:space="preserve">
+    <value>Informacje o śledzeniu pojawią się po wysyłce</value>
+  </data>
+  <data name="Need_Help" xml:space="preserve">
+    <value>Potrzebujesz Pomocy?</value>
+  </data>
+  <data name="Cancel_Order_Desc" xml:space="preserve">
+    <value>Anuluj przed wysyłką</value>
+  </data>
+  <data name="Edit_Request" xml:space="preserve">
+    <value>Edytuj Zamówienie</value>
+  </data>
+  <data name="Edit_Request_Desc" xml:space="preserve">
+    <value>Poproś o zmianę adresu lub produktu</value>
+  </data>
+  <data name="Invoice_Desc" xml:space="preserve">
+    <value>Pobierz fakturę PDF</value>
+  </data>
+  <data name="Refund_Processed" xml:space="preserve">
+    <value>Zwrot Przetworzony</value>
+  </data>
+  <data name="Refund_Processed_Desc" xml:space="preserve">
+    <value>Twój zwrot został przetworzony. Kwota powinna pojawić się na Twoim koncie w ciągu kilku dni roboczych.</value>
+  </data>
+  <data name="Questions_About_Order" xml:space="preserve">
+    <value>Pytania dotyczące zamówienia?</value>
+  </data>
+  <data name="Contact_Support_Desc" xml:space="preserve">
+    <value>Nasz zespół wsparcia jest tutaj, aby pomóc.</value>
+  </data>
+  <data name="Contact_Support" xml:space="preserve">
+    <value>Skontaktuj się z Pomocą</value>
+  </data>
+  <data name="Edit_Request_Info" xml:space="preserve">
+    <value>Opisz zmiany, które chcesz wprowadzić. Nasz zespół przejrzy i odpowie e-mailem.</value>
+  </data>
+  <data name="Request_Type" xml:space="preserve">
+    <value>Typ Zgłoszenia</value>
+  </data>
+  <data name="Select_Type" xml:space="preserve">
+    <value>Wybierz typ...</value>
+  </data>
+  <data name="Address_Change" xml:space="preserve">
+    <value>Zmiana Adresu Dostawy</value>
+  </data>
+  <data name="Item_Change" xml:space="preserve">
+    <value>Zmiana Produktu (rozmiar/kolor)</value>
+  </data>
+  <data name="Add_Note" xml:space="preserve">
+    <value>Dodaj Notatkę do Dostawy</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Inne</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Szczegóły</value>
+  </data>
+  <data name="Edit_Request_Placeholder" xml:space="preserve">
+    <value>Opisz, co chcesz zmienić...</value>
+  </data>
+  <data name="Submit_Request" xml:space="preserve">
+    <value>Wyślij Zgłoszenie</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Błąd</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+  <data name="Cancel_Order_Request_Title" xml:space="preserve">
+    <value>Wniosek o Anulowanie i Zwrot</value>
+  </data>
+  <data name="Cancel_Order_Request_Desc" xml:space="preserve">
+    <value>Twoje zgłoszenie zostanie rozpatrzone przez nasz zespół.</value>
+  </data>
+  <data name="Cancel_Reason_Placeholder" xml:space="preserve">
+    <value>Powiedz nam, dlaczego chcesz anulować (opcjonalnie)...</value>
+  </data>
+  <data name="Submit_Cancel_Request" xml:space="preserve">
+    <value>Wyślij Zgłoszenie</value>
+  </data>
+  <data name="Cancel_Request_Submitted" xml:space="preserve">
+    <value>Zgłoszenie Wysłane</value>
+  </data>
 </root>

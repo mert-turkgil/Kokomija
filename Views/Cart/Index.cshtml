@@ -3,38 +3,145 @@
 @using System.Globalization
 
 @{
-    ViewData["Title"] = "Shopping Cart";
+    ViewData["Title"] = L["Cart_Title"].ToString();
     var plnCulture = new CultureInfo("pl-PL");
+    var itemCount = Model.Items.Count();
+    var hasB2bIssues = Model.IsBusinessMode && Model.Items.Any(i => i.IsBelowMinBusinessQty);
+}
+
+@section Styles {
+<style>
+/* ── Quantity stepper ── */
+.qty-control {
+    display: inline-flex;
+    align-items: stretch;
+    height: 36px;
+    border: 1.5px solid var(--bs-border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bs-body-bg);
+}
+[data-theme="dark"] .qty-control {
+    border-color: rgba(255,255,255,.2);
+    background: rgba(255,255,255,.05);
+}
+.qty-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+    background: var(--bs-tertiary-bg);
+    border: none;
+    color: var(--bs-body-color);
+    font-size: .9rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    outline: none;
+    -webkit-appearance: none;
+}
+.qty-btn:first-child {
+    border-right: 1.5px solid var(--bs-border-color);
+}
+.qty-btn:last-child {
+    border-left: 1.5px solid var(--bs-border-color);
+}
+.qty-btn:hover:not(:disabled) {
+    background: #667eea;
+    color: #fff;
+    border-color: #667eea;
+}
+.qty-btn:active:not(:disabled) {
+    background: #5a6fd6;
+    color: #fff;
+}
+.qty-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.qty-btn i { pointer-events: none; }
+[data-theme="dark"] .qty-btn {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.15);
+    color: rgba(255,255,255,.85);
+}
+[data-theme="dark"] .qty-btn:hover:not(:disabled) {
+    background: #667eea;
+    border-color: #667eea;
+    color: #fff;
+}
+.qty-input {
+    width: 44px;
+    min-width: 44px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--bs-body-color);
+    padding: 0;
+    -moz-appearance: textfield;
+    outline: none;
+}
+.qty-input::-webkit-inner-spin-button,
+.qty-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+[data-theme="dark"] .qty-input { color: #fff; }
+</style>
 }
 
 <div class="cart-page container my-5">
-    <h1 class="mb-4">Shopping Cart</h1>
+
+    
+    <div class="cart-page-header mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="mb-0">@L["Cart_Title"]</h1>
+            @if (itemCount > 0)
+            {
+                <span class="badge bg-primary rounded-pill fs-6">@itemCount @L["ItemsInCart"]</span>
+            }
+        </div>
+        <nav aria-label="breadcrumb" class="mt-2">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">@L["Navigation_Home"]</a></li>
+                <li class="breadcrumb-item active">@L["Cart_Title"]</li>
+            </ol>
+        </nav>
+    </div>
+
     
     @if (Model.IsBusinessMode)
     {
-        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
-            <i class="bi bi-building-check me-2 fs-4"></i>
+        <div class="alert alert-info border-0 rounded-3 d-flex align-items-center mb-4 shadow-sm" role="alert">
+            <div class="alert-icon me-3">
+                <i class="bi bi-building-check fs-3"></i>
+            </div>
             <div>
-                <strong>@L["Cart_BusinessMode"]</strong> - @L["Cart_BusinessModeDescription"]
+                <strong>@L["Cart_BusinessMode"]</strong>
+                <p class="mb-0 text-muted small">@L["Cart_BusinessModeDescription"]</p>
             </div>
         </div>
         
-        @* Check for items below minimum business quantity *@
         var itemsBelowMin = Model.Items.Where(i => i.IsBelowMinBusinessQty).ToList();
-        if (itemsBelowMin.Any())
+        
+        @if (itemsBelowMin.Any())
         {
-            <div class="alert alert-warning d-flex align-items-start mb-4" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-4 mt-1"></i>
+            <div class="alert alert-warning border-0 rounded-3 d-flex align-items-start mb-4 shadow-sm" role="alert">
+                <div class="alert-icon me-3 mt-1">
+                    <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                </div>
                 <div>
-                    <strong>@(L["Cart_MinQtyWarning"] ?? "Minimum Quantity Warning")</strong>
-                    <p class="mb-1">@(L["Cart_MinQtyWarningDesc"] ?? "The following items are below the minimum business order quantity. Please increase the quantity to proceed with B2B pricing:")</p>
-                    <ul class="mb-0">
+                    <strong class="d-block mb-1">@L["Cart_MinQtyWarning"]</strong>
+                    <p class="mb-2 small">@L["Cart_MinQtyWarningDesc"]</p>
+                    <ul class="mb-0 small">
                         @foreach (var item in itemsBelowMin)
                         {
                             <li>
-                                <strong>@item.ProductName.Split("-")[0].Trim()</strong> — 
-                                @(L["Cart_CurrentQty"] ?? "Current"): @item.Quantity, 
-                                @(L["Cart_MinRequired"] ?? "Minimum required"): @item.MinBusinessQuantity
+                                <strong>@item.ProductName.Split("-")[0].Trim()</strong> —
+                                @L["Cart_CurrentQty"]: <strong>@item.Quantity</strong>,
+                                @L["Cart_MinRequired"]: <strong>@item.MinBusinessQuantity</strong>
                             </li>
                         }
                     </ul>
@@ -45,343 +152,455 @@
 
     @if (!Model.Items.Any())
     {
-        <div class="empty-cart text-center py-5">
-            <i class="bi bi-cart-x display-1 text-muted"></i>
-            <h3 class="mt-3">Your cart is empty</h3>
-            <p class="text-muted">Start shopping to add items to your cart</p>
-            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Continue Shopping</a>
+        
+        <div class="empty-cart-wrapper text-center py-5 my-4">
+            <div class="empty-cart-icon mb-4">
+                <i class="bi bi-cart-x"></i>
+            </div>
+            <h2 class="mb-2">@L["Empty"]</h2>
+            <p class="text-muted mb-4">@L["Cart_EmptyDesc"]</p>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-bag me-2"></i>@L["ContinueShopping"]
+            </a>
         </div>
     }
     else
     {
-        <div class="row">
+        <div class="row g-4 align-items-start">
+
+            
             <div class="col-lg-8">
-                @* Cart Items *@
-                <div class="card mb-4">
-                    <div class="card-body">
+
+                
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center py-3 px-4">
+                        <h5 class="mb-0"><i class="bi bi-cart3 me-2 text-primary"></i>@L["ShoppingCart"]</h5>
+                        <span class="text-muted small">@itemCount @L["ItemsInCart"]</span>
+                    </div>
+                    <div class="card-body p-0">
                         @foreach (var item in Model.Items)
                         {
-                            <div class="cart-item border-bottom py-3" 
-                                 data-product-id="@item.ProductId" 
-                                 data-color-id="@(item.ColorId?.ToString() ?? "")" 
+                            <div class="cart-item px-4 py-3"
+                                 data-product-id="@item.ProductId"
+                                 data-color-id="@(item.ColorId?.ToString() ?? "")"
                                  data-size-id="@(item.SizeId?.ToString() ?? "")">
-                                <div class="row align-items-center">
-                                    <div class="col-md-2">
-                                        @if (!string.IsNullOrEmpty(item.ProductImage))
+                                <div class="row align-items-center g-3">
+
+                                    
+                                    <div class="col-3 col-md-2">
+                                        <a asp-controller="Product" asp-action="Details" asp-route-slug="@item.ProductSlug" class="d-block cart-item-image-link">
+                                            @if (!string.IsNullOrEmpty(item.ProductImage))
+                                            {
+                                                <img src="@Url.Content("~/img/ProductImage/" + item.ProductImage)"
+                                                     alt="@item.ProductName"
+                                                     class="img-fluid rounded-2 cart-item-img"
+                                                     onerror="this.onerror=null;this.src='@Url.Content("~/img/logo_black.png")';this.classList.add('logo-fallback');">
+                                            }
+                                            else
+                                            {
+                                                <img src="@Url.Content("~/img/logo_black.png")"
+                                                     alt="Kokomija"
+                                                     class="img-fluid rounded-2 cart-item-img logo-fallback">
+                                            }
+                                        </a>
+                                    </div>
+
+                                    
+                                    <div class="col-9 col-md-4">
+                                        <a asp-controller="Product" asp-action="Details" asp-route-slug="@item.ProductSlug" class="text-decoration-none text-dark">
+                                            <h6 class="mb-1 fw-semibold">@item.ProductName.Split("-")[0].Trim()</h6>
+                                        </a>
+                                        <div class="cart-item-meta d-flex flex-wrap gap-2 mt-1">
+                                            @if (!string.IsNullOrEmpty(item.ColorName))
+                                            {
+                                                <span class="cart-meta-chip">
+                                                    @if (!string.IsNullOrEmpty(item.ColorHex))
+                                                    {
+                                                        <span class="color-dot" style="background-color: @item.ColorHex;"></span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-palette"></i>
+                                                    }
+                                                    @item.ColorName
+                                                </span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(item.SizeName))
+                                            {
+                                                <span class="cart-meta-chip">
+                                                    <i class="bi bi-rulers"></i> @item.SizeName
+                                                </span>
+                                            }
+                                            @if (item.PackSize > 1)
+                                            {
+                                                <span class="cart-meta-chip text-primary">
+                                                    <i class="bi bi-box-seam"></i> @item.PackSize @L["Product_ItemsPerPack"]
+                                                </span>
+                                                <span class="cart-meta-chip text-secondary">
+                                                    <i class="bi bi-stack"></i> @L["Product_TotalItems"]: @item.TotalItems
+                                                </span>
+                                            }
+                                        </div>
+                                        @if (item.IsBusinessPrice)
                                         {
-                                            <img src="@Url.Content("~/img/ProductImage/" + item.ProductImage)" 
-                                                 alt="@item.ProductName" 
-                                                 class="img-fluid rounded product-image"
-                                                 onerror="this.onerror=null; this.src='@Url.Content("~/img/logo_black.png")'; this.classList.add('logo-fallback');">
-                                        }
-                                        else
-                                        {
-                                            <img src="@Url.Content("~/img/logo_black.png")" 
-                                                 alt="Kokomija" 
-                                                 class="img-fluid rounded logo-fallback">
+                                            <span class="badge bg-info text-dark mt-1"><i class="bi bi-building me-1"></i>B2B</span>
                                         }
                                     </div>
-                                    <div class="col-md-4">
-                                        <h5 class="mb-1">@item.ProductName.Split("-")[0].Trim()</h5>
-                                        @if (item.PackSize > 1)
-                                        {
-                                            <span class="badge bg-primary mb-2">
-                                                <i class="bi bi-box-seam"></i> @item.PackSize @L["Product_ItemsPerPack"]
-                                            </span>
-                                            <br />
-                                            <small class="text-muted">
-                                                <i class="bi bi-stack"></i> @L["Product_TotalItems"]: <strong>@item.TotalItems</strong>
-                                            </small>
-                                            <br />
-                                        }
-                                        @if (!string.IsNullOrEmpty(item.ColorName))
-                                        {
-                                            <small class="text-muted"><i class="bi bi-palette"></i> Color: @item.ColorName</small><br />
-                                        }
-                                        @if (!string.IsNullOrEmpty(item.SizeName))
-                                        {
-                                            <small class="text-muted"><i class="bi bi-rulers"></i> Size: @item.SizeName</small>
-                                        }
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="input-group input-group-sm">
-                                            <button class="btn btn-outline-secondary quantity-decrease" type="button">
+
+                                    
+                                    <div class="col-6 col-md-3">
+                                        <div class="qty-control d-flex align-items-center">
+                                            <button class="qty-btn quantity-decrease" type="button" aria-label="Decrease">
                                                 <i class="bi bi-dash"></i>
                                             </button>
-                                            <input type="number" class="form-control text-center quantity-input" value="@item.Quantity" min="1" max="@item.MaxQuantity" readonly>
-                                            <button class="btn btn-outline-secondary quantity-increase" type="button" @(item.Quantity >= item.MaxQuantity ? "disabled" : "")>
+                                            <input type="number"
+                                                   class="qty-input quantity-input"
+                                                   value="@item.Quantity"
+                                                   min="1"
+                                                   max="@item.MaxQuantity"
+                                                   readonly
+                                                   aria-label="Quantity">
+                                            <button class="qty-btn quantity-increase" type="button" aria-label="Increase"
+                                                    @(item.Quantity >= item.MaxQuantity ? "disabled" : "")>
                                                 <i class="bi bi-plus"></i>
                                             </button>
                                         </div>
                                         @if (!item.IsInStock)
                                         {
-                                            <small class="text-danger">Out of stock</small>
+                                            <small class="text-danger d-block mt-1"><i class="bi bi-x-circle me-1"></i>@L["Cart_OutOfStock"]</small>
                                         }
                                         else if (item.Quantity >= item.MaxQuantity)
                                         {
-                                            <small class="text-warning">Max quantity</small>
+                                            <small class="text-warning d-block mt-1"><i class="bi bi-exclamation-circle me-1"></i>@L["Cart_MaxQuantity"]</small>
                                         }
                                         @if (item.IsBelowMinBusinessQty)
                                         {
                                             <small class="text-danger d-block mt-1">
-                                                <i class="bi bi-exclamation-triangle"></i> @(L["Cart_MinQty"] ?? "Min"): @item.MinBusinessQuantity
+                                                <i class="bi bi-exclamation-triangle me-1"></i>@L["Cart_MinQty"]: @item.MinBusinessQuantity
                                             </small>
                                         }
                                     </div>
-                                    <div class="col-md-2 text-end">
-                                        @if (item.IsBusinessPrice && item.OriginalPrice.HasValue)
-                                        {
-                                            <small class="text-decoration-line-through text-muted d-block">@((item.OriginalPrice.Value * item.Quantity).ToString("C", plnCulture))</small>
-                                            <strong class="text-success">@item.TotalPrice.ToString("C", plnCulture)</strong>
-                                            <span class="badge bg-info ms-1" title="Business Price"><i class="bi bi-building"></i> B2B</span>
-                                        }
-                                        else
-                                        {
-                                            <strong>@item.TotalPrice.ToString("C", plnCulture)</strong>
-                                        }
-                                    </div>
-                                    <div class="col-md-2 text-end">
-                                        <button class="btn btn-sm btn-outline-danger remove-item">
-                                            <i class="bi bi-trash"></i> Remove
+
+                                    
+                                    <div class="col-6 col-md-3 text-end">
+                                        <div class="cart-item-price mb-2">
+                                            @if (item.IsBusinessPrice && item.OriginalPrice.HasValue)
+                                            {
+                                                <small class="text-muted text-decoration-line-through d-block">
+                                                    @((item.OriginalPrice.Value * item.Quantity).ToString("C", plnCulture))
+                                                </small>
+                                                <strong class="text-success fs-6">@item.TotalPrice.ToString("C", plnCulture)</strong>
+                                            }
+                                            else
+                                            {
+                                                <strong class="fs-6">@item.TotalPrice.ToString("C", plnCulture)</strong>
+                                            }
+                                            @if (item.PackSize > 1)
+                                            {
+                                                <small class="text-muted d-block">
+                                                    @item.UnitPrice.ToString("C", plnCulture) / @L["Product_Pack"]
+                                                </small>
+                                            }
+                                        </div>
+                                        <button class="btn btn-sm btn-ghost-danger remove-item" title="@L["Remove"]">
+                                            <i class="bi bi-trash3"></i>
+                                            <span class="d-none d-md-inline ms-1">@L["Remove"]</span>
                                         </button>
                                     </div>
+
                                 </div>
                             </div>
                         }
                     </div>
+
+                    <div class="card-footer bg-transparent border-top px-4 py-3">
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-link text-decoration-none ps-0">
+                            <i class="bi bi-arrow-left me-1"></i>@L["ContinueShopping"]
+                        </a>
+                    </div>
                 </div>
 
-                @* Coupon Section *@
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Have a coupon?</h5>
+                
+                <div class="card shadow-sm border-0 rounded-3 cart-coupon-section">
+                    <div class="card-header bg-transparent border-bottom py-3 px-4">
+                        <h5 class="mb-0"><i class="bi bi-ticket-perforated me-2 text-primary"></i>@L["Cart_HaveCoupon"]</h5>
+                    </div>
+                    <div class="card-body px-4 py-3">
                         @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
                         {
-                            <div class="alert alert-success d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="bi bi-check-circle"></i> Coupon <strong>@Model.AppliedCouponCode</strong> applied!
-                                    @if (Model.CouponDiscountPercentage.HasValue)
-                                    {
-                                        <span class="badge bg-success ms-2">@Model.CouponDiscountPercentage.Value% OFF</span>
-                                    }
+                            <div class="cart-coupon-applied d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="applied-icon">
+                                        <i class="bi bi-check-lg"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-muted small">@L["Cart_CouponApplied"]</span>
+                                        <strong class="d-block applied-code">@Model.AppliedCouponCode</strong>
+                                        @if (Model.CouponDiscountPercentage.HasValue)
+                                        {
+                                            <span class="badge bg-success">@Model.CouponDiscountPercentage.Value% @L["Coupon_Off"]</span>
+                                        }
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="removeCoupon">Remove</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="removeCoupon">
+                                    <i class="bi bi-x me-1"></i>@L["Remove"]
+                                </button>
                             </div>
                         }
                         else
                         {
-                            @if (Model.AvailableCoupons != null && Model.AvailableCoupons.Any())
+                            @if (Model.AvailableCouponCards != null && Model.AvailableCouponCards.Any())
                             {
-                                <div class="available-coupons mb-3">
-                                    <p class="text-muted mb-2"><small><i class="bi bi-ticket-perforated"></i> Available coupons:</small></p>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        @foreach (var coupon in Model.AvailableCoupons)
+                                <div class="mb-4">
+                                    <div class="coupon-section-header mb-2">
+                                        <p class="coupon-section-title mb-0">
+                                            <i class="bi bi-ticket-perforated text-primary me-1"></i>@L["Cart_AvailableCoupons"]
+                                        </p>
+                                        <span class="coupon-section-count">@Model.AvailableCouponCards.Count</span>
+                                    </div>
+                                    <div class="coupon-strip">
+                                        @foreach (var coupon in Model.AvailableCouponCards)
                                         {
-                                            <button type="button" class="btn btn-sm btn-outline-primary apply-coupon-btn" data-coupon="@coupon">
-                                                <i class="bi bi-tag"></i> @coupon
-                                            </button>
+                                            @await Html.PartialAsync("_CouponCard", coupon, new ViewDataDictionary(ViewData) { { "CouponCardMode", "compact" }, { "ShowApplyButton", true } })
                                         }
                                     </div>
                                 </div>
                             }
-                            
-                            <form id="couponForm" class="row g-3">
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" id="couponCode" placeholder="Enter coupon code" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-outline-primary w-100">Apply Coupon</button>
+                            <form id="couponForm">
+                                <div class="input-group">
+                                    <input type="text"
+                                           class="form-control"
+                                           id="couponCode"
+                                           placeholder="@L["Cart_EnterCouponCode"]"
+                                           autocomplete="off"
+                                           required>
+                                    <button type="submit" class="btn btn-outline-primary px-4">
+                                        @L["Cart_ApplyCoupon"]
+                                    </button>
                                 </div>
                             </form>
                             <div id="couponMessage" class="mt-2"></div>
                         }
                     </div>
                 </div>
+
             </div>
 
+            
             <div class="col-lg-4">
-                @* Order Summary *@
-                <div class="card sticky-top" style="top: 20px;">
-                    <div class="card-header">
-                        <h5 class="mb-0">Order Summary</h5>
+                <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 20px;">
+                    <div class="card-header bg-transparent border-bottom py-3 px-4">
+                        <h5 class="mb-0"><i class="bi bi-receipt me-2 text-primary"></i>@L["Cart_OrderSummary"]</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
+                    <div class="card-body px-4 py-3">
+
+                        
+                        <div class="summary-row d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">@L["Cart_Subtotal"]</span>
                             <strong>@Model.Subtotal.ToString("C", plnCulture)</strong>
                         </div>
 
-                        @* Always show VIP tier status *@
+                        
                         @if (Model.VipTier != "None")
                         {
-                            <div class="vip-discount-row mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="vip-label">
-                                        <i class="bi bi-star-fill"></i> VIP Discount
-                                        <span class="badge bg-gradient-purple ms-2">@Model.VipTier</span>
-                                        <span class="vip-percentage">@Model.VipDiscountPercentage%</span>
-                                    </span>
-                                    <strong class="vip-amount">-@Model.VipDiscountAmount.ToString("C", plnCulture)</strong>
-                                </div>
+                            <div class="summary-row vip-discount-row d-flex justify-content-between align-items-center mb-2">
+                                <span class="vip-label d-flex align-items-center gap-1">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    @L["Cart_VipDiscount"]
+                                    <span class="badge bg-gradient-purple">@Model.VipTier</span>
+                                    <small class="text-muted">(@Model.VipDiscountPercentage%)</small>
+                                </span>
+                                <strong class="text-success">-@Model.VipDiscountAmount.ToString("C", plnCulture)</strong>
                             </div>
                         }
 
+                        
                         @if (Model.CouponDiscountAmount > 0)
                         {
-                            <div class="coupon-discount-row mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="coupon-label">
-                                        <i class="bi bi-ticket-perforated-fill"></i> Coupon Discount
-                                        @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
-                                        {
-                                            <span class="badge bg-success ms-2">@Model.AppliedCouponCode</span>
-                                        }
-                                        @if (Model.CouponDiscountPercentage.HasValue)
-                                        {
-                                            <span class="coupon-percentage">@Model.CouponDiscountPercentage%</span>
-                                        }
-                                    </span>
-                                    <strong class="coupon-amount">-@Model.CouponDiscountAmount.ToString("C", plnCulture)</strong>
-                                </div>
+                            <div class="summary-row coupon-discount-row d-flex justify-content-between align-items-center mb-2">
+                                <span class="coupon-label d-flex align-items-center gap-1 flex-wrap">
+                                    <i class="bi bi-ticket-perforated-fill text-primary"></i>
+                                    @L["Cart_CouponDiscount"]
+                                    @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
+                                    {
+                                        <span class="badge bg-success">@Model.AppliedCouponCode</span>
+                                    }
+                                    @if (Model.CouponDiscountPercentage.HasValue)
+                                    {
+                                        <small class="text-muted">(@Model.CouponDiscountPercentage%)</small>
+                                    }
+                                </span>
+                                <strong class="text-success">-@Model.CouponDiscountAmount.ToString("C", plnCulture)</strong>
                             </div>
                         }
+
                         
                         @if (Model.DiscountAmount > 0)
                         {
-                            <div class="d-flex justify-content-between mb-2 text-success">
-                                <span><strong>Total Savings:</strong></span>
-                                <strong>-@Model.DiscountAmount.ToString("C", plnCulture)</strong>
+                            <div class="savings-highlight rounded-2 px-3 py-2 mb-3 d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold"><i class="bi bi-piggy-bank me-1"></i>@L["Cart_TotalSavings"]</span>
+                                <strong class="text-success">-@Model.DiscountAmount.ToString("C", plnCulture)</strong>
                             </div>
                         }
 
-                        @* Shipping Options Section *@
+                        <hr class="my-3">
+
+                        
                         <div class="shipping-options-section mb-3">
-                            <h6 class="mb-2">
-                                <i class="bi bi-truck me-2"></i>@L["Shipping_Method"]
+                            <h6 class="mb-2 fw-semibold">
+                                <i class="bi bi-truck me-2 text-primary"></i>@L["Shipping_Method"]
                             </h6>
-                            
+
                             @if (Model.IsFreeShippingVip)
                             {
-                                <div class="alert alert-success py-2 mb-2">
-                                    <i class="bi bi-star-fill text-warning me-1"></i>
-                                    @L["Shipping_FreeVip"]
+                                <div class="alert alert-success py-2 mb-2 border-0 rounded-2 small">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>@L["Shipping_FreeVip"]
                                 </div>
                             }
                             else if (Model.HasFreeShipping)
                             {
-                                <div class="alert alert-success py-2 mb-2">
-                                    <i class="bi bi-check-circle me-1"></i>
-                                    @L["Shipping_FreeThreshold"]
+                                <div class="alert alert-success py-2 mb-2 border-0 rounded-2 small">
+                                    <i class="bi bi-check-circle-fill me-1"></i>@L["Shipping_FreeThreshold"]
                                 </div>
                             }
-                            
+
                             <div class="shipping-options">
                                 @foreach (var option in Model.ShippingOptions)
                                 {
-                                    <div class="shipping-option @(option.IsSelected ? "selected" : "")" 
+                                    <div class="shipping-option @(option.IsSelected ? "selected" : "")"
                                          data-shipping-id="@option.Id"
                                          data-cost="@option.Cost">
-                                        <div class="form-check">
-                                            <input class="form-check-input shipping-radio" 
-                                                   type="radio" 
-                                                   name="shippingOption" 
-                                                   id="shipping_@option.Id" 
-                                                   value="@option.Id"
-                                                   @(option.IsSelected ? "checked" : "")>
-                                            <label class="form-check-label w-100" for="shipping_@option.Id">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <strong>@option.Name</strong>
-                                                        @if (!string.IsNullOrEmpty(option.ProviderName))
+                                        <label class="shipping-option-label d-flex justify-content-between align-items-center w-100" for="shipping_@option.Id">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <input class="form-check-input shipping-radio flex-shrink-0 mt-0"
+                                                       type="radio"
+                                                       name="shippingOption"
+                                                       id="shipping_@option.Id"
+                                                       value="@option.Id"
+                                                       @(option.IsSelected ? "checked" : "")>
+                                                <div>
+                                                    <strong class="d-block">@option.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(option.ProviderName))
+                                                    {
+                                                        <small class="text-muted d-block">@option.ProviderName</small>
+                                                    }
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-calendar-event me-1"></i>@option.DeliveryEstimate @L["Business_Days"]
+                                                        @if (option.EstimatedDeliveryDate.HasValue)
                                                         {
-                                                            <small class="text-muted d-block">@option.ProviderName</small>
+                                                            <span class="text-primary ms-1">(@L["Arrives_By"] @option.EstimatedDeliveryDate.Value.ToString("MMM d"))</span>
                                                         }
-                                                        <small class="text-muted">
-                                                            <i class="bi bi-calendar-event me-1"></i>
-                                                            @option.DeliveryEstimate @L["Business_Days"]
-                                                            @if (option.EstimatedDeliveryDate.HasValue)
-                                                            {
-                                                                <span class="text-primary ms-1">
-                                                                    (@L["Arrives_By"] @option.EstimatedDeliveryDate.Value.ToString("MMM d"))
-                                                                </span>
-                                                            }
-                                                        </small>
-                                                    </div>
-                                                    <div class="text-end">
-                                                        @if (option.IsFree)
-                                                        {
-                                                            <span class="badge bg-success">@L["Free"]</span>
-                                                            @if (option.OriginalCost > 0)
-                                                            {
-                                                                <small class="text-decoration-line-through text-muted d-block">
-                                                                    @option.OriginalCost.ToString("C", plnCulture)
-                                                                </small>
-                                                            }
-                                                        }
-                                                        else if (option.Cost < option.OriginalCost)
-                                                        {
-                                                            <strong>@option.Cost.ToString("C", plnCulture)</strong>
-                                                            <small class="text-decoration-line-through text-muted d-block">
-                                                                @option.OriginalCost.ToString("C", plnCulture)
-                                                            </small>
-                                                        }
-                                                        else
-                                                        {
-                                                            <strong>@option.Cost.ToString("C", plnCulture)</strong>
-                                                        }
-                                                    </div>
+                                                    </small>
                                                 </div>
-                                            </label>
-                                        </div>
+                                            </div>
+                                            <div class="text-end flex-shrink-0 ms-2">
+                                                @if (option.IsFree)
+                                                {
+                                                    <span class="badge bg-success">@L["Free"]</span>
+                                                    @if (option.OriginalCost > 0)
+                                                    {
+                                                        <small class="text-muted text-decoration-line-through d-block">@option.OriginalCost.ToString("C", plnCulture)</small>
+                                                    }
+                                                }
+                                                else if (option.Cost < option.OriginalCost)
+                                                {
+                                                    <strong>@option.Cost.ToString("C", plnCulture)</strong>
+                                                    <small class="text-muted text-decoration-line-through d-block">@option.OriginalCost.ToString("C", plnCulture)</small>
+                                                }
+                                                else
+                                                {
+                                                    <strong>@option.Cost.ToString("C", plnCulture)</strong>
+                                                }
+                                            </div>
+                                        </label>
                                     </div>
                                 }
                             </div>
                         </div>
 
+                        
                         @if (!Model.HasFreeShipping && Model.RemainingForFreeShipping > 0)
                         {
+                            var progressPct = (int)(((Model.FreeShippingThreshold - Model.RemainingForFreeShipping) / Model.FreeShippingThreshold) * 100);
                             <div class="free-shipping-progress mb-3">
-                                <small class="text-muted">@L["Cart_FreeShipping_Add"] @Model.RemainingForFreeShipping.ToString("C", plnCulture) @L["Cart_FreeShipping_More"]</small>
-                                <div class="progress mt-1" style="height: 5px;">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: @((int)(((Model.FreeShippingThreshold - Model.RemainingForFreeShipping) / Model.FreeShippingThreshold) * 100))%"></div>
+                                <small class="text-muted">
+                                    @L["Cart_FreeShipping_Add"] <strong>@Model.RemainingForFreeShipping.ToString("C", plnCulture)</strong> @L["Cart_FreeShipping_More"]
+                                </small>
+                                <div class="progress mt-1 rounded-pill" style="height: 6px;">
+                                    <div class="progress-bar bg-success progress-bar-striped" role="progressbar"
+                                         style="width: @progressPct%"></div>
                                 </div>
                             </div>
                         }
 
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>@L["Shipping"]:</span>
-                            <strong id="shippingCostDisplay">@(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C", plnCulture) : L["Free"].ToString())</strong>
+                        
+                        <div class="summary-row d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">@L["Shipping"]</span>
+                            <strong id="shippingCostDisplay">
+                                @(Model.ShippingCost > 0 ? Model.ShippingCost.ToString("C", plnCulture) : L["Free"].ToString())
+                            </strong>
                         </div>
 
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Tax (23%):<br /><small class="text-muted">(Included in total)</small></span>
+                        
+                        <div class="summary-row d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">
+                                @L["Cart_Tax"]
+                                <br /><small class="text-muted opacity-75">@L["Cart_TaxIncluded"]</small>
+                            </span>
                             <strong>@Model.TaxAmount.ToString("C", plnCulture)</strong>
                         </div>
 
-                        <hr>
+                        <hr class="my-2">
 
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5>Total:</h5>
-                            <h5 id="totalDisplay">@Model.Total.ToString("C", plnCulture)</h5>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="mb-0 fw-bold">@L["Cart_Total"]</h5>
+                            <h5 class="mb-0 fw-bold" id="totalDisplay">@Model.Total.ToString("C", plnCulture)</h5>
                         </div>
 
-                        <button type="button" id="proceedToCheckout" class="btn btn-primary w-100 mb-2"
-                                @if (Model.IsBusinessMode && Model.Items.Any(i => i.IsBelowMinBusinessQty))
+                        
+                        <button type="button"
+                                id="proceedToCheckout"
+                                class="btn btn-primary btn-lg w-100 mb-2"
+                                @if (hasB2bIssues)
                                 {
-                                    <text>disabled title="@(L["Cart_FixMinQty"] ?? "Please fix minimum quantity requirements before checkout")"</text>
+                                    <text>disabled title="@L["Cart_FixMinQty"]"</text>
                                 }>
-                            <i class="bi bi-lock-fill"></i> Proceed to Secure Checkout
+                            <i class="bi bi-lock-fill me-2"></i>@L["Cart_ProceedToCheckout"]
                         </button>
-                        @if (Model.IsBusinessMode && Model.Items.Any(i => i.IsBelowMinBusinessQty))
+
+                        @if (hasB2bIssues)
                         {
-                            <div class="alert alert-danger py-2 mb-2 text-center">
-                                <small><i class="bi bi-exclamation-triangle me-1"></i>@(L["Cart_FixMinQtyCheckout"] ?? "Increase quantities to meet B2B minimums before checkout")</small>
+                            <div class="alert alert-danger py-2 mb-2 text-center border-0 rounded-2 small">
+                                <i class="bi bi-exclamation-triangle me-1"></i>@L["Cart_FixMinQtyCheckout"]
                             </div>
                         }
-                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary w-100">Continue Shopping</a>
+
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-left me-2"></i>@L["ContinueShopping"]
+                        </a>
+
+                        <div id="checkoutError"></div>
+                        <div id="shippingError"></div>
+                        <div class="cart-trust-badges mt-4 pt-3 border-top d-flex justify-content-center gap-4 text-muted">
+                            <div class="text-center">
+                                <i class="bi bi-shield-lock-fill fs-5 d-block mb-1"></i>
+                                <small>@L["Shipping_Secure"]</small>
+                            </div>
+                            <div class="text-center">
+                                <i class="bi bi-truck fs-5 d-block mb-1"></i>
+                                <small>@L["Shipping_Fast"]</small>
+                            </div>
+                            <div class="text-center">
+                                <i class="bi bi-arrow-return-left fs-5 d-block mb-1"></i>
+                                <small>@L["Shipping_Returns"]</small>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
+
         </div>
     }
 </div>
@@ -403,13 +622,24 @@
                 };
             }
 
+            // Localized strings for JS
+            const jsStrings = {
+                removeConfirm:  '@Html.Raw(L["Cart_RemoveConfirm"])',
+                processing:     '@Html.Raw(L["Cart_Processing"])',
+                errorOccurred:  '@Html.Raw(L["Cart_ErrorOccurred"])',
+                failedUpdate:   '@Html.Raw(L["Cart_FailedToUpdate"])',
+                failedRemove:   '@Html.Raw(L["Cart_FailedToRemove"])',
+                failedShipping: '@Html.Raw(L["Cart_FailedShipping"])',
+                free:           '@Html.Raw(L["Free"])'
+            };
+
             // Proceed to checkout - create Stripe session directly
             $('#proceedToCheckout').on('click', async function() {
                 const $button = $(this);
                 const originalHtml = $button.html();
                 
                 $button.prop('disabled', true);
-                $button.html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
+                $button.html('<span class="spinner-border spinner-border-sm me-2"></span>' + jsStrings.processing);
 
                 try {
                     const response = await fetch('/Checkout/CreateCheckoutSession', {
@@ -433,13 +663,13 @@
                             $button.html(originalHtml);
                         }
                     } else {
-                        alert(data.message || 'Failed to create checkout session');
+                        showInlineError('#checkoutError', data.message || jsStrings.errorOccurred);
                         $button.prop('disabled', false);
                         $button.html(originalHtml);
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('An error occurred while processing checkout');
+                    showInlineError('#checkoutError', jsStrings.errorOccurred);
                     $button.prop('disabled', false);
                     $button.html(originalHtml);
                 }
@@ -479,21 +709,26 @@
                     data: JSON.stringify(itemData),
                     success: function(response) {
                         if (response.success) {
-                            location.reload(); // Refresh to update totals
+                            location.reload();
                         } else {
-                            alert(response.message || 'Failed to update quantity');
+                            showInlineError('#qtyError', response.message || jsStrings.failedUpdate);
                         }
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);
-                        alert('An error occurred while updating quantity');
+                        showInlineError('#qtyError', jsStrings.errorOccurred);
                     }
                 });
             });
 
+            // Inline error helper
+            function showInlineError(selector, msg) {
+                $(selector).html('<div class="alert alert-danger alert-dismissible border-0 rounded-2 py-2 mt-2"><i class="bi bi-exclamation-circle me-1"></i>' + msg + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+
             // Remove item
             $('.remove-item').on('click', function() {
-                if (!confirm('Remove this item from cart?')) return;
+                if (!confirm(jsStrings.removeConfirm)) return;
 
                 const $button = $(this);
                 const itemData = getCartItemData($button);
@@ -507,12 +742,12 @@
                         if (response.success) {
                             location.reload();
                         } else {
-                            alert(response.message || 'Failed to remove item');
+                            showInlineError('#removeError', response.message || jsStrings.failedRemove);
                         }
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);
-                        alert('An error occurred while removing item');
+                        showInlineError('#removeError', jsStrings.errorOccurred);
                     }
                 });
             });
@@ -536,7 +771,7 @@
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);
-                        $('#couponMessage').html('<div class="alert alert-danger">An error occurred</div>');
+                        $('#couponMessage').html('<div class="alert alert-danger border-0 rounded-2 py-2"><i class="bi bi-exclamation-circle me-1"></i>' + jsStrings.errorOccurred + '</div>');
                     }
                 });
             });
@@ -576,19 +811,19 @@
                         if (response.success) {
                             // Update displayed values
                             const formattedShipping = response.shippingCost === 0 
-                                ? '@L["Free"]' 
+                                ? jsStrings.free
                                 : new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(response.shippingCost);
                             $('#shippingCostDisplay').text(formattedShipping);
                             
                             const formattedTotal = new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(response.total);
                             $('#totalDisplay').text(formattedTotal);
                         } else {
-                            alert(response.message || 'Failed to update shipping');
+                            showInlineError('#shippingError', response.message || jsStrings.failedShipping);
                         }
                     },
                     error: function(xhr) {
                         console.error('Error:', xhr);
-                        alert('An error occurred while updating shipping');
+                        showInlineError('#shippingError', jsStrings.errorOccurred);
                     }
                 });
             });

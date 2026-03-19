@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Kokomija.Models.ViewModels.Admin
 {
     /// <summary>
@@ -70,10 +72,23 @@ namespace Kokomija.Models.ViewModels.Admin
     public class CarouselSlideTranslationDto
     {
         public int? Id { get; set; } // Null for new translations
+
+        [Required]
+        [MaxLength(10)]
         public string CultureCode { get; set; } = string.Empty; // e.g., "en-US", "pl-PL"
+
+        [Required(ErrorMessage = "Title is required")]
+        [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
+
+        [MaxLength(500)]
         public string? Subtitle { get; set; }
+
+        [MaxLength(100)]
         public string? ButtonText { get; set; }
+
+        [Required(ErrorMessage = "Image alt text is required for accessibility")]
+        [MaxLength(300)]
         public string? ImageAlt { get; set; }
         
         // ASP.NET Routing

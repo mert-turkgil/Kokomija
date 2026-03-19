@@ -1056,6 +1056,18 @@
                         </button>
                     </div>
 
+                    <!-- Dynamic Coupon Section -->
+                    <div id="productCouponsSection" class="product-detail-coupons" style="display:none;">
+                        <div class="coupon-section-header">
+                            <h6 class="coupon-section-title">
+                                <i class="bi bi-ticket-perforated text-primary"></i>
+                                <span>@(L["Product_AvailableCoupons"] ?? "Available Coupons")</span>
+                            </h6>
+                            <span class="coupon-section-count" id="productCouponCount"></span>
+                        </div>
+                        <div class="coupon-strip" id="productCouponStrip"></div>
+                    </div>
+
                     <!-- Product Description -->
                     <div class="product-description" itemprop="description">
                         <h5 class="description-title">@L["Product_Description"]</h5>
@@ -1503,6 +1515,97 @@
                 }, 2000);
             });
         }
+
+        // Load product-specific coupons dynamically
+        var couponT = {
+            general: '@Html.Raw(L["Coupon_Type_General"] ?? "General")',
+            birthday: '@Html.Raw(L["Coupon_Type_Birthday"] ?? "Birthday")',
+            new_user: '@Html.Raw(L["Coupon_Type_NewUser"] ?? "New User")',
+            vip: '@Html.Raw(L["Coupon_Type_VIP"] ?? "VIP")',
+            category: '@Html.Raw(L["Coupon_Type_Category"] ?? "Category")',
+            product: '@Html.Raw(L["Coupon_Type_Product"] ?? "Product")',
+            first_purchase: '@Html.Raw(L["Coupon_Type_FirstPurchase"] ?? "First Purchase")',
+            off: '@Html.Raw(L["Coupon_Off"] ?? "OFF")',
+            newBadge: '@Html.Raw(L["Coupon_New"] ?? "NEW")',
+            min: '@Html.Raw(L["Coupon_Min"] ?? "Min")',
+            max: '@Html.Raw(L["Coupon_Max"] ?? "Max")',
+            expiresToday: '@Html.Raw(L["Coupon_ExpiresToday"] ?? "Expires today!")',
+            expires1Day: '@Html.Raw(L["Coupon_Expires1Day"] ?? "1 day left!")',
+            expiresDays: '@Html.Raw(L["Coupon_ExpiresDays"] ?? "{0} days left")',
+            validUntil: '@Html.Raw(L["Coupon_ValidUntil"] ?? "Until")',
+            copyCode: '@Html.Raw(L["Coupon_CopyCode"] ?? "Copy Code")'
+        };
+
+        (function loadProductCoupons() {
+            var productId = @Model.Id;
+            fetch('/Product/GetProductCoupons/' + productId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.coupons || data.coupons.length === 0) return;
+                    var section = document.getElementById('productCouponsSection');
+                    var strip = document.getElementById('productCouponStrip');
+                    var count = document.getElementById('productCouponCount');
+                    count.textContent = data.coupons.length;
+
+                    var typeMap = {
+                        'general': { cls: 'coupon-general', icon: 'bi-tag', label: couponT.general },
+                        'birthday': { cls: 'coupon-birthday', icon: 'bi-gift', label: couponT.birthday },
+                        'new_user': { cls: 'coupon-newuser', icon: 'bi-person-plus', label: couponT.new_user },
+                        'vip': { cls: 'coupon-vip', icon: 'bi-star', label: couponT.vip },
+                        'category': { cls: 'coupon-category', icon: 'bi-grid', label: couponT.category },
+                        'product': { cls: 'coupon-product', icon: 'bi-box', label: couponT.product },
+                        'first_purchase': { cls: 'coupon-firstpurchase', icon: 'bi-bag-check', label: couponT.first_purchase }
+                    };
+
+                    data.coupons.forEach(function(c) {
+                        var t = typeMap[c.couponType] || typeMap['general'];
+                        var isNew = c.isNew ? ' coupon-new' : '';
+                        var discountHtml = c.discountType === 'percentage'
+                            ? '<span class="discount-value">' + c.discountValue + '<small>%</small></span><span class="discount-label">' + couponT.off + '</span>'
+                            : '<span class="discount-value">' + Math.round(c.discountValue) + '<small>zł</small></span><span class="discount-label">' + couponT.off + '</span>';
+
+                        var detailsHtml = '';
+                        if (c.minimumOrderAmount && c.minimumOrderAmount > 0)
+                            detailsHtml += '<span class="coupon-detail-item"><i class="bi bi-cart"></i> ' + couponT.min + ': ' + Math.round(c.minimumOrderAmount) + ' zł</span>';
+                        if (c.maximumDiscountAmount && c.maximumDiscountAmount > 0)
+                            detailsHtml += '<span class="coupon-detail-item"><i class="bi bi-shield-check"></i> ' + couponT.max + ': ' + Math.round(c.maximumDiscountAmount) + ' zł</span>';
+
+                        var expiryHtml = '';
+                        if (c.validUntil) {
+                            var d = new Date(c.validUntil);
+                            var days = Math.ceil((d - new Date()) / 86400000);
+                            if (days <= 3) {
+                                var expiryText = days <= 0 ? couponT.expiresToday : (days === 1 ? couponT.expires1Day : couponT.expiresDays.replace('{0}', days));
+                                expiryHtml = '<div class="coupon-expiry expiry-urgent"><i class="bi bi-clock"></i><span>' + expiryText + '</span></div>';
+                            } else {
+                                expiryHtml = '<div class="coupon-expiry"><i class="bi bi-calendar-event"></i><span>' + couponT.validUntil + ' ' + d.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) + '</span></div>';
+                            }
+                        }
+
+                        var html = '<div class="coupon-card ' + t.cls + isNew + ' coupon-card-compact" role="article" aria-label="' + couponT.copyCode + ' ' + c.code + '">'
+                            + '<div class="coupon-card-accent"></div>'
+                            + '<div class="coupon-card-body">'
+                            + '<div class="coupon-card-header">'
+                            + '<div class="coupon-type-badge"><i class="bi ' + t.icon + '"></i><span>' + t.label + '</span></div>'
+                            + '<div class="coupon-discount-display">' + discountHtml + '</div>'
+                            + '</div>'
+                            + '<div class="coupon-code-section"><div class="coupon-code-box">'
+                            + '<span class="coupon-code-text">' + c.code + '</span>'
+                            + '<button type="button" class="coupon-copy-btn" onclick="copyCouponCode(\'' + c.code + '\', this)" title="' + couponT.copyCode + '"><i class="bi bi-clipboard"></i></button>'
+                            + '</div>' + (c.isNew ? '<span class="coupon-new-badge">' + couponT.newBadge + '</span>' : '') + '</div>'
+                            + (c.description ? '<p class="coupon-description">' + c.description + '</p>' : '')
+                            + (detailsHtml ? '<div class="coupon-details">' + detailsHtml + '</div>' : '')
+                            + '<div class="coupon-card-footer">' + expiryHtml + '</div>'
+                            + '</div>'
+                            + '<div class="coupon-cutout coupon-cutout-top"></div>'
+                            + '<div class="coupon-cutout coupon-cutout-bottom"></div>'
+                            + '</div>';
+                        strip.insertAdjacentHTML('beforeend', html);
+                    });
+                    section.style.display = '';
+                })
+                .catch(function() { /* silently ignore */ });
+        })();
     </script>
 }
 

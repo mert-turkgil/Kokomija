@@ -36,12 +36,17 @@ namespace Kokomija.Services
         Task<List<Stripe.PaymentMethod>> ListCustomerPaymentMethodsAsync(string customerId);
         Task<Stripe.Coupon> CreateProductCouponAsync(Entity.Coupon coupon, string stripeProductId);
         Task DeleteStripeCouponAsync(string couponId);
+        Task<(Stripe.Coupon StripeCoupon, PromotionCode PromoCode)> SyncCouponToStripeAsync(Entity.Coupon coupon);
+        Task<List<Entity.Coupon>> ImportCouponsFromStripeAsync(IEnumerable<Entity.Coupon> existingCoupons);
         Task DeleteStripeProductAsync(string stripeProductId);
         Task ArchiveStripeProductAsync(string stripeProductId);
         Task<Stripe.ShippingRate> CreateShippingRateAsync(Entity.ShippingRate shippingRate);
         Task<Stripe.ShippingRate> UpdateShippingRateAsync(string stripeShippingRateId, Entity.ShippingRate shippingRate);
         Task<Stripe.ShippingRate> GetShippingRateAsync(string stripeShippingRateId);
         Task<IEnumerable<Stripe.ShippingRate>> ListAllShippingRatesAsync(int limit = 100);
+        Task<Dictionary<string, string>> EnsureVipTierCouponsExistAsync();
+        Task<string?> GetVipTierStripeCouponIdAsync(string vipTier);
+        Task<bool> IsCouponValidOnStripeAsync(string? stripeCouponId);
     }
 
     public class StripeService : IStripeService
@@ -316,10 +321,10 @@ namespace Kokomija.Services
         {
             var options = new PromotionCodeCreateOptions
             {
+                Promotion = new PromotionCodePromotionOptions { Type = "coupon", Coupon = stripeCouponId },
                 Code = code,
                 Active = true
             };
-            options.AddExtraParam("coupon", stripeCouponId);
 
             return await _promotionCodeService.CreateAsync(options);
         }
@@ -337,10 +342,10 @@ namespace Kokomija.Services
         {
             var options = new PromotionCodeCreateOptions
             {
+                Promotion = new PromotionCodePromotionOptions { Type = "coupon", Coupon = stripeCouponId },
                 Code = code,
                 Active = true
             };
-            options.AddExtraParam("coupon", stripeCouponId);
 
             // Per-customer usage limit (e.g., 1 for one-time use per customer)
             if (maxRedemptionsPerCustomer.HasValue)
@@ -857,5 +862,351 @@ namespace Kokomija.Services
             var rates = await _shippingRateService.ListAsync(options);
             return rates.Data;
         }
+
+        /// <summary>
+        /// Idempotent upsert: finds existing Stripe coupon by metadata coupon_id, updates or creates.
+        /// Also ensures a promotion code exists with the correct restrictions.
+        /// </summary>
+        public async Task<(Stripe.Coupon StripeCoupon, PromotionCode PromoCode)> SyncCouponToStripeAsync(Entity.Coupon coupon)
+        {
+            Stripe.Coupon? stripeCoupon = null;
+
+            // Try to find existing Stripe coupon by StripeCouponId
+            if (!string.IsNullOrEmpty(coupon.StripeCouponId))
+            {
+                try
+                {
+                    stripeCoupon = await _couponService.GetAsync(coupon.StripeCouponId);
+                }
+                catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+                {
+                    _logger.LogWarning("Stripe coupon {StripeCouponId} not found, will create new one", coupon.StripeCouponId);
+                    stripeCoupon = null;
+                }
+            }
+
+            // If not found by ID, search by metadata
+            if (stripeCoupon == null)
+            {
+                var allCoupons = await ListAllStripeCouponsAsync(100);
+                stripeCoupon = allCoupons.FirstOrDefault(sc =>
+                    sc.Metadata != null &&
+                    sc.Metadata.TryGetValue("coupon_id", out var cid) &&
+                    cid == coupon.Id.ToString());
+            }
+
+            // Update existing or create new
+            if (stripeCoupon != null)
+            {
+                // Stripe coupons are mostly immutable (can't change discount), but we can update metadata/name
+                var updateOptions = new CouponUpdateOptions
+                {
+                    Name = !string.IsNullOrEmpty(coupon.Description) ? coupon.Description : coupon.Code,
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "coupon_id", coupon.Id.ToString() },
+                        { "code", coupon.Code },
+                        { "coupon_type", coupon.CouponType ?? "general" }
+                    }
+                };
+
+                if (!string.IsNullOrEmpty(coupon.VipTierRequired))
+                    updateOptions.Metadata["vip_tier_required"] = coupon.VipTierRequired;
+                if (coupon.CategoryId.HasValue)
+                    updateOptions.Metadata["category_id"] = coupon.CategoryId.Value.ToString();
+                if (coupon.ProductId.HasValue)
+                    updateOptions.Metadata["product_id"] = coupon.ProductId.Value.ToString();
+
+                stripeCoupon = await _couponService.UpdateAsync(stripeCoupon.Id, updateOptions);
+            }
+            else
+            {
+                stripeCoupon = await CreateStripeCouponAsync(coupon);
+            }
+
+            // Ensure promotion code exists
+            PromotionCode? promoCode = null;
+
+            if (!string.IsNullOrEmpty(coupon.StripePromotionCodeId))
+            {
+                promoCode = await GetStripePromotionCodeAsync(coupon.StripePromotionCodeId);
+            }
+
+            // Search for existing promotion code by coupon code if not found by ID
+            if (promoCode == null)
+            {
+                // Search by code across all promotion codes for this coupon
+                var searchOptions = new PromotionCodeListOptions
+                {
+                    Limit = 100,
+                    Code = coupon.Code
+                };
+                var matchingPromoCodes = await _promotionCodeService.ListAsync(searchOptions);
+                promoCode = matchingPromoCodes.Data.FirstOrDefault();
+            }
+
+            if (promoCode != null)
+            {
+                // Check if restrictions changed — Stripe doesn't allow updating restrictions on promotion codes
+                // so we must deactivate old one and create a new one
+                bool restrictionsChanged = false;
+
+                // Check minimum amount
+                var existingMinAmount = promoCode.Restrictions?.MinimumAmount;
+                var newMinAmount = coupon.MinimumOrderAmount.HasValue ? (long)(coupon.MinimumOrderAmount.Value * 100) : (long?)null;
+                if (existingMinAmount != newMinAmount)
+                    restrictionsChanged = true;
+
+                // Check max redemptions
+                if (promoCode.MaxRedemptions != (coupon.UsageLimitPerUser.HasValue ? (long?)coupon.UsageLimitPerUser.Value : null))
+                    restrictionsChanged = true;
+
+                // Check expiration
+                if (promoCode.ExpiresAt != coupon.ValidUntil)
+                    restrictionsChanged = true;
+
+                if (restrictionsChanged)
+                {
+                    // Deactivate old promotion code
+                    await UpdateStripePromotionCodeAsync(promoCode.Id, false);
+                    _logger.LogInformation("Deactivated old promotion code {PromoId} for coupon {Code} due to restriction changes",
+                        promoCode.Id, coupon.Code);
+
+                    // Create new promotion code with updated restrictions
+                    try
+                    {
+                        promoCode = await CreateStripePromotionCodeWithRestrictionsAsync(
+                            stripeCouponId: stripeCoupon.Id,
+                            code: coupon.Code,
+                            maxRedemptions: coupon.UsageLimit,
+                            maxRedemptionsPerCustomer: coupon.UsageLimitPerUser,
+                            expiresAt: coupon.ValidUntil,
+                            minimumAmount: coupon.MinimumOrderAmount
+                        );
+                    }
+                    catch (StripeException ex) when (ex.StripeError?.Code == "resource_already_exists")
+                    {
+                        // Code already taken — create with a suffix
+                        var newCode = $"{coupon.Code}-{DateTime.UtcNow:yyyyMMddHHmmss}";
+                        promoCode = await CreateStripePromotionCodeWithRestrictionsAsync(
+                            stripeCouponId: stripeCoupon.Id,
+                            code: newCode,
+                            maxRedemptions: coupon.UsageLimit,
+                            maxRedemptionsPerCustomer: coupon.UsageLimitPerUser,
+                            expiresAt: coupon.ValidUntil,
+                            minimumAmount: coupon.MinimumOrderAmount
+                        );
+                        _logger.LogWarning("Created new promotion code with code {NewCode} (original {OrigCode} was taken)",
+                            newCode, coupon.Code);
+                    }
+                }
+                else
+                {
+                    // Only update active status if needed
+                    if (promoCode.Active != coupon.IsActive)
+                    {
+                        promoCode = await UpdateStripePromotionCodeAsync(promoCode.Id, coupon.IsActive);
+                    }
+                }
+            }
+            else
+            {
+                // Create new promotion code with restrictions
+                promoCode = await CreateStripePromotionCodeWithRestrictionsAsync(
+                    stripeCouponId: stripeCoupon.Id,
+                    code: coupon.Code,
+                    maxRedemptions: coupon.UsageLimit,
+                    maxRedemptionsPerCustomer: coupon.UsageLimitPerUser,
+                    expiresAt: coupon.ValidUntil,
+                    minimumAmount: coupon.MinimumOrderAmount
+                );
+            }
+
+            _logger.LogInformation("Synced coupon {Code} with Stripe: CouponId={StripeCouponId}, PromotionCodeId={PromoCodeId}",
+                coupon.Code, stripeCoupon.Id, promoCode.Id);
+
+            return (stripeCoupon, promoCode);
+        }
+
+        /// <summary>
+        /// Import coupons from Stripe that don't exist locally.
+        /// Returns list of newly created local Coupon entities (not yet saved to DB).
+        /// </summary>
+        public async Task<List<Entity.Coupon>> ImportCouponsFromStripeAsync(IEnumerable<Entity.Coupon> existingCoupons)
+        {
+            var imported = new List<Entity.Coupon>();
+            var existingStripeCouponIds = existingCoupons
+                .Where(c => !string.IsNullOrEmpty(c.StripeCouponId))
+                .Select(c => c.StripeCouponId!)
+                .ToHashSet();
+            var existingCodes = existingCoupons
+                .Select(c => c.Code.ToUpper())
+                .ToHashSet();
+
+            var stripeCoupons = await ListAllStripeCouponsAsync(100);
+            var stripePromoCodes = await ListAllStripePromotionCodesAsync(100);
+
+            foreach (var sc in stripeCoupons)
+            {
+                // Skip if already tracked
+                if (existingStripeCouponIds.Contains(sc.Id))
+                    continue;
+
+                // Also skip if matched by metadata coupon_id
+                if (sc.Metadata != null && sc.Metadata.TryGetValue("coupon_id", out var cid))
+                {
+                    if (existingCoupons.Any(c => c.Id.ToString() == cid))
+                        continue;
+                }
+
+                // Find promotion code for this Stripe coupon by searching with code from metadata
+                var promoCodeStr = sc.Metadata?.GetValueOrDefault("code");
+                PromotionCode? relatedPromo = null;
+                if (!string.IsNullOrEmpty(promoCodeStr))
+                {
+                    var searchResult = await _promotionCodeService.ListAsync(new PromotionCodeListOptions
+                    {
+                        Limit = 5,
+                        Code = promoCodeStr
+                    });
+                    relatedPromo = searchResult.Data.FirstOrDefault();
+                }
+                // Fallback: search in pre-fetched list by iterating
+                if (relatedPromo == null)
+                {
+                    relatedPromo = stripePromoCodes.FirstOrDefault(pc => pc.Code == (promoCodeStr ?? sc.Id));
+                }
+                var code = relatedPromo?.Code ?? sc.Metadata?.GetValueOrDefault("code") ?? sc.Id;
+
+                // Skip if a coupon with same code already exists
+                if (existingCodes.Contains(code.ToUpper()))
+                    continue;
+
+                var newCoupon = new Entity.Coupon
+                {
+                    Code = code.ToUpper(),
+                    Description = sc.Name,
+                    DiscountType = sc.PercentOff.HasValue ? "percentage" : "fixed_amount",
+                    DiscountValue = sc.PercentOff ?? (sc.AmountOff.HasValue ? sc.AmountOff.Value / 100m : 0),
+                    CouponType = sc.Metadata?.GetValueOrDefault("coupon_type") ?? "general",
+                    StripeCouponId = sc.Id,
+                    StripePromotionCodeId = relatedPromo?.Id,
+                    IsActive = sc.Valid,
+                    UsageLimit = sc.MaxRedemptions.HasValue ? (int)sc.MaxRedemptions.Value : null,
+                    UsageCount = (int)sc.TimesRedeemed,
+                    ValidUntil = sc.RedeemBy,
+                    CreatedAt = sc.Created,
+                    VipTierRequired = sc.Metadata?.GetValueOrDefault("vip_tier_required"),
+                    CategoryId = sc.Metadata != null && sc.Metadata.TryGetValue("category_id", out var catId) && int.TryParse(catId, out var catIdInt) ? catIdInt : null,
+                    ProductId = sc.Metadata != null && sc.Metadata.TryGetValue("product_id", out var prodId) && int.TryParse(prodId, out var prodIdInt) ? prodIdInt : null
+                };
+
+                imported.Add(newCoupon);
+                existingCodes.Add(newCoupon.Code);
+
+                _logger.LogInformation("Imported coupon {Code} from Stripe (CouponId={StripeCouponId})", newCoupon.Code, sc.Id);
+            }
+
+            return imported;
+        }
+
+        /// <summary>
+        /// Ensures persistent Stripe coupons exist for each VIP tier.
+        /// Returns a dictionary mapping tier name to Stripe coupon ID.
+        /// Idempotent — safe to call on every startup.
+        /// </summary>
+        public async Task<Dictionary<string, string>> EnsureVipTierCouponsExistAsync()
+        {
+            var tiers = new Dictionary<string, decimal>
+            {
+                { "Bronze", 2m },
+                { "Silver", 5m },
+                { "Gold", 8m },
+                { "Platinum", 12m }
+            };
+
+            var result = new Dictionary<string, string>();
+
+            // List existing coupons and find VIP ones by metadata
+            var existingCoupons = await ListAllStripeCouponsAsync(100);
+
+            foreach (var (tier, percent) in tiers)
+            {
+                var metadataKey = $"vip_tier_auto";
+                var existing = existingCoupons.FirstOrDefault(c =>
+                    c.Metadata != null &&
+                    c.Metadata.TryGetValue(metadataKey, out var val) &&
+                    val == tier);
+
+                if (existing != null)
+                {
+                    result[tier] = existing.Id;
+                    _logger.LogInformation("VIP tier coupon already exists for {Tier}: {CouponId}", tier, existing.Id);
+                    continue;
+                }
+
+                // Create new coupon for this tier
+                var options = new CouponCreateOptions
+                {
+                    PercentOff = percent,
+                    Duration = "forever",
+                    Name = $"VIP {tier} Discount ({percent}%)",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "vip_tier_auto", tier },
+                        { "vip_discount_percentage", percent.ToString("F2") }
+                    }
+                };
+
+                var created = await _couponService.CreateAsync(options);
+                result[tier] = created.Id;
+                _logger.LogInformation("Created VIP tier coupon for {Tier}: {CouponId}", tier, created.Id);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks whether a Stripe coupon still exists and is valid.
+        /// Returns false if the coupon was deleted or is invalid on Stripe.
+        /// </summary>
+        public async Task<bool> IsCouponValidOnStripeAsync(string? stripeCouponId)
+        {
+            if (string.IsNullOrEmpty(stripeCouponId))
+                return false;
+
+            try
+            {
+                var stripeCoupon = await _couponService.GetAsync(stripeCouponId);
+                return stripeCoupon.Valid;
+            }
+            catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+            {
+                return false;
+            }
+            catch (StripeException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the Stripe coupon ID for a given VIP tier.
+        /// Searches existing Stripe coupons by metadata.
+        /// </summary>
+        public async Task<string?> GetVipTierStripeCouponIdAsync(string vipTier)
+        {
+            if (string.IsNullOrEmpty(vipTier) || vipTier == "None")
+                return null;
+
+            var existingCoupons = await ListAllStripeCouponsAsync(100);
+            var match = existingCoupons.FirstOrDefault(c =>
+                c.Metadata != null &&
+                c.Metadata.TryGetValue("vip_tier_auto", out var val) &&
+                val == vipTier);
+
+            return match?.Id;
+        }
     }
 }
+

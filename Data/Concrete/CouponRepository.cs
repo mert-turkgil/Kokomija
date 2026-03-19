@@ -18,7 +18,7 @@ namespace Kokomija.Data.Concrete
 
         public async Task<Coupon?> GetActiveByCodeAsync(string code)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             return await _dbSet
                 .Where(c => c.Code.ToLower() == code.ToLower() 
@@ -31,9 +31,11 @@ namespace Kokomija.Data.Concrete
 
         public async Task<IEnumerable<Coupon>> GetActiveCouponsAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             return await _dbSet
+                .Include(c => c.Category)
+                .Include(c => c.Product)
                 .Where(c => c.IsActive
                     && (c.ValidFrom == null || c.ValidFrom <= now)
                     && (c.ValidUntil == null || c.ValidUntil >= now)

@@ -39,6 +39,8 @@ namespace Kokomija.Models.ViewModels
         public List<ProductImageViewModel> Images { get; set; } = new();
         public int? CategoryId { get; set; }
         public List<ProductTranslationViewModel> Translations { get; set; } = new();
+        public bool HasCoupon { get; set; }
+        public decimal CouponDiscount { get; set; }
     }
     
     public class ColorViewModel

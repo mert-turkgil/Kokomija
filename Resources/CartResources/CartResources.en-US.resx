@@ -54,4 +54,56 @@
   <data name="Cart_Coupon_AlreadyUsed" xml:space="preserve"><value>You have already used this coupon the maximum number of times</value></data>
   <data name="Cart_Coupon_MinimumAmount" xml:space="preserve"><value>This coupon requires a minimum order of</value></data>
   <data name="Cart_Coupon_Applied" xml:space="preserve"><value>Coupon applied successfully!</value></data>
+
+  <!-- Coupon UI -->
+  <data name="Cart_HaveCoupon" xml:space="preserve"><value>Have a coupon?</value></data>
+  <data name="Cart_CouponApplied" xml:space="preserve"><value>Coupon applied</value></data>
+  <data name="Cart_AvailableCoupons" xml:space="preserve"><value>Available coupons</value></data>
+  <data name="Cart_EnterCouponCode" xml:space="preserve"><value>Enter coupon code</value></data>
+  <data name="Cart_ApplyCoupon" xml:space="preserve"><value>Apply</value></data>
+  <data name="Cart_CouponDiscount" xml:space="preserve"><value>Coupon Discount</value></data>
+  <data name="Coupon_Off" xml:space="preserve"><value>OFF</value></data>
+
+  <!-- Business Mode -->
+  <data name="Cart_BusinessMode" xml:space="preserve"><value>Business Mode Active</value></data>
+  <data name="Cart_BusinessModeDescription" xml:space="preserve"><value>You are viewing B2B prices with your verified business account</value></data>
+  <data name="Cart_MinQtyWarning" xml:space="preserve"><value>Minimum Quantity Warning</value></data>
+  <data name="Cart_MinQtyWarningDesc" xml:space="preserve"><value>The following items are below the minimum business order quantity. Please increase the quantity to proceed with B2B pricing:</value></data>
+  <data name="Cart_CurrentQty" xml:space="preserve"><value>Current</value></data>
+  <data name="Cart_MinRequired" xml:space="preserve"><value>Minimum required</value></data>
+  <data name="Cart_MinQty" xml:space="preserve"><value>Min</value></data>
+  <data name="Cart_FixMinQty" xml:space="preserve"><value>Please fix minimum quantity requirements before checkout</value></data>
+  <data name="Cart_FixMinQtyCheckout" xml:space="preserve"><value>Increase quantities to meet B2B minimums before checkout</value></data>
+
+  <!-- Empty Cart -->
+  <data name="Cart_EmptyDesc" xml:space="preserve"><value>Browse our catalog and add some items to your cart</value></data>
+
+  <!-- Product Details -->
+  <data name="Cart_Color" xml:space="preserve"><value>Color</value></data>
+  <data name="Cart_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Cart_OutOfStock" xml:space="preserve"><value>Out of stock</value></data>
+  <data name="Cart_MaxQuantity" xml:space="preserve"><value>Max qty</value></data>
+
+  <!-- Order Summary -->
+  <data name="Cart_OrderSummary" xml:space="preserve"><value>Order Summary</value></data>
+  <data name="Cart_Subtotal" xml:space="preserve"><value>Subtotal</value></data>
+  <data name="Cart_VipDiscount" xml:space="preserve"><value>VIP Discount</value></data>
+  <data name="Cart_TotalSavings" xml:space="preserve"><value>Total Savings</value></data>
+  <data name="Cart_Tax" xml:space="preserve"><value>VAT (23%)</value></data>
+  <data name="Cart_TaxIncluded" xml:space="preserve"><value>Included in price</value></data>
+  <data name="Cart_Total" xml:space="preserve"><value>Total</value></data>
+  <data name="Cart_ProceedToCheckout" xml:space="preserve"><value>Proceed to Secure Checkout</value></data>
+
+  <!-- JS Alert Messages -->
+  <data name="Cart_RemoveConfirm" xml:space="preserve"><value>Remove this item from your cart?</value></data>
+  <data name="Cart_Processing" xml:space="preserve"><value>Processing…</value></data>
+  <data name="Cart_ErrorOccurred" xml:space="preserve"><value>An error occurred. Please try again.</value></data>
+  <data name="Cart_FailedToUpdate" xml:space="preserve"><value>Failed to update quantity.</value></data>
+  <data name="Cart_FailedToRemove" xml:space="preserve"><value>Failed to remove item.</value></data>
+  <data name="Cart_FailedShipping" xml:space="preserve"><value>Failed to update shipping option.</value></data>
+
+  <!-- Trust Badges -->
+  <data name="Shipping_Secure" xml:space="preserve"><value>Secure checkout</value></data>
+  <data name="Shipping_Fast" xml:space="preserve"><value>Fast delivery</value></data>
+  <data name="Shipping_Returns" xml:space="preserve"><value>Easy returns</value></data>
 </root>

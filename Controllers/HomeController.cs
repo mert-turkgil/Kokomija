@@ -76,7 +76,7 @@ public class HomeController : Controller
         // Filter and map categories with translated names
         var currentCultureCode = currentCulture == "pl" ? "pl-PL" : currentCulture == "tr" ? "tr-TR" : "en-US";
         var categories = allCategories
-            .Where(c => c.IsActive && c.ParentCategoryId == null)
+            .Where(c => c.IsActive && !c.IsDeleted && c.ParentCategoryId == null)
             .OrderBy(c => c.DisplayOrder)
             .ToList();
         
@@ -96,6 +96,7 @@ public class HomeController : Controller
             // Apply translations to subcategories
             if (category.SubCategories != null)
             {
+                category.SubCategories = category.SubCategories.Where(sc => !sc.IsDeleted && sc.IsActive).ToList();
                 foreach (var subcategory in category.SubCategories)
                 {
                     var subTranslation = subcategory.Translations?.FirstOrDefault(t => t.CultureCode == currentCultureCode)

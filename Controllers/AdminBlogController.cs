@@ -34,14 +34,15 @@ public class AdminBlogController : Controller
     {
         var viewModel = new SiteSettingsViewModel();
         var currentCulture = CultureInfo.CurrentCulture.Name;
-        var blogs = (await _blogService.GetAllAsync()).ToList();
+        var blogs = (await _blogService.GetAllAsync(includeDeleted: true)).ToList();
 
         if (!string.IsNullOrEmpty(category) && int.TryParse(category, out int categoryId))
             blogs = blogs.Where(b => b.CategoryId == categoryId).ToList();
 
         if (!string.IsNullOrEmpty(status))
-            blogs = status.ToLower() == "published" ? blogs.Where(b => b.IsPublished).ToList() : 
-                   status.ToLower() == "draft" ? blogs.Where(b => !b.IsPublished).ToList() : blogs;
+            blogs = status.ToLower() == "published" ? blogs.Where(b => b.IsPublished && !b.IsDeleted).ToList() : 
+                   status.ToLower() == "draft" ? blogs.Where(b => !b.IsPublished && !b.IsDeleted).ToList() :
+                   status.ToLower() == "deleted" ? blogs.Where(b => b.IsDeleted).ToList() : blogs;
 
         viewModel.BlogPosts = blogs.Select(blog =>
         {
@@ -61,6 +62,7 @@ public class AdminBlogController : Controller
                 AuthorName = blog.Author?.UserName ?? "Unknown",
                 CategoryName = blog.Category?.Name ?? "Uncategorized",
                 IsPublished = blog.IsPublished,
+                IsDeleted = blog.IsDeleted,
                 PublishedDate = blog.PublishedDate,
                 Views = blog.Views,
                 CreatedAt = blog.CreatedAt,
@@ -72,6 +74,7 @@ public class AdminBlogController : Controller
         viewModel.TotalBlogs = stats.GetValueOrDefault("Total", 0);
         viewModel.PublishedBlogs = stats.GetValueOrDefault("Published", 0);
         viewModel.DraftBlogs = stats.GetValueOrDefault("Draft", 0);
+        ViewBag.DeletedBlogs = (await _blogService.GetAllAsync(includeDeleted: true)).Count(b => b.IsDeleted);
 
         ViewBag.BlogCategories = (await _unitOfWork.BlogCategories.GetActiveCategoriesAsync()).OrderBy(c => c.DisplayOrder).ToList();
         ViewBag.CurrentCategory = category;
@@ -203,6 +206,15 @@ public class AdminBlogController : Controller
     public async Task<IActionResult> Delete(int id, bool hardDelete = false)
     {
         var result = await _blogService.DeleteBlogAsync(id, hardDelete);
+        TempData[result.Success ? "Success" : "Error"] = result.Message;
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(int id)
+    {
+        var result = await _blogService.RestoreBlogAsync(id);
         TempData[result.Success ? "Success" : "Error"] = result.Message;
         return RedirectToAction(nameof(Index));
     }

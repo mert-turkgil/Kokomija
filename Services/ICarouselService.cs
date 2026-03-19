@@ -40,6 +40,16 @@ namespace Kokomija.Services
         Task<bool> DeleteSlideAsync(int id, string deletedBy);
 
         /// <summary>
+        /// Restore a soft-deleted carousel slide
+        /// </summary>
+        Task<bool> RestoreSlideAsync(int id);
+
+        /// <summary>
+        /// Get all soft-deleted carousel slides
+        /// </summary>
+        Task<IEnumerable<CarouselSlide>> GetDeletedSlidesAsync();
+
+        /// <summary>
         /// Toggle active status
         /// </summary>
         Task<bool> ToggleActiveStatusAsync(int id);

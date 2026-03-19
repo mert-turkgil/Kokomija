@@ -54,4 +54,56 @@
   <data name="Cart_Coupon_AlreadyUsed" xml:space="preserve"><value>Już wykorzystałeś ten kupon maksymalną liczbę razy</value></data>
   <data name="Cart_Coupon_MinimumAmount" xml:space="preserve"><value>Ten kupon wymaga minimalnego zamówienia w wysokości</value></data>
   <data name="Cart_Coupon_Applied" xml:space="preserve"><value>Kupon został zastosowany pomyślnie!</value></data>
+
+  <!-- Coupon UI -->
+  <data name="Cart_HaveCoupon" xml:space="preserve"><value>Masz kupon?</value></data>
+  <data name="Cart_CouponApplied" xml:space="preserve"><value>Kupon zastosowany</value></data>
+  <data name="Cart_AvailableCoupons" xml:space="preserve"><value>Dostępne kupony</value></data>
+  <data name="Cart_EnterCouponCode" xml:space="preserve"><value>Wpisz kod kuponu</value></data>
+  <data name="Cart_ApplyCoupon" xml:space="preserve"><value>Zastosuj</value></data>
+  <data name="Cart_CouponDiscount" xml:space="preserve"><value>Rabat kuponowy</value></data>
+  <data name="Coupon_Off" xml:space="preserve"><value>ZNIŻKA</value></data>
+
+  <!-- Business Mode -->
+  <data name="Cart_BusinessMode" xml:space="preserve"><value>Tryb Biznesowy Aktywny</value></data>
+  <data name="Cart_BusinessModeDescription" xml:space="preserve"><value>Przeglądasz ceny B2B z korzyściami zweryfikowanego konta biznesowego</value></data>
+  <data name="Cart_MinQtyWarning" xml:space="preserve"><value>Ostrzeżenie o minimalnej ilości</value></data>
+  <data name="Cart_MinQtyWarningDesc" xml:space="preserve"><value>Następujące produkty są poniżej minimalnej ilości zamówienia biznesowego. Zwiększ ilość, aby skorzystać z cen B2B:</value></data>
+  <data name="Cart_CurrentQty" xml:space="preserve"><value>Aktualna</value></data>
+  <data name="Cart_MinRequired" xml:space="preserve"><value>Wymagane minimum</value></data>
+  <data name="Cart_MinQty" xml:space="preserve"><value>Min</value></data>
+  <data name="Cart_FixMinQty" xml:space="preserve"><value>Uzupełnij minimalne wymagania ilościowe przed przejściem do kasy</value></data>
+  <data name="Cart_FixMinQtyCheckout" xml:space="preserve"><value>Zwiększ ilości do spełnienia minimów B2B przed przejściem do kasy</value></data>
+
+  <!-- Empty Cart -->
+  <data name="Cart_EmptyDesc" xml:space="preserve"><value>Przeglądaj nasz katalog i dodaj produkty do koszyka</value></data>
+
+  <!-- Product Details -->
+  <data name="Cart_Color" xml:space="preserve"><value>Kolor</value></data>
+  <data name="Cart_Size" xml:space="preserve"><value>Rozmiar</value></data>
+  <data name="Cart_OutOfStock" xml:space="preserve"><value>Brak w magazynie</value></data>
+  <data name="Cart_MaxQuantity" xml:space="preserve"><value>Maks. ilość</value></data>
+
+  <!-- Order Summary -->
+  <data name="Cart_OrderSummary" xml:space="preserve"><value>Podsumowanie zamówienia</value></data>
+  <data name="Cart_Subtotal" xml:space="preserve"><value>Suma częściowa</value></data>
+  <data name="Cart_VipDiscount" xml:space="preserve"><value>Zniżka VIP</value></data>
+  <data name="Cart_TotalSavings" xml:space="preserve"><value>Łączne oszczędności</value></data>
+  <data name="Cart_Tax" xml:space="preserve"><value>VAT (23%)</value></data>
+  <data name="Cart_TaxIncluded" xml:space="preserve"><value>Wliczone w cenę</value></data>
+  <data name="Cart_Total" xml:space="preserve"><value>Łącznie</value></data>
+  <data name="Cart_ProceedToCheckout" xml:space="preserve"><value>Przejdź do bezpiecznej kasy</value></data>
+
+  <!-- JS Alert Messages -->
+  <data name="Cart_RemoveConfirm" xml:space="preserve"><value>Usunąć ten produkt z koszyka?</value></data>
+  <data name="Cart_Processing" xml:space="preserve"><value>Przetwarzanie…</value></data>
+  <data name="Cart_ErrorOccurred" xml:space="preserve"><value>Wystąpił błąd. Spróbuj ponownie.</value></data>
+  <data name="Cart_FailedToUpdate" xml:space="preserve"><value>Nie udało się zaktualizować ilości.</value></data>
+  <data name="Cart_FailedToRemove" xml:space="preserve"><value>Nie udało się usunąć produktu.</value></data>
+  <data name="Cart_FailedShipping" xml:space="preserve"><value>Nie udało się zaktualizować opcji dostawy.</value></data>
+
+  <!-- Trust Badges -->
+  <data name="Shipping_Secure" xml:space="preserve"><value>Bezpieczna płatność</value></data>
+  <data name="Shipping_Fast" xml:space="preserve"><value>Szybka dostawa</value></data>
+  <data name="Shipping_Returns" xml:space="preserve"><value>Łatwe zwroty</value></data>
 </root>

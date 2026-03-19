@@ -41,7 +41,7 @@
         <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-2-4">
-                <div class="stat-card-small">
+                <div class="stat-card-small stat-filter" data-filter="all" role="button" title="Show all products">
                     <div class="stat-icon-small bg-primary">
                         <i class="bi bi-box-seam"></i>
                     </div>
@@ -52,7 +52,7 @@
                 </div>
             </div>
             <div class="col-md-2-4">
-                <div class="stat-card-small">
+                <div class="stat-card-small stat-filter" data-filter="active" role="button" title="Show active products">
                     <div class="stat-icon-small bg-success">
                         <i class="bi bi-check-circle"></i>
                     </div>
@@ -63,7 +63,7 @@
                 </div>
             </div>
             <div class="col-md-2-4">
-                <div class="stat-card-small">
+                <div class="stat-card-small stat-filter" data-filter="inactive" role="button" title="Show inactive products">
                     <div class="stat-icon-small bg-warning">
                         <i class="bi bi-pause-circle"></i>
                     </div>
@@ -74,7 +74,7 @@
                 </div>
             </div>
             <div class="col-md-2-4">
-                <div class="stat-card-small">
+                <div class="stat-card-small stat-filter" data-filter="out" role="button" title="Show out of stock products">
                     <div class="stat-icon-small bg-danger">
                         <i class="bi bi-exclamation-triangle"></i>
                     </div>
@@ -85,7 +85,7 @@
                 </div>
             </div>
             <div class="col-md-2-4">
-                <div class="stat-card-small">
+                <div class="stat-card-small stat-filter active" data-filter="all" role="button" title="Show all products">
                     <div class="stat-icon-small bg-info">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
@@ -399,6 +399,29 @@
             align-items: center;
             gap: 1rem;
             height: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .stat-filter {
+            cursor: pointer;
+        }
+
+        .stat-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-filter.active {
+            outline: 2px solid var(--bs-primary);
+            outline-offset: -2px;
+        }
+
+        [data-bs-theme="dark"] .stat-filter:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-bs-theme="dark"] .stat-filter.active {
+            outline-color: var(--bs-primary);
         }
 
         .stat-icon-small {
@@ -683,7 +706,29 @@
             
             // Status filter buttons
             $('input[name="statusFilter"]').on('change', function() {
+                // Sync stat card active state with radio buttons
+                var filterVal = $(this).val();
+                $('.stat-filter').removeClass('active');
+                $('.stat-filter[data-filter="' + filterVal + '"]').first().addClass('active');
                 applyFilters();
+            });
+
+            // Clickable stat cards
+            $('.stat-filter').on('click', function() {
+                var filterVal = $(this).data('filter');
+                // Set the corresponding radio button
+                var radioId = {
+                    'all': '#filterAll',
+                    'active': '#filterActive',
+                    'inactive': '#filterInactive',
+                    'out': '#filterOutOfStock'
+                }[filterVal];
+                if (radioId) {
+                    $(radioId).prop('checked', true);
+                    $('.stat-filter').removeClass('active');
+                    $(this).addClass('active');
+                    applyFilters();
+                }
             });
             
             function updateFilteredCount(api) {

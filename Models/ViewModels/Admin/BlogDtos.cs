@@ -114,6 +114,7 @@ namespace Kokomija.Models.ViewModels.Admin
         public string AuthorName { get; set; } = string.Empty;
         public string CategoryName { get; set; } = string.Empty;
         public bool IsPublished { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTime? PublishedDate { get; set; }
         public int Views { get; set; }
         public DateTime CreatedAt { get; set; }

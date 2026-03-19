@@ -5,8 +5,9 @@ using System.Net.Http.Headers;
 namespace Kokomija.Services;
 
 /// <summary>
-/// Auto-translation service using MyMemory API (free tier: 1000 words/day)
-/// Falls back to simple placeholder translation if API fails
+/// Auto-translation service using DeepL API as primary (auto-detect source language).
+/// Falls back to MyMemory API if DeepL key is missing or quota exceeded.
+/// Falls back to basic dictionary if both APIs fail.
 /// </summary>
 public class AutoTranslationService : IAutoTranslationService
 {
@@ -14,7 +15,7 @@ public class AutoTranslationService : IAutoTranslationService
     private readonly ILogger<AutoTranslationService> _logger;
     private readonly IConfiguration _configuration;
     
-    // MyMemory API (free, no key required for basic usage)
+    private const string DeepLApiUrl = "https://api-free.deepl.com/v2/translate";
     private const string MyMemoryApiUrl = "https://api.mymemory.translated.net/get";
     
     public AutoTranslationService(
@@ -41,33 +42,151 @@ public class AutoTranslationService : IAutoTranslationService
             };
         }
         
+        var sourceLang = NormalizeLanguageCode(sourceLanguage);
+        var targetLang = NormalizeLanguageCode(targetLanguage);
+        
+        if (sourceLang == targetLang)
+        {
+            return new TranslationResult
+            {
+                Success = true,
+                OriginalText = text,
+                TranslatedText = text,
+                SourceLanguage = sourceLang,
+                TargetLanguage = targetLang
+            };
+        }
+        
+        // Try DeepL first
+        var deepLKey = _configuration["DeepL:ApiKey"];
+        if (!string.IsNullOrEmpty(deepLKey))
+        {
+            var deepLResult = await TranslateWithDeepLAsync(text, targetLang, deepLKey);
+            if (deepLResult != null)
+                return deepLResult;
+        }
+        
+        // Fallback to MyMemory
+        var myMemoryResult = await TranslateWithMyMemoryAsync(text, sourceLang, targetLang);
+        if (myMemoryResult != null)
+            return myMemoryResult;
+        
+        // Final fallback: dictionary
+        return await FallbackTranslateAsync(text, sourceLang, targetLang);
+    }
+    
+    public async Task<List<TranslationResult>> TranslateBatchAsync(List<string> texts, string sourceLanguage, string targetLanguage)
+    {
+        var results = new List<TranslationResult>();
+        
+        foreach (var text in texts)
+        {
+            var result = await TranslateAsync(text, sourceLanguage, targetLanguage);
+            results.Add(result);
+            
+            await Task.Delay(50);
+        }
+        
+        return results;
+    }
+
+    #region DeepL
+
+    private async Task<TranslationResult?> TranslateWithDeepLAsync(string text, string targetLang, string apiKey)
+    {
         try
         {
-            // Normalize language codes
-            var sourceLang = NormalizeLanguageCode(sourceLanguage);
-            var targetLang = NormalizeLanguageCode(targetLanguage);
-            
-            if (sourceLang == targetLang)
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(15);
+
+            // DeepL uses uppercase language codes: EN, PL, DE, etc.
+            // For English target, DeepL requires EN-US or EN-GB
+            var deepLTarget = targetLang.ToUpper() switch
             {
-                return new TranslationResult
-                {
-                    Success = true,
-                    OriginalText = text,
-                    TranslatedText = text,
-                    SourceLanguage = sourceLang,
-                    TargetLanguage = targetLang
-                };
+                "EN" => "EN-US",
+                _ => targetLang.ToUpper()
+            };
+
+            var formData = new List<KeyValuePair<string, string>>
+            {
+                new("auth_key", apiKey),
+                new("text", text),
+                new("target_lang", deepLTarget)
+                // No source_lang — DeepL auto-detects
+            };
+
+            var content = new FormUrlEncodedContent(formData);
+            var response = await client.PostAsync(DeepLApiUrl, content);
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                _logger.LogWarning("DeepL API key is invalid or unauthorized");
+                return null;
             }
             
+            if (response.StatusCode == (System.Net.HttpStatusCode)456 ||
+                response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                _logger.LogWarning("DeepL API quota exceeded, falling back to MyMemory");
+                return null;
+            }
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<DeepLResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                if (result?.Translations != null && result.Translations.Count > 0)
+                {
+                    var translation = result.Translations[0];
+                    var detectedSource = translation.DetectedSourceLanguage?.ToLower() ?? "auto";
+                    
+                    _logger.LogInformation("DeepL translated from {Source} to {Target}", detectedSource, targetLang);
+                    
+                    return new TranslationResult
+                    {
+                        Success = true,
+                        OriginalText = text,
+                        TranslatedText = translation.Text,
+                        SourceLanguage = detectedSource,
+                        TargetLanguage = targetLang
+                    };
+                }
+            }
+            
+            _logger.LogWarning("DeepL API returned {Status}", response.StatusCode);
+            return null;
+        }
+        catch (TaskCanceledException)
+        {
+            _logger.LogWarning("DeepL translation request timed out");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error translating with DeepL API");
+            return null;
+        }
+    }
+
+    #endregion
+
+    #region MyMemory Fallback
+
+    private async Task<TranslationResult?> TranslateWithMyMemoryAsync(string text, string sourceLang, string targetLang)
+    {
+        try
+        {
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(10);
             
-            // Build the URL with query parameters
             var langpair = $"{sourceLang}|{targetLang}";
             var encodedText = Uri.EscapeDataString(text);
             var requestUrl = $"{MyMemoryApiUrl}?q={encodedText}&langpair={langpair}";
             
-            // Add optional email for higher rate limits
             var email = _configuration["Translation:MyMemoryEmail"];
             if (!string.IsNullOrEmpty(email))
             {
@@ -88,11 +207,10 @@ public class AutoTranslationService : IAutoTranslationService
                 {
                     var translatedText = result.ResponseData.TranslatedText;
                     
-                    // Check for rate limit warning
                     if (translatedText.Contains("MYMEMORY WARNING"))
                     {
-                        _logger.LogWarning("MyMemory API rate limit warning received");
-                        return await FallbackTranslateAsync(text, sourceLang, targetLang);
+                        _logger.LogWarning("MyMemory API rate limit warning");
+                        return null;
                     }
                     
                     return new TranslationResult
@@ -106,38 +224,19 @@ public class AutoTranslationService : IAutoTranslationService
                 }
             }
             
-            _logger.LogWarning("MyMemory API returned non-success status: {StatusCode}", response.StatusCode);
-            return await FallbackTranslateAsync(text, sourceLang, targetLang);
-        }
-        catch (TaskCanceledException)
-        {
-            _logger.LogWarning("Translation request timed out");
-            return await FallbackTranslateAsync(text, sourceLanguage, targetLanguage);
+            _logger.LogWarning("MyMemory API returned {Status}", response.StatusCode);
+            return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error translating text with MyMemory API");
-            return await FallbackTranslateAsync(text, sourceLanguage, targetLanguage);
+            _logger.LogWarning(ex, "Error translating with MyMemory API");
+            return null;
         }
     }
-    
-    public async Task<List<TranslationResult>> TranslateBatchAsync(List<string> texts, string sourceLanguage, string targetLanguage)
-    {
-        var results = new List<TranslationResult>();
-        
-        foreach (var text in texts)
-        {
-            var result = await TranslateAsync(text, sourceLanguage, targetLanguage);
-            results.Add(result);
-            
-            // Add small delay to respect rate limits
-            await Task.Delay(100);
-        }
-        
-        return results;
-    }
-    
-    /// <summary>
+
+    #endregion
+
+    #region Dictionary Fallback
     /// Fallback translation using basic dictionary-based approach for common e-commerce terms
     /// </summary>
     private Task<TranslationResult> FallbackTranslateAsync(string text, string sourceLang, string targetLang)
@@ -276,6 +375,20 @@ public class AutoTranslationService : IAutoTranslationService
             _ => languageCode?.ToLower()?.Split('-')[0] ?? "en"
         };
     }
+
+    #endregion
+}
+
+// DeepL API Response DTOs
+internal class DeepLResponse
+{
+    public List<DeepLTranslation> Translations { get; set; } = new();
+}
+
+internal class DeepLTranslation
+{
+    public string Text { get; set; } = string.Empty;
+    public string? DetectedSourceLanguage { get; set; }
 }
 
 // MyMemory API Response DTOs

@@ -1101,9 +1101,12 @@
         <!-- Deductions Breakdown -->
         <div class="col-xl-5 col-lg-6">
             <div class="chart-card h-100">
-                <div class="chart-title">
-                    <i class="bi bi-pie-chart-fill text-primary"></i>
-                    Deductions Breakdown
+                <div class="chart-title d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-pie-chart-fill text-primary"></i>
+                    Deductions Breakdown</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printChart('deductionChart', 'Deductions Breakdown')" title="Print Chart">
+                        <i class="bi bi-printer"></i>
+                    </button>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-5">
@@ -1133,9 +1136,12 @@
         <!-- Revenue Chart -->
         <div class="col-xl-7 col-lg-6">
             <div class="chart-card h-100">
-                <div class="chart-title">
-                    <i class="bi bi-graph-up text-success"></i>
-                    Revenue Trend
+                <div class="chart-title d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-graph-up text-success"></i>
+                    Revenue Trend</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printChart('revenueChart', 'Revenue Trend')" title="Print Chart">
+                        <i class="bi bi-printer"></i>
+                    </button>
                 </div>
                 <div class="chart-container">
                     <canvas id="revenueChart"></canvas>
@@ -1918,6 +1924,20 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        function printChart(canvasId, title) {
+            var canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            var imgData = canvas.toDataURL('image/png');
+            var win = window.open('', '_blank');
+            win.document.write('<html><head><title>' + title + '</title></head><body style="text-align:center;padding:20px;">');
+            win.document.write('<h2>' + title + '</h2>');
+            win.document.write('<img src="' + imgData + '" style="max-width:100%;">');
+            win.document.write('</body></html>');
+            win.document.close();
+            win.onload = function() { win.print(); };
+        }
+    </script>
     <style>
         /* DataTables Dark Mode */
         [data-bs-theme="dark"] .dataTables_wrapper .dataTables_length select,

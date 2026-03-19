@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using System.Security.Claims;
 
 namespace Kokomija.Controllers
@@ -639,9 +642,9 @@ namespace Kokomija.Controllers
 
             // Calculate statistics
             var totalOrders = orders.Count();
-            var pendingOrders = orders.Count(o => o.OrderStatus == "Pending" || o.OrderStatus == "Processing");
-            var completedOrders = orders.Count(o => o.OrderStatus == "Completed" || o.OrderStatus == "Delivered");
-            var totalSpent = orders.Where(o => o.OrderStatus != "Cancelled").Sum(o => o.TotalAmount);
+            var pendingOrders = orders.Count(o => o.OrderStatus == "pending" || o.OrderStatus == "processing");
+            var completedOrders = orders.Count(o => o.OrderStatus == "completed" || o.OrderStatus == "delivered");
+            var totalSpent = orders.Where(o => o.OrderStatus != "cancelled").Sum(o => o.TotalAmount);
 
             // Get cart and wishlist counts
             var cartItemsCount = await _unitOfWork.Carts.GetCartItemCountAsync(user.Id);
@@ -673,8 +676,8 @@ namespace Kokomija.Controllers
                 SessionStatus = o.SessionStatus,
                 CustomerCountry = o.CustomerCountry,
                 ItemCount = o.OrderItems?.Count ?? 0,
-                CanCancel = o.OrderStatus == "Pending" || o.OrderStatus == "Processing",
-                CanReturn = o.OrderStatus == "Delivered" && o.DeliveredAt.HasValue && (DateTime.UtcNow - o.DeliveredAt.Value).TotalDays <= 30,
+                CanCancel = o.OrderStatus == "pending" || o.OrderStatus == "processing",
+                CanReturn = o.OrderStatus == "delivered" && o.DeliveredAt.HasValue && (DateTime.UtcNow - o.DeliveredAt.Value).TotalDays <= 30,
                 Items = o.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
                 {
                     Id = oi.Id,
@@ -760,8 +763,8 @@ namespace Kokomija.Controllers
             var hasPassword = await _userManager.HasPasswordAsync(user);
 
             // Load coupons - check both local DB and Stripe for used coupons
-            var now = DateTime.UtcNow;
-            var allCoupons = await _unitOfWork.Coupons.GetAllAsync("CouponUsages");
+            var now = DateTime.Now;
+            var allCoupons = await _unitOfWork.Coupons.GetAllAsync("CouponUsages", "Category", "Product");
             
             // Get used promotion codes from Stripe
             var stripeUsedPromotionCodes = new List<string>();
@@ -785,6 +788,12 @@ namespace Kokomija.Controllers
                 .ToList();
             
             // Available coupons: active, valid dates, not used locally AND not used in Stripe
+            var tierOrder = new Dictionary<string, int> { { "None", 0 }, { "Bronze", 1 }, { "Silver", 2 }, { "Gold", 3 }, { "Platinum", 4 } };
+            var userTierLevel = tierOrder.GetValueOrDefault(user.VipTier ?? "None", 0);
+            var userOrders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
+            var hasOrders = userOrders.Any();
+            var todayDate = DateTime.UtcNow.Date;
+
             var availableCoupons = allCoupons
                 .Where(c => c.IsActive && 
                            (!c.ValidFrom.HasValue || c.ValidFrom.Value <= now) &&
@@ -793,6 +802,19 @@ namespace Kokomija.Controllers
                            (c.UserId == null || c.UserId == user.Id) &&
                            !localUsedCouponIds.Contains(c.Id) &&
                            (string.IsNullOrEmpty(c.StripePromotionCodeId) || !stripeUsedPromotionCodes.Contains(c.StripePromotionCodeId)))
+                // Type-specific eligibility
+                .Where(c =>
+                    // Birthday: only show during birthday window
+                    (c.CouponType != "birthday" || (user.Birthday != null &&
+                        todayDate >= new DateTime(todayDate.Year, user.Birthday.Value.Month, user.Birthday.Value.Day).AddDays(-(c.DaysBeforeBirthday ?? 7)) &&
+                        todayDate <= new DateTime(todayDate.Year, user.Birthday.Value.Month, user.Birthday.Value.Day).AddDays(c.DaysAfterBirthday ?? 7))) &&
+                    // New user: only if account is young enough
+                    (c.CouponType != "new_user" || !c.AccountAgeDays.HasValue || (DateTime.UtcNow - user.CreatedAt).TotalDays <= c.AccountAgeDays.Value) &&
+                    // First purchase: only if no prior orders
+                    (c.CouponType != "first_purchase" || !hasOrders) &&
+                    // VIP tier: only if user meets requirement
+                    (string.IsNullOrEmpty(c.VipTierRequired) || userTierLevel >= tierOrder.GetValueOrDefault(c.VipTierRequired, 0))
+                )
                 .Select(c => new AccountCouponViewModel
                 {
                     Id = c.Id,
@@ -800,9 +822,13 @@ namespace Kokomija.Controllers
                     Description = c.Description ?? string.Empty,
                     DiscountType = c.DiscountType,
                     DiscountValue = c.DiscountValue,
+                    CouponType = c.CouponType,
                     MinimumOrderAmount = c.MinimumOrderAmount,
+                    MaximumDiscountAmount = c.MaximumDiscountAmount,
                     ValidUntil = c.ValidUntil,
-                    IsNew = c.CreatedAt >= DateTime.UtcNow.AddDays(-7)
+                    IsNew = c.CreatedAt >= DateTime.UtcNow.AddDays(-7),
+                    CategoryName = c.Category?.Name,
+                    ProductName = c.Product?.Name
                 })
                 .ToList();
             
@@ -1017,7 +1043,9 @@ namespace Kokomija.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CancelOrder(int id)
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int id, string? reason)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -1031,17 +1059,347 @@ namespace Kokomija.Controllers
                 return Json(new { success = false, message = "Order not found" });
             }
 
-            // Can only cancel pending or processing orders
-            if (order.OrderStatus == "pending" || order.OrderStatus == "processing")
+            if (order.OrderStatus != "pending" && order.OrderStatus != "processing")
             {
-                order.OrderStatus = "cancelled";
-                _unitOfWork.Orders.Update(order);
-                await _unitOfWork.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Order cancelled successfully" });
+                return Json(new { success = false, message = "Cannot request cancellation at this stage" });
             }
 
-            return Json(new { success = false, message = "Cannot cancel order at this stage" });
+            var adminEmail = _configuration["Email:AdminEmail"] ?? "kontakt@kokomija.com";
+            var subject = $"Cancellation & Refund Request - Order #{order.OrderNumber}";
+            var body = $@"<h2>🚫 Order Cancellation & Refund Request</h2>
+                <p><strong>Order:</strong> #{order.OrderNumber}</p>
+                <p><strong>Customer:</strong> {user.Email} ({user.FirstName} {user.LastName})</p>
+                <p><strong>Order Total:</strong> {order.TotalAmount:N2} {order.Currency?.ToUpper()}</p>
+                <p><strong>Current Status:</strong> {order.OrderStatus}</p>
+                <p><strong>Payment Status:</strong> {order.PaymentStatus}</p>
+                <p><strong>Reason:</strong></p>
+                <p>{System.Net.WebUtility.HtmlEncode(reason ?? "No reason provided")}</p>
+                <hr>
+                <p><small>Submitted at {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</small></p>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(adminEmail, subject, body, user.Email);
+            }
+            catch
+            {
+                // Log but don't fail
+            }
+
+            return Json(new { success = true, message = "Cancellation request submitted. Our team will review it and contact you via email." });
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitEditRequest(int orderId, string requestType, string details)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Json(new { success = false, message = "User not authenticated" });
+
+            if (string.IsNullOrWhiteSpace(requestType) || string.IsNullOrWhiteSpace(details) || details.Length < 10)
+                return Json(new { success = false, message = "Please provide valid request type and details" });
+
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
+            if (order == null || order.UserId != user.Id)
+                return Json(new { success = false, message = "Order not found" });
+
+            var typeLabel = requestType switch
+            {
+                "address_change" => "Address Change",
+                "item_change" => "Item Change (size/color)",
+                "add_note" => "Delivery Note",
+                _ => "Other"
+            };
+
+            var adminEmail = _configuration["Email:AdminEmail"] ?? "kontakt@kokomija.com";
+            var subject = $"Edit Request for Order #{order.OrderNumber} - {typeLabel}";
+            var body = $@"<h2>Order Edit Request</h2>
+                <p><strong>Order:</strong> #{order.OrderNumber}</p>
+                <p><strong>Customer:</strong> {user.Email} ({user.FirstName} {user.LastName})</p>
+                <p><strong>Request Type:</strong> {typeLabel}</p>
+                <p><strong>Details:</strong></p>
+                <p>{System.Net.WebUtility.HtmlEncode(details)}</p>
+                <p><strong>Order Status:</strong> {order.OrderStatus}</p>
+                <hr>
+                <p><small>Submitted at {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</small></p>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(adminEmail, subject, body, user.Email);
+            }
+            catch
+            {
+                // Log but don't fail - the request is still valid
+            }
+
+            return Json(new { success = true, message = "Request submitted successfully" });
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> DownloadInvoice(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return RedirectToAction("Login");
+
+            var order = await _unitOfWork.Orders.GetByIdAsync(id,
+                o => o.OrderItems,
+                o => o.Coupon!);
+
+            if (order == null || order.UserId != user.Id)
+                return NotFound();
+
+            if (order.PaymentStatus?.ToLower() != "paid")
+                return BadRequest("Invoice is only available for paid orders.");
+
+            var cur = order.Currency?.ToUpper() switch
+            {
+                "EUR" => "EUR",
+                "USD" => "USD",
+                _ => "PLN"
+            };
+            var sym = cur switch { "EUR" => "€", "USD" => "$", _ => "zł" };
+
+            // EU tax detail
+            var netAmount = order.SubtotalAmount + order.ShippingCost - order.DiscountAmount;
+            var taxPercent = order.TaxRate * 100;
+            var invoiceNumber = $"INV-{order.CreatedAt:yyyyMMdd}-{order.OrderNumber}";
+            var invoiceDate = order.PaidAt ?? order.CreatedAt;
+
+            // Load logo
+            var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "logo_black.png");
+            byte[]? logoBytes = System.IO.File.Exists(logoPath) ? await System.IO.File.ReadAllBytesAsync(logoPath) : null;
+
+            var pdf = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.MarginHorizontal(45);
+                    page.MarginVertical(35);
+                    page.DefaultTextStyle(x => x.FontSize(9.5f));
+
+                    // ─── Header ─────────────────────────────────────────
+                    page.Header().Column(col =>
+                    {
+                        col.Item().Row(row =>
+                        {
+                            row.RelativeItem(3).Column(left =>
+                            {
+                                if (logoBytes != null)
+                                    left.Item().Width(120).Image(logoBytes);
+                                else
+                                    left.Item().Text("KOKOMIJA").Bold().FontSize(24).FontColor("#1a1a1a");
+
+                                left.Item().PaddingTop(6).Text("Kokomija").Bold().FontSize(10);
+                                left.Item().Text("Kraków, Poland").FontSize(8).FontColor("#555555");
+                                left.Item().Text("kontakt@kokomija.com").FontSize(8).FontColor("#555555");
+                                left.Item().Text("+48 123 456 789").FontSize(8).FontColor("#555555");
+                            });
+
+                            row.RelativeItem(2).AlignRight().PaddingTop(5).Column(right =>
+                            {
+                                right.Item().Text("FAKTURA / INVOICE").Bold().FontSize(16).FontColor("#1a1a1a");
+                                right.Item().PaddingTop(8).Text($"No: {invoiceNumber}").FontSize(9);
+                                right.Item().Text($"Invoice date: {invoiceDate:dd.MM.yyyy}").FontSize(9);
+                                right.Item().Text($"Sale date: {invoiceDate:dd.MM.yyyy}").FontSize(9);
+                                right.Item().Text($"Payment: Stripe (Card)").FontSize(9);
+                                right.Item().PaddingTop(4).Text($"Status: PAID").Bold().FontSize(9).FontColor("#2e7d32");
+                            });
+                        });
+
+                        col.Item().PaddingVertical(12).LineHorizontal(1.5f).LineColor("#1a1a1a");
+                    });
+
+                    // ─── Content ────────────────────────────────────────
+                    page.Content().Column(content =>
+                    {
+                        // Seller / Buyer
+                        content.Item().PaddingBottom(18).Row(row =>
+                        {
+                            row.RelativeItem().Border(1).BorderColor("#e0e0e0").Padding(12).Column(seller =>
+                            {
+                                seller.Item().Text("SELLER / SPRZEDAWCA").Bold().FontSize(8).FontColor("#888888");
+                                seller.Item().PaddingTop(4).Text("Kokomija").Bold().FontSize(10);
+                                seller.Item().Text("Kraków, Poland");
+                                seller.Item().Text("kontakt@kokomija.com");
+                                seller.Item().Text("+48 123 456 789");
+                            });
+
+                            row.ConstantItem(15);
+
+                            row.RelativeItem().Border(1).BorderColor("#e0e0e0").Padding(12).Column(buyer =>
+                            {
+                                buyer.Item().Text("BUYER / NABYWCA").Bold().FontSize(8).FontColor("#888888");
+                                buyer.Item().PaddingTop(4).Text(order.CustomerName ?? $"{user.FirstName} {user.LastName}").Bold().FontSize(10);
+                                buyer.Item().Text(order.CustomerEmail);
+                                if (!string.IsNullOrEmpty(order.CustomerPhone))
+                                    buyer.Item().Text(order.CustomerPhone);
+                                if (!string.IsNullOrEmpty(order.ShippingAddress))
+                                    buyer.Item().Text(order.ShippingAddress);
+                                var cityParts = new[] { order.ShippingPostalCode, order.ShippingCity }.Where(s => !string.IsNullOrEmpty(s));
+                                if (cityParts.Any())
+                                    buyer.Item().Text(string.Join(" ", cityParts));
+                                if (!string.IsNullOrEmpty(order.ShippingCountry))
+                                    buyer.Item().Text(order.ShippingCountry);
+                            });
+                        });
+
+                        // Items table — EU style with Net / VAT / Gross
+                        content.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(cols =>
+                            {
+                                cols.ConstantColumn(28);       // #
+                                cols.RelativeColumn(4);        // Description
+                                cols.RelativeColumn(0.8f);     // Qty
+                                cols.RelativeColumn(1.2f);     // Net unit price
+                                cols.RelativeColumn(1.2f);     // Net total
+                                cols.RelativeColumn(0.8f);     // VAT %
+                                cols.RelativeColumn(1f);       // VAT amount
+                                cols.RelativeColumn(1.3f);     // Gross total
+                            });
+
+                            // Header
+                            table.Header(header =>
+                            {
+                                void HCell(string text, bool right = false)
+                                {
+                                    var cell = header.Cell().Background("#1a1a1a").Padding(6);
+                                    var t = right ? cell.AlignRight() : cell;
+                                    t.Text(text).FontColor("#ffffff").Bold().FontSize(8);
+                                }
+                                HCell("#");
+                                HCell("Description / Opis");
+                                HCell("Qty", true);
+                                HCell($"Net ({cur})", true);
+                                HCell($"Net total", true);
+                                HCell("VAT %", true);
+                                HCell($"VAT ({cur})", true);
+                                HCell($"Gross ({cur})", true);
+                            });
+
+                            if (order.OrderItems != null)
+                            {
+                                var idx = 1;
+                                foreach (var item in order.OrderItems)
+                                {
+                                    var bg = idx % 2 == 0 ? "#f5f5f5" : "#ffffff";
+                                    var variant = new List<string>();
+                                    if (!string.IsNullOrEmpty(item.Color)) variant.Add(item.Color);
+                                    if (!string.IsNullOrEmpty(item.Size)) variant.Add(item.Size);
+                                    var variantText = variant.Count > 0 ? $" ({string.Join(", ", variant)})" : "";
+
+                                    var itemGross = item.TotalPrice;
+                                    var itemNet = order.TaxRate > 0 ? Math.Round(itemGross / (1 + order.TaxRate), 2) : itemGross;
+                                    var itemVat = itemGross - itemNet;
+                                    var unitNet = order.TaxRate > 0 ? Math.Round(item.UnitPrice / (1 + order.TaxRate), 2) : item.UnitPrice;
+
+                                    table.Cell().Background(bg).Padding(5).Text(idx.ToString()).FontSize(8);
+                                    table.Cell().Background(bg).Padding(5).Text($"{item.ProductName}{variantText}").FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text(item.Quantity.ToString()).FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{unitNet:N2}").FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{itemNet:N2}").FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{taxPercent:0.##}%").FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{itemVat:N2}").FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{itemGross:N2}").FontSize(8.5f);
+                                    idx++;
+                                }
+
+                                // Shipping row
+                                if (order.ShippingCost > 0)
+                                {
+                                    var shipBg = idx % 2 == 0 ? "#f5f5f5" : "#ffffff";
+                                    var shipNet = order.TaxRate > 0 ? Math.Round(order.ShippingCost / (1 + order.TaxRate), 2) : order.ShippingCost;
+                                    var shipVat = order.ShippingCost - shipNet;
+
+                                    table.Cell().Background(shipBg).Padding(5).Text(idx.ToString()).FontSize(8);
+                                    table.Cell().Background(shipBg).Padding(5).Text("Shipping / Dostawa").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text("1").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{shipNet:N2}").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{shipNet:N2}").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{taxPercent:0.##}%").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{shipVat:N2}").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{order.ShippingCost:N2}").FontSize(8.5f);
+                                }
+                            }
+                        });
+
+                        // ─── Summary section ────────────────────────────
+                        content.Item().PaddingTop(18).Row(row =>
+                        {
+                            // Left: payment info
+                            row.RelativeItem().Column(left =>
+                            {
+                                left.Item().Text("PAYMENT DETAILS / DANE PŁATNOŚCI").Bold().FontSize(8).FontColor("#888888");
+                                left.Item().PaddingTop(4).Text($"Method: Stripe (Online Card Payment)").FontSize(9);
+                                left.Item().Text($"Paid on: {(order.PaidAt?.ToString("dd.MM.yyyy HH:mm") ?? "N/A")}").FontSize(9);
+                                left.Item().Text($"Transaction: {order.StripePaymentIntentId}").FontSize(8).FontColor("#666666");
+                                if (order.Coupon != null)
+                                    left.Item().PaddingTop(4).Text($"Coupon applied: {order.Coupon.Code} (-{order.DiscountAmount:N2} {cur})").FontSize(9).FontColor("#c62828");
+                            });
+
+                            // Right: financial summary
+                            row.ConstantItem(220).Column(summary =>
+                            {
+                                void SummaryRow(string label, string value, bool bold = false, string? color = null)
+                                {
+                                    summary.Item().PaddingVertical(2).Row(r =>
+                                    {
+                                        var lbl = r.RelativeItem().AlignLeft().Text(label).FontSize(9);
+                                        if (bold) lbl.Bold();
+                                        var val = r.ConstantItem(90).AlignRight().Text(value).FontSize(9);
+                                        if (bold) val.Bold().FontSize(11);
+                                        if (color != null) val.FontColor(color);
+                                    });
+                                }
+
+                                SummaryRow("Net amount / Netto:", $"{netAmount - order.TaxAmount:N2} {sym}");
+                                if (order.TaxAmount > 0)
+                                    SummaryRow($"VAT ({taxPercent:0.##}%):", $"{order.TaxAmount:N2} {sym}");
+                                if (order.ShippingCost > 0)
+                                    SummaryRow("Shipping / Dostawa:", $"{order.ShippingCost:N2} {sym}");
+                                if (order.DiscountAmount > 0)
+                                    SummaryRow("Discount / Rabat:", $"-{order.DiscountAmount:N2} {sym}", color: "#c62828");
+
+                                summary.Item().PaddingVertical(4).LineHorizontal(1.5f).LineColor("#1a1a1a");
+                                SummaryRow("TOTAL / DO ZAPŁATY:", $"{order.TotalAmount:N2} {sym}", bold: true);
+                            });
+                        });
+
+                        // ─── Notes ──────────────────────────────────────
+                        content.Item().PaddingTop(25).Border(1).BorderColor("#e0e0e0").Padding(12).Column(notes =>
+                        {
+                            notes.Item().Text("NOTES / UWAGI").Bold().FontSize(8).FontColor("#888888");
+                            notes.Item().PaddingTop(4).Text("This document serves as a proof of purchase. Goods sold online — the consumer has 14 days to withdraw from the contract without giving any reason (EU Directive 2011/83/EU).").FontSize(8).FontColor("#555555");
+                            notes.Item().PaddingTop(2).Text("Dokument stanowi dowód zakupu. Towary sprzedane przez internet — konsument ma 14 dni na odstąpienie od umowy bez podania przyczyny (Dyrektywa UE 2011/83/UE).").FontSize(8).FontColor("#555555");
+                        });
+                    });
+
+                    // ─── Footer ─────────────────────────────────────────
+                    page.Footer().Column(footer =>
+                    {
+                        footer.Item().LineHorizontal(0.5f).LineColor("#cccccc");
+                        footer.Item().PaddingTop(6).Row(row =>
+                        {
+                            row.RelativeItem().Text("Kokomija | Kraków, Poland | kontakt@kokomija.com").FontSize(7).FontColor("#999999");
+                            row.RelativeItem().AlignRight().Text(text =>
+                            {
+                                text.Span("Page ").FontSize(7).FontColor("#999999");
+                                text.CurrentPageNumber().FontSize(7).FontColor("#999999");
+                                text.Span(" / ").FontSize(7).FontColor("#999999");
+                                text.TotalPages().FontSize(7).FontColor("#999999");
+                            });
+                        });
+                    });
+                });
+            });
+
+            var pdfBytes = pdf.GeneratePdf();
+            return File(pdfBytes, "application/pdf", $"Faktura_{invoiceNumber}.pdf");
         }
 
         [HttpGet]
@@ -1278,7 +1636,7 @@ namespace Kokomija.Controllers
             }
 
             // Check if order is eligible for return (delivered within 30 days)
-            if (order.OrderStatus != "Delivered" || !order.DeliveredAt.HasValue || (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays > 30)
+            if (order.OrderStatus != "delivered" || !order.DeliveredAt.HasValue || (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays > 30)
             {
                 TempData["ErrorMessage"] = "This order is not eligible for return";
                 return RedirectToAction("Index");
@@ -1346,7 +1704,7 @@ namespace Kokomija.Controllers
             }
 
             // Check if order is eligible for return
-            if (orderToReturn.OrderStatus != "Delivered" || !orderToReturn.DeliveredAt.HasValue)
+            if (orderToReturn.OrderStatus != "delivered" || !orderToReturn.DeliveredAt.HasValue)
             {
                 TempData["ErrorMessage"] = "This order is not eligible for return";
                 return RedirectToAction("Index");

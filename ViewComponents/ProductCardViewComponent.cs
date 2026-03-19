@@ -122,6 +122,20 @@ namespace Kokomija.ViewComponents
                 }).ToList() ?? new()
             };
             
+            // Check coupon eligibility
+            var activeCoupons = await _unitOfWork.Coupons.GetActiveCouponsAsync();
+            var applicableCoupons = activeCoupons.Where(c =>
+                (c.CategoryId == null && c.ProductId == null && c.UserId == null) ||
+                (c.CategoryId.HasValue && c.CategoryId == product.CategoryId) ||
+                (c.ProductId.HasValue && c.ProductId == product.Id));
+            if (applicableCoupons.Any())
+            {
+                viewModel.HasCoupon = true;
+                viewModel.CouponDiscount = applicableCoupons.Max(c =>
+                    c.DiscountType == "percentage" ? c.DiscountValue :
+                    (product.Price > 0 ? (c.DiscountValue / product.Price * 100) : 0));
+            }
+            
             // Pass current culture to view
             ViewData["CurrentCulture"] = currentCulture;
 

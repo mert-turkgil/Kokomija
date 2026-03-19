@@ -121,6 +121,17 @@ namespace Kokomija.Controllers
                     _ => 0m
                 };
 
+                // Resolve VIP Stripe coupon ID (will be applied as a Stripe discount, not a price reduction)
+                string? vipStripeCouponId = null;
+                if (vipDiscountPercentage > 0)
+                {
+                    vipStripeCouponId = await _stripeService.GetVipTierStripeCouponIdAsync(vipTier);
+                    if (vipStripeCouponId == null)
+                    {
+                        _logger.LogWarning("VIP Stripe coupon not found for tier {Tier}, falling back to price reduction", vipTier);
+                    }
+                }
+
                 // Store coupon code for Stripe (don't apply to price, let Stripe handle it)
                 couponCode = couponCode ?? HttpContext.Session.GetString("AppliedCouponCode");
 
@@ -198,14 +209,17 @@ namespace Kokomija.Controllers
                         _logger.LogInformation($"Product {product.Name}: Using B2B price {basePrice} PLN instead of retail {variant.Price} PLN");
                     }
 
-                    // Apply VIP discount to the price (Stripe will handle coupon separately)
+                    // Apply VIP discount to the price only if Stripe VIP coupon is NOT available
+                    // When Stripe VIP coupon exists, show original price and let Stripe apply the discount
                     decimal originalPrice = basePrice;
-                    decimal discountedPrice = originalPrice * (1 - (vipDiscountPercentage / 100));
+                    decimal finalPrice = (vipStripeCouponId == null && vipDiscountPercentage > 0)
+                        ? originalPrice * (1 - (vipDiscountPercentage / 100))
+                        : originalPrice;
                     
                     // Convert to grosze (cents) for Stripe
-                    long priceInGrosze = (long)(discountedPrice * 100);
+                    long priceInGrosze = (long)(finalPrice * 100);
 
-                    _logger.LogInformation($"Product {product.Name}: Base {originalPrice} PLN{(isBusinessPrice ? " (B2B)" : "")}, VIP Discounted {discountedPrice} PLN ({vipDiscountPercentage}% off)");
+                    _logger.LogInformation($"Product {product.Name}: Base {originalPrice} PLN{(isBusinessPrice ? " (B2B)" : "")}{(vipStripeCouponId != null ? ", VIP discount via Stripe coupon" : (vipDiscountPercentage > 0 ? $", VIP Discounted {finalPrice} PLN ({vipDiscountPercentage}% off)" : ""))}");
 
                     // Always use PriceData with PLN currency
                     var lineItem = new SessionLineItemOptions
@@ -473,44 +487,95 @@ namespace Kokomija.Controllers
                     ReceiptEmail = user.Email
                 };
                 
-                // Apply coupon discount if exists, otherwise allow promotion codes
+                // Build Stripe Discounts list (VIP coupon + user coupon)
+                var discountOptions = new List<SessionDiscountOptions>();
+
+                // Add VIP tier discount as a Stripe coupon
+                if (!string.IsNullOrEmpty(vipStripeCouponId))
+                {
+                    discountOptions.Add(new SessionDiscountOptions { Coupon = vipStripeCouponId });
+                    _logger.LogInformation("Applied VIP tier Stripe coupon {CouponId} for {Tier} customer {Email}",
+                        vipStripeCouponId, vipTier, user.Email);
+                }
+
+                // Add user-applied coupon discount
                 if (!string.IsNullOrEmpty(couponCode))
                 {
                     var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
                     if (coupon != null && coupon.IsActive && !string.IsNullOrEmpty(coupon.StripePromotionCodeId))
                     {
-                        // Check if user has prior orders (to avoid "first-time customer only" restrictions)
-                        var userOrders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
-                        var hasPriorOrders = userOrders.Any();
-                        
-                        // Check if coupon has customer restrictions (FirstTimeTransaction)
-                        var stripeCoupon = await _stripeService.GetStripeCouponAsync(coupon.StripeCouponId ?? "");
-                        var hasFirstTimeRestriction = stripeCoupon?.AppliesTo?.Products != null || 
-                                                     coupon.UsageLimitPerUser == 1;
-                        
-                        // Only apply if user qualifies
-                        if (!hasPriorOrders || !hasFirstTimeRestriction)
+                        // Verify coupon still exists on Stripe — if deleted, remove locally and skip
+                        var couponValidOnStripe = await _stripeService.IsCouponValidOnStripeAsync(coupon.StripeCouponId);
+                        if (!couponValidOnStripe)
                         {
-                            options.Discounts = new List<SessionDiscountOptions>
+                            _logger.LogWarning("Coupon {Code} deleted from Stripe, removing from database", coupon.Code);
+                            _unitOfWork.Repository<Coupon>().Remove(coupon);
+                            await _unitOfWork.SaveChangesAsync();
+                            HttpContext.Session.Remove("AppliedCouponCode");
+                            couponCode = null;
+                        }
+                    }
+                }
+                if (!string.IsNullOrEmpty(couponCode))
+                {
+                    var coupon = await _unitOfWork.Coupons.GetByCodeAsync(couponCode);
+                    if (coupon != null && coupon.IsActive && !string.IsNullOrEmpty(coupon.StripePromotionCodeId))
+                    {
+                        bool eligible = true;
+
+                        // Birthday check
+                        if (coupon.CouponType == "birthday")
+                        {
+                            if (user.Birthday == null) { eligible = false; }
+                            else
                             {
-                                new SessionDiscountOptions { PromotionCode = coupon.StripePromotionCodeId }
-                            };
+                                var today = DateTime.UtcNow.Date;
+                                var bd = new DateTime(today.Year, user.Birthday.Value.Month, user.Birthday.Value.Day);
+                                if (today < bd.AddDays(-(coupon.DaysBeforeBirthday ?? 7)) || today > bd.AddDays(coupon.DaysAfterBirthday ?? 7))
+                                    eligible = false;
+                            }
+                        }
+
+                        // New user check
+                        if (coupon.CouponType == "new_user" && coupon.AccountAgeDays.HasValue)
+                        {
+                            if ((DateTime.UtcNow - user.CreatedAt).TotalDays > coupon.AccountAgeDays.Value)
+                                eligible = false;
+                        }
+
+                        // First purchase check
+                        if (coupon.CouponType == "first_purchase")
+                        {
+                            var userOrders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(user.Id);
+                            if (userOrders.Any()) eligible = false;
+                        }
+
+                        // VIP tier check
+                        if (!string.IsNullOrEmpty(coupon.VipTierRequired))
+                        {
+                            var tierOrder = new Dictionary<string, int> { { "None", 0 }, { "Bronze", 1 }, { "Silver", 2 }, { "Gold", 3 }, { "Platinum", 4 } };
+                            if (tierOrder.GetValueOrDefault(user.VipTier ?? "None", 0) < tierOrder.GetValueOrDefault(coupon.VipTierRequired, 0))
+                                eligible = false;
+                        }
+
+                        if (eligible)
+                        {
+                            discountOptions.Add(new SessionDiscountOptions { PromotionCode = coupon.StripePromotionCodeId });
                             _logger.LogInformation("Applied promotion code {Code} for customer {Email}", couponCode, user.Email);
                         }
                         else
                         {
-                            _logger.LogWarning("Skipping promotion code {Code} for customer {Email} due to prior orders restriction", 
+                            _logger.LogWarning("Skipping promotion code {Code} for customer {Email} — eligibility check failed", 
                                 couponCode, user.Email);
-                            // Clear the coupon from session since it can't be used
                             HttpContext.Session.Remove("AppliedCouponCode");
-                            options.AllowPromotionCodes = true;
                         }
                     }
                 }
-                else
+
+                // Apply pre-selected discounts (VIP + cart coupon)
+                if (discountOptions.Any())
                 {
-                    // If no coupon applied, allow users to enter promotion codes at checkout
-                    options.AllowPromotionCodes = true;
+                    options.Discounts = discountOptions;
                 }
 
                 var sessionService = new SessionService();

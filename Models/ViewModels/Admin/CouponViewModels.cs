@@ -399,4 +399,51 @@ namespace Kokomija.Models.ViewModels.Admin
         public List<string> GeneratedCodes { get; set; } = new();
         public List<string> Errors { get; set; } = new();
     }
+
+    // ==================== Page-Based Create/Edit ViewModels ====================
+
+    /// <summary>
+    /// ViewModel for the dedicated Create Coupon page (wraps DTO + dropdown data)
+    /// </summary>
+    public class CreateCouponPageViewModel
+    {
+        public CreateCouponDto Coupon { get; set; } = new();
+        public List<SelectListItem> Categories { get; set; } = new();
+        public List<SelectListItem> Products { get; set; } = new();
+        public List<SelectListItem> VipTiers { get; set; } = new();
+        public List<SelectListItem> CouponTypes { get; set; } = new();
+    }
+
+    /// <summary>
+    /// ViewModel for the dedicated Edit Coupon page (wraps DTO + read-only display fields + dropdown data)
+    /// </summary>
+    public class EditCouponPageViewModel
+    {
+        public UpdateCouponDto Coupon { get; set; } = new();
+
+        // Read-only display fields (immutable in Stripe)
+        public string Code { get; set; } = string.Empty;
+        public string DiscountType { get; set; } = "percentage";
+        public decimal DiscountValue { get; set; }
+        public string CouponType { get; set; } = "general";
+        public int UsageCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        // Stripe sync status
+        public string? StripeCouponId { get; set; }
+        public string? StripePromotionCodeId { get; set; }
+        public bool HasStripeSync => !string.IsNullOrEmpty(StripeCouponId);
+
+        // Live Stripe data
+        public int? StripeTimesRedeemed { get; set; }
+        public bool? StripeIsValid { get; set; }
+        public string? StripeRedeemBy { get; set; }
+        public bool? StripePromotionActive { get; set; }
+        public decimal? StripeMinimumAmount { get; set; }
+
+        // Dropdowns
+        public List<SelectListItem> Categories { get; set; } = new();
+        public List<SelectListItem> Products { get; set; } = new();
+        public List<SelectListItem> VipTiers { get; set; } = new();
+    }
 }

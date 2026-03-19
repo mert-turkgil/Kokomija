@@ -71,7 +71,7 @@ namespace Kokomija.Controllers
         #endregion
 
         // GET: Product
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? sort)
         {
             try
             {
@@ -103,7 +103,18 @@ namespace Kokomija.Controllers
                 
                 // Filter products based on business mode
                 var filteredProducts = FilterProductsForBusinessMode(activeProducts, isBusinessMode);
-                
+
+                // Apply sorting
+                filteredProducts = sort?.ToLower() switch
+                {
+                    "newest" => filteredProducts.OrderByDescending(p => p.CreatedAt).ToList(),
+                    "price_asc" => filteredProducts.OrderBy(p => p.Price).ToList(),
+                    "price_desc" => filteredProducts.OrderByDescending(p => p.Price).ToList(),
+                    "name" => filteredProducts.OrderBy(p => p.Name).ToList(),
+                    _ => filteredProducts
+                };
+
+                ViewBag.CurrentSort = sort;
                 return View(filteredProducts);
             }
             catch (Exception ex)
@@ -673,6 +684,13 @@ namespace Kokomija.Controllers
                 {
                     return Json(Array.Empty<object>());
                 }
+
+                // Get active coupon category IDs for the hasCoupons flag
+                var activeCoupons = await _unitOfWork.Coupons.GetActiveCouponsAsync();
+                var activeCouponCategoryIds = activeCoupons
+                    .Where(c => c.CategoryId.HasValue)
+                    .Select(c => c.CategoryId!.Value)
+                    .ToList();
                 
                 // Return ALL categories (both parent and subcategories)
                 // This allows the filter sidebar to show the complete category hierarchy
@@ -690,7 +708,9 @@ namespace Kokomija.Controllers
                         parentName = c.ParentCategory != null 
                             ? GetCategoryNameFromTranslation(c.ParentCategory, currentCultureCode)
                             : "Other",
-                        isParent = !c.ParentCategoryId.HasValue // Indicates if this is a top-level category
+                        isParent = !c.ParentCategoryId.HasValue,
+                        hasCoupons = activeCouponCategoryIds.Contains(c.Id),
+                        couponCount = activeCouponCategoryIds.Count(catId => catId == c.Id)
                     })
                     .ToList();
 
@@ -700,6 +720,154 @@ namespace Kokomija.Controllers
             {
                 _logger.LogError(ex, "Error retrieving categories");
                 return BadRequest();
+            }
+        }
+
+        /// <summary>
+        /// Returns available coupons for the current user, grouped by scope.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableCoupons()
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                var activeCoupons = (await _unitOfWork.Coupons.GetActiveCouponsAsync()).ToList();
+                var user = await _userManager.GetUserAsync(User);
+
+                // Filter out user-specific coupons that don't belong to current user
+                var applicableCoupons = activeCoupons.Where(c =>
+                    c.UserId == null || (user != null && c.UserId == user.Id)
+                ).ToList();
+
+                // Filter by per-user usage limits
+                if (user != null)
+                {
+                    var couponsToRemove = new List<Coupon>();
+                    foreach (var coupon in applicableCoupons)
+                    {
+                        if (coupon.UsageLimitPerUser.HasValue)
+                        {
+                            var userUsageCount = await _unitOfWork.Coupons.GetUserUsageCountAsync(coupon.Id, user.Id);
+                            if (userUsageCount >= coupon.UsageLimitPerUser.Value)
+                                couponsToRemove.Add(coupon);
+                        }
+                    }
+                    applicableCoupons = applicableCoupons.Except(couponsToRemove).ToList();
+                }
+
+                object MapCoupon(Coupon c) => new
+                {
+                    id = c.Id,
+                    code = c.Code,
+                    description = c.Description,
+                    discountType = c.DiscountType,
+                    discountValue = c.DiscountValue,
+                    couponType = c.CouponType,
+                    minimumOrderAmount = c.MinimumOrderAmount,
+                    maximumDiscountAmount = c.MaximumDiscountAmount,
+                    validUntil = c.ValidUntil?.ToString("yyyy-MM-dd"),
+                    categoryId = c.CategoryId,
+                    productId = c.ProductId,
+                    isNew = c.CreatedAt >= now.AddDays(-7)
+                };
+
+                var global = applicableCoupons
+                    .Where(c => c.CategoryId == null && c.ProductId == null && c.UserId == null)
+                    .Select(c => MapCoupon(c)).ToList();
+
+                var category = applicableCoupons
+                    .Where(c => c.CategoryId.HasValue)
+                    .GroupBy(c => c.CategoryId!.Value)
+                    .ToDictionary(g => g.Key, g => g.Select(c => MapCoupon(c)).ToList());
+
+                var product = applicableCoupons
+                    .Where(c => c.ProductId.HasValue)
+                    .GroupBy(c => c.ProductId!.Value)
+                    .ToDictionary(g => g.Key, g => g.Select(c => MapCoupon(c)).ToList());
+
+                var personal = applicableCoupons
+                    .Where(c => c.UserId != null)
+                    .Select(c => MapCoupon(c)).ToList();
+
+                return Json(new { global, category, product, personal });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving available coupons");
+                return Json(new { global = Array.Empty<object>(), category = new Dictionary<int, object>(), product = new Dictionary<int, object>(), personal = Array.Empty<object>() });
+            }
+        }
+
+        /// <summary>
+        /// Returns coupons applicable to a specific product (global + category + product-specific + user-personal).
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetProductCoupons(int productId)
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                var productEntity = await _unitOfWork.Products.GetByIdAsync(productId);
+                if (productEntity == null)
+                    return Json(new { coupons = Array.Empty<object>() });
+
+                var activeCoupons = (await _unitOfWork.Coupons.GetActiveCouponsAsync()).ToList();
+                var user = await _userManager.GetUserAsync(User);
+
+                // Filter to coupons relevant to this product
+                var relevantCoupons = activeCoupons.Where(c =>
+                {
+                    // User-specific: only show to the right user
+                    if (c.UserId != null && (user == null || c.UserId != user.Id))
+                        return false;
+
+                    // Product-specific: must match this product
+                    if (c.ProductId.HasValue && c.ProductId.Value != productId)
+                        return false;
+
+                    // Category-specific: must match this product's category
+                    if (c.CategoryId.HasValue && c.CategoryId.Value != productEntity.CategoryId)
+                        return false;
+
+                    return true;
+                }).ToList();
+
+                // Filter by per-user usage limits
+                if (user != null)
+                {
+                    var couponsToRemove = new List<Coupon>();
+                    foreach (var coupon in relevantCoupons)
+                    {
+                        if (coupon.UsageLimitPerUser.HasValue)
+                        {
+                            var userUsageCount = await _unitOfWork.Coupons.GetUserUsageCountAsync(coupon.Id, user.Id);
+                            if (userUsageCount >= coupon.UsageLimitPerUser.Value)
+                                couponsToRemove.Add(coupon);
+                        }
+                    }
+                    relevantCoupons = relevantCoupons.Except(couponsToRemove).ToList();
+                }
+
+                var result = relevantCoupons.Select(c => new
+                {
+                    id = c.Id,
+                    code = c.Code,
+                    description = c.Description,
+                    discountType = c.DiscountType,
+                    discountValue = c.DiscountValue,
+                    couponType = c.CouponType,
+                    minimumOrderAmount = c.MinimumOrderAmount,
+                    validUntil = c.ValidUntil?.ToString("yyyy-MM-dd"),
+                    isNew = c.CreatedAt >= now.AddDays(-7)
+                }).ToList();
+
+                return Json(new { coupons = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving product coupons for {ProductId}", productId);
+                return Json(new { coupons = Array.Empty<object>() });
             }
         }
 

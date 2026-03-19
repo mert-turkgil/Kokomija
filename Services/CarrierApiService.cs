@@ -464,69 +464,180 @@ namespace Kokomija.Services
 
         private TrackingResult ParseTrackingResponse(string trackingNumber, ShippingProvider provider, string jsonResponse)
         {
-            // Generic JSON parsing - adapt based on carrier's response structure
-            // Most carriers return similar structures with status, location, events
             try
             {
-                using var doc = JsonDocument.Parse(jsonResponse);
-                var root = doc.RootElement;
-
-                // Try common response patterns
-                var events = new List<TrackingEvent>();
-                string? currentStatus = null;
-                string? currentLocation = null;
-
-                // Pattern 1: DHL-style { shipments: [{ status: {...}, events: [...] }] }
-                if (root.TryGetProperty("shipments", out var shipments) && shipments.GetArrayLength() > 0)
+                switch (provider.Code.ToLower())
                 {
-                    var shipment = shipments[0];
-                    if (shipment.TryGetProperty("status", out var status))
-                    {
-                        currentStatus = status.TryGetProperty("status", out var s) ? s.GetString() : null;
-                        currentLocation = status.TryGetProperty("location", out var l) ? l.GetString() : null;
-                    }
+                    case "inpost_paczkomat":
+                    case "inpost_courier":
+                        return ParseInPostTrackingResponse(trackingNumber, provider, jsonResponse);
+                    case "dhl_express":
+                    case "dhl_standard":
+                        return ParseDhlTrackingResponse(trackingNumber, provider, jsonResponse);
+                    default:
+                        return ParseGenericTrackingResponse(trackingNumber, provider, jsonResponse);
                 }
-                // Pattern 2: { trackingNumber, status, events: [...] }
-                else if (root.TryGetProperty("status", out var statusProp))
-                {
-                    currentStatus = statusProp.GetString();
-                }
-
-                // Parse events if available
-                if (root.TryGetProperty("events", out var eventsArray))
-                {
-                    foreach (var evt in eventsArray.EnumerateArray())
-                    {
-                        events.Add(new TrackingEvent
-                        {
-                            Timestamp = evt.TryGetProperty("timestamp", out var ts) 
-                                ? DateTime.Parse(ts.GetString()!) 
-                                : DateTime.UtcNow,
-                            Status = evt.TryGetProperty("status", out var es) ? es.GetString()! : "",
-                            Description = evt.TryGetProperty("description", out var ed) ? ed.GetString()! : "",
-                            Location = evt.TryGetProperty("location", out var el) ? el.GetString() : null
-                        });
-                    }
-                }
-
-                return new TrackingResult
-                {
-                    Success = true,
-                    Message = "Tracking information retrieved from carrier API.",
-                    TrackingNumber = trackingNumber,
-                    CarrierCode = provider.Code,
-                    CarrierName = provider.Name,
-                    CurrentStatus = currentStatus ?? "UNKNOWN",
-                    CurrentLocation = currentLocation,
-                    TrackingUrl = BuildTrackingUrl(provider, trackingNumber),
-                    Events = events
-                };
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to parse tracking response for {Carrier}", provider.Code);
                 return CreateTrackingResultWithUrl(trackingNumber, provider);
             }
+        }
+
+        private TrackingResult ParseInPostTrackingResponse(string trackingNumber, ShippingProvider provider, string jsonResponse)
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            var events = new List<TrackingEvent>();
+            string? currentStatus = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+
+            if (root.TryGetProperty("tracking_details", out var details))
+            {
+                foreach (var evt in details.EnumerateArray())
+                {
+                    events.Add(new TrackingEvent
+                    {
+                        Timestamp = evt.TryGetProperty("datetime", out var dt) ? DateTime.Parse(dt.GetString()!) : DateTime.UtcNow,
+                        Status = evt.TryGetProperty("status", out var es) ? es.GetString()! : "",
+                        Description = evt.TryGetProperty("origin_status", out var od) ? od.GetString()! : "",
+                        City = evt.TryGetProperty("agency", out var ag) ? ag.GetString() : null
+                    });
+                }
+            }
+
+            return new TrackingResult
+            {
+                Success = true,
+                Message = "Tracking information retrieved from InPost.",
+                TrackingNumber = trackingNumber,
+                CarrierCode = provider.Code,
+                CarrierName = provider.Name,
+                CurrentStatus = currentStatus ?? "UNKNOWN",
+                TrackingUrl = BuildTrackingUrl(provider, trackingNumber),
+                Events = events
+            };
+        }
+
+        private TrackingResult ParseDhlTrackingResponse(string trackingNumber, ShippingProvider provider, string jsonResponse)
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            var events = new List<TrackingEvent>();
+            string? currentStatus = null;
+            string? currentLocation = null;
+            DateTime? estimatedDelivery = null;
+
+            if (root.TryGetProperty("shipments", out var shipments) && shipments.GetArrayLength() > 0)
+            {
+                var shipment = shipments[0];
+
+                if (shipment.TryGetProperty("status", out var status))
+                {
+                    currentStatus = status.TryGetProperty("statusCode", out var sc) ? sc.GetString() : null;
+                    currentLocation = status.TryGetProperty("location", out var loc)
+                        && loc.TryGetProperty("address", out var addr)
+                        && addr.TryGetProperty("addressLocality", out var city) ? city.GetString() : null;
+                }
+
+                if (shipment.TryGetProperty("estimatedTimeOfDelivery", out var etd))
+                {
+                    if (DateTime.TryParse(etd.GetString(), out var parsed))
+                        estimatedDelivery = parsed;
+                }
+
+                if (shipment.TryGetProperty("events", out var eventsArray))
+                {
+                    foreach (var evt in eventsArray.EnumerateArray())
+                    {
+                        string? city = null;
+                        string? country = null;
+                        if (evt.TryGetProperty("location", out var evtLoc) && evtLoc.TryGetProperty("address", out var evtAddr))
+                        {
+                            city = evtAddr.TryGetProperty("addressLocality", out var c) ? c.GetString() : null;
+                            country = evtAddr.TryGetProperty("countryCode", out var cc) ? cc.GetString() : null;
+                        }
+
+                        events.Add(new TrackingEvent
+                        {
+                            Timestamp = evt.TryGetProperty("timestamp", out var ts) ? DateTime.Parse(ts.GetString()!) : DateTime.UtcNow,
+                            Status = evt.TryGetProperty("statusCode", out var es) ? es.GetString()! : "",
+                            Description = evt.TryGetProperty("description", out var ed) ? ed.GetString()! : "",
+                            City = city,
+                            Country = country
+                        });
+                    }
+                }
+            }
+
+            return new TrackingResult
+            {
+                Success = true,
+                Message = "Tracking information retrieved from DHL.",
+                TrackingNumber = trackingNumber,
+                CarrierCode = provider.Code,
+                CarrierName = provider.Name,
+                CurrentStatus = currentStatus ?? "UNKNOWN",
+                CurrentLocation = currentLocation,
+                EstimatedDelivery = estimatedDelivery,
+                TrackingUrl = BuildTrackingUrl(provider, trackingNumber),
+                Events = events
+            };
+        }
+
+        private TrackingResult ParseGenericTrackingResponse(string trackingNumber, ShippingProvider provider, string jsonResponse)
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            var events = new List<TrackingEvent>();
+            string? currentStatus = null;
+            string? currentLocation = null;
+
+            if (root.TryGetProperty("shipments", out var shipments) && shipments.GetArrayLength() > 0)
+            {
+                var shipment = shipments[0];
+                if (shipment.TryGetProperty("status", out var status))
+                {
+                    currentStatus = status.TryGetProperty("status", out var s) ? s.GetString() : null;
+                    currentLocation = status.TryGetProperty("location", out var l) ? l.GetString() : null;
+                }
+            }
+            else if (root.TryGetProperty("status", out var statusProp))
+            {
+                currentStatus = statusProp.GetString();
+            }
+
+            if (root.TryGetProperty("events", out var eventsArray))
+            {
+                foreach (var evt in eventsArray.EnumerateArray())
+                {
+                    events.Add(new TrackingEvent
+                    {
+                        Timestamp = evt.TryGetProperty("timestamp", out var ts)
+                            ? DateTime.Parse(ts.GetString()!)
+                            : DateTime.UtcNow,
+                        Status = evt.TryGetProperty("status", out var es) ? es.GetString()! : "",
+                        Description = evt.TryGetProperty("description", out var ed) ? ed.GetString()! : "",
+                        Location = evt.TryGetProperty("location", out var el) ? el.GetString() : null
+                    });
+                }
+            }
+
+            return new TrackingResult
+            {
+                Success = true,
+                Message = "Tracking information retrieved from carrier API.",
+                TrackingNumber = trackingNumber,
+                CarrierCode = provider.Code,
+                CarrierName = provider.Name,
+                CurrentStatus = currentStatus ?? "UNKNOWN",
+                CurrentLocation = currentLocation,
+                TrackingUrl = BuildTrackingUrl(provider, trackingNumber),
+                Events = events
+            };
         }
 
         private TrackingResult CreateTrackingResultWithUrl(string trackingNumber, ShippingProvider provider)
@@ -697,14 +808,28 @@ namespace Kokomija.Services
 
         private object BuildShipmentPayload(CreateShipmentRequest request, ShippingProvider provider)
         {
-            // Generic payload structure - carriers may need specific formats
+            switch (provider.Code.ToLower())
+            {
+                case "inpost_paczkomat":
+                case "inpost_courier":
+                    return BuildInPostShipmentPayload(request, provider);
+                case "dhl_express":
+                case "dhl_standard":
+                    return BuildDhlShipmentPayload(request, provider);
+                default:
+                    return BuildGenericShipmentPayload(request, provider);
+            }
+        }
+
+        private object BuildGenericShipmentPayload(CreateShipmentRequest request, ShippingProvider provider)
+        {
             return new
             {
                 reference = request.Reference ?? $"ORDER-{request.OrderId}",
                 service = request.ServiceType,
                 sender = request.Sender,
                 recipient = request.Recipient,
-                package = request.Package,
+                package_info = request.Package,
                 options = new
                 {
                     signatureRequired = request.SignatureRequired,
@@ -713,46 +838,248 @@ namespace Kokomija.Services
             };
         }
 
+        private object BuildInPostShipmentPayload(CreateShipmentRequest request, ShippingProvider provider)
+        {
+            var isPaczkomat = provider.Code.ToLower() == "inpost_paczkomat";
+            var payload = new Dictionary<string, object>
+            {
+                ["receiver"] = new
+                {
+                    name = request.Recipient.Name,
+                    company_name = request.Recipient.Company,
+                    email = request.Recipient.Email,
+                    phone = request.Recipient.Phone,
+                    address = isPaczkomat ? null : new
+                    {
+                        street = request.Recipient.Street,
+                        building_number = "",
+                        city = request.Recipient.City,
+                        post_code = request.Recipient.PostalCode,
+                        country_code = string.IsNullOrEmpty(request.Recipient.Country) ? "PL" : request.Recipient.Country
+                    }
+                },
+                ["sender"] = new
+                {
+                    name = request.Sender.Name,
+                    company_name = request.Sender.Company,
+                    email = request.Sender.Email,
+                    phone = request.Sender.Phone,
+                    address = new
+                    {
+                        street = request.Sender.Street,
+                        building_number = "",
+                        city = request.Sender.City,
+                        post_code = request.Sender.PostalCode,
+                        country_code = string.IsNullOrEmpty(request.Sender.Country) ? "PL" : request.Sender.Country
+                    }
+                },
+                ["parcels"] = new[]
+                {
+                    new
+                    {
+                        dimensions = new
+                        {
+                            length = request.Package.Length,
+                            width = request.Package.Width,
+                            height = request.Package.Height,
+                            unit = "mm"
+                        },
+                        weight = new
+                        {
+                            amount = request.Package.Weight,
+                            unit = "kg"
+                        }
+                    }
+                },
+                ["service"] = isPaczkomat ? "inpost_locker_standard" : "inpost_courier_standard",
+                ["reference"] = request.Reference ?? $"ORDER-{request.OrderId}"
+            };
+
+            if (request.InsuranceRequired && request.InsuredValue.HasValue)
+            {
+                payload["insurance"] = new { amount = request.InsuredValue.Value, currency = "PLN" };
+            }
+
+            return payload;
+        }
+
+        private object BuildDhlShipmentPayload(CreateShipmentRequest request, ShippingProvider provider)
+        {
+            var isExpress = provider.Code.ToLower() == "dhl_express";
+            return new
+            {
+                plannedShippingDateAndTime = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ss") + " GMT+00:00",
+                pickup = new { isRequested = false },
+                productCode = isExpress ? "P" : "N",
+                accounts = new[]
+                {
+                    new { typeCode = "shipper", number = provider.ApiAccountNumber ?? "" }
+                },
+                customerDetails = new
+                {
+                    shipperDetails = new
+                    {
+                        postalAddress = new
+                        {
+                            postalCode = request.Sender.PostalCode,
+                            cityName = request.Sender.City,
+                            countryCode = string.IsNullOrEmpty(request.Sender.Country) ? "PL" : request.Sender.Country,
+                            addressLine1 = request.Sender.Street
+                        },
+                        contactInformation = new
+                        {
+                            phone = request.Sender.Phone,
+                            companyName = request.Sender.Company,
+                            fullName = request.Sender.Name,
+                            email = request.Sender.Email
+                        }
+                    },
+                    receiverDetails = new
+                    {
+                        postalAddress = new
+                        {
+                            postalCode = request.Recipient.PostalCode,
+                            cityName = request.Recipient.City,
+                            countryCode = string.IsNullOrEmpty(request.Recipient.Country) ? "PL" : request.Recipient.Country,
+                            addressLine1 = request.Recipient.Street
+                        },
+                        contactInformation = new
+                        {
+                            phone = request.Recipient.Phone,
+                            companyName = request.Recipient.Company,
+                            fullName = request.Recipient.Name,
+                            email = request.Recipient.Email
+                        }
+                    }
+                },
+                content = new
+                {
+                    packages = new[]
+                    {
+                        new
+                        {
+                            weight = request.Package.Weight,
+                            dimensions = new
+                            {
+                                length = request.Package.Length,
+                                width = request.Package.Width,
+                                height = request.Package.Height
+                            },
+                            customerReferences = new[] { new { value = request.Reference ?? $"ORDER-{request.OrderId}" } }
+                        }
+                    },
+                    isCustomsDeclarable = false,
+                    description = $"Order {request.OrderId}",
+                    unitOfMeasurement = "metric"
+                },
+                outputImageProperties = new
+                {
+                    encodingFormat = "pdf",
+                    imageOptions = new[] { new { typeCode = "label", templateName = "ECOM26_84_001" } }
+                }
+            };
+        }
+
         private ShipmentCreationResult ParseShipmentResponse(string jsonResponse, ShippingProvider provider)
         {
             try
             {
-                using var doc = JsonDocument.Parse(jsonResponse);
-                var root = doc.RootElement;
-
-                string? trackingNumber = null;
-                string? shipmentId = null;
-                string? labelUrl = null;
-
-                // Common response patterns
-                if (root.TryGetProperty("trackingNumber", out var tn))
-                    trackingNumber = tn.GetString();
-                else if (root.TryGetProperty("tracking_number", out var tn2))
-                    trackingNumber = tn2.GetString();
-
-                if (root.TryGetProperty("shipmentId", out var si))
-                    shipmentId = si.GetString();
-                else if (root.TryGetProperty("id", out var si2))
-                    shipmentId = si2.GetString();
-
-                if (root.TryGetProperty("labelUrl", out var lu))
-                    labelUrl = lu.GetString();
-                else if (root.TryGetProperty("label_url", out var lu2))
-                    labelUrl = lu2.GetString();
-
-                return new ShipmentCreationResult
+                switch (provider.Code.ToLower())
                 {
-                    Success = !string.IsNullOrEmpty(trackingNumber),
-                    Message = !string.IsNullOrEmpty(trackingNumber) ? "Shipment created via carrier API." : "No tracking number returned.",
-                    TrackingNumber = trackingNumber,
-                    CarrierShipmentId = shipmentId,
-                    LabelUrl = labelUrl
-                };
+                    case "inpost_paczkomat":
+                    case "inpost_courier":
+                        return ParseInPostShipmentResponse(jsonResponse);
+                    case "dhl_express":
+                    case "dhl_standard":
+                        return ParseDhlShipmentResponse(jsonResponse);
+                    default:
+                        return ParseGenericShipmentResponse(jsonResponse, provider);
+                }
             }
             catch
             {
                 return CreateManualShipment(new CreateShipmentRequest(), provider);
             }
+        }
+
+        private ShipmentCreationResult ParseInPostShipmentResponse(string jsonResponse)
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            string? trackingNumber = root.TryGetProperty("tracking_number", out var tn) ? tn.GetString() : null;
+            string? shipmentId = root.TryGetProperty("id", out var id) ? id.ToString() : null;
+
+            return new ShipmentCreationResult
+            {
+                Success = !string.IsNullOrEmpty(trackingNumber),
+                Message = !string.IsNullOrEmpty(trackingNumber) ? "InPost shipment created." : "No tracking number in InPost response.",
+                TrackingNumber = trackingNumber,
+                CarrierShipmentId = shipmentId
+            };
+        }
+
+        private ShipmentCreationResult ParseDhlShipmentResponse(string jsonResponse)
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            string? trackingNumber = null;
+            string? shipmentId = root.TryGetProperty("shipmentTrackingNumber", out var stn) ? stn.GetString() : null;
+            string? labelUrl = null;
+
+            if (root.TryGetProperty("packages", out var packages) && packages.GetArrayLength() > 0)
+            {
+                trackingNumber = packages[0].TryGetProperty("trackingNumber", out var ptn) ? ptn.GetString() : null;
+            }
+
+            if (root.TryGetProperty("documents", out var docs) && docs.GetArrayLength() > 0)
+            {
+                labelUrl = docs[0].TryGetProperty("url", out var url) ? url.GetString() : null;
+            }
+
+            return new ShipmentCreationResult
+            {
+                Success = !string.IsNullOrEmpty(trackingNumber ?? shipmentId),
+                Message = !string.IsNullOrEmpty(trackingNumber) ? "DHL shipment created." : "Shipment created but no package tracking number.",
+                TrackingNumber = trackingNumber ?? shipmentId,
+                CarrierShipmentId = shipmentId,
+                LabelUrl = labelUrl
+            };
+        }
+
+        private ShipmentCreationResult ParseGenericShipmentResponse(string jsonResponse, ShippingProvider provider)
+        {
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            string? trackingNumber = null;
+            string? shipmentId = null;
+            string? labelUrl = null;
+
+            if (root.TryGetProperty("trackingNumber", out var tn))
+                trackingNumber = tn.GetString();
+            else if (root.TryGetProperty("tracking_number", out var tn2))
+                trackingNumber = tn2.GetString();
+
+            if (root.TryGetProperty("shipmentId", out var si))
+                shipmentId = si.GetString();
+            else if (root.TryGetProperty("id", out var si2))
+                shipmentId = si2.GetString();
+
+            if (root.TryGetProperty("labelUrl", out var lu))
+                labelUrl = lu.GetString();
+            else if (root.TryGetProperty("label_url", out var lu2))
+                labelUrl = lu2.GetString();
+
+            return new ShipmentCreationResult
+            {
+                Success = !string.IsNullOrEmpty(trackingNumber),
+                Message = !string.IsNullOrEmpty(trackingNumber) ? "Shipment created via carrier API." : "No tracking number returned.",
+                TrackingNumber = trackingNumber,
+                CarrierShipmentId = shipmentId,
+                LabelUrl = labelUrl
+            };
         }
 
         private ShipmentCreationResult CreateManualShipment(CreateShipmentRequest request, ShippingProvider provider)
@@ -815,13 +1142,70 @@ namespace Kokomija.Services
 
         private async Task<LabelGenerationResult> GenerateLiveLabelAsync(OrderShipment shipment, ShippingProvider provider)
         {
-            // Implementation depends on carrier API
-            await Task.CompletedTask;
-            return new LabelGenerationResult
+            try
             {
-                Success = false,
-                Message = "Label API not implemented for this carrier."
-            };
+                var client = CreateHttpClientForProvider(provider);
+                var baseUrl = provider.UseSandbox && !string.IsNullOrEmpty(provider.SandboxApiBaseUrl)
+                    ? provider.SandboxApiBaseUrl.TrimEnd('/')
+                    : provider.ApiBaseUrl?.TrimEnd('/') ?? "";
+
+                switch (provider.Code.ToLower())
+                {
+                    case "inpost_paczkomat":
+                    case "inpost_courier":
+                    {
+                        if (string.IsNullOrEmpty(shipment.TrackingNumber))
+                            return new LabelGenerationResult { Success = false, Message = "No carrier shipment ID for label generation." };
+
+                        var labelEndpoint = $"{baseUrl}/v1/shipments/{shipment.TrackingNumber}/label";
+                        var response = await client.GetAsync(labelEndpoint);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var labelBytes = await response.Content.ReadAsByteArrayAsync();
+                            await UpdateProviderApiStatus(provider, true, null);
+                            return new LabelGenerationResult
+                            {
+                                Success = true,
+                                Message = "InPost label generated.",
+                                LabelData = labelBytes,
+                                LabelFormat = "PDF"
+                            };
+                        }
+                        await UpdateProviderApiStatus(provider, false, $"Label API returned {response.StatusCode}");
+                        return new LabelGenerationResult { Success = false, Message = $"InPost label API returned {response.StatusCode}." };
+                    }
+                    case "dhl_express":
+                    case "dhl_standard":
+                    {
+                        if (string.IsNullOrEmpty(shipment.TrackingNumber))
+                            return new LabelGenerationResult { Success = false, Message = "No tracking number for DHL label." };
+
+                        var labelEndpoint = $"{baseUrl}/shipments/{shipment.TrackingNumber}/get-image";
+                        var response = await client.GetAsync(labelEndpoint);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var labelBytes = await response.Content.ReadAsByteArrayAsync();
+                            await UpdateProviderApiStatus(provider, true, null);
+                            return new LabelGenerationResult
+                            {
+                                Success = true,
+                                Message = "DHL label generated.",
+                                LabelData = labelBytes,
+                                LabelFormat = "PDF"
+                            };
+                        }
+                        await UpdateProviderApiStatus(provider, false, $"Label API returned {response.StatusCode}");
+                        return new LabelGenerationResult { Success = false, Message = $"DHL label API returned {response.StatusCode}." };
+                    }
+                    default:
+                        return new LabelGenerationResult { Success = false, Message = "Label API not implemented for this carrier." };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error generating label for carrier {Carrier}", provider.Code);
+                return new LabelGenerationResult { Success = false, Message = "Error generating label." };
+            }
         }
 
         public async Task<(bool Success, string Message)> CancelShipmentAsync(int shipmentId)
@@ -960,10 +1344,99 @@ namespace Kokomija.Services
 
         private async Task<List<ShippingQuote>> GetLiveProviderRatesAsync(ShippingProvider provider, ShippingQuoteRequest request)
         {
-            // Implementation for live rate fetching from carrier API
-            // Return empty list to fall back to database rates
-            await Task.CompletedTask;
+            try
+            {
+                var client = CreateHttpClientForProvider(provider);
+                var baseUrl = provider.UseSandbox && !string.IsNullOrEmpty(provider.SandboxApiBaseUrl)
+                    ? provider.SandboxApiBaseUrl.TrimEnd('/')
+                    : provider.ApiBaseUrl?.TrimEnd('/') ?? "";
+
+                switch (provider.Code.ToLower())
+                {
+                    case "dhl_express":
+                    case "dhl_standard":
+                    {
+                        var ratesUrl = $"{baseUrl}/rates?" +
+                            $"accountNumber={Uri.EscapeDataString(provider.ApiAccountNumber ?? "")}" +
+                            $"&originCountryCode={Uri.EscapeDataString(request.Origin.Country)}" +
+                            $"&originCityName={Uri.EscapeDataString(request.Origin.City)}" +
+                            $"&destinationCountryCode={Uri.EscapeDataString(request.Destination.Country)}" +
+                            $"&destinationCityName={Uri.EscapeDataString(request.Destination.City)}" +
+                            $"&weight={request.Package.Weight}" +
+                            $"&length={request.Package.Length}&width={request.Package.Width}&height={request.Package.Height}" +
+                            $"&plannedShippingDate={DateTime.UtcNow.AddDays(1):yyyy-MM-dd}" +
+                            "&isCustomsDeclarable=false&unitOfMeasurement=metric";
+
+                        var response = await client.GetAsync(ratesUrl);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var content = await response.Content.ReadAsStringAsync();
+                            var quotes = ParseDhlRatesResponse(content, provider);
+                            await UpdateProviderApiStatus(provider, true, null);
+                            return quotes;
+                        }
+                        await UpdateProviderApiStatus(provider, false, $"Rates API returned {response.StatusCode}");
+                        break;
+                    }
+                    // InPost does not have a live rates API — rates are configured in DB
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error fetching live rates from {Carrier}", provider.Code);
+                await UpdateProviderApiStatus(provider, false, ex.Message);
+            }
             return new List<ShippingQuote>();
+        }
+
+        private List<ShippingQuote> ParseDhlRatesResponse(string jsonResponse, ShippingProvider provider)
+        {
+            var quotes = new List<ShippingQuote>();
+            using var doc = JsonDocument.Parse(jsonResponse);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("products", out var products))
+            {
+                foreach (var product in products.EnumerateArray())
+                {
+                    var productName = product.TryGetProperty("productName", out var pn) ? pn.GetString() ?? "" : "";
+                    var productCode = product.TryGetProperty("productCode", out var pc) ? pc.GetString() ?? "" : "";
+
+                    decimal price = 0;
+                    string currency = "PLN";
+                    if (product.TryGetProperty("totalPrice", out var tp) && tp.GetArrayLength() > 0)
+                    {
+                        var priceEntry = tp[0];
+                        price = priceEntry.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
+                        currency = priceEntry.TryGetProperty("priceCurrency", out var cur) ? cur.GetString() ?? "PLN" : "PLN";
+                    }
+
+                    int minDays = 1, maxDays = 5;
+                    if (product.TryGetProperty("deliveryCapabilities", out var dc))
+                    {
+                        if (dc.TryGetProperty("totalTransitDays", out var td))
+                        {
+                            minDays = maxDays = td.GetInt32();
+                        }
+                    }
+
+                    quotes.Add(new ShippingQuote
+                    {
+                        ProviderId = provider.Id,
+                        CarrierCode = provider.Code,
+                        CarrierName = provider.Name,
+                        CarrierLogo = provider.LogoUrl,
+                        ServiceType = productCode,
+                        ServiceName = productName,
+                        Price = price,
+                        Currency = currency,
+                        EstimatedDaysMin = minDays,
+                        EstimatedDaysMax = maxDays,
+                        IsLiveRate = true
+                    });
+                }
+            }
+            return quotes;
         }
 
         #endregion

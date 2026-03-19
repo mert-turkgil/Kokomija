@@ -247,7 +247,7 @@
                                                             </div>
                                                             <div class="text-end">
                                                                 <div class="fw-bold text-primary">@order.TotalAmount.ToString("C", plnCulture)</div>
-                                                                <span class="badge bg-@statusClass">@(L[$"Status_{order.OrderStatus}"] ?? order.OrderStatus)</span>
+                                                                <span class="badge bg-@statusClass">@(L[$"Status_{System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(order.OrderStatus ?? "")}"] ?? order.OrderStatus)</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -457,7 +457,7 @@
                                         <div class="col-lg-3 col-6">
                                             <div class="d-flex flex-column align-items-lg-center">
                                                 <span class="badge bg-@statusClass mb-1">
-                                                    <i class="bi bi-@statusIcon me-1"></i>@(L[$"Status_{order.OrderStatus}"] ?? order.OrderStatus)
+                                                    <i class="bi bi-@statusIcon me-1"></i>@(L[$"Status_{System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(order.OrderStatus ?? "")}"] ?? order.OrderStatus)
                                                 </span>
                                                 @if (order.PaymentStatus?.ToLower() == "refunded")
                                                 {
@@ -535,65 +535,70 @@
 
             <!-- ==================== COUPONS TAB ==================== -->
             <div class="tab-pane fade" id="coupons" role="tabpanel">
+                <!-- Stats Row -->
+                @{
+                    var availableCount = Model.AvailableCoupons.Count;
+                    var expiringCount = Model.AvailableCoupons.Count(c => c.ValidUntil.HasValue && c.ValidUntil.Value <= DateTime.UtcNow.AddDays(7));
+                    var usedCount = Model.UsedCoupons.Count;
+                }
+                <div class="account-coupons-stats">
+                    <div class="coupon-stat-card stat-available">
+                        <div class="stat-number">@availableCount</div>
+                        <div class="stat-label">@(L["Account_Coupons_Available"] ?? "Available")</div>
+                    </div>
+                    <div class="coupon-stat-card stat-expiring">
+                        <div class="stat-number">@expiringCount</div>
+                        <div class="stat-label">@(L["Account_Coupons_ExpiringSoon"] ?? "Expiring Soon")</div>
+                    </div>
+                    <div class="coupon-stat-card stat-used">
+                        <div class="stat-number">@usedCount</div>
+                        <div class="stat-label">@(L["Account_Coupons_Used"] ?? "Used")</div>
+                    </div>
+                </div>
+
                 <div class="card shadow-sm">
                     <div class="card-header py-3">
                         <h5 class="mb-0 fw-semibold">
                             <i class="bi bi-ticket-perforated-fill text-success me-2"></i>@(L["Account_Coupons_Available"] ?? "Available Coupons")
+                            @if (Model.AvailableCoupons.Any())
+                            {
+                                <span class="coupon-section-count ms-2">@Model.AvailableCoupons.Count</span>
+                            }
                         </h5>
                     </div>
                     <div class="card-body">
                         @if (Model.AvailableCoupons.Any())
                         {
-                            <div class="row g-3">
+                            <div class="coupon-grid">
                                 @foreach (var coupon in Model.AvailableCoupons)
                                 {
-                                    <div class="col-md-6">
-                                        <div class="card border-success h-100">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                                    <div>
-                                                        <h6 class="fw-bold mb-1">@coupon.Code</h6>
-                                                        <p class="text-body-secondary small mb-0">@coupon.Description</p>
-                                                    </div>
-                                                    @if (coupon.DiscountType == "percentage")
-                                                    {
-                                                        <span class="badge bg-success fs-6">-@coupon.DiscountValue%</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge bg-success fs-6">-@coupon.DiscountValue.ToString("C", plnCulture)</span>
-                                                    }
-                                                </div>
-                                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                                    @if (coupon.MinimumOrderAmount.HasValue)
-                                                    {
-                                                        <small class="text-body-secondary">
-                                                            <i class="bi bi-cart me-1"></i>Min: @coupon.MinimumOrderAmount.Value.ToString("C", plnCulture)
-                                                        </small>
-                                                    }
-                                                    @if (coupon.ValidUntil.HasValue)
-                                                    {
-                                                        <small class="text-body-secondary">
-                                                            <i class="bi bi-calendar-event me-1"></i>@(L["Account_Coupons_ValidUntil"] ?? "Valid Until"): @coupon.ValidUntil.Value.ToString("dd MMM yyyy")
-                                                        </small>
-                                                    }
-                                                    <button class="btn btn-sm btn-outline-success copy-coupon-btn" data-code="@coupon.Code">
-                                                        <i class="bi bi-clipboard me-1"></i>@(L["Account_Coupons_Copy"] ?? "Copy Code")
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    @await Html.PartialAsync("_CouponCard", new Kokomija.Models.ViewModels.CouponCardViewModel
+                                    {
+                                        Id = coupon.Id,
+                                        Code = coupon.Code,
+                                        Description = coupon.Description,
+                                        DiscountType = coupon.DiscountType,
+                                        DiscountValue = coupon.DiscountValue,
+                                        CouponType = coupon.CouponType,
+                                        MinimumOrderAmount = coupon.MinimumOrderAmount,
+                                        MaximumDiscountAmount = coupon.MaximumDiscountAmount,
+                                        ValidUntil = coupon.ValidUntil,
+                                        IsNew = coupon.IsNew,
+                                        CategoryName = coupon.CategoryName,
+                                        ProductName = coupon.ProductName
+                                    })
                                 }
                             </div>
                         }
                         else
                         {
-                            <div class="text-center py-5">
-                                <i class="bi bi-ticket-perforated text-body-secondary" style="font-size: 4rem;"></i>
-                                <h5 class="mt-3 text-body-secondary">@(L["Account_Coupons_Empty"] ?? "No coupons available")</h5>
-                                <p class="text-body-secondary">@(L["Account_Coupons_EmptyDesc"] ?? "Check back later for special offers and discounts!")</p>
-                                <a asp-controller="Product" asp-action="Index" class="btn btn-primary mt-3">
+                            <div class="empty-coupons-state">
+                                <div class="empty-coupons-icon">
+                                    <i class="bi bi-ticket-perforated"></i>
+                                </div>
+                                <h5 class="fw-semibold mt-3">@(L["Account_Coupons_Empty"] ?? "No coupons available")</h5>
+                                <p class="text-body-secondary mb-3">@(L["Account_Coupons_EmptyDesc"] ?? "Check back later for special offers and discounts!")</p>
+                                <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
                                     <i class="bi bi-bag me-2"></i>@(L["Account_ShopNow"] ?? "Shop Now")
                                 </a>
                             </div>
@@ -611,43 +616,38 @@
                     <div class="card-body">
                         @if (Model.UsedCoupons.Any())
                         {
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>@(L["Account_Coupons_Code"] ?? "Code")</th>
-                                            <th>@(L["Account_Coupons_Discount"] ?? "Discount")</th>
-                                            <th>@(L["Account_Coupons_UsedOn"] ?? "Used On")</th>
-                                            <th>@(L["Account_Order"] ?? "Order")</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var coupon in Model.UsedCoupons)
-                                        {
-                                            <tr>
-                                                <td><strong>@coupon.Code</strong></td>
-                                                <td><span class="badge bg-info">-@coupon.DiscountAmount.ToString("C", plnCulture)</span></td>
-                                                <td>@coupon.UsedAt.ToString("dd MMM yyyy")</td>
-                                                <td>
-                                                    @if (coupon.OrderId > 0)
-                                                    {
-                                                        <a asp-action="OrderDetails" asp-route-id="@coupon.OrderId">@coupon.OrderNumber</a>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-muted">@coupon.OrderNumber</span>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                            <div class="used-coupons-list">
+                                @foreach (var coupon in Model.UsedCoupons)
+                                {
+                                    <div class="used-coupon-item">
+                                        <div class="used-coupon-icon">
+                                            <i class="bi bi-ticket-perforated-fill"></i>
+                                        </div>
+                                        <div class="used-coupon-info">
+                                            <div class="used-coupon-code">@coupon.Code</div>
+                                            <div class="used-coupon-date">@coupon.UsedAt.ToString("dd MMM yyyy")</div>
+                                        </div>
+                                        <div class="used-coupon-discount">-@coupon.DiscountAmount.ToString("C", plnCulture)</div>
+                                        <div class="used-coupon-order">
+                                            @if (coupon.OrderId > 0)
+                                            {
+                                                <a asp-action="OrderDetails" asp-route-id="@coupon.OrderId" class="text-decoration-none">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>@coupon.OrderNumber
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@coupon.OrderNumber</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
                         else
                         {
                             <div class="text-center py-4">
-                                <i class="bi bi-inbox text-body-secondary" style="font-size: 3rem;"></i>
+                                <i class="bi bi-inbox text-body-secondary" style="font-size: 2.5rem;"></i>
                                 <p class="text-body-secondary mt-2 mb-0">@(L["Account_NoData"] ?? "No data available")</p>
                             </div>
                         }

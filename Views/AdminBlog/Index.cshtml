@@ -82,6 +82,26 @@
             </div>
         </div>
 
+        @{
+            var deletedBlogCount = ViewBag.DeletedBlogs as int? ?? 0;
+        }
+        @if (deletedBlogCount > 0)
+        {
+            <div class="row mb-4 g-3">
+                <div class="col-6 col-lg-3">
+                    <div class="stat-card-small stat-filter-card" data-filter="deleted" role="button" tabindex="0" title="Click to show deleted posts">
+                        <div class="stat-icon-small bg-danger">
+                            <i class="bi bi-trash3"></i>
+                        </div>
+                        <div>
+                            <h6>@deletedBlogCount</h6>
+                            <small>Deleted (Trash)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- Blog Posts Table -->
         <div class="row">
             <div class="col-12">
@@ -119,6 +139,7 @@
                                         <option value="">All Status</option>
                                         <option value="Published">Published</option>
                                         <option value="Draft">Draft</option>
+                                        <option value="Deleted">Deleted</option>
                                     </select>
                                 </div>
                             </div>
@@ -177,7 +198,13 @@
                                                     </small>
                                                 </td>
                                                 <td>
-                                                    @if (blog.IsPublished)
+                                                    @if (blog.IsDeleted)
+                                                    {
+                                                        <span class="badge bg-danger">
+                                                            <i class="bi bi-trash3"></i> Deleted
+                                                        </span>
+                                                    }
+                                                    else if (blog.IsPublished)
                                                     {
                                                         <span class="badge bg-success">
                                                             <i class="bi bi-check-circle"></i> Published
@@ -206,21 +233,39 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        <a asp-action="Edit" asp-route-id="@blog.Id" 
-                                                           class="btn btn-outline-primary" title="Edit Blog Post">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </a>
-                                                        <button type="button" class="btn btn-outline-info" 
-                                                                onclick="toggleBlogPublish(@blog.Id)" 
-                                                                title="@(blog.IsPublished ? "Unpublish" : "Publish")">
-                                                            <i class="bi bi-@(blog.IsPublished ? "eye-slash" : "eye")"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger" 
-                                                                onclick="deleteBlog(@blog.Id, '@blog.Title')" title="Delete">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </div>
+                                                    @if (blog.IsDeleted)
+                                                    {
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <form asp-action="Restore" asp-controller="AdminBlog" method="post" class="d-inline">
+                                                                <input type="hidden" name="id" value="@blog.Id" />
+                                                                <button type="submit" class="btn btn-outline-success" title="Restore">
+                                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                                </button>
+                                                            </form>
+                                                            <button type="button" class="btn btn-outline-danger"
+                                                                    onclick="deleteBlog(@blog.Id, '@blog.Title', true)" title="Delete Permanently">
+                                                                <i class="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <a asp-action="Edit" asp-route-id="@blog.Id"
+                                                               class="btn btn-outline-primary" title="Edit Blog Post">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </a>
+                                                            <button type="button" class="btn btn-outline-info"
+                                                                    onclick="toggleBlogPublish(@blog.Id)"
+                                                                    title="@(blog.IsPublished ? "Unpublish" : "Publish")">
+                                                                <i class="bi bi-@(blog.IsPublished ? "eye-slash" : "eye")"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-danger"
+                                                                    onclick="deleteBlog(@blog.Id, '@blog.Title')" title="Delete">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    }
                                                 </td>
                                             </tr>
                                         }
@@ -919,6 +964,10 @@
                     // Filter draft posts
                     table.column(4).search('Draft').draw();
                     $('#statusFilter').val('Draft');
+                } else if (filterType === 'deleted') {
+                    // Filter deleted posts
+                    table.column(4).search('Deleted').draw();
+                    $('#statusFilter').val('Deleted');
                 }
                 
                 // Smooth scroll to table on mobile
@@ -949,6 +998,8 @@
                     $('.stat-filter-card[data-filter="published"]').addClass('active');
                 } else if (status === 'Draft') {
                     $('.stat-filter-card[data-filter="draft"]').addClass('active');
+                } else if (status === 'Deleted') {
+                    $('.stat-filter-card[data-filter="deleted"]').addClass('active');
                 } else {
                     $('.stat-filter-card[data-filter="all"]').addClass('active');
                 }
@@ -997,14 +1048,21 @@
         }
 
         // Delete blog
-        async function deleteBlog(blogId, blogTitle) {
-            if (!confirm(`Are you sure you want to delete the blog post "${blogTitle}"?\n\nThis action cannot be undone.`)) {
+        async function deleteBlog(blogId, blogTitle, hardDelete = false) {
+            const message = hardDelete 
+                ? `Are you sure you want to PERMANENTLY delete the blog post "${blogTitle}"?\n\nThis action cannot be undone.`
+                : `Are you sure you want to delete the blog post "${blogTitle}"?\n\nYou can restore it later.`;
+            
+            if (!confirm(message)) {
                 return;
             }
 
             try {
                 const formData = new FormData();
                 formData.append('id', blogId);
+                if (hardDelete) {
+                    formData.append('hardDelete', 'true');
+                }
                 formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value);
 
                 const response = await fetch('@Url.Action("Delete", "AdminBlog")', {

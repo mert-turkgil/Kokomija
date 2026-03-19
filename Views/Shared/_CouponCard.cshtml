@@ -1,0 +1,140 @@
+@model Kokomija.Models.ViewModels.CouponCardViewModel
+@inject Kokomija.Services.ILocalizationService L
+@using System.Globalization
+
+@{
+    var plnCulture = new CultureInfo("pl-PL");
+    
+    // Color scheme based on coupon type
+    var (typeClass, typeIcon, typeLabel) = Model.CouponType switch
+    {
+        "birthday" => ("coupon-birthday", "bi-gift", L["Coupon_Type_Birthday"] ?? "Birthday"),
+        "new_user" => ("coupon-newuser", "bi-person-plus", L["Coupon_Type_NewUser"] ?? "New User"),
+        "vip" => ("coupon-vip", "bi-star", L["Coupon_Type_VIP"] ?? "VIP"),
+        "category" => ("coupon-category", "bi-grid", L["Coupon_Type_Category"] ?? "Category"),
+        "product" => ("coupon-product", "bi-box", L["Coupon_Type_Product"] ?? "Product"),
+        "first_purchase" => ("coupon-firstpurchase", "bi-bag-check", L["Coupon_Type_FirstPurchase"] ?? "First Purchase"),
+        _ => ("coupon-general", "bi-tag", L["Coupon_Type_General"] ?? "General")
+    };
+    
+    // Determine if coupon is expiring soon (within 3 days)
+    var isExpiringSoon = Model.ValidUntil.HasValue && (Model.ValidUntil.Value - DateTime.UtcNow).TotalDays <= 3;
+    var daysLeft = Model.ValidUntil.HasValue ? (int)Math.Ceiling((Model.ValidUntil.Value - DateTime.UtcNow).TotalDays) : (int?)null;
+    
+    var cardMode = ViewData["CouponCardMode"]?.ToString() ?? "full"; // full, compact, mini
+}
+
+<div class="coupon-card @typeClass @(Model.IsNew ? "coupon-new" : "") @(isExpiringSoon ? "coupon-expiring" : "") coupon-card-@cardMode" data-coupon-id="@Model.Id" data-coupon-code="@Model.Code" role="article" aria-label="@(L["Coupon_CopyCode"] ?? "Coupon") @Model.Code">
+    <!-- Dashed border side accent -->
+    <div class="coupon-card-accent"></div>
+    
+    <div class="coupon-card-body">
+        <!-- Top row: Type badge + Discount -->
+        <div class="coupon-card-header">
+            <div class="coupon-type-badge">
+                <i class="bi @typeIcon"></i>
+                <span>@typeLabel</span>
+            </div>
+            <div class="coupon-discount-display">
+                @if (Model.DiscountType == "percentage")
+                {
+                    <span class="discount-value">@Model.DiscountValue<small>%</small></span>
+                    <span class="discount-label">@(L["Coupon_Off"] ?? "OFF")</span>
+                }
+                else
+                {
+                    <span class="discount-value">@Model.DiscountValue.ToString("N0")<small>zł</small></span>
+                    <span class="discount-label">@(L["Coupon_Off"] ?? "OFF")</span>
+                }
+            </div>
+        </div>
+        
+        <!-- Code with copy button -->
+        <div class="coupon-code-section">
+            <div class="coupon-code-box">
+                <span class="coupon-code-text">@Model.Code</span>
+                <button type="button" class="coupon-copy-btn" onclick="copyCouponCode('@Model.Code', this)" title="@(L["Coupon_CopyCode"] ?? "Copy Code")">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>
+            @if (Model.IsNew)
+            {
+                <span class="coupon-new-badge">@(L["Coupon_New"] ?? "NEW")</span>
+            }
+        </div>
+        
+        <!-- Description -->
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p class="coupon-description">@Model.Description</p>
+        }
+        
+        <!-- Details row -->
+        <div class="coupon-details">
+            @if (Model.MinimumOrderAmount.HasValue && Model.MinimumOrderAmount.Value > 0)
+            {
+                <span class="coupon-detail-item" title="@(L["Coupon_MinOrder"] ?? "Minimum Order")">
+                    <i class="bi bi-cart"></i> @(L["Coupon_Min"] ?? "Min"): @Model.MinimumOrderAmount.Value.ToString("C0", plnCulture)
+                </span>
+            }
+            @if (Model.MaximumDiscountAmount.HasValue && Model.MaximumDiscountAmount.Value > 0)
+            {
+                <span class="coupon-detail-item" title="@(L["Coupon_MaxDiscount"] ?? "Maximum Discount")">
+                    <i class="bi bi-shield-check"></i> @(L["Coupon_Max"] ?? "Max"): @Model.MaximumDiscountAmount.Value.ToString("C0", plnCulture)
+                </span>
+            }
+            @if (!string.IsNullOrEmpty(Model.CategoryName))
+            {
+                <span class="coupon-detail-item" title="@(L["Coupon_ForCategory"] ?? "For Category")">
+                    <i class="bi bi-folder"></i> @Model.CategoryName
+                </span>
+            }
+            @if (!string.IsNullOrEmpty(Model.ProductName))
+            {
+                <span class="coupon-detail-item" title="@(L["Coupon_ForProduct"] ?? "For Product")">
+                    <i class="bi bi-box"></i> @Model.ProductName
+                </span>
+            }
+        </div>
+        
+        <!-- Footer: Expiry + CTA -->
+        <div class="coupon-card-footer">
+            @if (Model.ValidUntil.HasValue)
+            {
+                <div class="coupon-expiry @(isExpiringSoon ? "expiry-urgent" : "")">
+                    @if (isExpiringSoon && daysLeft.HasValue)
+                    {
+                        <i class="bi bi-clock"></i>
+                        @if (daysLeft.Value <= 0)
+                        {
+                            <span>@(L["Coupon_ExpiresToday"] ?? "Expires today!")</span>
+                        }
+                        else if (daysLeft.Value == 1)
+                        {
+                            <span>@(L["Coupon_Expires1Day"] ?? "1 day left!")</span>
+                        }
+                        else
+                        {
+                            <span>@(string.Format(L["Coupon_ExpiresDays"] ?? "{0} days left", daysLeft.Value))</span>
+                        }
+                    }
+                    else
+                    {
+                        <i class="bi bi-calendar-event"></i>
+                        <span>@(L["Coupon_ValidUntil"] ?? "Until") @Model.ValidUntil.Value.ToString("dd MMM yyyy")</span>
+                    }
+                </div>
+            }
+            @if (ViewData["ShowApplyButton"] is true)
+            {
+                <button type="button" class="coupon-apply-btn apply-coupon-btn" data-coupon="@Model.Code">
+                    <i class="bi bi-check-circle me-1"></i>@(L["Coupon_Apply"] ?? "Apply")
+                </button>
+            }
+        </div>
+    </div>
+    
+    <!-- Circular cutouts for ticket effect -->
+    <div class="coupon-cutout coupon-cutout-top"></div>
+    <div class="coupon-cutout coupon-cutout-bottom"></div>
+</div>

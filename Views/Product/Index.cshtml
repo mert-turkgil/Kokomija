@@ -1,5 +1,6 @@
 @model IEnumerable<Kokomija.Entity.Product>
 @inject Kokomija.Services.ILocalizationService L
+@inject Kokomija.Data.Abstract.IUnitOfWork UnitOfWork
 @using System.Globalization
 
 @{
@@ -9,6 +10,23 @@
     var currentCultureTwoLetter = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     var currentCultureCodeForCategory = currentCultureTwoLetter == "pl" ? "pl-PL" : currentCultureTwoLetter == "en" ? "en-US" : "en-US";
 
+    // Pre-load active coupons for coupon eligibility data attributes
+    var activeCoupons = (await UnitOfWork.Coupons.GetActiveCouponsAsync()).ToList();
+    var globalCoupons = activeCoupons.Where(c => c.CategoryId == null && c.ProductId == null && c.UserId == null).ToList();
+    var categoryCouponMap = activeCoupons.Where(c => c.CategoryId.HasValue).GroupBy(c => c.CategoryId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+    var productCouponMap = activeCoupons.Where(c => c.ProductId.HasValue).GroupBy(c => c.ProductId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+
+    // Helper to get best coupon discount for a product
+    decimal GetBestCouponDiscount(Kokomija.Entity.Product p) {
+        var applicableCoupons = new List<Kokomija.Entity.Coupon>();
+        applicableCoupons.AddRange(globalCoupons);
+        if (p.CategoryId.HasValue && categoryCouponMap.TryGetValue(p.CategoryId.Value, out var catCoupons))
+            applicableCoupons.AddRange(catCoupons);
+        if (productCouponMap.TryGetValue(p.Id, out var prodCoupons))
+            applicableCoupons.AddRange(prodCoupons);
+        if (!applicableCoupons.Any()) return 0;
+        return applicableCoupons.Max(c => c.DiscountType == "percentage" ? c.DiscountValue : (p.Price > 0 ? (c.DiscountValue / p.Price * 100) : 0));
+    }
     
     // Helper function to get translated category name
     string GetCategoryName(Kokomija.Entity.Category? cat) {
@@ -194,22 +212,27 @@
                             </h6>
                         </div>
                         <div class="filter-options">
-                            <div class="form-check">
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" id="showDiscountsOnly" name="discount">
                                 <label class="form-check-label" for="showDiscountsOnly">
                                     <i class="bi bi-gift me-1 text-danger"></i>
-                                    @L["Products_ShowDiscountsOnly"]
+                                    @(L["Products_ShowOnSale"] ?? "On Sale")
                                 </label>
                             </div>
-                            @if (User.Identity?.IsAuthenticated != true)
-                            {
-                                <div class="discount-hint mt-2 p-2 bg-light rounded">
-                                    <small class="text-muted">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        @L["Products_WelcomeDiscountHint"] <strong>WELCOME10</strong>
-                                    </small>
-                                </div>
-                            }
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="showCouponEligible" name="couponEligible">
+                                <label class="form-check-label" for="showCouponEligible">
+                                    <i class="bi bi-ticket-perforated me-1 text-primary"></i>
+                                    @(L["Products_HasCoupon"] ?? "Has Coupon")
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showBestDeals" name="bestDeals">
+                                <label class="form-check-label" for="showBestDeals">
+                                    <i class="bi bi-lightning me-1 text-warning"></i>
+                                    @(L["Products_BestDeals"] ?? "Best Deals")
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -234,6 +257,61 @@
 
             <!-- Products Grid -->
             <div class="col-lg-9 products-container">
+                @if (globalCoupons.Any() || categoryCouponMap.Any())
+                {
+                    <div class="product-coupon-banner" id="listingCouponBanner">
+                        <div class="coupon-section-header">
+                            <h6 class="product-coupon-banner-title">
+                                <i class="bi bi-ticket-perforated"></i> @(L["Products_AvailableCoupons"] ?? "Available Coupons")
+                                <span class="coupon-section-count ms-1">@(globalCoupons.Count + categoryCouponMap.Values.Sum(v => v.Count))</span>
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-link text-body-secondary p-0" onclick="document.getElementById('listingCouponBanner').style.display='none'" title="@(L["Products_DismissBanner"] ?? "Dismiss")">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div class="coupon-strip">
+                            @foreach (var coupon in globalCoupons.Take(5))
+                            {
+                                @await Html.PartialAsync("_CouponCard", new Kokomija.Models.ViewModels.CouponCardViewModel
+                                {
+                                    Id = coupon.Id,
+                                    Code = coupon.Code,
+                                    Description = coupon.Description,
+                                    DiscountType = coupon.DiscountType,
+                                    DiscountValue = coupon.DiscountValue,
+                                    CouponType = coupon.CouponType,
+                                    MinimumOrderAmount = coupon.MinimumOrderAmount,
+                                    MaximumDiscountAmount = coupon.MaximumDiscountAmount,
+                                    ValidUntil = coupon.ValidUntil,
+                                    IsNew = coupon.CreatedAt >= DateTime.UtcNow.AddDays(-7)
+                                }, new ViewDataDictionary(ViewData) { { "CouponCardMode", "compact" } })
+                            }
+                            @{
+                                var categoryId = ViewBag.Category != null ? ((Kokomija.Entity.Category)ViewBag.Category).Id : (int?)null;
+                            }
+                            @if (categoryId.HasValue && categoryCouponMap.TryGetValue(categoryId.Value, out var currentCatCoupons))
+                            {
+                                @foreach (var coupon in currentCatCoupons.Take(3))
+                                {
+                                    @await Html.PartialAsync("_CouponCard", new Kokomija.Models.ViewModels.CouponCardViewModel
+                                    {
+                                        Id = coupon.Id,
+                                        Code = coupon.Code,
+                                        Description = coupon.Description,
+                                        DiscountType = coupon.DiscountType,
+                                        DiscountValue = coupon.DiscountValue,
+                                        CouponType = coupon.CouponType,
+                                        MinimumOrderAmount = coupon.MinimumOrderAmount,
+                                        MaximumDiscountAmount = coupon.MaximumDiscountAmount,
+                                        ValidUntil = coupon.ValidUntil,
+                                        IsNew = coupon.CreatedAt >= DateTime.UtcNow.AddDays(-7),
+                                        CategoryName = coupon.Category?.Name
+                                    }, new ViewDataDictionary(ViewData) { { "CouponCardMode", "compact" } })
+                                }
+                            }
+                        </div>
+                    </div>
+                }
                 @if (!Model.Any())
                 {
                     <div class="no-products">
@@ -258,6 +336,24 @@
                             }
                             var allNames = string.Join("|", translatedNames.Distinct());
                             
+                            // Get available colors for this product (from variants)
+                            var productColors = product.Variants?.Where(v => v.ColorId.HasValue)
+                                .Select(v => v.ColorId!.Value)
+                                .Distinct()
+                                .ToList() ?? new List<int>();
+                            var colorsJson = string.Join(",", productColors);
+                            
+                            // Get available sizes for this product (from variants)
+                            var productSizes = product.Variants?.Where(v => v.SizeId.HasValue)
+                                .Select(v => v.SizeId!.Value)
+                                .Distinct()
+                                .ToList() ?? new List<int>();
+                            var sizesJson = string.Join(",", productSizes);
+                            
+                            // Get coupon eligibility for this product
+                            var bestCouponDiscount = GetBestCouponDiscount(product);
+                            var hasCoupon = bestCouponDiscount > 0;
+                            
                             <div class="col-md-6 col-lg-4" 
                                  data-category="@product.CategoryId" 
                                  data-price="@product.Price"
@@ -265,7 +361,11 @@
                                  data-translated-names="@System.Net.WebUtility.HtmlEncode(allNames)"
                                  data-created="@product.CreatedAt.Ticks"
                                  data-pack-size="@product.PackSize"
-                                 data-is-bulk="@(isBulkProduct ? "true" : "false")">
+                                 data-is-bulk="@(isBulkProduct ? "true" : "false")"
+                                 data-colors="@colorsJson"
+                                 data-sizes="@sizesJson"
+                                 data-has-coupon="@(hasCoupon ? "true" : "false")"
+                                 data-coupon-discount="@bestCouponDiscount.ToString("F0")">
                                 @await Component.InvokeAsync("ProductCard", new { productId = product.Id })
                             </div>
                         }
@@ -288,6 +388,8 @@
                 maxPrice: null,
                 sortBy: 'newest',
                 showDiscountsOnly: false,
+                showCouponEligible: false,
+                showBestDeals: false,
                 productType: 'all', // 'all', 'single', 'bulk'
                 productName: '' // Search by product name
             };
@@ -368,6 +470,8 @@
                 filterState.maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
                 filterState.sortBy = $('#sortBy').val();
                 filterState.showDiscountsOnly = $('#showDiscountsOnly').prop('checked');
+                filterState.showCouponEligible = $('#showCouponEligible').prop('checked');
+                filterState.showBestDeals = $('#showBestDeals').prop('checked');
                 filterState.productType = $('input[name="productType"]:checked').val() || 'all';
                 filterState.productName = $('#productNameSearch').val().toLowerCase().trim();
                 let $products = $('#productsGrid > div');
@@ -398,6 +502,12 @@
                     const isSingle = !isBulk; // Single = PackSize == 1
                     const hasDiscount = $product.find('.price-with-discount, .discount-badge, .badge-sale').length > 0;
                     
+                    // Get product colors and sizes
+                    const productColorsStr = $product.data('colors') || '';
+                    const productSizesStr = $product.data('sizes') || '';
+                    const productColors = productColorsStr ? productColorsStr.toString().split(',').map(c => parseInt(c)) : [];
+                    const productSizes = productSizesStr ? productSizesStr.toString().split(',').map(s => parseInt(s)) : [];
+                    
                     let showProduct = true;
 
                     // Filter by product name - search in all translated names
@@ -417,9 +527,41 @@
                         showProduct = false;
                     }
                     
-                    // Filter by discount - for non-authenticated users, all products have WELCOME10
+                    // Filter by colors - product must have at least one of the selected colors
+                    if (showProduct && filterState.colors.length > 0) {
+                        const hasMatchingColor = filterState.colors.some(colorId => productColors.includes(colorId));
+                        if (!hasMatchingColor) {
+                            showProduct = false;
+                        }
+                    }
+                    
+                    // Filter by sizes - product must have at least one of the selected sizes
+                    if (showProduct && filterState.sizes.length > 0) {
+                        const hasMatchingSize = filterState.sizes.some(sizeId => productSizes.includes(sizeId));
+                        if (!hasMatchingSize) {
+                            showProduct = false;
+                        }
+                    }
+                    
+                    // Filter by discount — on sale items
                     if (showProduct && filterState.showDiscountsOnly && !hasDiscount) {
                         showProduct = false;
+                    }
+                    
+                    // Filter by coupon eligible
+                    if (showProduct && filterState.showCouponEligible) {
+                        const hasCoupon = $product.attr('data-has-coupon') === 'true';
+                        if (!hasCoupon) {
+                            showProduct = false;
+                        }
+                    }
+                    
+                    // Filter by best deals (has discount OR has coupon)
+                    if (showProduct && filterState.showBestDeals) {
+                        const hasCoupon = $product.attr('data-has-coupon') === 'true';
+                        if (!hasDiscount && !hasCoupon) {
+                            showProduct = false;
+                        }
                     }
 
                     // Filter by product type (all/single/bulk)
@@ -478,7 +620,7 @@
 
             function sortProducts(sortBy) {
                 const $container = $('#productsGrid');
-                const $products = $container.children('div:visible').get();
+                const $products = $container.children('div').get();
 
                 $products.sort(function(a, b) {
                     const $a = $(a);
@@ -499,14 +641,14 @@
                     }
                 });
 
-                // Smooth reordering
-                $products.forEach((item, idx) => {
-                    $(item).css('order', idx);
+                // Detach all products and reattach in sorted order
+                $.each($products, function(idx, item) {
+                    $container.append(item);
                 });
             }
 
             // Event listeners (excluding category - handled by attachCategoryHandlers)
-            $(document).on('change', 'input[name="color"], input[name="productType"], #sortBy, #showDiscountsOnly', triggerFilter);
+            $(document).on('change', 'input[name="color"], input[name="productType"], #sortBy, #showDiscountsOnly, #showCouponEligible, #showBestDeals', triggerFilter);
             $('#applyPriceFilter').click(applyFilters);
             $('#minPrice, #maxPrice').on('keyup', function(e) {
                 if (e.keyCode === 13) { // Enter key
@@ -554,6 +696,8 @@
                 $('#productNameSearch').val('');
                 $('#sortBy').val('newest');
                 $('#showDiscountsOnly').prop('checked', false);
+                $('#showCouponEligible').prop('checked', false);
+                $('#showBestDeals').prop('checked', false);
                 
                 filterState.categories = [];
                 filterState.colors = [];
@@ -562,6 +706,8 @@
                 filterState.maxPrice = null;
                 filterState.sortBy = 'newest';
                 filterState.showDiscountsOnly = false;
+                filterState.showCouponEligible = false;
+                filterState.showBestDeals = false;
                 filterState.productType = 'all';
                 filterState.productName = '';
 
@@ -609,25 +755,42 @@
                             
                             html += `<div class="category-group mb-3">`;
                             
-                            // Parent category with checkbox
+                            // Parent category with checkbox and optional image
+                            const parentIcon = parent.iconImagePath || parent.iconCssClass;
+                            let parentIconHtml = '';
+                            if (parent.iconImagePath) {
+                                parentIconHtml = `<img src="${parent.iconImagePath}" alt="${parent.name}" class="category-icon me-1" style="width: 20px; height: 20px; object-fit: contain;" onerror="this.style.display='none'">`;
+                            } else if (parent.iconCssClass) {
+                                parentIconHtml = `<i class="${parent.iconCssClass} me-1"></i>`;
+                            }
+                            
                             html += `
                                 <div class="form-check mb-2">
                                     <input class="form-check-input parent-category" type="checkbox" name="category" value="${parent.id}" id="cat${parent.id}" data-parent-id="${parent.id}">
-                                    <label class="form-check-label fw-bold" for="cat${parent.id}">
-                                        ${parent.name}
+                                    <label class="form-check-label fw-bold d-flex align-items-center" for="cat${parent.id}">
+                                        ${parentIconHtml}
+                                        <span>${parent.name}</span>
                                     </label>
                                 </div>
                             `;
                             
-                            // Subcategories indented
+                            // Subcategories indented with icons/images
                             if (subcategories.length > 0) {
                                 html += `<div class="ps-3 child-categories" data-parent="${parent.id}">`;
                                 subcategories.forEach(cat => {
+                                    let iconHtml = '';
+                                    if (cat.iconImagePath) {
+                                        iconHtml = `<img src="${cat.iconImagePath}" alt="${cat.name}" class="category-icon me-1" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.style.display='none'">`;
+                                    } else if (cat.iconCssClass) {
+                                        iconHtml = `<i class="${cat.iconCssClass} me-1"></i>`;
+                                    }
+                                    
                                     html += `
                                         <div class="form-check">
                                             <input class="form-check-input child-category" type="checkbox" name="category" value="${cat.id}" id="cat${cat.id}" data-parent-id="${parent.id}">
-                                            <label class="form-check-label" for="cat${cat.id}">
-                                                ${cat.name}
+                                            <label class="form-check-label d-flex align-items-center" for="cat${cat.id}">
+                                                ${iconHtml}
+                                                <span>${cat.name}</span>
                                             </label>
                                         </div>
                                     `;
@@ -753,6 +916,44 @@
 
                 document.querySelectorAll('img.lazy').forEach(img => imageObserver.observe(img));
             }
+
+            // Handle image load errors - fallback to logo
+            $(document).on('error', '.product-card img, #productsGrid img', function() {
+                if (!$(this).hasClass('error-handled')) {
+                    $(this).addClass('error-handled');
+                    $(this).attr('src', '/img/logo.png');
+                    $(this).attr('alt', 'Product image not available');
+                }
+            });
+
+            // Re-observe images after filtering
+            function reObserveImages() {
+                if ('IntersectionObserver' in window) {
+                    document.querySelectorAll('img.lazy:not(.observed)').forEach(img => {
+                        img.classList.add('observed');
+                        const observer = new IntersectionObserver((entries) => {
+                            entries.forEach(entry => {
+                                if (entry.isIntersecting) {
+                                    const image = entry.target;
+                                    if (image.dataset.src) {
+                                        image.src = image.dataset.src;
+                                    }
+                                    image.classList.remove('lazy');
+                                    observer.unobserve(image);
+                                }
+                            });
+                        });
+                        observer.observe(img);
+                    });
+                }
+            }
+
+            // Call reObserveImages when filtering completes
+            const originalApplyFilters = applyFilters;
+            applyFilters = function() {
+                originalApplyFilters();
+                setTimeout(reObserveImages, 100);
+            };
         });
     </script>
 }

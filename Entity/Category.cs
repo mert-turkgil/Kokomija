@@ -99,6 +99,22 @@ namespace Kokomija.Entity
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
 
+        /// <summary>
+        /// Soft delete flag
+        /// </summary>
+        public bool IsDeleted { get; set; } = false;
+
+        /// <summary>
+        /// When the category was soft-deleted
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
+
+        /// <summary>
+        /// User who soft-deleted the category
+        /// </summary>
+        [MaxLength(450)]
+        public string? DeletedBy { get; set; }
+
         // Navigation properties
         /// <summary>
         /// Child categories (subcategories)

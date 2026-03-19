@@ -171,7 +171,7 @@ public class AdminProductController : Controller
 
         // Load categories for filter dropdown
         var categories = await _unitOfWork.Categories.GetAllAsync();
-        ViewBag.Categories = categories.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder).ToList();
+        ViewBag.Categories = categories.Where(c => c.IsActive && !c.IsDeleted).OrderBy(c => c.DisplayOrder).ToList();
 
         ViewData["Title"] = "Product Management";
         return View(viewModel);
@@ -526,37 +526,33 @@ public class AdminProductController : Controller
 
             var translations = new TranslateContentResponse();
 
-            // Translate name
-            if (!string.IsNullOrWhiteSpace(request.Name))
-            {
-                var nameResult = await _autoTranslationService.TranslateAsync(
-                    request.Name, request.SourceLanguage, request.TargetLanguage);
-                translations.Name = nameResult.TranslatedText;
-            }
+            // Kick off all translation tasks in parallel
+            var nameTask = !string.IsNullOrWhiteSpace(request.Name)
+                ? _autoTranslationService.TranslateAsync(request.Name, request.SourceLanguage, request.TargetLanguage)
+                : Task.FromResult<Kokomija.Services.TranslationResult>(null!);
+            var descTask = !string.IsNullOrWhiteSpace(request.Description)
+                ? _autoTranslationService.TranslateAsync(request.Description, request.SourceLanguage, request.TargetLanguage)
+                : Task.FromResult<Kokomija.Services.TranslationResult>(null!);
+            var metaTask = !string.IsNullOrWhiteSpace(request.MetaDescription)
+                ? _autoTranslationService.TranslateAsync(request.MetaDescription, request.SourceLanguage, request.TargetLanguage)
+                : Task.FromResult<Kokomija.Services.TranslationResult>(null!);
+            var keywordsTask = !string.IsNullOrWhiteSpace(request.MetaKeywords)
+                ? _autoTranslationService.TranslateAsync(request.MetaKeywords, request.SourceLanguage, request.TargetLanguage)
+                : Task.FromResult<Kokomija.Services.TranslationResult>(null!);
 
-            // Translate description
-            if (!string.IsNullOrWhiteSpace(request.Description))
-            {
-                var descResult = await _autoTranslationService.TranslateAsync(
-                    request.Description, request.SourceLanguage, request.TargetLanguage);
-                translations.Description = descResult.TranslatedText;
-            }
+            await Task.WhenAll(nameTask, descTask, metaTask, keywordsTask);
 
-            // Translate meta description
-            if (!string.IsNullOrWhiteSpace(request.MetaDescription))
-            {
-                var metaResult = await _autoTranslationService.TranslateAsync(
-                    request.MetaDescription, request.SourceLanguage, request.TargetLanguage);
-                translations.MetaDescription = metaResult.TranslatedText;
-            }
+            var nameResult = await nameTask;
+            if (nameResult != null) translations.Name = nameResult.TranslatedText;
 
-            // Translate meta keywords
-            if (!string.IsNullOrWhiteSpace(request.MetaKeywords))
-            {
-                var keywordsResult = await _autoTranslationService.TranslateAsync(
-                    request.MetaKeywords, request.SourceLanguage, request.TargetLanguage);
-                translations.MetaKeywords = keywordsResult.TranslatedText;
-            }
+            var descResult = await descTask;
+            if (descResult != null) translations.Description = descResult.TranslatedText;
+
+            var metaResult = await metaTask;
+            if (metaResult != null) translations.MetaDescription = metaResult.TranslatedText;
+
+            var keywordsResult = await keywordsTask;
+            if (keywordsResult != null) translations.MetaKeywords = keywordsResult.TranslatedText;
 
             // Generate slug from translated name if not provided
             if (!string.IsNullOrWhiteSpace(translations.Name))
@@ -637,6 +633,7 @@ public class AdminProductController : Controller
         ViewBag.ProductGroups = productGroups.ToList();
         ViewBag.Coupons = activeCoupons.ToList();
         ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
+        ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
 
         return View("Create", model);
     }
@@ -668,6 +665,7 @@ public class AdminProductController : Controller
         ViewBag.ProductGroups = productGroups.ToList();
         ViewBag.Coupons = activeCoupons.ToList();
         ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
+        ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
 
         return View("CreateWizard", model);
     }
@@ -851,6 +849,7 @@ public class AdminProductController : Controller
                 MinBusinessQuantity = model.MinBusinessQuantity,
                 BusinessPrice = model.BusinessPrice,
                 BusinessStripePriceId = businessStripePriceId,
+                EanCode = model.EanCode,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -1097,21 +1096,23 @@ public class AdminProductController : Controller
             
             // Reload all dropdowns and ViewBag data
             var categories = await _unitOfWork.Repository<Category>()
-                .GetAllAsync(c => c.Translations!);
+                .GetAllAsync(c => c.Translations!, c => c.SubCategories!);
             var sizes = await _unitOfWork.Sizes.GetAllAsync();
             var colors = await _unitOfWork.Colors.GetAllAsync();
             var productGroups = await _unitOfWork.Repository<ProductGroup>().GetAllAsync();
             var activeCoupons = await _unitOfWork.Repository<Coupon>()
                 .FindAsync(c => c.IsActive && 
                                (!c.ValidUntil.HasValue || c.ValidUntil >= DateTime.UtcNow));
+            var packQuantities = await _unitOfWork.Repository<PackQuantity>().GetAllAsync();
             
             model.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
             model.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
             model.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
             
-            ViewBag.Categories = categories.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder).ToList();
+            ViewBag.Categories = categories.Where(c => c.IsActive && c.ParentCategoryId == null).OrderBy(c => c.DisplayOrder).ToList();
             ViewBag.ProductGroups = productGroups.ToList();
             ViewBag.Coupons = activeCoupons.ToList();
+            ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
             
             // Return to the view that submitted
             var catchReferer = Request.Headers["Referer"].ToString();
@@ -1188,6 +1189,7 @@ public class AdminProductController : Controller
             IsAvailableForBusiness = product.IsAvailableForBusiness,
             MinBusinessQuantity = product.MinBusinessQuantity,
             BusinessPrice = product.BusinessPrice,
+            EanCode = product.EanCode,
             ExistingImageUrls = product.Images.OrderBy(i => i.DisplayOrder).Select(i => i.ImageUrl).ToList(),
             Variants = variants.Select(v => new ProductVariantDto
             {
@@ -1250,6 +1252,7 @@ public class AdminProductController : Controller
         ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
         ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
         ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
+        ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
 
         // Get product specific coupons
         var productCoupons = await _unitOfWork.Repository<Coupon>()
@@ -1275,14 +1278,14 @@ public class AdminProductController : Controller
                 var sizes = await _unitOfWork.Sizes.GetAllAsync();
                 var colors = await _unitOfWork.Colors.GetAllAsync();
                 
-                ViewBag.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
+                ViewBag.Categories = new SelectList(categories.Where(c => !c.IsDeleted), "Id", "Name", model.CategoryId);
                 ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
                 ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
                 
                 return View(model);
             }
 
-            var product = await _unitOfWork.Products.GetByIdAsync(model.Id);
+            var product = await _unitOfWork.Products.GetProductWithDetailsAsync(model.Id);
             if (product == null)
             {
                 return NotFound();
@@ -1308,6 +1311,7 @@ public class AdminProductController : Controller
             product.IsAvailableForBusiness = model.IsAvailableForBusiness;
             product.MinBusinessQuantity = model.MinBusinessQuantity;
             product.BusinessPrice = model.BusinessPrice;
+            product.EanCode = model.EanCode;
 
             // Update Stripe product (sync name, description, active status, and tax code)
             var stripeProductService = new Stripe.ProductService();
@@ -1745,10 +1749,12 @@ public class AdminProductController : Controller
             var categories = await _unitOfWork.Categories.GetAllAsync();
             var sizes = await _unitOfWork.Sizes.GetAllAsync();
             var colors = await _unitOfWork.Colors.GetAllAsync();
+            var packQuantities = await _unitOfWork.Repository<PackQuantity>().GetAllAsync();
             
-            ViewBag.Categories = new SelectList(categories, "Id", "Name", model.CategoryId);
+            ViewBag.Categories = new SelectList(categories.Where(c => !c.IsDeleted), "Id", "Name", model.CategoryId);
             ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
             ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
+            ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
             
             return View(model);
         }
@@ -1907,6 +1913,41 @@ public class AdminProductController : Controller
         {
             _logger.LogError(ex, "Error canceling product upload");
             return Json(new { success = false });
+        }
+    }
+
+    /// <summary>
+    /// POST: Reorder product images (AJAX)
+    /// </summary>
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> ReorderImages([FromBody] ReorderImagesRequest request)
+    {
+        try
+        {
+            if (request?.ImageUrls == null || !request.ImageUrls.Any())
+                return Json(new { success = false, message = "No images provided" });
+
+            var images = await _unitOfWork.Repository<ProductImage>()
+                .FindAsync(img => request.ImageUrls.Contains(img.ImageUrl));
+
+            for (int i = 0; i < request.ImageUrls.Count; i++)
+            {
+                var image = images.FirstOrDefault(img => img.ImageUrl == request.ImageUrls[i]);
+                if (image != null)
+                {
+                    image.DisplayOrder = i;
+                    _unitOfWork.Repository<ProductImage>().Update(image);
+                }
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reordering images");
+            return Json(new { success = false, message = "Error reordering images" });
         }
     }
 
