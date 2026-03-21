@@ -17,6 +17,7 @@ namespace Kokomija.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IStripeService _stripeService;
         private readonly ILocalizationService _localizationService;
         private readonly IConfiguration _configuration;
@@ -38,6 +39,7 @@ namespace Kokomija.Controllers
             IUnitOfWork unitOfWork,
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
             IStripeService stripeService,
             ILocalizationService localizationService,
             IConfiguration configuration,
@@ -48,6 +50,7 @@ namespace Kokomija.Controllers
             _unitOfWork = unitOfWork;
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
             _stripeService = stripeService;
             _localizationService = localizationService;
             _configuration = configuration;
@@ -633,6 +636,16 @@ namespace Kokomija.Controllers
                     return RedirectToAction("Index", "Cart");
                 }
 
+                // Re-authenticate user after Stripe redirect if needed
+                if (User?.Identity?.IsAuthenticated != true && !string.IsNullOrEmpty(session.ClientReferenceId))
+                {
+                    var returnedUser = await _userManager.FindByIdAsync(session.ClientReferenceId);
+                    if (returnedUser != null)
+                    {
+                        await _signInManager.SignInAsync(returnedUser, isPersistent: true);
+                    }
+                }
+
                 // Check if order already exists (created by webhook or previous visit)
                 var existingOrders = await _unitOfWork.Orders.FindAsync(o => o.StripeCheckoutSessionId == session_id);
                 var existingOrder = existingOrders.FirstOrDefault();
@@ -651,10 +664,15 @@ namespace Kokomija.Controllers
                 }
 
                 // Try to get user from session or from Stripe customer metadata
-                var user = await _userManager.GetUserAsync(User);
+                var user = await _userManager.GetUserAsync(User!);
                 if (user == null && !string.IsNullOrEmpty(session.ClientReferenceId))
                 {
                     user = await _userManager.FindByIdAsync(session.ClientReferenceId);
+                    // Re-authenticate user after Stripe redirect (SameSite cookie may drop auth)
+                    if (user != null)
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: true);
+                    }
                 }
                 
                 if (user == null)
@@ -906,11 +924,6 @@ namespace Kokomija.Controllers
 
             // Get cart item count for retry button
             var user = await _userManager.GetUserAsync(User);
-            if (user != null)
-            {
-                var cartItems = await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id);
-                viewModel.CartItemCount = cartItems.Count();
-            }
 
             // Try to get session details if available
             if (!string.IsNullOrEmpty(session_id))
@@ -920,6 +933,16 @@ namespace Kokomija.Controllers
                     var session = await _stripeService.GetCheckoutSessionAsync(session_id);
                     if (session != null)
                     {
+                        // Re-authenticate user after Stripe redirect if needed
+                        if (user == null && !string.IsNullOrEmpty(session.ClientReferenceId))
+                        {
+                            user = await _userManager.FindByIdAsync(session.ClientReferenceId);
+                            if (user != null)
+                            {
+                                await _signInManager.SignInAsync(user, isPersistent: true);
+                            }
+                        }
+
                         viewModel.AttemptedAmount = (session.AmountTotal ?? 0) / 100m;
                         viewModel.Currency = session.Metadata?.GetValueOrDefault("currency")?.ToUpper() ?? "PLN";
                         viewModel.WasPaymentAttempted = session.PaymentStatus != "unpaid";
@@ -930,6 +953,12 @@ namespace Kokomija.Controllers
                 {
                     _logger.LogWarning(ex, "Could not retrieve session details for failure page");
                 }
+            }
+
+            if (user != null)
+            {
+                var cartItems = await _unitOfWork.Carts.FindAsync(c => c.UserId == user.Id);
+                viewModel.CartItemCount = cartItems.Count();
             }
 
             // Set appropriate error message based on reason

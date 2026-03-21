@@ -1163,11 +1163,44 @@ namespace Kokomija.Controllers
             };
             var sym = cur switch { "EUR" => "€", "USD" => "$", _ => "zł" };
 
-            // EU tax detail
-            var netAmount = order.SubtotalAmount + order.ShippingCost - order.DiscountAmount;
-            var taxPercent = order.TaxRate * 100;
+            // Derive fallback tax rate from stored Stripe amounts
+            var effectiveTaxRate = order.TaxRate > 0
+                ? order.TaxRate
+                : (order.TaxAmount > 0 && order.TotalAmount > order.TaxAmount
+                    ? Math.Round(order.TaxAmount / (order.TotalAmount - order.TaxAmount), 4)
+                    : 0m);
+            var taxPercent = effectiveTaxRate * 100;
             var invoiceNumber = $"INV-{order.CreatedAt:yyyyMMdd}-{order.OrderNumber}";
             var invoiceDate = order.PaidAt ?? order.CreatedAt;
+
+            // VIP loyalty discount (informational)
+            var vipTierName = user.VipTier ?? "None";
+            decimal vipDiscountPct = vipTierName switch
+            {
+                "Bronze"   => 2m,
+                "Silver"   => 5m,
+                "Gold"     => 8m,
+                "Platinum" => 12m,
+                _          => 0m
+            };
+
+            // Fetch actual Stripe line items for accurate per-item tax breakdown
+            List<Stripe.LineItem>? stripeLineItems = null;
+            try
+            {
+                if (!string.IsNullOrEmpty(order.StripeCheckoutSessionId))
+                {
+                    var lineItemService = new Stripe.Checkout.SessionLineItemService();
+                    var lineItemsResult = await lineItemService.ListAsync(
+                        order.StripeCheckoutSessionId,
+                        new Stripe.Checkout.SessionLineItemListOptions { Limit = 100 });
+                    stripeLineItems = lineItemsResult?.Data;
+                }
+            }
+            catch
+            {
+                // Fall back to calculated amounts if Stripe API call fails
+            }
 
             // Load logo
             var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "logo_black.png");
@@ -1254,11 +1287,11 @@ namespace Kokomija.Controllers
                             table.ColumnsDefinition(cols =>
                             {
                                 cols.ConstantColumn(28);       // #
-                                cols.RelativeColumn(4);        // Description
+                                cols.RelativeColumn(3.8f);     // Description
                                 cols.RelativeColumn(0.8f);     // Qty
                                 cols.RelativeColumn(1.2f);     // Net unit price
                                 cols.RelativeColumn(1.2f);     // Net total
-                                cols.RelativeColumn(0.8f);     // VAT %
+                                cols.RelativeColumn(1.0f);     // VAT % (widened to prevent % wrapping)
                                 cols.RelativeColumn(1f);       // VAT amount
                                 cols.RelativeColumn(1.3f);     // Gross total
                             });
@@ -1284,45 +1317,62 @@ namespace Kokomija.Controllers
 
                             if (order.OrderItems != null)
                             {
+                                var orderItemsList = order.OrderItems.ToList();
                                 var idx = 1;
-                                foreach (var item in order.OrderItems)
+                                for (int i = 0; i < orderItemsList.Count; i++)
                                 {
+                                    var item = orderItemsList[i];
                                     var bg = idx % 2 == 0 ? "#f5f5f5" : "#ffffff";
                                     var variant = new List<string>();
                                     if (!string.IsNullOrEmpty(item.Color)) variant.Add(item.Color);
                                     if (!string.IsNullOrEmpty(item.Size)) variant.Add(item.Size);
                                     var variantText = variant.Count > 0 ? $" ({string.Join(", ", variant)})" : "";
 
-                                    var itemGross = item.TotalPrice;
-                                    var itemNet = order.TaxRate > 0 ? Math.Round(itemGross / (1 + order.TaxRate), 2) : itemGross;
-                                    var itemVat = itemGross - itemNet;
-                                    var unitNet = order.TaxRate > 0 ? Math.Round(item.UnitPrice / (1 + order.TaxRate), 2) : item.UnitPrice;
+                                    // Use actual Stripe line item amounts when available
+                                    decimal itemGross, itemNet, itemVat, unitNet;
+                                    decimal rowTaxPct;
+                                    if (stripeLineItems != null && i < stripeLineItems.Count)
+                                    {
+                                        var sli = stripeLineItems[i];
+                                        itemGross = sli.AmountTotal / 100m;
+                                        itemVat = sli.AmountTax / 100m;
+                                        itemNet = itemGross - itemVat;
+                                        unitNet = item.Quantity > 0 ? Math.Round(itemNet / item.Quantity, 2) : itemNet;
+                                        rowTaxPct = itemNet > 0 ? Math.Round(itemVat / itemNet * 100, 2) : 0;
+                                    }
+                                    else
+                                    {
+                                        // Fallback: derive from stored amounts
+                                        itemGross = item.TotalPrice;
+                                        itemNet = effectiveTaxRate > 0 ? Math.Round(itemGross / (1 + effectiveTaxRate), 2) : itemGross;
+                                        itemVat = itemGross - itemNet;
+                                        unitNet = effectiveTaxRate > 0 ? Math.Round(item.UnitPrice / (1 + effectiveTaxRate), 2) : item.UnitPrice;
+                                        rowTaxPct = taxPercent;
+                                    }
 
                                     table.Cell().Background(bg).Padding(5).Text(idx.ToString()).FontSize(8);
                                     table.Cell().Background(bg).Padding(5).Text($"{item.ProductName}{variantText}").FontSize(8.5f);
                                     table.Cell().Background(bg).Padding(5).AlignRight().Text(item.Quantity.ToString()).FontSize(8.5f);
                                     table.Cell().Background(bg).Padding(5).AlignRight().Text($"{unitNet:N2}").FontSize(8.5f);
                                     table.Cell().Background(bg).Padding(5).AlignRight().Text($"{itemNet:N2}").FontSize(8.5f);
-                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{taxPercent:0.##}%").FontSize(8.5f);
+                                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{rowTaxPct:0.##}%").FontSize(8.5f);
                                     table.Cell().Background(bg).Padding(5).AlignRight().Text($"{itemVat:N2}").FontSize(8.5f);
                                     table.Cell().Background(bg).Padding(5).AlignRight().Text($"{itemGross:N2}").FontSize(8.5f);
                                     idx++;
                                 }
 
-                                // Shipping row
+                                // Shipping row (no tax rates applied to shipping in this store)
                                 if (order.ShippingCost > 0)
                                 {
                                     var shipBg = idx % 2 == 0 ? "#f5f5f5" : "#ffffff";
-                                    var shipNet = order.TaxRate > 0 ? Math.Round(order.ShippingCost / (1 + order.TaxRate), 2) : order.ShippingCost;
-                                    var shipVat = order.ShippingCost - shipNet;
 
                                     table.Cell().Background(shipBg).Padding(5).Text(idx.ToString()).FontSize(8);
                                     table.Cell().Background(shipBg).Padding(5).Text("Shipping / Dostawa").FontSize(8.5f);
                                     table.Cell().Background(shipBg).Padding(5).AlignRight().Text("1").FontSize(8.5f);
-                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{shipNet:N2}").FontSize(8.5f);
-                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{shipNet:N2}").FontSize(8.5f);
-                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{taxPercent:0.##}%").FontSize(8.5f);
-                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{shipVat:N2}").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{order.ShippingCost:N2}").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{order.ShippingCost:N2}").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text("0%").FontSize(8.5f);
+                                    table.Cell().Background(shipBg).Padding(5).AlignRight().Text("0.00").FontSize(8.5f);
                                     table.Cell().Background(shipBg).Padding(5).AlignRight().Text($"{order.ShippingCost:N2}").FontSize(8.5f);
                                 }
                             }
@@ -1338,6 +1388,8 @@ namespace Kokomija.Controllers
                                 left.Item().PaddingTop(4).Text($"Method: Stripe (Online Card Payment)").FontSize(9);
                                 left.Item().Text($"Paid on: {(order.PaidAt?.ToString("dd.MM.yyyy HH:mm") ?? "N/A")}").FontSize(9);
                                 left.Item().Text($"Transaction: {order.StripePaymentIntentId}").FontSize(8).FontColor("#666666");
+                                if (vipDiscountPct > 0)
+                                    left.Item().PaddingTop(4).Text($"VIP {vipTierName} loyalty discount: {vipDiscountPct:0.##}% applied").FontSize(9).FontColor("#1565c0");
                                 if (order.Coupon != null)
                                     left.Item().PaddingTop(4).Text($"Coupon applied: {order.Coupon.Code} (-{order.DiscountAmount:N2} {cur})").FontSize(9).FontColor("#c62828");
                             });
@@ -1357,7 +1409,8 @@ namespace Kokomija.Controllers
                                     });
                                 }
 
-                                SummaryRow("Net amount / Netto:", $"{netAmount - order.TaxAmount:N2} {sym}");
+                                // All amounts are actual Stripe-calculated values
+                                SummaryRow("Net amount / Netto:", $"{order.TotalAmount - order.TaxAmount:N2} {sym}");
                                 if (order.TaxAmount > 0)
                                     SummaryRow($"VAT ({taxPercent:0.##}%):", $"{order.TaxAmount:N2} {sym}");
                                 if (order.ShippingCost > 0)

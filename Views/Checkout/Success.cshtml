@@ -3,277 +3,620 @@
 
 @{
     ViewData["Title"] = L["Checkout_Success_Title"];
+    var paymentBadgeClass = Model.PaymentStatus?.ToLower() switch {
+        "paid" => "success",
+        "pending" => "warning",
+        "failed" => "danger",
+        "refunded" => "info",
+        _ => "success"
+    };
+    var paymentIcon = Model.PaymentStatus?.ToLower() switch {
+        "paid" => "check-circle-fill",
+        "pending" => "clock",
+        "failed" => "x-circle-fill",
+        "refunded" => "arrow-counterclockwise",
+        _ => "check-circle-fill"
+    };
+    var orderBadgeClass = Model.OrderStatus?.ToLower() switch {
+        "pending" => "warning",
+        "processing" => "info",
+        "shipped" => "primary",
+        "delivered" => "success",
+        "cancelled" => "danger",
+        _ => "info"
+    };
+    var orderIcon = Model.OrderStatus?.ToLower() switch {
+        "pending" => "hourglass-split",
+        "processing" => "gear-fill",
+        "shipped" => "truck",
+        "delivered" => "house-check-fill",
+        "cancelled" => "x-circle-fill",
+        _ => "gear-fill"
+    };
 }
 
-<div class="checkout-result-page checkout-success-page">
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="result-card success-card">
-                    <!-- Success Header -->
-                    <div class="result-header text-center mb-5">
-                        <div class="result-icon success-icon mb-4">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
-                        <h1 class="mb-3">@L["Checkout_Success_Title"]</h1>
-                        <p class="lead text-muted">@L["Checkout_Success_Message"]</p>
+<div class="checkout-success-wrapper">
+    <div class="container py-4">
+        <!-- Hero Header -->
+        <div class="cs-hero mb-4">
+            <div class="cs-hero-bg"></div>
+            <div class="cs-hero-content text-center">
+                <div class="cs-success-icon mb-3">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h1 class="mb-2">@L["Checkout_Success_Title"]</h1>
+                <p class="cs-hero-sub mb-3">@L["Checkout_Success_Message"]</p>
+                <div class="cs-order-ref">
+                    <small>@L["Order_Number"]</small>
+                    <span class="cs-order-number">@Model.OrderNumber</span>
+                </div>
+                <div class="cs-status-pills mt-3">
+                    <span class="cs-pill cs-pill-@paymentBadgeClass">
+                        <i class="bi bi-@paymentIcon me-1"></i> @L["Payment_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.PaymentStatus ?? "Paid")]
+                    </span>
+                    <span class="cs-pill cs-pill-@orderBadgeClass">
+                        <i class="bi bi-@orderIcon me-1"></i> @L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.OrderStatus ?? "Processing")]
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column - Order Details -->
+            <div class="col-lg-7">
+                <!-- Order Items -->
+                <div class="cs-card mb-4">
+                    <div class="cs-card-header">
+                        <h5><i class="bi bi-bag-check"></i> @L["Order_Items"] <span class="cs-count">@Model.Items.Count</span></h5>
                     </div>
-
-                    <div class="row">
-                        <!-- Order Summary Column -->
-                        <div class="col-lg-7">
-                            <!-- Order Info Card -->
-                            <div class="order-info-card mb-4">
-                                <div class="order-header">
-                                    <div class="order-number-section">
-                                        <small class="text-muted">@L["Order_Number"]</small>
-                                        <h3 class="order-number mb-0">@Model.OrderNumber</h3>
-                                    </div>
-                                    <div class="order-status-badges">
-                                        @{
-                                            var paymentBadgeClass = Model.PaymentStatus?.ToLower() switch {
-                                                "paid" => "success",
-                                                "pending" => "warning",
-                                                "failed" => "danger",
-                                                "refunded" => "info",
-                                                _ => "success"
-                                            };
-                                            var paymentIcon = Model.PaymentStatus?.ToLower() switch {
-                                                "paid" => "check-circle",
-                                                "pending" => "clock",
-                                                "failed" => "x-circle",
-                                                "refunded" => "arrow-counterclockwise",
-                                                _ => "check-circle"
-                                            };
-                                            var orderBadgeClass = Model.OrderStatus?.ToLower() switch {
-                                                "pending" => "warning",
-                                                "processing" => "info",
-                                                "shipped" => "primary",
-                                                "delivered" => "success",
-                                                "cancelled" => "danger",
-                                                _ => "info"
-                                            };
-                                            var orderIcon = Model.OrderStatus?.ToLower() switch {
-                                                "pending" => "hourglass-split",
-                                                "processing" => "gear",
-                                                "shipped" => "truck",
-                                                "delivered" => "house-check",
-                                                "cancelled" => "x-circle",
-                                                _ => "gear"
-                                            };
-                                        }
-                                        <span class="badge bg-@paymentBadgeClass">
-                                            <i class="bi bi-@paymentIcon me-1"></i> @L["Payment_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.PaymentStatus ?? "Paid")]
-                                        </span>
-                                        <span class="badge bg-@orderBadgeClass">
-                                            <i class="bi bi-@orderIcon me-1"></i> @L["Status_" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Model.OrderStatus ?? "Processing")]
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Order Items -->
-                            <div class="order-items-card mb-4">
-                                <h5 class="card-title mb-3">
-                                    <i class="bi bi-bag-check me-2"></i>@L["Order_Items"]
-                                </h5>
-                                <div class="order-items-list">
-                                    @foreach (var item in Model.Items)
+                    <div class="cs-items-list">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="cs-item">
+                                <div class="cs-item-img">
+                                    @if (!string.IsNullOrEmpty(item.ProductImage))
                                     {
-                                        <div class="order-item">
-                                            <div class="item-image">
-                                                @if (!string.IsNullOrEmpty(item.ProductImage))
-                                                {
-                                                    <img src="@item.ProductImage" 
-                                                         alt="@item.ProductName"
-                                                         onerror="this.onerror=null; this.src='/img/logo_black.png'; this.classList.add('logo-fallback');">
-                                                }
-                                                else
-                                                {
-                                                    <img src="/img/logo_black.png" alt="Kokomija" class="logo-fallback">
-                                                }
-                                            </div>
-                                            <div class="item-details">
-                                                <h6 class="item-name">@item.ProductName</h6>
-                                                <div class="item-variants">
-                                                    @if (!string.IsNullOrEmpty(item.Color))
-                                                    {
-                                                        <span><i class="bi bi-palette"></i> @item.Color</span>
-                                                    }
-                                                    @if (!string.IsNullOrEmpty(item.Size))
-                                                    {
-                                                        <span><i class="bi bi-rulers"></i> @item.Size</span>
-                                                    }
-                                                    @if (item.PackSize > 1)
-                                                    {
-                                                        <span><i class="bi bi-box-seam"></i> @item.PackSize @L["Product_Piece"]</span>
-                                                    }
-                                                </div>
-                                            </div>
-                                            <div class="item-quantity">
-                                                <span>x@item.Quantity</span>
-                                            </div>
-                                            <div class="item-price">
-                                                <strong>@item.FormattedTotalPrice</strong>
-                                                <small class="text-muted d-block">@item.FormattedUnitPrice @L["Each"]</small>
-                                            </div>
-                                        </div>
+                                        <img src="@item.ProductImage" alt="@item.ProductName"
+                                             onerror="this.onerror=null; this.src='/img/logo_black.png'; this.classList.add('logo-fallback');">
+                                    }
+                                    else
+                                    {
+                                        <img src="/img/logo_black.png" alt="Kokomija" class="logo-fallback">
                                     }
                                 </div>
-                            </div>
-
-                            <!-- Shipping Address -->
-                            @if (!string.IsNullOrEmpty(Model.FormattedShippingAddress))
-                            {
-                                <div class="shipping-address-card mb-4">
-                                    <h5 class="card-title mb-3">
-                                        <i class="bi bi-geo-alt me-2"></i>@L["Shipping_Address"]
-                                    </h5>
-                                    <address class="mb-0">
-                                        @if (!string.IsNullOrEmpty(Model.CustomerName))
+                                <div class="cs-item-details">
+                                    <h6 class="cs-item-name">@item.ProductName</h6>
+                                    <div class="cs-item-meta">
+                                        @if (!string.IsNullOrEmpty(item.Color))
                                         {
-                                            <strong>@Model.CustomerName</strong><br>
+                                            <span class="cs-meta-tag"><i class="bi bi-palette"></i> @item.Color</span>
                                         }
-                                        @Model.FormattedShippingAddress
-                                    </address>
+                                        @if (!string.IsNullOrEmpty(item.Size))
+                                        {
+                                            <span class="cs-meta-tag"><i class="bi bi-rulers"></i> @item.Size</span>
+                                        }
+                                        @if (item.PackSize > 1)
+                                        {
+                                            <span class="cs-meta-tag"><i class="bi bi-box-seam"></i> @item.PackSize @L["Product_Piece"]</span>
+                                        }
+                                    </div>
                                 </div>
-                            }
+                                <div class="cs-item-qty">x @item.Quantity</div>
+                                <div class="cs-item-price">
+                                    <strong>@item.FormattedTotalPrice</strong>
+                                    <small>@item.FormattedUnitPrice @L["Each"]</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Shipping Address -->
+                @if (!string.IsNullOrEmpty(Model.FormattedShippingAddress))
+                {
+                    <div class="cs-card mb-4">
+                        <div class="cs-card-header">
+                            <h5><i class="bi bi-geo-alt"></i> @L["Shipping_Address"]</h5>
                         </div>
-
-                        <!-- Payment Summary Column -->
-                        <div class="col-lg-5">
-                            <!-- Payment Summary Card -->
-                            <div class="payment-summary-card mb-4">
-                                <h5 class="card-title mb-4">
-                                    <i class="bi bi-receipt me-2"></i>@L["Order_Summary"]
-                                </h5>
-                                
-                                <div class="summary-rows">
-                                    <div class="summary-row">
-                                        <span>@L["Subtotal"]</span>
-                                        <span>@Model.FormattedSubtotal</span>
-                                    </div>
-                                    
-                                    @if (Model.DiscountAmount > 0)
+                        <div class="cs-card-body">
+                            <div class="cs-info-block">
+                                <i class="bi bi-house-door cs-info-icon"></i>
+                                <div>
+                                    @if (!string.IsNullOrEmpty(Model.CustomerName))
                                     {
-                                        <div class="summary-row discount">
-                                            <span>
-                                                <i class="bi bi-tag me-1"></i>@L["Discount"]
-                                                @if (Model.VipDiscount > 0)
-                                                {
-                                                    <small class="badge bg-warning text-dark ms-1">VIP @Model.VipDiscount%</small>
-                                                }
-                                            </span>
-                                            <span class="text-success">@Model.FormattedDiscount</span>
-                                        </div>
+                                        <strong>@Model.CustomerName</strong><br>
                                     }
-                                    
-                                    <div class="summary-row">
-                                        <span>@L["Shipping"]</span>
-                                        <span>@Model.FormattedShipping</span>
-                                    </div>
-                                    
-                                    @if (Model.TaxAmount > 0)
-                                    {
-                                        <div class="summary-row">
-                                            <span>@L["Tax"] (VAT)</span>
-                                            <span>@Model.FormattedTax</span>
-                                        </div>
-                                    }
-                                    
-                                    <div class="summary-row total">
-                                        <span><strong>@L["Cart_Total"]</strong></span>
-                                        <span class="total-amount"><strong>@Model.FormattedTotal</strong></span>
-                                    </div>
+                                    @Model.FormattedShippingAddress
                                 </div>
-
-                                <!-- Payment Method -->
-                                @if (!string.IsNullOrEmpty(Model.PaymentMethod) && !string.IsNullOrEmpty(Model.Last4))
-                                {
-                                    <div class="payment-method-info mt-4 pt-3 border-top">
-                                        <small class="text-muted d-block mb-1">@L["Payment_Method"]</small>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi bi-credit-card me-2"></i>
-                                            <span class="text-capitalize">@Model.PaymentMethod</span>
-                                            <span class="ms-2">•••• @Model.Last4</span>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-
-                            <!-- Email Confirmation -->
-                            <div class="email-confirmation-card mb-4">
-                                <div class="d-flex align-items-start">
-                                    <i class="bi bi-envelope-check text-success me-3 fs-4"></i>
-                                    <div>
-                                        <h6 class="mb-1">@L["Checkout_EmailConfirmation_Title"]</h6>
-                                        <p class="text-muted mb-0 small">
-                                            @L["Checkout_EmailConfirmation"]
-                                            <strong>@Model.CustomerEmail</strong>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="action-buttons d-grid gap-2">
-                                <a asp-controller="Account" asp-action="OrderDetails" asp-route-id="@Model.OrderId" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-eye me-2"></i>@L["View_Order_Details"]
-                                </a>
-                                <a asp-controller="Account" asp-action="Orders" class="btn btn-outline-secondary">
-                                    <i class="bi bi-bag-check me-2"></i>@L["Account_Orders"]
-                                </a>
-                                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary">
-                                    <i class="bi bi-shop me-2"></i>@L["Continue_Shopping"]
-                                </a>
                             </div>
                         </div>
                     </div>
+                }
 
-                    <!-- Order Timeline -->
-                    <div class="order-timeline mt-5">
-                        <h5 class="text-center mb-4">@L["Checkout_WhatNext"]</h5>
-                        <div class="timeline">
-                            <div class="timeline-item completed">
-                                <div class="timeline-icon">
-                                    <i class="bi bi-check-circle-fill"></i>
+                <!-- Order Timeline -->
+                <div class="cs-card">
+                    <div class="cs-card-header">
+                        <h5><i class="bi bi-signpost-split"></i> @L["Checkout_WhatNext"]</h5>
+                    </div>
+                    <div class="cs-card-body">
+                        <div class="cs-timeline">
+                            <div class="cs-timeline-track">
+                                <div class="cs-progress-line">
+                                    <div class="cs-progress-fill" style="width: 25%;"></div>
                                 </div>
-                                <div class="timeline-content">
-                                    <strong>@L["Checkout_Step_OrderPlaced"]</strong>
-                                    <p class="mb-0 text-muted small">@L["Checkout_Step_OrderPlaced_Desc"]</p>
+                                <div class="cs-step completed">
+                                    <div class="cs-step-dot"><i class="bi bi-check-lg"></i></div>
+                                    <div class="cs-step-label">@L["Checkout_Step_OrderPlaced"]</div>
+                                    <div class="cs-step-date">@L["Checkout_Step_OrderPlaced_Desc"]</div>
                                 </div>
-                            </div>
-                            <div class="timeline-item active">
-                                <div class="timeline-icon">
-                                    <i class="bi bi-box-seam"></i>
+                                <div class="cs-step active">
+                                    <div class="cs-step-dot"><i class="bi bi-box-seam"></i></div>
+                                    <div class="cs-step-label">@L["Checkout_Step_Processing"]</div>
+                                    <div class="cs-step-date">@L["Checkout_Step_Processing_Desc"]</div>
                                 </div>
-                                <div class="timeline-content">
-                                    <strong>@L["Checkout_Step_Processing"]</strong>
-                                    <p class="mb-0 text-muted small">@L["Checkout_Step_Processing_Desc"]</p>
+                                <div class="cs-step">
+                                    <div class="cs-step-dot"><i class="bi bi-truck"></i></div>
+                                    <div class="cs-step-label">@L["Checkout_Step_Shipping"]</div>
+                                    <div class="cs-step-date">@L["Checkout_Step_Shipping_Desc"]</div>
                                 </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon">
-                                    <i class="bi bi-truck"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <strong>@L["Checkout_Step_Shipping"]</strong>
-                                    <p class="mb-0 text-muted small">@L["Checkout_Step_Shipping_Desc"]</p>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-icon">
-                                    <i class="bi bi-house-door"></i>
-                                </div>
-                                <div class="timeline-content">
-                                    <strong>@L["Checkout_Step_Delivery"]</strong>
-                                    <p class="mb-0 text-muted small">@L["Checkout_Step_Delivery_Desc"]</p>
+                                <div class="cs-step">
+                                    <div class="cs-step-dot"><i class="bi bi-house-door"></i></div>
+                                    <div class="cs-step-label">@L["Checkout_Step_Delivery"]</div>
+                                    <div class="cs-step-date">@L["Checkout_Step_Delivery_Desc"]</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Right Column - Summary & Actions -->
+            <div class="col-lg-5">
+                <!-- Payment Summary -->
+                <div class="cs-card cs-summary-card mb-4">
+                    <div class="cs-card-header">
+                        <h5><i class="bi bi-receipt"></i> @L["Order_Summary"]</h5>
+                    </div>
+                    <div class="cs-card-body">
+                        <div class="cs-summary-rows">
+                            <div class="cs-summary-row">
+                                <span>@L["Subtotal"]</span>
+                                <span>@Model.FormattedSubtotal</span>
+                            </div>
+
+                            @if (Model.DiscountAmount > 0)
+                            {
+                                <div class="cs-summary-row cs-discount">
+                                    <span>
+                                        <i class="bi bi-tag me-1"></i>@L["Discount"]
+                                        @if (Model.VipDiscount > 0)
+                                        {
+                                            <small class="cs-vip-badge">VIP @Model.VipDiscount%</small>
+                                        }
+                                    </span>
+                                    <span>@Model.FormattedDiscount</span>
+                                </div>
+                            }
+
+                            <div class="cs-summary-row">
+                                <span>@L["Shipping"]</span>
+                                <span>@Model.FormattedShipping</span>
+                            </div>
+
+                            @if (Model.TaxAmount > 0)
+                            {
+                                <div class="cs-summary-row">
+                                    <span>@L["Tax"] (VAT)</span>
+                                    <span>@Model.FormattedTax</span>
+                                </div>
+                            }
+
+                            <div class="cs-summary-total">
+                                <span>@L["Cart_Total"]</span>
+                                <span>@Model.FormattedTotal</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.PaymentMethod) && !string.IsNullOrEmpty(Model.Last4))
+                        {
+                            <div class="cs-payment-method">
+                                <small class="text-muted d-block mb-1">@L["Payment_Method"]</small>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-credit-card me-2"></i>
+                                    <span class="text-capitalize">@Model.PaymentMethod</span>
+                                    <span class="ms-2">&bull;&bull;&bull;&bull; @Model.Last4</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Email Confirmation -->
+                <div class="cs-card cs-email-card mb-4">
+                    <div class="cs-card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="cs-email-icon me-3">
+                                <i class="bi bi-envelope-check"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">@L["Checkout_EmailConfirmation_Title"]</h6>
+                                <p class="text-muted mb-0 small">
+                                    @L["Checkout_EmailConfirmation"]
+                                    <strong>@Model.CustomerEmail</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <a asp-controller="Account" asp-action="OrderDetails" asp-route-id="@Model.OrderId" class="cs-action-tile cs-action-primary">
+                        <div class="cs-action-icon"><i class="bi bi-eye"></i></div>
+                        <div>
+                            <strong>@L["View_Order_Details"]</strong>
+                            <small class="d-block text-muted">@L["Order_Number"] @Model.OrderNumber</small>
+                        </div>
+                        <i class="bi bi-chevron-right ms-auto"></i>
+                    </a>
+                    <a asp-controller="Account" asp-action="Orders" class="cs-action-tile">
+                        <div class="cs-action-icon cs-action-orders"><i class="bi bi-bag-check"></i></div>
+                        <div>
+                            <strong>@L["Account_Orders"]</strong>
+                        </div>
+                        <i class="bi bi-chevron-right ms-auto"></i>
+                    </a>
+                    <a asp-controller="Product" asp-action="Index" class="cs-action-tile">
+                        <div class="cs-action-icon cs-action-shop"><i class="bi bi-shop"></i></div>
+                        <div>
+                            <strong>@L["Continue_Shopping"]</strong>
+                        </div>
+                        <i class="bi bi-chevron-right ms-auto"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .checkout-success-wrapper { min-height: 80vh; }
+
+    /* Hero */
+    .cs-hero {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        padding: 2.5rem 2rem;
+    }
+    .cs-hero-bg {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%);
+        opacity: 0.95;
+    }
+    .cs-hero-content { position: relative; z-index: 1; color: #fff; }
+    .cs-hero-content h1 { font-size: 1.75rem; font-weight: 700; }
+    .cs-hero-sub { opacity: 0.9; font-size: 1rem; }
+    .cs-success-icon i {
+        font-size: 3.5rem;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+        animation: cs-bounce 1s ease-in-out;
+    }
+    @@keyframes cs-bounce {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    .cs-order-ref {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .cs-order-ref small { opacity: 0.8; font-size: 0.8rem; }
+    .cs-order-number {
+        font-family: 'Courier New', monospace;
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        background: rgba(255,255,255,0.15);
+        padding: 0.3rem 1rem;
+        border-radius: 8px;
+        backdrop-filter: blur(8px);
+    }
+    .cs-status-pills { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+    .cs-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+    }
+    .cs-pill-success { background: rgba(255,255,255,0.2); color: #fff; }
+    .cs-pill-warning { background: rgba(255,193,7,0.3); color: #ffc107; }
+    .cs-pill-danger { background: rgba(220,53,69,0.3); color: #ea868f; }
+    .cs-pill-info { background: rgba(13,202,240,0.3); color: #0dcaf0; }
+    .cs-pill-primary { background: rgba(13,110,253,0.3); color: #6ea8fe; }
+
+    /* Cards */
+    .cs-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s ease;
+    }
+    .cs-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .cs-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+    }
+    .cs-card-header h5 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--bs-body-color);
+        margin: 0;
+    }
+    .cs-card-header h5 i { color: var(--bs-primary); }
+    .cs-card-body { padding: 1.25rem; }
+    .cs-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 24px;
+        padding: 0 0.5rem;
+        border-radius: 50px;
+        background: var(--bs-primary);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    /* Items */
+    .cs-items-list { padding: 0; }
+    .cs-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        gap: 1rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        transition: background 0.15s ease;
+    }
+    .cs-item:last-child { border-bottom: none; }
+    .cs-item:hover { background: var(--bs-tertiary-bg); }
+    .cs-item-img {
+        width: 68px;
+        height: 68px;
+        min-width: 68px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .cs-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .cs-item-img img.logo-fallback { object-fit: contain; padding: 8px; background: var(--bs-tertiary-bg); }
+    .cs-item-details { flex: 1; min-width: 0; }
+    .cs-item-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .cs-item-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .cs-meta-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        background: var(--bs-tertiary-bg);
+        font-size: 0.75rem;
+        color: var(--bs-secondary-color);
+    }
+    .cs-item-qty { font-weight: 600; color: var(--bs-secondary-color); font-size: 0.9rem; }
+    .cs-item-price { text-align: right; min-width: 90px; }
+    .cs-item-price strong { font-size: 1rem; display: block; }
+    .cs-item-price small { color: var(--bs-secondary-color); font-size: 0.75rem; }
+
+    /* Info block */
+    .cs-info-block {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 12px;
+        background: var(--bs-tertiary-bg);
+    }
+    .cs-info-icon { font-size: 1.25rem; color: var(--bs-primary); margin-top: 0.1rem; }
+
+    /* Summary */
+    .cs-summary-rows { display: flex; flex-direction: column; }
+    .cs-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        font-size: 0.9rem;
+        color: var(--bs-body-color);
+        border-bottom: 1px dashed rgba(var(--bs-border-color-rgb), 0.3);
+    }
+    .cs-summary-row:last-of-type { border-bottom: none; }
+    .cs-summary-row.cs-discount span:last-child { color: var(--bs-success); font-weight: 600; }
+    .cs-vip-badge {
+        display: inline-block;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        background: rgba(255,193,7,0.15);
+        color: #d97706;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: 0.35rem;
+    }
+    .cs-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0 0;
+        margin-top: 0.5rem;
+        border-top: 2px solid var(--bs-border-color);
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+    .cs-summary-total span:last-child { color: var(--bs-primary); }
+    .cs-payment-method {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    /* Email card */
+    .cs-email-card {
+        border-left: 4px solid var(--bs-success);
+    }
+    .cs-email-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background: rgba(25,135,84,0.15);
+        color: var(--bs-success);
+    }
+
+    /* Action tiles */
+    .cs-action-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-body-bg);
+        text-decoration: none;
+        color: var(--bs-body-color);
+        transition: all 0.2s ease;
+    }
+    .cs-action-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        border-color: var(--bs-primary);
+        color: var(--bs-body-color);
+        text-decoration: none;
+    }
+    .cs-action-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background: rgba(13,110,253,0.15);
+        color: #0d6efd;
+    }
+    .cs-action-primary { border-color: var(--bs-primary); background: rgba(var(--bs-primary-rgb), 0.04); }
+    .cs-action-orders .cs-action-icon,
+    .cs-action-orders { background: rgba(25,135,84,0.15); color: #198754; }
+    .cs-action-shop .cs-action-icon,
+    .cs-action-shop { background: rgba(108,117,125,0.15); color: #6c757d; }
+
+    /* Timeline */
+    .cs-timeline { padding: 0.5rem 0; }
+    .cs-timeline-track {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+    }
+    .cs-progress-line {
+        position: absolute;
+        top: 18px;
+        left: 40px;
+        right: 40px;
+        height: 4px;
+        background: var(--bs-border-color);
+        border-radius: 2px;
+        z-index: 0;
+    }
+    .cs-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--bs-success), var(--bs-primary));
+        border-radius: 2px;
+        transition: width 0.6s ease;
+    }
+    .cs-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        min-width: 80px;
+        text-align: center;
+    }
+    .cs-step-dot {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--bs-body-bg);
+        border: 3px solid var(--bs-border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        color: var(--bs-secondary-color);
+        transition: all 0.3s ease;
+    }
+    .cs-step.completed .cs-step-dot {
+        background: var(--bs-success);
+        border-color: var(--bs-success);
+        color: #fff;
+    }
+    .cs-step.active .cs-step-dot {
+        background: var(--bs-primary);
+        border-color: var(--bs-primary);
+        color: #fff;
+        box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.2);
+        animation: cs-pulse 2s infinite;
+    }
+    .cs-step-label { font-size: 0.78rem; font-weight: 600; margin-top: 0.5rem; color: var(--bs-body-color); }
+    .cs-step-date { font-size: 0.68rem; color: var(--bs-secondary-color); margin-top: 0.15rem; max-width: 120px; }
+
+    @@keyframes cs-pulse {
+        0%, 100% { box-shadow: 0 0 0 4px rgba(var(--bs-primary-rgb), 0.2); }
+        50% { box-shadow: 0 0 0 8px rgba(var(--bs-primary-rgb), 0.1); }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .cs-hero { padding: 1.5rem 1rem; }
+        .cs-hero-content h1 { font-size: 1.35rem; }
+        .cs-order-number { font-size: 1.1rem; }
+        .cs-item { flex-wrap: wrap; padding: 0.75rem 1rem; }
+        .cs-item-details { order: 1; flex-basis: calc(100% - 84px); }
+        .cs-item-qty, .cs-item-price { order: 2; }
+        .cs-item-price { width: 100%; text-align: left; margin-top: 0.25rem; }
+        .cs-timeline-track { flex-direction: column; gap: 1.25rem; }
+        .cs-progress-line { display: none; }
+        .cs-step { flex-direction: row; text-align: left; gap: 0.75rem; min-width: auto; }
+        .cs-step-dot { margin-bottom: 0; }
+        .cs-step-date { max-width: none; }
+    }
+    @@media (max-width: 576px) {
+        .cs-action-tile { padding: 0.75rem; }
+        .cs-action-icon { width: 36px; height: 36px; min-width: 36px; font-size: 1rem; }
+    }
+</style>

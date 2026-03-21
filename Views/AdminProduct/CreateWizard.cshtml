@@ -203,6 +203,14 @@
                                         </select>
                                         <div class="collection-preview" id="collectionPreview"></div>
                                     </div>
+
+                                    <!-- New Collection Name Input -->
+                                    <div class="new-collection-input" id="newCollectionContainer" style="display: none;">
+                                        <label class="form-label">Collection Name</label>
+                                        <input type="text" name="NewCollectionName" class="form-control form-control-lg" id="newCollectionNameInput"
+                                               placeholder="e.g. Women's T-Shirt Collection" maxlength="200" />
+                                        <small class="text-muted mt-1 d-block">This will create a new product group you can add more products to later.</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -680,6 +688,12 @@
                                             <i class="bi bi-plus-circle me-1"></i>Add Custom Variant
                                         </button>
                                     </div>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="includeColorsInVariants">
+                                    <label class="form-check-label text-muted" for="includeColorsInVariants">
+                                        Include colors in variant combinations
+                                    </label>
                                 </div>
 
                                 <div class="variants-info">
@@ -2074,6 +2088,10 @@
             background: #1e293b;
         }
 
+        .image-item { cursor: grab; }
+        .image-item:active { cursor: grabbing; }
+        .image-item.sortable-ghost { opacity: 0.4; }
+
         [data-bs-theme="dark"] .primary-badge {
             background: #f59e0b;
             color: #78350f;
@@ -2117,6 +2135,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <script>
         $(document).ready(function() {
@@ -2472,9 +2491,17 @@
                 const type = $(this).data('collection');
                 if (type === 'existing') {
                     $('#existingCollectionContainer').slideDown(300);
+                    $('#newCollectionContainer').slideUp(300);
+                    $('#newCollectionNameInput').val('');
+                } else if (type === 'new') {
+                    $('#existingCollectionContainer').slideUp(300);
+                    $('#newCollectionContainer').slideDown(300);
+                    $('#productGroupSelect').val('');
                 } else {
                     $('#existingCollectionContainer').slideUp(300);
+                    $('#newCollectionContainer').slideUp(300);
                     $('#productGroupSelect').val('');
+                    $('#newCollectionNameInput').val('');
                 }
             });
 
@@ -2845,40 +2872,59 @@
             });
 
             async function handleFiles(files) {
-                for (const file of files) {
-                    await uploadFile(file);
-                }
-            }
-
-            async function uploadFile(file) {
+                const fileArray = Array.from(files);
+                const validFiles = fileArray.filter(f => {
+                    if (f.size > 5 * 1024 * 1024) { showToast('File ' + f.name + ' is too large. Max 5MB.', 'error'); return false; }
+                    return true;
+                });
+                if (validFiles.length === 0) return;
                 const formData = new FormData();
-                formData.append('file', file);
-
+                validFiles.forEach(f => formData.append('files', f));
                 try {
-                    const response = await fetch('/AdminProduct/UploadImage', {
+                    const response = await fetch('/AdminProduct/UploadImages', {
                         method: 'POST',
                         body: formData,
                         headers: {
                             'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                         }
                     });
-
-                    const result = await response.json();
-                    if (result.success) {
-                        tempImageFileNames.push(result.tempFileName);
-                        if (!primaryImageFileName) {
-                            primaryImageFileName = result.tempFileName;
-                        }
-                        addImagePreview(result.tempUrl, result.tempFileName);
+                    const results = await response.json();
+                    if (Array.isArray(results)) {
+                        results.forEach(r => {
+                            if (r.success) {
+                                tempImageFileNames.push(r.tempFileName);
+                                if (!primaryImageFileName) primaryImageFileName = r.tempFileName;
+                                addImagePreview(r.tempUrl, r.tempFileName);
+                            } else {
+                                showToast('Failed to upload: ' + r.message, 'error');
+                            }
+                        });
                         updateHiddenInput();
-                        saveImagesToStorage(); // Save to session storage
-                    } else {
-                        showToast('Failed to upload: ' + result.message, 'error');
+                        saveImagesToStorage();
                     }
                 } catch (error) {
                     showToast('Upload error: ' + error.message, 'error');
                 }
             }
+
+            // Initialize drag-and-drop reorder for images
+            (function() {
+                const imageGrid = document.getElementById('imagePreview');
+                if (imageGrid) {
+                    new Sortable(imageGrid, {
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        onEnd: function() {
+                            const items = imageGrid.querySelectorAll('.image-item');
+                            tempImageFileNames = Array.from(items).map(item => item.getAttribute('data-filename'));
+                            primaryImageFileName = tempImageFileNames[0] || null;
+                            rebuildImagePreviews();
+                            updateHiddenInput();
+                            saveImagesToStorage();
+                        }
+                    });
+                }
+            })();
 
             function addImagePreview(url, fileName) {
                 const isPrimary = fileName === primaryImageFileName;
@@ -2961,6 +3007,7 @@
             // === STEP 5: VARIANTS ===
             $('#generateVariantsBtn').click(function() {
                 const selectedSizes = [];
+                const includeColors = $('#includeColorsInVariants').is(':checked');
                 const selectedColors = [];
                 
                 $('input[name="SelectedSizeIds"]:checked').each(function() {
@@ -2970,15 +3017,17 @@
                     });
                 });
                 
-                $('input[name="SelectedColorIds"]:checked').each(function() {
-                    selectedColors.push({
-                        id: $(this).val(),
-                        name: $(this).closest('label').find('.color-name').text().trim()
+                if (includeColors) {
+                    $('input[name="SelectedColorIds"]:checked').each(function() {
+                        selectedColors.push({
+                            id: $(this).val(),
+                            name: $(this).closest('label').find('.color-name').text().trim()
+                        });
                     });
-                });
+                }
 
                 if (selectedSizes.length === 0 && selectedColors.length === 0) {
-                    showToast('Please select at least one size or color', 'warning');
+                    showToast('Please select at least one size' + (includeColors ? ' or color' : ''), 'warning');
                     return;
                 }
 

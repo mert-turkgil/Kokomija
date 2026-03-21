@@ -231,7 +231,7 @@
                                 </button>
                                 <input type="file" id="imageUpload" class="d-none" accept=".jpg,.jpeg,.png,.webp" multiple />
                             </div>
-                            <small class="text-muted">Click the star icon to set primary image.</small>
+                            <small class="text-muted">Drag images to reorder. The first image is the primary (featured) image.</small>
 
                             <div id="imagePreview" class="row g-3 mt-2"></div>
 
@@ -253,13 +253,19 @@
                                 Variant price defaults to base price if left empty.
                             </div>
 
-                            <div class="mb-3 d-flex gap-2">
+                            <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
                                 <button type="button" class="btn btn-success" id="addVariantBtn">
                                     <i class="bi bi-plus-circle me-1"></i> Add Variant
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="generateVariantsBtn">
                                     <i class="bi bi-magic me-1"></i> Auto-Generate from Selections
                                 </button>
+                                <div class="form-check ms-3">
+                                    <input class="form-check-input" type="checkbox" id="includeColorsInVariants">
+                                    <label class="form-check-label text-muted" for="includeColorsInVariants">
+                                        Include colors in variant combinations
+                                    </label>
+                                </div>
                             </div>
 
                             <div id="variantsContainer"></div>
@@ -286,18 +292,31 @@
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="ProductGroupId" class="form-label">Product Group</label>
-                                <select asp-for="ProductGroupId" class="form-select">
-                                    <option value="">— No group —</option>
-                                    @if (ViewBag.ProductGroups != null)
-                                    {
-                                        @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
+                                <label class="form-label fw-bold"><i class="bi bi-collection me-1"></i>Product Collection</label>
+                                <div class="btn-group w-100 mb-2" role="group">
+                                    <input type="radio" class="btn-check" name="collectionMode" id="collectionNone" value="none" checked>
+                                    <label class="btn btn-outline-secondary btn-sm" for="collectionNone">No Group</label>
+                                    <input type="radio" class="btn-check" name="collectionMode" id="collectionExisting" value="existing">
+                                    <label class="btn btn-outline-secondary btn-sm" for="collectionExisting">Join Existing</label>
+                                    <input type="radio" class="btn-check" name="collectionMode" id="collectionNew" value="new">
+                                    <label class="btn btn-outline-secondary btn-sm" for="collectionNew">New Collection</label>
+                                </div>
+                                <div id="existingGroupContainer" style="display: none;">
+                                    <select asp-for="ProductGroupId" class="form-select" id="productGroupSelect">
+                                        <option value="">Choose a collection...</option>
+                                        @if (ViewBag.ProductGroups != null)
                                         {
-                                            <option value="@group.Id">@group.Name (@(group.Products?.Count ?? 0) products)</option>
+                                            @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
+                                            {
+                                                <option value="@group.Id">@group.Name (@(group.Products?.Count ?? 0) products)</option>
+                                            }
                                         }
-                                    }
-                                </select>
-                                <small class="text-muted">Group related products (Single, 5-Pack, 10-Pack)</small>
+                                    </select>
+                                </div>
+                                <div id="newGroupContainer" style="display: none;">
+                                    <input type="text" name="NewCollectionName" class="form-control" placeholder="e.g. Women's T-Shirt Collection" maxlength="200" />
+                                </div>
+                                <small class="text-muted">Group related products (e.g., Single + 5-Pack + 10-Pack)</small>
                             </div>
 
                             <div class="mb-3">
@@ -329,6 +348,20 @@
                                     }
                                 </select>
                             </div>
+
+                            <!-- EAN / GTIN Code -->
+                            <div class="mb-3">
+                                <label asp-for="EanCode" class="form-label">
+                                    <i class="bi bi-upc-scan me-1"></i>EAN / GTIN Code
+                                    <span class="badge bg-secondary ms-1">Optional</span>
+                                </label>
+                                <input asp-for="EanCode" type="text" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" id="eanCodeInput" />
+                                <small class="text-muted">8, 12, 13, or 14-digit barcode (admin only, not visible to customers)</small>
+                                <div id="eanBarcodeContainer" class="text-center p-3 mt-2 rounded" style="background: #fff; display: none;">
+                                    <svg id="eanBarcode"></svg>
+                                    <div class="mt-1"><small class="text-muted">Barcode preview</small></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -352,14 +385,19 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Available Colors</label>
+                                <label class="form-label fw-bold"><i class="bi bi-palette me-1"></i>Available Colors</label>
                                 <div class="d-flex flex-wrap gap-2">
+                                    @{
+                                        var colorHexMap = ViewBag.ColorHexMap as Dictionary<string, string> ?? new Dictionary<string, string>();
+                                    }
                                     @foreach (var color in Model.AvailableColors)
                                     {
-                                        <div class="form-check">
-                                            <input class="form-check-input color-checkbox" type="checkbox" name="SelectedColorIds" value="@color.Value" id="color_@color.Value" />
-                                            <label class="form-check-label" for="color_@color.Value">@color.Text</label>
-                                        </div>
+                                        var hex = colorHexMap.ContainsKey(color.Value) ? colorHexMap[color.Value] : "#ccc";
+                                        <label class="color-chip" style="--chip-color: @hex">
+                                            <input type="checkbox" name="SelectedColorIds" value="@color.Value" class="color-checkbox" data-hex="@hex" />
+                                            <span class="color-swatch" style="background-color: @hex"></span>
+                                            <span class="color-name">@color.Text</span>
+                                        </label>
                                     }
                                 </div>
                             </div>
@@ -523,7 +561,49 @@
         [data-bs-theme="dark"] .pricing-b2b {
             background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.25) 100%);
         }
-        .image-preview-item { position: relative; }
+        /* Color chip / swatch styles */
+        .color-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 2rem;
+            border: 2px solid var(--bs-border-color, #dee2e6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bs-body-bg, #fff);
+            user-select: none;
+        }
+        .color-chip:hover {
+            border-color: var(--chip-color, #6366f1);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+        }
+        .color-chip input[type="checkbox"] {
+            display: none;
+        }
+        .color-chip input[type="checkbox"]:checked + .color-swatch {
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--chip-color, #6366f1);
+        }
+        .color-chip:has(input:checked) {
+            border-color: var(--chip-color, #6366f1);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+        .color-swatch {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+        .color-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .image-preview-item { position: relative; cursor: grab; }
+        .image-preview-item:active { cursor: grabbing; }
+        .image-preview-item.sortable-ghost { opacity: 0.4; }
         .image-preview-item img {
             width: 100%; height: 150px; object-fit: cover; border-radius: 8px;
         }
@@ -545,13 +625,154 @@
             position: sticky; bottom: 0; z-index: 10;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
+
+        /* ===== Dark Theme for Product Create ===== */
+        [data-bs-theme="dark"] .variant-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .card {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .card-header {
+            background: rgba(255, 255, 255, 0.06);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .table-light {
+            --bs-table-bg: rgba(255, 255, 255, 0.06);
+            --bs-table-color: var(--bs-body-color);
+            --bs-table-border-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .table-light th {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: var(--bs-body-color) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        [data-bs-theme="dark"] .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--bs-body-color);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        [data-bs-theme="dark"] .table td {
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        [data-bs-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+        }
+
+        [data-bs-theme="dark"] #dropZone {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        [data-bs-theme="dark"] #dropZone:hover {
+            border-color: #a8b7ff !important;
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        [data-bs-theme="dark"] .image-preview-item img {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: var(--bs-body-color);
+        }
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #a8b7ff;
+            color: var(--bs-body-color);
+            box-shadow: 0 0 0 3px rgba(168, 183, 255, 0.15);
+        }
+        [data-bs-theme="dark"] .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        [data-bs-theme="dark"] .form-check-input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        [data-bs-theme="dark"] .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        [data-bs-theme="dark"] .color-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        [data-bs-theme="dark"] .color-chip:has(input:checked) {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--chip-color, #6366f1);
+        }
+
+        [data-bs-theme="dark"] .modal-content {
+            background: #1a1d24;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        [data-bs-theme="dark"] .modal-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .modal-footer {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .nav-tabs {
+            border-bottom-color: rgba(255, 255, 255, 0.12);
+        }
+        [data-bs-theme="dark"] .nav-tabs .nav-link.active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            border-bottom-color: transparent;
+            color: #a8b7ff;
+        }
+
+        [data-bs-theme="dark"] #eanBarcodeContainer {
+            background: #fff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .sticky-bottom {
+            background: rgba(26, 29, 36, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
     </style>
 }
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
     <script>
+        // === EAN Barcode Preview ===
+        function renderEanBarcode() {
+            const input = document.getElementById('eanCodeInput');
+            const container = document.getElementById('eanBarcodeContainer');
+            const val = (input.value || '').trim();
+            if (val && /^\d{8}$|^\d{12,14}$/.test(val)) {
+                try {
+                    let format = 'CODE128';
+                    if (val.length === 13) format = 'EAN13';
+                    else if (val.length === 8) format = 'EAN8';
+                    else if (val.length === 12) format = 'UPC';
+                    JsBarcode('#eanBarcode', val, {
+                        format: format, width: 2, height: 60, displayValue: true,
+                        fontSize: 14, margin: 10, background: '#ffffff', lineColor: '#000000'
+                    });
+                    container.style.display = 'block';
+                } catch (e) { container.style.display = 'none'; }
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        document.getElementById('eanCodeInput').addEventListener('input', renderEanBarcode);
+
         let tempImageFileNames = [];
         let variantIndex = 0;
         let primaryImageFileName = null;
@@ -587,24 +808,45 @@
         selectFilesBtn.addEventListener('click', e => { e.stopPropagation(); imageUpload.click(); });
         imageUpload.addEventListener('change', async e => { await handleFiles(e.target.files); e.target.value = ''; });
 
-        async function handleFiles(files) {
-            for (const file of Array.from(files)) await uploadFile(file);
-        }
-
-        async function uploadFile(file) {
-            if (file.size > 5 * 1024 * 1024) { alert('File ' + file.name + ' is too large. Max 5MB.'); return; }
-            const formData = new FormData();
-            formData.append('file', file);
-            try {
-                const res = await fetch('@Url.Action("UploadImage")', { method: 'POST', body: formData });
-                const result = await res.json();
-                if (result.success) {
-                    tempImageFileNames.push(result.tempFileName);
-                    if (tempImageFileNames.length === 1) primaryImageFileName = result.tempFileName;
-                    addImagePreview(result.tempUrl, result.tempFileName);
+        // Initialize drag-and-drop reorder
+        (function() {
+            const imageGrid = document.getElementById('imagePreview');
+            new Sortable(imageGrid, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function() {
+                    const items = imageGrid.querySelectorAll('.image-preview-item');
+                    tempImageFileNames = Array.from(items).map(item => item.dataset.filename);
+                    primaryImageFileName = tempImageFileNames[0] || null;
+                    rebuildImagePreviews();
                     updateImageHiddenInputs();
-                } else {
-                    alert('Upload error: ' + result.message);
+                }
+            });
+        })();
+
+        async function handleFiles(files) {
+            const fileArray = Array.from(files);
+            const validFiles = fileArray.filter(f => {
+                if (f.size > 5 * 1024 * 1024) { alert('File ' + f.name + ' is too large. Max 5MB.'); return false; }
+                return true;
+            });
+            if (validFiles.length === 0) return;
+            const formData = new FormData();
+            validFiles.forEach(f => formData.append('files', f));
+            try {
+                const res = await fetch('@Url.Action("UploadImages")', { method: 'POST', body: formData });
+                const results = await res.json();
+                if (Array.isArray(results)) {
+                    results.forEach(r => {
+                        if (r.success) {
+                            tempImageFileNames.push(r.tempFileName);
+                            if (tempImageFileNames.length === 1) primaryImageFileName = r.tempFileName;
+                            addImagePreview(r.tempUrl, r.tempFileName);
+                        } else {
+                            alert('Upload error: ' + r.message);
+                        }
+                    });
+                    updateImageHiddenInputs();
                 }
             } catch (err) { alert('Upload failed: ' + err.message); }
         }
@@ -713,12 +955,16 @@
             const selectedSizes = Array.from(document.querySelectorAll('.size-checkbox:checked')).map(cb => ({
                 id: cb.value, name: cb.nextElementSibling ? cb.nextElementSibling.textContent.trim() : ''
             }));
-            const selectedColors = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => ({
-                id: cb.value, name: cb.nextElementSibling ? cb.nextElementSibling.textContent.trim() : ''
-            }));
+            const includeColors = document.getElementById('includeColorsInVariants').checked;
+            const selectedColors = includeColors
+                ? Array.from(document.querySelectorAll('.color-checkbox:checked')).map(cb => {
+                    const nameEl = cb.closest('label')?.querySelector('.color-name');
+                    return { id: cb.value, name: nameEl ? nameEl.textContent.trim() : '' };
+                  })
+                : [];
 
             if (selectedSizes.length === 0 && selectedColors.length === 0) {
-                alert('Select at least one size or color first.');
+                alert('Select at least one size' + (includeColors ? ' or color' : '') + ' first.');
                 return;
             }
 
@@ -817,15 +1063,41 @@
         // CATEGORY SELECTION
         // ==========================================
         $(document).ready(function () {
-            if ($.fn.DataTable) {
-                $('#categoryTable').DataTable({ responsive: true, pageLength: 10, order: [[2, 'asc']], language: { search: "Search:" } });
-            }
+            let categoryTable = null;
+
+            // Initialize DataTable when modal is shown (fixes column width issues in hidden containers)
+            $('#categoryModal').on('shown.bs.modal', function () {
+                if (!categoryTable) {
+                    categoryTable = $('#categoryTable').DataTable({
+                        responsive: true,
+                        pageLength: 10,
+                        order: [[2, 'asc']],
+                        language: { search: "Search:" }
+                    });
+                } else {
+                    categoryTable.columns.adjust().responsive.recalc();
+                }
+            });
+
             $(document).on('click', '.select-category', function () {
                 var id = $(this).data('category-id');
                 var name = $(this).data('category-name');
                 $('#selectedCategoryId').val(id);
                 $('#selectedCategoryDisplay').html('<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>' + name + '</span>');
                 $('#categoryModal').modal('hide');
+            });
+        });
+
+        // ==========================================
+        // COLLECTION MODE TOGGLE
+        // ==========================================
+        document.querySelectorAll('input[name="collectionMode"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                const mode = this.value;
+                document.getElementById('existingGroupContainer').style.display = mode === 'existing' ? 'block' : 'none';
+                document.getElementById('newGroupContainer').style.display = mode === 'new' ? 'block' : 'none';
+                if (mode !== 'existing') document.getElementById('productGroupSelect').value = '';
+                if (mode !== 'new') document.querySelector('input[name="NewCollectionName"]').value = '';
             });
         });
 

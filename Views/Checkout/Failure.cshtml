@@ -3,131 +3,390 @@
 
 @{
     ViewData["Title"] = L["Checkout_Failure_Title"];
+    var isCancelled = Model.FailureReason == "cancelled";
+    var isExpired = Model.FailureReason == "expired";
+    var isPaymentFailed = Model.FailureReason == "payment_failed";
 }
 
-<div class="checkout-result-page checkout-failure-page">
-    <div class="container py-5">
+<div class="checkout-failure-wrapper">
+    <div class="container py-4">
+        <!-- Hero Header -->
+        <div class="cf-hero mb-4">
+            <div class="cf-hero-bg @(isCancelled ? "cf-bg-cancel" : isExpired ? "cf-bg-expired" : "cf-bg-error")"></div>
+            <div class="cf-hero-content text-center">
+                <div class="cf-failure-icon mb-3">
+                    @if (isCancelled)
+                    {
+                        <i class="bi bi-x-circle"></i>
+                    }
+                    else if (isExpired)
+                    {
+                        <i class="bi bi-clock-history"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-exclamation-triangle"></i>
+                    }
+                </div>
+                <h1 class="mb-2">
+                    @if (isCancelled)
+                    {
+                        @L["Checkout_Cancelled_Title"]
+                    }
+                    else if (isExpired)
+                    {
+                        @L["Checkout_Expired_Title"]
+                    }
+                    else
+                    {
+                        @L["Checkout_Failed_Title"]
+                    }
+                </h1>
+                <p class="cf-hero-sub mb-0">@Model.ErrorMessage</p>
+            </div>
+        </div>
+
         <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="result-card failure-card text-center">
-                    <!-- Failure Icon -->
-                    <div class="result-icon failure-icon mb-4">
-                        @if (Model.FailureReason == "cancelled")
-                        {
-                            <i class="bi bi-x-circle"></i>
-                        }
-                        else if (Model.FailureReason == "expired")
-                        {
-                            <i class="bi bi-clock-history"></i>
-                        }
-                        else
-                        {
-                            <i class="bi bi-exclamation-triangle"></i>
-                        }
-                    </div>
-
-                    <!-- Title and Message -->
-                    <h1 class="mb-3">
-                        @if (Model.FailureReason == "cancelled")
-                        {
-                            @L["Checkout_Cancelled_Title"]
-                        }
-                        else if (Model.FailureReason == "expired")
-                        {
-                            @L["Checkout_Expired_Title"]
-                        }
-                        else
-                        {
-                            @L["Checkout_Failed_Title"]
-                        }
-                    </h1>
-                    
-                    <p class="lead text-muted mb-4">@Model.ErrorMessage</p>
-
-                    <!-- Attempted Payment Info -->
-                    @if (Model.WasPaymentAttempted && Model.AttemptedAmount.HasValue)
-                    {
-                        <div class="payment-attempt-info mb-4">
-                            <div class="alert alert-warning">
-                                <i class="bi bi-info-circle me-2"></i>
-                                @L["Checkout_PaymentAttempted"]: <strong>@Model.FormattedAmount</strong>
+            <div class="col-lg-8">
+                <div class="row g-4">
+                    <!-- Left - Details -->
+                    <div class="col-md-7">
+                        <!-- Explanation Card -->
+                        <div class="cf-card mb-4">
+                            <div class="cf-card-header">
+                                <h5><i class="bi bi-info-circle"></i> @L["Checkout_Failure_Title"]</h5>
+                            </div>
+                            <div class="cf-card-body">
+                                @if (isCancelled)
+                                {
+                                    <div class="cf-explanation cf-explanation-cancel">
+                                        <div class="cf-explanation-icon">
+                                            <i class="bi bi-bag-x"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block mb-1">@L["Checkout_Cancelled_Title"]</strong>
+                                            <span>@L["Checkout_Cancelled_Explanation"]</span>
+                                        </div>
+                                    </div>
+                                }
+                                else if (isPaymentFailed)
+                                {
+                                    <div class="cf-explanation cf-explanation-error">
+                                        <div class="cf-explanation-icon">
+                                            <i class="bi bi-credit-card"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block mb-1">@L["Checkout_Failed_Title"]</strong>
+                                            <span>@L["Checkout_PaymentFailed_Explanation"]</span>
+                                        </div>
+                                    </div>
+                                }
+                                else if (isExpired)
+                                {
+                                    <div class="cf-explanation cf-explanation-warning">
+                                        <div class="cf-explanation-icon">
+                                            <i class="bi bi-hourglass-bottom"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block mb-1">@L["Checkout_Expired_Title"]</strong>
+                                            <span>@L["Checkout_Expired_Explanation"]</span>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="cf-explanation cf-explanation-error">
+                                        <div class="cf-explanation-icon">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block mb-1">@L["Checkout_Failed_Title"]</strong>
+                                            <span>@L["Checkout_Error_Explanation"]</span>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         </div>
-                    }
 
-                    <!-- Reason Explanation -->
-                    <div class="failure-explanation mb-4">
-                        @if (Model.FailureReason == "cancelled")
+                        <!-- Payment Attempt Info -->
+                        @if (Model.WasPaymentAttempted && Model.AttemptedAmount.HasValue)
                         {
-                            <div class="explanation-box">
-                                <i class="bi bi-bag-x me-2"></i>
-                                @L["Checkout_Cancelled_Explanation"]
+                            <div class="cf-card cf-card-warning mb-4">
+                                <div class="cf-card-body">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="cf-warning-icon">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block">@L["Checkout_PaymentAttempted"]</strong>
+                                            <span class="cf-attempted-amount">@Model.FormattedAmount</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         }
-                        else if (Model.FailureReason == "payment_failed")
+
+                        <!-- Debug info (Development only) -->
+                        @if (!string.IsNullOrEmpty(Model.SessionId) && Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
                         {
-                            <div class="explanation-box error">
-                                <i class="bi bi-credit-card me-2"></i>
-                                @L["Checkout_PaymentFailed_Explanation"]
-                            </div>
-                        }
-                        else if (Model.FailureReason == "expired")
-                        {
-                            <div class="explanation-box warning">
-                                <i class="bi bi-hourglass-bottom me-2"></i>
-                                @L["Checkout_Expired_Explanation"]
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="explanation-box error">
-                                <i class="bi bi-exclamation-circle me-2"></i>
-                                @L["Checkout_Error_Explanation"]
+                            <div class="cf-card mb-4">
+                                <div class="cf-card-body">
+                                    <small class="text-muted">
+                                        <strong>Session ID:</strong> <code>@Model.SessionId</code>
+                                    </small>
+                                </div>
                             </div>
                         }
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="action-buttons mt-4">
-                        @if (Model.CanRetry && Model.CartItemCount > 0)
-                        {
-                            <a asp-controller="Cart" asp-action="Index" class="btn btn-primary btn-lg me-2">
-                                <i class="bi bi-arrow-repeat me-2"></i>
-                                @L["Checkout_TryAgain"]
-                            </a>
-                        }
-                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary btn-lg">
-                            <i class="bi bi-shop me-2"></i>
-                            @L["Continue_Shopping"]
-                        </a>
-                    </div>
-
-                    <!-- Help Section -->
-                    <div class="help-section mt-5">
-                        <h5 class="mb-3">@L["Checkout_NeedHelp"]</h5>
-                        <div class="help-options">
-                            <a asp-controller="Home" asp-action="FAQ" class="help-link">
-                                <i class="bi bi-question-circle"></i>
-                                <span>@L["Nav_FAQ"]</span>
-                            </a>
-                            <a asp-controller="Home" asp-action="Contact" class="help-link">
-                                <i class="bi bi-envelope"></i>
-                                <span>@L["Nav_Contact"]</span>
+                    <!-- Right - Actions -->
+                    <div class="col-md-5">
+                        <!-- Action Tiles -->
+                        <div class="d-grid gap-2 mb-4">
+                            @if (Model.CanRetry && Model.CartItemCount > 0)
+                            {
+                                <a asp-controller="Cart" asp-action="Index" class="cf-action-tile cf-action-retry">
+                                    <div class="cf-action-icon"><i class="bi bi-arrow-repeat"></i></div>
+                                    <div>
+                                        <strong>@L["Checkout_TryAgain"]</strong>
+                                        <small class="d-block text-muted">@Model.CartItemCount item(s) in cart</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right ms-auto"></i>
+                                </a>
+                            }
+                            @if (Model.CartItemCount > 0)
+                            {
+                                <a asp-controller="Cart" asp-action="Index" class="cf-action-tile cf-action-cart">
+                                    <div class="cf-action-icon"><i class="bi bi-cart3"></i></div>
+                                    <div>
+                                        <strong>@L["Nav_Cart"]</strong>
+                                        <small class="d-block text-muted">@Model.CartItemCount item(s) saved</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right ms-auto"></i>
+                                </a>
+                            }
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <a asp-controller="Account" asp-action="Index" class="cf-action-tile cf-action-account">
+                                    <div class="cf-action-icon"><i class="bi bi-person-circle"></i></div>
+                                    <div>
+                                        <strong>@L["Nav_MyAccount"]</strong>
+                                        <small class="d-block text-muted">Orders, settings & more</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right ms-auto"></i>
+                                </a>
+                            }
+                            <a asp-controller="Product" asp-action="Index" class="cf-action-tile cf-action-shop">
+                                <div class="cf-action-icon"><i class="bi bi-shop"></i></div>
+                                <div>
+                                    <strong>@L["Continue_Shopping"]</strong>
+                                </div>
+                                <i class="bi bi-chevron-right ms-auto"></i>
                             </a>
                         </div>
-                    </div>
 
-                    <!-- Session Info (for debugging, hidden in production) -->
-                    @if (!string.IsNullOrEmpty(Model.SessionId) && Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-                    {
-                        <div class="session-debug mt-4 p-3 bg-light rounded text-start">
-                            <small class="text-muted">
-                                <strong>Session ID:</strong> @Model.SessionId
-                            </small>
+                        <!-- Help Card -->
+                        <div class="cf-card">
+                            <div class="cf-card-header">
+                                <h5><i class="bi bi-life-preserver"></i> @L["Checkout_NeedHelp"]</h5>
+                            </div>
+                            <div class="cf-card-body">
+                                <div class="d-grid gap-2">
+                                    <a asp-controller="Home" asp-action="FAQ" class="cf-help-tile">
+                                        <i class="bi bi-question-circle"></i>
+                                        <span>@L["Nav_FAQ"]</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                    <a asp-controller="Home" asp-action="Contact" class="cf-help-tile">
+                                        <i class="bi bi-envelope"></i>
+                                        <span>@L["Nav_Contact"]</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .checkout-failure-wrapper { min-height: 80vh; }
+
+    /* Hero */
+    .cf-hero {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        padding: 2.5rem 2rem;
+    }
+    .cf-hero-bg {
+        position: absolute;
+        inset: 0;
+        opacity: 0.95;
+    }
+    .cf-bg-error { background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #b91c1c 100%); }
+    .cf-bg-cancel { background: linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #4b5563 100%); }
+    .cf-bg-expired { background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%); }
+    .cf-hero-content { position: relative; z-index: 1; color: #fff; }
+    .cf-hero-content h1 { font-size: 1.75rem; font-weight: 700; }
+    .cf-hero-sub { opacity: 0.9; font-size: 1rem; }
+    .cf-failure-icon i {
+        font-size: 3.5rem;
+        filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+        animation: cf-shake 0.6s ease-in-out;
+    }
+    @@keyframes cf-shake {
+        0%, 100% { transform: translateX(0); }
+        15% { transform: translateX(-8px); }
+        30% { transform: translateX(8px); }
+        45% { transform: translateX(-6px); }
+        60% { transform: translateX(6px); }
+        75% { transform: translateX(-3px); }
+        90% { transform: translateX(3px); }
+    }
+
+    /* Cards */
+    .cf-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: box-shadow 0.2s ease;
+    }
+    .cf-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .cf-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+    }
+    .cf-card-header h5 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--bs-body-color);
+        margin: 0;
+    }
+    .cf-card-header h5 i { color: var(--bs-primary); }
+    .cf-card-body { padding: 1.25rem; }
+
+    /* Warning card */
+    .cf-card-warning { border-left: 4px solid #f59e0b; }
+    .cf-warning-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background: rgba(245,158,11,0.15);
+        color: #d97706;
+    }
+    .cf-attempted-amount { font-size: 1.25rem; font-weight: 700; color: var(--bs-body-color); }
+
+    /* Explanation boxes */
+    .cf-explanation {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        align-items: flex-start;
+    }
+    .cf-explanation-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .cf-explanation-cancel {
+        background: rgba(107,114,128,0.08);
+    }
+    .cf-explanation-cancel .cf-explanation-icon { background: rgba(107,114,128,0.15); color: #6b7280; }
+    .cf-explanation-error {
+        background: rgba(239,68,68,0.06);
+    }
+    .cf-explanation-error .cf-explanation-icon { background: rgba(239,68,68,0.15); color: #dc2626; }
+    .cf-explanation-warning {
+        background: rgba(245,158,11,0.06);
+    }
+    .cf-explanation-warning .cf-explanation-icon { background: rgba(245,158,11,0.15); color: #d97706; }
+
+    /* Action tiles */
+    .cf-action-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-body-bg);
+        text-decoration: none;
+        color: var(--bs-body-color);
+        transition: all 0.2s ease;
+    }
+    .cf-action-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        border-color: var(--bs-primary);
+        color: var(--bs-body-color);
+        text-decoration: none;
+    }
+    .cf-action-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .cf-action-retry .cf-action-icon { background: rgba(13,110,253,0.15); color: #0d6efd; }
+    .cf-action-retry { border-color: var(--bs-primary); background: rgba(var(--bs-primary-rgb), 0.04); }
+    .cf-action-shop .cf-action-icon { background: rgba(108,117,125,0.15); color: #6c757d; }
+    .cf-action-cart .cf-action-icon { background: rgba(25,135,84,0.15); color: #198754; }
+    .cf-action-cart { border-color: #198754; background: rgba(25,135,84,0.04); }
+    .cf-action-account .cf-action-icon { background: rgba(111,66,193,0.15); color: #6f42c1; }
+    .cf-action-account { border-color: #6f42c1; background: rgba(111,66,193,0.04); }
+
+    /* Help tiles */
+    .cf-help-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 10px;
+        text-decoration: none;
+        color: var(--bs-body-color);
+        transition: all 0.2s ease;
+        background: var(--bs-tertiary-bg);
+    }
+    .cf-help-tile:hover {
+        background: var(--bs-primary);
+        color: #fff;
+        text-decoration: none;
+    }
+    .cf-help-tile i:first-child { font-size: 1.1rem; }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .cf-hero { padding: 1.5rem 1rem; }
+        .cf-hero-content h1 { font-size: 1.35rem; }
+    }
+    @@media (max-width: 576px) {
+        .cf-action-tile { padding: 0.75rem; }
+        .cf-action-icon { width: 36px; height: 36px; min-width: 36px; font-size: 1rem; }
+    }
+</style>

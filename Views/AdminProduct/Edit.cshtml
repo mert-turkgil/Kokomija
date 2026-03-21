@@ -177,21 +177,40 @@
                                     <small class="text-muted">Price for this pack size. Changing price creates new Stripe price.</small>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label asp-for="ProductGroupId" class="form-label">Product Group (Optional)</label>
-                                    <select asp-for="ProductGroupId" class="form-select form-select-lg">
-                                        <option value="">Create new or no group</option>
-                                        @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
-                                        {
-                                            if (Model.ProductGroupId == group.Id)
+                                    <label class="form-label">Product Group (Optional)</label>
+                                    <div class="mb-2">
+                                        <div class="btn-group w-100" role="group">
+                                            <input type="radio" class="btn-check" name="collectionMode" id="collModeNone" value="none"
+                                                   @(Model.ProductGroupId == null ? "checked" : "") />
+                                            <label class="btn btn-outline-secondary" for="collModeNone">No Group</label>
+
+                                            <input type="radio" class="btn-check" name="collectionMode" id="collModeJoin" value="join"
+                                                   @(Model.ProductGroupId != null ? "checked" : "") />
+                                            <label class="btn btn-outline-primary" for="collModeJoin">Join Existing</label>
+
+                                            <input type="radio" class="btn-check" name="collectionMode" id="collModeNew" value="new" />
+                                            <label class="btn btn-outline-success" for="collModeNew">New Collection</label>
+                                        </div>
+                                    </div>
+                                    <div id="joinGroupPanel" class="@(Model.ProductGroupId != null ? "" : "d-none")">
+                                        <select asp-for="ProductGroupId" class="form-select">
+                                            <option value="">-- Select group --</option>
+                                            @foreach (var group in (List<Kokomija.Entity.ProductGroup>)ViewBag.ProductGroups)
                                             {
-                                                <option value="@group.Id" selected>@group.Name</option>
+                                                if (Model.ProductGroupId == group.Id)
+                                                {
+                                                    <option value="@group.Id" selected>@group.Name</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@group.Id">@group.Name</option>
+                                                }
                                             }
-                                            else
-                                            {
-                                                <option value="@group.Id">@group.Name</option>
-                                            }
-                                        }
-                                    </select>
+                                        </select>
+                                    </div>
+                                    <div id="newGroupPanel" class="d-none">
+                                        <input type="text" name="NewCollectionName" class="form-control" placeholder="Enter new collection name" maxlength="200" />
+                                    </div>
                                     <small class="text-muted">Group related products (Single, 5-Pack, 10-Pack of same item)</small>
                                 </div>
                             </div>
@@ -447,6 +466,7 @@
                                             <tr>
                                                 <th>Size</th>
                                                 <th>Color</th>
+                                                <th>Pack Qty</th>
                                                 <th>SKU</th>
                                                 <th>Price</th>
                                                 <th>Stock</th>
@@ -494,6 +514,23 @@
                                                         </select>
                                                     </td>
                                                     <td>
+                                                        <select name="Variants[@i].PackQuantityId" class="form-select form-select-sm">
+                                                            <option value="">-- None --</option>
+                                                            @foreach (var pq in (List<Kokomija.Entity.PackQuantity>)ViewBag.AvailablePackQuantities)
+                                                            {
+                                                                var pqSelected = variant.PackQuantityId?.ToString() == pq.Id.ToString();
+                                                                if (pqSelected)
+                                                                {
+                                                                    <option value="@pq.Id" selected>@pq.Name</option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="@pq.Id">@pq.Name</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                    </td>
+                                                    <td>
                                                         <input type="text" name="Variants[@i].SKU" class="form-control form-control-sm" value="@variant.SKU" required style="width: 100px;" />
                                                     </td>
                                                     <td>
@@ -518,6 +555,10 @@
                                 <button type="button" class="btn btn-primary btn-sm ms-2" id="autoGenerateVariantsBtn">
                                     <i class="bi bi-magic me-1"></i> Auto-Generate Missing Variants
                                 </button>
+                                <div class="form-check ms-3 d-inline-flex align-items-center">
+                                    <input type="checkbox" class="form-check-input" id="includeColorsInVariants" />
+                                    <label class="form-check-label ms-1" for="includeColorsInVariants">Include colors in variant combinations</label>
+                                </div>
                             }
                             else
                             {
@@ -720,11 +761,19 @@
                             <h5 class="mb-0"><i class="bi bi-upc-scan"></i> EAN / GTIN Code</h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-0">
+                            <div class="mb-3">
                                 <label asp-for="EanCode" class="form-label">EAN / GTIN Barcode</label>
-                                <input asp-for="EanCode" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" />
+                                <input asp-for="EanCode" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" id="eanCodeInput" />
                                 <small class="text-muted">8, 12, 13, or 14-digit barcode (EAN-8, UPC-A, EAN-13, or GTIN-14)</small>
                                 <span asp-validation-for="EanCode" class="text-danger"></span>
+                            </div>
+                            <div id="eanBarcodeContainer" class="text-center p-3 rounded" style="background: #fff; display: none;">
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.Id" target="_blank" id="eanProductLink" title="View product page">
+                                    <svg id="eanBarcode"></svg>
+                                </a>
+                                <div class="mt-1">
+                                    <small class="text-muted">Click barcode to view product page</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1137,6 +1186,144 @@
         .star-rating-input input:checked ~ label {
             color: #ffc107;
         }
+
+        /* ===== Dark Theme for Product Edit ===== */
+        [data-bs-theme="dark"] .upload-zone {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        [data-bs-theme="dark"] .upload-zone:hover,
+        [data-bs-theme="dark"] .upload-zone.drag-over {
+            border-color: #a8b7ff;
+            background: rgba(102, 126, 234, 0.08);
+        }
+        [data-bs-theme="dark"] .upload-icon {
+            color: #a8b7ff;
+        }
+
+        [data-bs-theme="dark"] .card {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .card-header {
+            background: rgba(255, 255, 255, 0.06);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .card-body {
+            color: var(--bs-body-color);
+        }
+
+        [data-bs-theme="dark"] .table-light {
+            --bs-table-bg: rgba(255, 255, 255, 0.06);
+            --bs-table-color: var(--bs-body-color);
+            --bs-table-border-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .table-light th {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: var(--bs-body-color) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        [data-bs-theme="dark"] .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--bs-body-color);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        [data-bs-theme="dark"] .table td {
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        [data-bs-theme="dark"] .table-hover tbody tr:hover {
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+        }
+        [data-bs-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+        }
+
+        [data-bs-theme="dark"] .image-preview-item img {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: var(--bs-body-color);
+        }
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #a8b7ff;
+            color: var(--bs-body-color);
+            box-shadow: 0 0 0 3px rgba(168, 183, 255, 0.15);
+        }
+        [data-bs-theme="dark"] .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        [data-bs-theme="dark"] .form-check-input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        [data-bs-theme="dark"] .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        [data-bs-theme="dark"] .nav-tabs {
+            border-bottom-color: rgba(255, 255, 255, 0.12);
+        }
+        [data-bs-theme="dark"] .nav-tabs .nav-link {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        [data-bs-theme="dark"] .nav-tabs .nav-link.active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            border-bottom-color: transparent;
+            color: #a8b7ff;
+        }
+        [data-bs-theme="dark"] .nav-tabs .nav-link:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--bs-body-color);
+        }
+
+        [data-bs-theme="dark"] .modal-content {
+            background: #1a1d24;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        [data-bs-theme="dark"] .modal-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-bs-theme="dark"] .modal-footer {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .list-group-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--bs-body-color);
+        }
+        [data-bs-theme="dark"] .list-group-item:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        [data-bs-theme="dark"] .border-bottom {
+            border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        [data-bs-theme="dark"] #eanBarcodeContainer {
+            background: #fff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .coupon-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        [data-bs-theme="dark"] .sticky-bottom,
+        [data-bs-theme="dark"] .bg-body-tertiary {
+            background: rgba(26, 29, 36, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
     </style>
 }
 
@@ -1187,10 +1374,97 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
     <script>
+        // === EAN Barcode Preview ===
+        function renderEanBarcode() {
+            const input = document.getElementById('eanCodeInput');
+            const container = document.getElementById('eanBarcodeContainer');
+            const val = (input.value || '').trim();
+            if (val && /^\d{8}$|^\d{12,14}$/.test(val)) {
+                try {
+                    let format = 'CODE128';
+                    if (val.length === 13) format = 'EAN13';
+                    else if (val.length === 8) format = 'EAN8';
+                    else if (val.length === 12) format = 'UPC';
+                    JsBarcode('#eanBarcode', val, {
+                        format: format,
+                        width: 2,
+                        height: 60,
+                        displayValue: true,
+                        fontSize: 14,
+                        margin: 10,
+                        background: '#ffffff',
+                        lineColor: '#000000'
+                    });
+                    container.style.display = 'block';
+                } catch (e) {
+                    container.style.display = 'none';
+                }
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        document.getElementById('eanCodeInput').addEventListener('input', renderEanBarcode);
+        document.addEventListener('DOMContentLoaded', renderEanBarcode);
+
         let newImageFileNames = [];
         let imagesToDelete = [];
+
+        // Collection mode toggle
+        document.querySelectorAll('input[name="collectionMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const joinPanel = document.getElementById('joinGroupPanel');
+                const newPanel = document.getElementById('newGroupPanel');
+                joinPanel.classList.add('d-none');
+                newPanel.classList.add('d-none');
+                if (this.value === 'join') {
+                    joinPanel.classList.remove('d-none');
+                } else if (this.value === 'new') {
+                    newPanel.classList.remove('d-none');
+                    document.querySelector('select[name="ProductGroupId"]').value = '';
+                } else {
+                    document.querySelector('select[name="ProductGroupId"]').value = '';
+                    document.querySelector('input[name="NewCollectionName"]').value = '';
+                }
+            });
+        });
+
+        // Add color hex indicators to variant color dropdowns
+        (function() {
+            const colorHexMap = @Html.Raw(Json.Serialize(ViewBag.ColorHexMap));
+            function addColorIndicators() {
+                document.querySelectorAll('select[name*=".ColorId"]').forEach(select => {
+                    if (select.dataset.hexApplied) return;
+                    select.dataset.hexApplied = 'true';
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'd-flex align-items-center gap-1';
+                    select.parentNode.insertBefore(wrapper, select);
+                    const indicator = document.createElement('span');
+                    indicator.className = 'color-indicator';
+                    indicator.style.cssText = 'display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,0.15);flex-shrink:0;';
+                    wrapper.appendChild(indicator);
+                    wrapper.appendChild(select);
+                    function updateIndicator() {
+                        const hex = colorHexMap[select.value];
+                        if (hex) {
+                            indicator.style.backgroundColor = hex;
+                            indicator.style.display = 'inline-block';
+                        } else {
+                            indicator.style.display = 'none';
+                        }
+                    }
+                    select.addEventListener('change', updateIndicator);
+                    updateIndicator();
+                });
+            }
+            addColorIndicators();
+            // Re-apply when new variants are added
+            const observer = new MutationObserver(addColorIndicators);
+            const tbody = document.getElementById('variantsTableBody');
+            if (tbody) observer.observe(tbody, { childList: true });
+        })();
 
         // Initialize drag-drop reorder for existing images
         (function() {
@@ -1416,38 +1690,43 @@
         });
 
         async function handleFiles(files) {
-            files = Array.from(files);
-            for (const file of files) {
-                if (file.size > 5 * 1024 * 1024) {
-                    alert(`File ${file.name} is too large. Max size is 5MB.`);
-                    continue;
+            const fileArray = Array.from(files);
+            const validFiles = fileArray.filter(f => {
+                if (f.size > 5 * 1024 * 1024) {
+                    alert(`File ${f.name} is too large. Max size is 5MB.`);
+                    return false;
                 }
+                return true;
+            });
+            if (validFiles.length === 0) return;
 
-                const formData = new FormData();
-                formData.append('file', file);
+            const formData = new FormData();
+            validFiles.forEach(f => formData.append('files', f));
 
-                try {
-                    const response = await fetch('@Url.Action("UploadImage")', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+            try {
+                const response = await fetch('@Url.Action("UploadImages")', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                });
+
+                const results = await response.json();
+                if (Array.isArray(results)) {
+                    results.forEach(r => {
+                        if (r.success) {
+                            newImageFileNames.push(r.tempFileName);
+                            addNewImagePreview(r.tempUrl, r.tempFileName);
+                        } else {
+                            alert('Failed to upload: ' + (r.message || 'Unknown error'));
                         }
                     });
-
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        newImageFileNames.push(result.tempFileName);
-                        addNewImagePreview(result.tempUrl, result.tempFileName);
-                        updateHiddenInputs();
-                    } else {
-                        alert('Failed to upload: ' + (result.message || 'Unknown error'));
-                    }
-                } catch (error) {
-                    console.error('Upload error:', error);
-                    alert('Upload error occurred');
+                    updateHiddenInputs();
                 }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload error occurred');
             }
         }
 
@@ -1671,15 +1950,24 @@
 
         // === Category DataTables for Edit ===
         $(document).ready(function() {
-            const categoryTableEdit = $('#categoryTableEdit').DataTable({
-                responsive: true,
-                pageLength: 10,
-                order: [[2, 'asc']], // Sort by Display Order
-                language: {
-                    search: "Search categories:",
-                    lengthMenu: "Show _MENU_ categories",
-                    info: "Showing _START_ to _END_ of _TOTAL_ categories",
-                    emptyTable: "No categories available"
+            let categoryTableEdit = null;
+
+            // Initialize DataTable when modal is shown (fixes column width issues in hidden containers)
+            $('#categoryModalEdit').on('shown.bs.modal', function () {
+                if (!categoryTableEdit) {
+                    categoryTableEdit = $('#categoryTableEdit').DataTable({
+                        responsive: true,
+                        pageLength: 10,
+                        order: [[2, 'asc']],
+                        language: {
+                            search: "Search categories:",
+                            lengthMenu: "Show _MENU_ categories",
+                            info: "Showing _START_ to _END_ of _TOTAL_ categories",
+                            emptyTable: "No categories available"
+                        }
+                    });
+                } else {
+                    categoryTableEdit.columns.adjust().responsive.recalc();
                 }
             });
 
@@ -1837,8 +2125,10 @@
             // Generate missing combos
             let added = 0;
             const basePrice = @Model.Price;
+            const includeColors = document.getElementById('includeColorsInVariants')?.checked;
+            const colorList = includeColors ? colors : [{ value: '', text: '' }];
             sizes.forEach(s => {
-                colors.forEach(c => {
+                colorList.forEach(c => {
                     const key = `${s.value}|${c.value}`;
                     if (!existingCombos.has(key)) {
                         const sizeCode = s.text ? s.text.substring(0, 3).toUpperCase() : 'STD';
@@ -1860,6 +2150,12 @@
                                 <select name="Variants[${variantIndex}].ColorId" class="form-select form-select-sm">
                                     <option value="">-- None --</option>
                                     ${colors.map(cl => `<option value="${cl.value}" ${cl.value === c.value ? 'selected' : ''}>${cl.text}</option>`).join('')}
+                                </select>
+                            </td>
+                            <td>
+                                <select name="Variants[${variantIndex}].PackQuantityId" class="form-select form-select-sm">
+                                    <option value="">-- None --</option>
+                                    ${packQuantities.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                                 </select>
                             </td>
                             <td>

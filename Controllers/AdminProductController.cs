@@ -749,6 +749,7 @@ public class AdminProductController : Controller
                 ViewBag.ProductGroups = productGroups.ToList();
                 ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
                 ViewBag.Coupons = activeCoupons.ToList();
+                ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
                 
                 // Return to the view that submitted (check referer for wizard)
                 var referer = Request.Headers["Referer"].ToString();
@@ -780,6 +781,7 @@ public class AdminProductController : Controller
                 ViewBag.ProductGroups = productGroups.ToList();
                 ViewBag.AvailablePackQuantities = (await _unitOfWork.Repository<PackQuantity>().GetAllAsync()).OrderBy(p => p.DisplayOrder).ToList();
                 ViewBag.Coupons = activeCoupons.ToList();
+                ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
                 
                 var referer = Request.Headers["Referer"].ToString();
                 if (referer.Contains("Wizard", StringComparison.OrdinalIgnoreCase))
@@ -828,6 +830,20 @@ public class AdminProductController : Controller
                     Metadata = new Dictionary<string, string> { { "type", "business" } }
                 });
                 businessStripePriceId = businessStripePrice.Id;
+            }
+
+            // Create new product group/collection if requested
+            if (!string.IsNullOrWhiteSpace(model.NewCollectionName) && !model.ProductGroupId.HasValue)
+            {
+                var newGroup = new ProductGroup
+                {
+                    Name = model.NewCollectionName.Trim(),
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.Repository<ProductGroup>().AddAsync(newGroup);
+                await _unitOfWork.SaveChangesAsync();
+                model.ProductGroupId = newGroup.Id;
+                _logger.LogInformation("Created new product group '{GroupName}' (ID: {GroupId})", newGroup.Name, newGroup.Id);
             }
 
             // Create product entity
@@ -1113,6 +1129,7 @@ public class AdminProductController : Controller
             ViewBag.ProductGroups = productGroups.ToList();
             ViewBag.Coupons = activeCoupons.ToList();
             ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
+            ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
             
             // Return to the view that submitted
             var catchReferer = Request.Headers["Referer"].ToString();
@@ -1301,7 +1318,20 @@ public class AdminProductController : Controller
             product.Price = model.Price;
             product.PackSize = model.PackSize;
             product.CategoryId = model.CategoryId;
-            product.ProductGroupId = model.ProductGroupId;
+
+            // Handle new collection creation
+            if (!string.IsNullOrWhiteSpace(model.NewCollectionName))
+            {
+                var newGroup = new ProductGroup { Name = model.NewCollectionName.Trim() };
+                await _unitOfWork.Repository<ProductGroup>().AddAsync(newGroup);
+                await _unitOfWork.SaveChangesAsync();
+                product.ProductGroupId = newGroup.Id;
+            }
+            else
+            {
+                product.ProductGroupId = model.ProductGroupId;
+            }
+
             product.StripeTaxCode = string.IsNullOrWhiteSpace(model.StripeTaxCode) ? null : model.StripeTaxCode;
             product.IsActive = model.IsActive;
             product.UpdatedAt = DateTime.UtcNow;
@@ -1896,6 +1926,29 @@ public class AdminProductController : Controller
         }
         
         return Json(new { success = false, message = result.Message });
+    }
+
+    /// <summary>
+    /// POST: Upload multiple product images to temp folder in one request (AJAX)
+    /// </summary>
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> UploadImages(List<IFormFile> files)
+    {
+        var results = new List<object>();
+        foreach (var file in files)
+        {
+            var result = await _productImageService.UploadToTempAsync(file);
+            if (result.Success)
+            {
+                results.Add(new { success = true, tempFileName = result.TempFileName, tempUrl = result.TempUrl });
+            }
+            else
+            {
+                results.Add(new { success = false, message = result.Message });
+            }
+        }
+        return Json(results);
     }
 
     /// <summary>

@@ -84,6 +84,12 @@ public class ProductCreateDto
     public int? ProductGroupId { get; set; }
 
     /// <summary>
+    /// Name for creating a new product collection/group
+    /// </summary>
+    [StringLength(200)]
+    public string? NewCollectionName { get; set; }
+
+    /// <summary>
     /// Optional: Associate a coupon with this product for automatic discount
     /// </summary>
     public int? CouponId { get; set; }
@@ -177,6 +183,12 @@ public class ProductUpdateDto
     public int? CategoryId { get; set; }
 
     public int? ProductGroupId { get; set; }
+
+    /// <summary>
+    /// If set, creates a new ProductGroup with this name
+    /// </summary>
+    [StringLength(200)]
+    public string? NewCollectionName { get; set; }
 
     /// <summary>
     /// Optional: Associate a coupon with this product for automatic discount

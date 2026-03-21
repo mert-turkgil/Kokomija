@@ -473,3 +473,6 @@ $RECYCLE.BIN/
 wwwroot/img/temp/*.*
 wwwroot/img/Blog/*.*
 wwwroot/img/Blog/Temp/*.*
+wwwroot/img/categories/*.*
+wwwroot/img/Products/*.*/*.*
+wwwroot/img/ProductImage/*.*
