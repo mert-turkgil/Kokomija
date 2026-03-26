@@ -252,14 +252,73 @@
                     </div>
                     <div class="od-card-body">
                         <div class="row g-3">
-                            @if (Model.CanReturn)
+                            @if (Model.HasReturnRequest)
+                            {
+                                var retStatusBadge = Model.ReturnRequestStatus?.ToLower() switch {
+                                    "pending" => "warning",
+                                    "underreview" => "info",
+                                    "approved" => "primary",
+                                    "completed" => "success",
+                                    "rejected" => "danger",
+                                    _ => "secondary"
+                                };
+                                var retStatusIcon = Model.ReturnRequestStatus?.ToLower() switch {
+                                    "pending" => "hourglass-split",
+                                    "underreview" => "search",
+                                    "approved" => "check-circle",
+                                    "completed" => "check-circle-fill",
+                                    "rejected" => "x-circle",
+                                    _ => "question-circle"
+                                };
+                                var isResolved = Model.ReturnRequestStatus == "Completed" || Model.ReturnRequestStatus == "Rejected";
+
+                                <div class="col-sm-6">
+                                    <a asp-action="ReturnRequestDetails" asp-route-id="@Model.ReturnRequestId" class="od-action-tile od-action-refund">
+                                        <div class="od-action-icon"><i class="bi bi-@retStatusIcon"></i></div>
+                                        <div>
+                                            @if (isResolved)
+                                            {
+                                                <strong>@(L["Return_Request_Resolved"] ?? "Return Request Resolved")</strong>
+                                                <div class="small opacity-75">
+                                                    <span class="badge bg-@retStatusBadge">@(L["Status_" + Model.ReturnRequestStatus] ?? Model.ReturnRequestStatus)</span>
+                                                    @(L["View_Details"] ?? "View details")
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <strong>@(L["Return_Request_Active"] ?? "Return Request In Progress")</strong>
+                                                <div class="small opacity-75">
+                                                    <span class="badge bg-@retStatusBadge">@(L["Status_" + Model.ReturnRequestStatus] ?? Model.ReturnRequestStatus)</span>
+                                                    @(L["View_Details"] ?? "View details")
+                                                </div>
+                                            }
+                                        </div>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                </div>
+                            }
+                            else if (Model.CanRequestReturn)
                             {
                                 <div class="col-sm-6">
                                     <a asp-action="ReturnRequest" asp-route-orderId="@Model.Id" class="od-action-tile od-action-refund">
                                         <div class="od-action-icon"><i class="bi bi-arrow-return-left"></i></div>
                                         <div>
-                                            <strong>@(L["Request_Refund"] ?? "Request Refund")</strong>
-                                            <div class="small opacity-75">@(L["Refund_Within_30"] ?? "Return within 30 days of delivery")</div>
+                                            @if (Model.OrderStatus == "processing")
+                                            {
+                                                <strong>@(L["Request_Cancellation"] ?? "Request Cancellation")</strong>
+                                                <div class="small opacity-75">@(L["Cancel_Processing_Desc"] ?? "Request to cancel your order")</div>
+                                            }
+                                            else
+                                            {
+                                                <strong>@(L["Request_Return"] ?? "Request Return / Refund")</strong>
+                                                <div class="small opacity-75">
+                                                    @if (Model.ReturnDaysRemaining.HasValue)
+                                                    {
+                                                        <span class="badge bg-warning text-dark me-1">@Model.ReturnDaysRemaining @(L["Days"] ?? "days")</span>
+                                                    }
+                                                    @(L["Return_Within_14"] ?? "Return within 14 days")
+                                                </div>
+                                            }
                                         </div>
                                         <i class="bi bi-chevron-right ms-auto"></i>
                                     </a>
@@ -278,16 +337,19 @@
                                     </button>
                                 </div>
                             }
-                            <div class="col-sm-6">
-                                <button type="button" class="od-action-tile od-action-edit" data-bs-toggle="modal" data-bs-target="#editRequestModal">
-                                    <div class="od-action-icon"><i class="bi bi-pencil-square"></i></div>
-                                    <div>
-                                        <strong>@(L["Edit_Request"] ?? "Edit Request")</strong>
-                                        <div class="small opacity-75">@(L["Edit_Request_Desc"] ?? "Request address or item changes")</div>
-                                    </div>
-                                    <i class="bi bi-chevron-right ms-auto"></i>
-                                </button>
-                            </div>
+                            @if (Model.OrderStatus?.ToLower() != "shipped" && Model.OrderStatus?.ToLower() != "delivered")
+                            {
+                                <div class="col-sm-6">
+                                    <button type="button" class="od-action-tile od-action-edit" data-bs-toggle="modal" data-bs-target="#editRequestModal">
+                                        <div class="od-action-icon"><i class="bi bi-pencil-square"></i></div>
+                                        <div>
+                                            <strong>@(L["Edit_Request"] ?? "Edit Request")</strong>
+                                            <div class="small opacity-75">@(L["Edit_Request_Desc"] ?? "Request address or item changes")</div>
+                                        </div>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </button>
+                                </div>
+                            }
                             @if (Model.PaymentStatus?.ToLower() == "paid")
                             {
                                 <div class="col-sm-6">

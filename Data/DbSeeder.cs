@@ -700,6 +700,7 @@ namespace Kokomija.Data
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
+                    EanCode = "5901234100011",
                     CreatedAt = DateTime.UtcNow
                 },
                 
@@ -718,6 +719,7 @@ namespace Kokomija.Data
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
+                    EanCode = "5901234100028",
                     CreatedAt = DateTime.UtcNow
                 },
                 
@@ -736,6 +738,7 @@ namespace Kokomija.Data
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
+                    EanCode = "5901234100035",
                     CreatedAt = DateTime.UtcNow
                 },
                 
@@ -754,6 +757,7 @@ namespace Kokomija.Data
                     ProductGroupId = 1,
                     CategoryId = 1,
                     IsActive = true,
+                    EanCode = "5901234100042",
                     CreatedAt = DateTime.UtcNow
                 }
             );

@@ -2781,4 +2781,125 @@
   <data name="Cancel_Request_Submitted" xml:space="preserve">
     <value>Request Submitted</value>
   </data>
+
+  <!-- Return Request Form -->
+  <data name="Account_ReturnRequest_Title" xml:space="preserve">
+    <value>Request Return / Refund</value>
+  </data>
+  <data name="Account_CancelRequest_Title" xml:space="preserve">
+    <value>Request Cancellation</value>
+  </data>
+  <data name="Account_ReturnRequest_SelectItems" xml:space="preserve">
+    <value>Select Items</value>
+  </data>
+  <data name="Account_ReturnRequest_Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="Account_ReturnRequest_Details" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="Account_ReturnRequest_DetailsHint" xml:space="preserve">
+    <value>Describe the issue. You can paste or drag images directly into the editor.</value>
+  </data>
+  <data name="Account_ReturnRequest_Submit" xml:space="preserve">
+    <value>Submit Request</value>
+  </data>
+  <data name="Account_ReturnRequest_ChangedMind" xml:space="preserve">
+    <value>Changed my mind</value>
+  </data>
+  <data name="Account_ReturnRequest_BetterPrice" xml:space="preserve">
+    <value>Found a better price</value>
+  </data>
+  <data name="Account_ReturnRequest_OrderedByMistake" xml:space="preserve">
+    <value>Ordered by mistake</value>
+  </data>
+  <data name="Account_ReturnRequest_DefectiveItem" xml:space="preserve">
+    <value>Defective or damaged item</value>
+  </data>
+  <data name="Account_ReturnRequest_WrongItem" xml:space="preserve">
+    <value>Wrong item received</value>
+  </data>
+  <data name="Account_ReturnRequest_NotMatching" xml:space="preserve">
+    <value>Item doesn't match description</value>
+  </data>
+  <data name="Account_ReturnRequest_WrongSize" xml:space="preserve">
+    <value>Wrong size ordered</value>
+  </data>
+  <data name="Account_ReturnRequest_NotNeeded" xml:space="preserve">
+    <value>No longer needed</value>
+  </data>
+  <data name="Account_ReturnRequest_QualityIssue" xml:space="preserve">
+    <value>Quality not as expected</value>
+  </data>
+  <data name="Account_ReturnRequest_Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+
+  <!-- Return Policy & Flow -->
+  <data name="Return_Policy" xml:space="preserve">
+    <value>Return Policy</value>
+  </data>
+  <data name="Cancel_Policy_Desc" xml:space="preserve">
+    <value>Your cancellation request will be reviewed by our team. If approved, a full refund will be processed.</value>
+  </data>
+  <data name="Return_Policy_Desc" xml:space="preserve">
+    <value>Returns are accepted within 14 days. Items must be unworn, unwashed, and in original packaging with tags attached.</value>
+  </data>
+  <data name="Request_Cancellation" xml:space="preserve">
+    <value>Request Cancellation</value>
+  </data>
+  <data name="Request_Return" xml:space="preserve">
+    <value>Request Return / Refund</value>
+  </data>
+  <data name="Cancel_Processing_Desc" xml:space="preserve">
+    <value>Request to cancel your order</value>
+  </data>
+  <data name="Return_Within_14" xml:space="preserve">
+    <value>Return within 14 days</value>
+  </data>
+  <data name="Days_Remaining" xml:space="preserve">
+    <value>days remaining</value>
+  </data>
+  <data name="Back_To_Order" xml:space="preserve">
+    <value>Back to Order</value>
+  </data>
+  <data name="ReturnEditor_Placeholder" xml:space="preserve">
+    <value>Describe your issue in detail. You can paste or drag images here...</value>
+  </data>
+  <data name="ReturnRequest_SelectItem" xml:space="preserve">
+    <value>Please select at least one item.</value>
+  </data>
+  <data name="ReturnRequest_MinDetails" xml:space="preserve">
+    <value>Please provide at least 20 characters of detail.</value>
+  </data>
+  <!-- Generic Keys -->
+  <data name="Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+
+  <!-- Return Request Status -->
+  <data name="Return_Request_Resolved" xml:space="preserve">
+    <value>Return Request Resolved</value>
+  </data>
+  <data name="Return_Request_Active" xml:space="preserve">
+    <value>Return Request In Progress</value>
+  </data>
+  <data name="Status_UnderReview" xml:space="preserve">
+    <value>Under Review</value>
+  </data>
+  <data name="Status_Approved" xml:space="preserve">
+    <value>Approved</value>
+  </data>
+  <data name="Status_Rejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="Status_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
 </root>

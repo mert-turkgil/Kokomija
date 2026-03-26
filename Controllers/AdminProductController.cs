@@ -97,7 +97,9 @@ public class AdminProductController : Controller
                 MinBusinessQuantity = product.MinBusinessQuantity,
                 BusinessPrice = product.BusinessPrice,
                 // SKUs for search
-                SKUs = variants.Select(v => v.SKU).ToList()
+                SKUs = variants.Select(v => v.SKU).ToList(),
+                // EAN/GTIN
+                EanCode = product.EanCode
             });
         }
 
@@ -114,10 +116,12 @@ public class AdminProductController : Controller
                 "stripe" => filteredProducts.Where(p => p.StripeProductId != null && p.StripeProductId.ToLower().Contains(searchLower)),
                 "id" => filteredProducts.Where(p => p.Id.ToString() == searchTerm.Trim()),
                 "name" => filteredProducts.Where(p => p.Name != null && p.Name.ToLower().Contains(searchLower)),
+                "ean" => filteredProducts.Where(p => p.EanCode != null && p.EanCode.ToLower().Contains(searchLower)),
                 _ => filteredProducts.Where(p => 
                     (p.Name != null && p.Name.ToLower().Contains(searchLower)) ||
                     (p.StripeProductId != null && p.StripeProductId.ToLower().Contains(searchLower)) ||
-                    p.SKUs.Any(s => s != null && s.ToLower().Contains(searchLower))
+                    p.SKUs.Any(s => s != null && s.ToLower().Contains(searchLower)) ||
+                    (p.EanCode != null && p.EanCode.ToLower().Contains(searchLower))
                 )
             };
         }
@@ -233,10 +237,12 @@ public class AdminProductController : Controller
                 "stripe" => filteredProducts.Where(p => p.StripeProductId != null && p.StripeProductId.ToLower().Contains(searchLower)),
                 "id" => filteredProducts.Where(p => p.Id.ToString() == searchTerm.Trim()),
                 "name" => filteredProducts.Where(p => p.Name != null && p.Name.ToLower().Contains(searchLower)),
+                "ean" => filteredProducts.Where(p => p.EanCode != null && p.EanCode.ToLower().Contains(searchLower)),
                 _ => filteredProducts.Where(p => 
                     (p.Name != null && p.Name.ToLower().Contains(searchLower)) ||
                     (p.StripeProductId != null && p.StripeProductId.ToLower().Contains(searchLower)) ||
-                    p.SKUs.Any(s => s != null && s.ToLower().Contains(searchLower))
+                    p.SKUs.Any(s => s != null && s.ToLower().Contains(searchLower)) ||
+                    (p.EanCode != null && p.EanCode.ToLower().Contains(searchLower))
                 )
             };
         }

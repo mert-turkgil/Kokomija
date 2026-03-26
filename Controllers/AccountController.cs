@@ -1091,6 +1091,34 @@ namespace Kokomija.Controllers
 
         [Authorize]
         [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UploadReturnImage(IFormFile upload)
+        {
+            if (upload == null || upload.Length == 0)
+                return Json(new { uploaded = false, error = new { message = "No file uploaded" } });
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var ext = Path.GetExtension(upload.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(ext))
+                return Json(new { uploaded = false, error = new { message = "Only image files (jpg, png, gif, webp) are allowed" } });
+
+            if (upload.Length > 5 * 1024 * 1024)
+                return Json(new { uploaded = false, error = new { message = "File size must be under 5 MB" } });
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "ReturnRequests");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"ret_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}"[..40] + ext;
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+                await upload.CopyToAsync(stream);
+
+            return Json(new { uploaded = true, url = $"/img/ReturnRequests/{fileName}" });
+        }
+
+        [Authorize]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitEditRequest(int orderId, string requestType, string details)
         {
@@ -1614,6 +1642,17 @@ namespace Kokomija.Controllers
             var shipment = await _unitOfWork.Repository<OrderShipment>()
                 .FirstOrDefaultAsync(s => s.OrderId == order.Id, s => s.ShippingRate);
 
+            // Check for existing return requests on this order
+            var existingReturn = await _dbContext.ReturnRequests
+                .Where(rr => rr.OrderId == order.Id && rr.Status != Entity.ReturnRequestStatus.Cancelled)
+                .OrderByDescending(rr => rr.RequestedAt)
+                .Select(rr => new { rr.Id, rr.Status })
+                .FirstOrDefaultAsync();
+
+            var hasExistingReturn = existingReturn != null;
+            var isEligible = IsEligibleForReturnRequest(order, out int daysRemaining);
+            var canRequestReturn = !hasExistingReturn && isEligible;
+
             var orderViewModel = new Models.ViewModels.Account.OrderViewModel
             {
                 Id = order.Id,
@@ -1630,8 +1669,13 @@ namespace Kokomija.Controllers
                 SessionStatus = order.SessionStatus,
                 CustomerCountry = order.CustomerCountry,
                 ItemCount = order.OrderItems?.Count ?? 0,
-                CanCancel = order.OrderStatus == "pending" || order.OrderStatus == "processing",
-                CanReturn = order.OrderStatus == "delivered" && order.DeliveredAt.HasValue && (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays <= 30,
+                CanCancel = order.OrderStatus == "pending",
+                CanReturn = order.OrderStatus == "delivered" && order.DeliveredAt.HasValue && (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays <= 14,
+                CanRequestReturn = canRequestReturn,
+                ReturnDaysRemaining = canRequestReturn ? daysRemaining : null,
+                HasReturnRequest = hasExistingReturn,
+                ReturnRequestId = existingReturn?.Id,
+                ReturnRequestStatus = existingReturn?.Status.ToString(),
                 
                 // Shipping details
                 ShippingMethod = shipment?.ShippingRate?.Name,
@@ -1688,18 +1732,23 @@ namespace Kokomija.Controllers
                 return NotFound();
             }
 
-            // Check if order is eligible for return (delivered within 30 days)
-            if (order.OrderStatus != "delivered" || !order.DeliveredAt.HasValue || (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays > 30)
+            // Get order item IDs that already have active return requests
+            var returnedItemIds = await _dbContext.ReturnRequests
+                .Where(rr => rr.OrderId == orderId && rr.Status != Entity.ReturnRequestStatus.Cancelled && rr.Status != Entity.ReturnRequestStatus.Rejected)
+                .Select(rr => rr.OrderItemId)
+                .ToListAsync();
+
+            // Check if order is eligible for return/cancel request
+            if (!IsEligibleForReturnRequest(order, out int daysRemaining))
             {
-                TempData["ErrorMessage"] = "This order is not eligible for return";
+                TempData["ErrorMessage"] = "This order is not eligible for a return request";
                 return RedirectToAction("Index");
             }
 
-            var model = new ReturnRequestViewModel
-            {
-                OrderId = order.Id,
-                OrderNumber = order.OrderNumber,
-                OrderItems = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
+            // Filter out items that already have active return requests
+            var availableItems = (order.OrderItems ?? Enumerable.Empty<Entity.OrderItem>())
+                .Where(oi => !returnedItemIds.Contains(oi.Id))
+                .Select(oi => new Models.ViewModels.Account.OrderItemViewModel
                 {
                     Id = oi.Id,
                     ProductId = oi.ProductVariant?.ProductId ?? 0,
@@ -1710,7 +1759,30 @@ namespace Kokomija.Controllers
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
                     TotalPrice = oi.TotalPrice
-                }) ?? Enumerable.Empty<Models.ViewModels.Account.OrderItemViewModel>()
+                })
+                .ToList();
+
+            // If all items already have return requests, redirect to the most recent one
+            if (!availableItems.Any())
+            {
+                var latestReturn = await _dbContext.ReturnRequests
+                    .Where(rr => rr.OrderId == orderId && rr.Status != Entity.ReturnRequestStatus.Cancelled)
+                    .OrderByDescending(rr => rr.RequestedAt)
+                    .FirstOrDefaultAsync();
+                if (latestReturn != null)
+                    return RedirectToAction("ReturnRequestDetails", new { id = latestReturn.Id });
+
+                TempData["ErrorMessage"] = "All items in this order already have return requests";
+                return RedirectToAction("Index");
+            }
+
+            var model = new ReturnRequestViewModel
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                OrderStatus = order.OrderStatus,
+                DaysRemaining = daysRemaining,
+                OrderItems = availableItems
             };
 
             return View(model);
@@ -1727,7 +1799,16 @@ namespace Kokomija.Controllers
                 if (order != null)
                 {
                     model.OrderNumber = order.OrderNumber;
-                    model.OrderItems = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
+                    model.OrderStatus = order.OrderStatus;
+                    IsEligibleForReturnRequest(order, out int dr);
+                    model.DaysRemaining = dr;
+                    var existingReturnItemIds = await _dbContext.ReturnRequests
+                        .Where(rr => rr.OrderId == model.OrderId && rr.Status != Entity.ReturnRequestStatus.Cancelled && rr.Status != Entity.ReturnRequestStatus.Rejected)
+                        .Select(rr => rr.OrderItemId)
+                        .ToListAsync();
+                    model.OrderItems = (order.OrderItems ?? Enumerable.Empty<Entity.OrderItem>())
+                        .Where(oi => !existingReturnItemIds.Contains(oi.Id))
+                        .Select(oi => new Models.ViewModels.Account.OrderItemViewModel
                     {
                         Id = oi.Id,
                         ProductId = oi.ProductVariant?.ProductId ?? 0,
@@ -1738,7 +1819,7 @@ namespace Kokomija.Controllers
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,
                         TotalPrice = oi.TotalPrice
-                    }) ?? Enumerable.Empty<Models.ViewModels.Account.OrderItemViewModel>();
+                    });
                 }
                 return View(model);
             }
@@ -1756,10 +1837,10 @@ namespace Kokomija.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Check if order is eligible for return
-            if (orderToReturn.OrderStatus != "delivered" || !orderToReturn.DeliveredAt.HasValue)
+            // Check if order is eligible for return request
+            if (!IsEligibleForReturnRequest(orderToReturn, out _))
             {
-                TempData["ErrorMessage"] = "This order is not eligible for return";
+                TempData["ErrorMessage"] = "This order is not eligible for a return request";
                 return RedirectToAction("Index");
             }
 
@@ -1784,8 +1865,7 @@ namespace Kokomija.Controllers
                         OrderItemId = orderItemId,
                         Reason = model.Reason,
                         Description = model.Details,
-                        RequestedAmount = orderItem.TotalPrice,
-                        Images = null // File upload not implemented in current view
+                        RequestedAmount = orderItem.TotalPrice
                     };
 
                     var (success, message, requestId) = await _returnRequestService.CreateReturnRequestAsync(createDto, user.Id);
@@ -2550,6 +2630,39 @@ namespace Kokomija.Controllers
             _logger.LogInformation("User {UserId} unlinked {Provider} login.", user.Id, loginProvider);
             
             return RedirectToAction(nameof(Index));
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private static bool IsEligibleForReturnRequest(Entity.Order order, out int daysRemaining)
+        {
+            daysRemaining = 0;
+            switch (order.OrderStatus)
+            {
+                case "processing":
+                    daysRemaining = 14; // no deadline for processing
+                    return true;
+                case "shipped" when order.ShippedAt.HasValue:
+                    var shippedDays = (DateTime.UtcNow - order.ShippedAt.Value).TotalDays;
+                    if (shippedDays <= 14)
+                    {
+                        daysRemaining = Math.Max(0, (int)Math.Ceiling(14 - shippedDays));
+                        return true;
+                    }
+                    return false;
+                case "delivered" when order.DeliveredAt.HasValue:
+                    var deliveredDays = (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays;
+                    if (deliveredDays <= 14)
+                    {
+                        daysRemaining = Math.Max(0, (int)Math.Ceiling(14 - deliveredDays));
+                        return true;
+                    }
+                    return false;
+                default:
+                    return false;
+            }
         }
 
         #endregion

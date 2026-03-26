@@ -3,107 +3,269 @@
 
 @{
     ViewData["Title"] = L["Account_ReturnRequest_Title"];
+    var isCancel = Model.OrderStatus == "processing";
+    var heading = isCancel
+        ? (L["Account_CancelRequest_Title"] ?? "Request Cancellation")
+        : (L["Account_ReturnRequest_Title"] ?? "Request Return / Refund");
 }
+
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.css" />
 
 <div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">@L["Account_ReturnRequest_Title"]</h4>
-                    <small class="text-muted">@L["Order_Number"]: #@Model.OrderNumber</small>
-                </div>
-                <div class="card-body">
-                    <form method="post" asp-action="ReturnRequest">
-                        <input type="hidden" asp-for="OrderId" />
-                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+        <div class="col-lg-9">
 
-                        <div class="mb-4">
-                            <h5>@L["Account_ReturnRequest_SelectItems"]</h5>
-                            <div class="list-group">
-                                @{
-                                    int index = 0;
-                                }
-                                @foreach (var item in Model.OrderItems)
-                                {
-                                    <div class="list-group-item">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-1">
-                                                <input type="checkbox" class="form-check-input" name="SelectedItemIds" value="@item.Id" id="item_@item.Id" />
-                                            </div>
-                                            <div class="col-md-2">
-                                                @if (!string.IsNullOrEmpty(item.ProductImage))
-                                                {
-                                                    <img src="@item.ProductImage" alt="@item.ProductName" class="img-fluid rounded" />
-                                                }
-                                            </div>
-                                            <div class="col-md-5">
-                                                <label for="item_@item.Id" class="form-check-label mb-0">
-                                                    <strong>@item.ProductName</strong><br />
-                                                    @if (!string.IsNullOrEmpty(item.ColorName))
-                                                    {
-                                                        <small>@L["Color"]: @item.ColorName</small><text> | </text>
-                                                    }
-                                                    @if (!string.IsNullOrEmpty(item.SizeName))
-                                                    {
-                                                        <small>@L["Size"]: @item.SizeName</small>
-                                                    }
-                                                </label>
-                                            </div>
-                                            <div class="col-md-2 text-center">
-                                                <strong>x@item.Quantity</strong>
-                                            </div>
-                                            <div class="col-md-2 text-end">
-                                                <strong>@item.TotalPrice.ToString("C")</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    index++;
-                                }
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Reason" class="form-label">@L["Account_ReturnRequest_Reason"]</label>
-                            <select asp-for="Reason" class="form-select" required>
-                                <option value="">-- @L["Select"] --</option>
-                                <option value="Defective or damaged item">@L["Account_ReturnRequest_DefectiveItem"]</option>
-                                <option value="Wrong item received">@L["Account_ReturnRequest_WrongItem"]</option>
-                                <option value="Item doesn't match description">@L["Account_ReturnRequest_NotMatching"]</option>
-                                <option value="Wrong size ordered">@L["Account_ReturnRequest_WrongSize"]</option>
-                                <option value="No longer needed">@L["Account_ReturnRequest_NotNeeded"]</option>
-                                <option value="Quality not as expected">@L["Account_ReturnRequest_QualityIssue"]</option>
-                                <option value="Other">@L["Account_ReturnRequest_Other"]</option>
-                            </select>
-                            <span asp-validation-for="Reason" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Details" class="form-label">@L["Account_ReturnRequest_Details"]</label>
-                            <textarea asp-for="Details" class="form-control" rows="5" required 
-                                placeholder="Please provide detailed information about why you want to return this item..."></textarea>
-                            <span asp-validation-for="Details" class="text-danger"></span>
-                            <small class="form-text text-muted">Minimum 20 characters required</small>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <strong>Return Policy:</strong> Returns are accepted within 30 days of delivery. Items must be unworn, unwashed, and in original packaging with tags attached.
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-send me-2"></i>@L["Account_ReturnRequest_Submit"]
-                            </button>
-                            <a asp-action="Index" class="btn btn-secondary">@L["Back_To_Account"]</a>
-                        </div>
-                    </form>
+            <!-- Header -->
+            <div class="od-card mb-4">
+                <div class="od-card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mb-1"><i class="bi bi-arrow-return-left me-2"></i>@heading</h4>
+                        <small class="text-body-secondary">@L["Order_Number"]: #@Model.OrderNumber</small>
+                    </div>
+                    @if (Model.DaysRemaining > 0 && !isCancel)
+                    {
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                            <i class="bi bi-clock me-1"></i>@Model.DaysRemaining @(L["Days_Remaining"] ?? "days remaining")
+                        </span>
+                    }
                 </div>
             </div>
+
+            <form method="post" asp-action="ReturnRequest" id="returnRequestForm">
+                <input type="hidden" asp-for="OrderId" />
+                <input type="hidden" asp-for="OrderStatus" />
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <!-- Item Selection -->
+                <div class="od-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>@L["Account_ReturnRequest_SelectItems"]</h5>
+                    </div>
+                    <div class="od-card-body p-0">
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            <label for="item_@item.Id" class="ret-item-row">
+                                <input type="checkbox" class="form-check-input me-3" name="SelectedItemIds" value="@item.Id" id="item_@item.Id" />
+                                <div class="ret-item-img">
+                                    @if (!string.IsNullOrEmpty(item.ProductImage))
+                                    {
+                                        <img src="@item.ProductImage" alt="@item.ProductName" />
+                                    }
+                                    else
+                                    {
+                                        <div class="ret-item-placeholder"><i class="bi bi-image"></i></div>
+                                    }
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong>@item.ProductName</strong>
+                                    <div class="small text-body-secondary">
+                                        @if (!string.IsNullOrEmpty(item.ColorName))
+                                        {
+                                            <span>@L["Color"]: @item.ColorName</span><text> · </text>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.SizeName))
+                                        {
+                                            <span>@L["Size"]: @item.SizeName</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="text-end text-nowrap">
+                                    <div class="text-body-secondary small">x@item.Quantity</div>
+                                    <strong>@item.TotalPrice.ToString("C")</strong>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div class="od-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>@(L["Account_ReturnRequest_Reason"] ?? "Reason")</h5>
+                    </div>
+                    <div class="od-card-body">
+                        <select asp-for="Reason" class="form-select" required>
+                            <option value="">-- @L["Select"] --</option>
+                            @if (isCancel)
+                            {
+                                <option value="Changed my mind">@(L["Account_ReturnRequest_ChangedMind"] ?? "Changed my mind")</option>
+                                <option value="Found a better price">@(L["Account_ReturnRequest_BetterPrice"] ?? "Found a better price")</option>
+                                <option value="Ordered by mistake">@(L["Account_ReturnRequest_OrderedByMistake"] ?? "Ordered by mistake")</option>
+                            }
+                            <option value="Defective or damaged item">@L["Account_ReturnRequest_DefectiveItem"]</option>
+                            <option value="Wrong item received">@L["Account_ReturnRequest_WrongItem"]</option>
+                            <option value="Item doesn't match description">@L["Account_ReturnRequest_NotMatching"]</option>
+                            <option value="Wrong size ordered">@L["Account_ReturnRequest_WrongSize"]</option>
+                            <option value="No longer needed">@L["Account_ReturnRequest_NotNeeded"]</option>
+                            <option value="Quality not as expected">@L["Account_ReturnRequest_QualityIssue"]</option>
+                            <option value="Other">@L["Account_ReturnRequest_Other"]</option>
+                        </select>
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Description with CKEditor -->
+                <div class="od-card mb-4">
+                    <div class="od-card-header">
+                        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>@(L["Account_ReturnRequest_Details"] ?? "Details")</h5>
+                        <small class="text-body-secondary">@(L["Account_ReturnRequest_DetailsHint"] ?? "Describe the issue. You can paste or drag images directly into the editor.")</small>
+                    </div>
+                    <div class="od-card-body">
+                        <div id="returnEditor"></div>
+                        <input type="hidden" asp-for="Details" id="detailsHidden" />
+                        <span asp-validation-for="Details" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Policy Info -->
+                <div class="alert alert-info d-flex align-items-start gap-3 rounded-3 mb-4">
+                    <i class="bi bi-info-circle-fill fs-4 mt-1"></i>
+                    <div>
+                        <strong>@(L["Return_Policy"] ?? "Return Policy")</strong>
+                        <p class="mb-0 small mt-1">
+                            @if (isCancel)
+                            {
+                                @(L["Cancel_Policy_Desc"] ?? "Your cancellation request will be reviewed by our team. If approved, a full refund will be processed.")
+                            }
+                            else
+                            {
+                                @(L["Return_Policy_Desc"] ?? "Returns are accepted within 14 days. Items must be unworn, unwashed, and in original packaging with tags attached.")
+                            }
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+                        <i class="bi bi-send me-2"></i>@L["Account_ReturnRequest_Submit"]
+                    </button>
+                    <a asp-action="OrderDetails" asp-route-id="@Model.OrderId" class="btn btn-outline-secondary rounded-pill">
+                        <i class="bi bi-arrow-left me-1"></i>@(L["Back_To_Order"] ?? "Back to Order")
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
+<style>
+    .od-card {
+        border-radius: 16px;
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-body-bg);
+        overflow: hidden;
+    }
+    .od-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+    }
+    .od-card-body { padding: 1.25rem; }
+
+    .ret-item-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .ret-item-row:last-child { border-bottom: none; }
+    .ret-item-row:hover { background: var(--bs-tertiary-bg); }
+    .ret-item-img { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+    .ret-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .ret-item-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); }
+
+    /* CKEditor dark-theme support */
+    .ck.ck-editor__main > .ck-editor__editable {
+        min-height: 200px;
+        background: var(--bs-body-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+    .ck.ck-toolbar {
+        background: var(--bs-tertiary-bg) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+    .ck.ck-toolbar .ck-button {
+        color: var(--bs-body-color) !important;
+    }
+    .ck.ck-toolbar .ck-button:hover {
+        background: var(--bs-secondary-bg) !important;
+    }
+</style>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.umd.js"></script>
+    <script>
+        let returnEditor = null;
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const { ClassicEditor, Essentials, Bold, Italic, Underline, Link, Paragraph,
+                    Image, ImageUpload, ImageToolbar, ImageStyle, ImageCaption,
+                    SimpleUploadAdapter, List, BlockQuote, Heading } = CKEDITOR;
+
+            const editorConfig = {
+                plugins: [Essentials, Bold, Italic, Underline, Link, Paragraph,
+                          Image, ImageUpload, ImageToolbar, ImageStyle, ImageCaption,
+                          SimpleUploadAdapter, List, BlockQuote, Heading],
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'underline', '|',
+                        'link', 'uploadImage', 'blockQuote', '|',
+                        'bulletedList', 'numberedList', '|',
+                        'undo', 'redo'
+                    ]
+                },
+                image: {
+                    toolbar: ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block']
+                },
+                simpleUpload: {
+                    uploadUrl: '@Url.Action("UploadReturnImage", "Account")',
+                    withCredentials: true
+                },
+                placeholder: '@(L["ReturnEditor_Placeholder"] ?? "Describe your issue in detail. You can paste or drag images here...")'
+            };
+
+            try {
+                const editorElement = document.getElementById('returnEditor');
+                returnEditor = await ClassicEditor.create(editorElement, editorConfig);
+
+                // If there is pre-existing content (validation failure), restore it
+                const existingContent = document.getElementById('detailsHidden').value;
+                if (existingContent) {
+                    returnEditor.setData(existingContent);
+                }
+            } catch (error) {
+                console.error('CKEditor init failed:', error);
+            }
+        });
+
+        // Sync CKEditor data to hidden field before submit
+        document.getElementById('returnRequestForm')?.addEventListener('submit', function (e) {
+            if (returnEditor) {
+                document.getElementById('detailsHidden').value = returnEditor.getData();
+            }
+
+            // Validate at least one item selected
+            const checked = document.querySelectorAll('input[name="SelectedItemIds"]:checked');
+            if (checked.length === 0) {
+                e.preventDefault();
+                alert('@(L["ReturnRequest_SelectItem"] ?? "Please select at least one item.")');
+                return false;
+            }
+
+            // Validate editor has content
+            const content = returnEditor ? returnEditor.getData().replace(/<[^>]*>/g, '').trim() : '';
+            if (content.length < 20) {
+                e.preventDefault();
+                alert('@(L["ReturnRequest_MinDetails"] ?? "Please provide at least 20 characters of detail.")');
+                return false;
+            }
+        });
+    </script>
 }

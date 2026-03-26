@@ -55,6 +55,9 @@ public class ProductListItemDto
     
     // SKU info for search
     public List<string> SKUs { get; set; } = new();
+    
+    // EAN/GTIN barcode
+    public string? EanCode { get; set; }
 }
 
 public class ProductCreateDto

@@ -3,6 +3,7 @@ using Kokomija.Entity;
 using Kokomija.Models.ViewModels.ReturnRequest;
 using Microsoft.EntityFrameworkCore;
 using Stripe;
+using System.Text.RegularExpressions;
 
 namespace Kokomija.Services
 {
@@ -52,9 +53,17 @@ namespace Kokomija.Services
                 if (orderItem == null)
                     return (false, "Order item not found or does not belong to you.", null);
 
-                // Check if order is completed and within return window (e.g., 30 days)
-                if (orderItem.Order.CreatedAt < DateTime.UtcNow.AddDays(-30))
-                    return (false, "Return period has expired. Returns are only accepted within 30 days of purchase.", null);
+                // Check if order is within return window (14 days from shipped/delivered, or anytime for processing)
+                var order = orderItem.Order;
+                var eligible = order.OrderStatus switch
+                {
+                    "processing" => true,
+                    "shipped" => order.ShippedAt.HasValue && (DateTime.UtcNow - order.ShippedAt.Value).TotalDays <= 14,
+                    "delivered" => order.DeliveredAt.HasValue && (DateTime.UtcNow - order.DeliveredAt.Value).TotalDays <= 14,
+                    _ => false
+                };
+                if (!eligible)
+                    return (false, "Return period has expired. Requests are accepted within 14 days.", null);
 
                 // Check if already has a pending/approved return request
                 var existingRequest = await _context.ReturnRequests
@@ -93,7 +102,7 @@ namespace Kokomija.Services
                 };
                 _context.ReturnStatusHistories.Add(statusHistory);
 
-                // Upload images if provided
+                // Upload images if provided via IFormFile
                 if (dto.Images != null && dto.Images.Any())
                 {
                     foreach (var image in dto.Images)
@@ -108,6 +117,30 @@ namespace Kokomija.Services
                                 UploadedAt = DateTime.UtcNow
                             };
                             _context.ReturnRequestImages.Add(returnImage);
+                        }
+                    }
+                }
+
+                // Extract inline image URLs from CKEditor HTML description
+                if (!string.IsNullOrEmpty(dto.Description))
+                {
+                    var imgMatches = Regex.Matches(dto.Description, @"<img[^>]+src=""([^""]+)""" , RegexOptions.IgnoreCase);
+                    foreach (Match match in imgMatches)
+                    {
+                        var imgUrl = match.Groups[1].Value;
+                        if (imgUrl.StartsWith("/img/ReturnRequests/", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var exists = await _context.ReturnRequestImages
+                                .AnyAsync(ri => ri.ReturnRequestId == returnRequest.Id && ri.ImageUrl == imgUrl);
+                            if (!exists)
+                            {
+                                _context.ReturnRequestImages.Add(new ReturnRequestImage
+                                {
+                                    ReturnRequestId = returnRequest.Id,
+                                    ImageUrl = imgUrl,
+                                    UploadedAt = DateTime.UtcNow
+                                });
+                            }
                         }
                     }
                 }

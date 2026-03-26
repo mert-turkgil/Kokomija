@@ -763,7 +763,12 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label asp-for="EanCode" class="form-label">EAN / GTIN Barcode</label>
-                                <input asp-for="EanCode" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" id="eanCodeInput" />
+                                <div class="input-group">
+                                    <input asp-for="EanCode" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" id="eanCodeInput" />
+                                    <button type="button" class="btn btn-outline-primary" id="generateEanBtn" title="Generate random EAN-13 code">
+                                        <i class="bi bi-magic me-1"></i>Generate
+                                    </button>
+                                </div>
                                 <small class="text-muted">8, 12, 13, or 14-digit barcode (EAN-8, UPC-A, EAN-13, or GTIN-14)</small>
                                 <span asp-validation-for="EanCode" class="text-danger"></span>
                             </div>
@@ -1408,6 +1413,18 @@
         }
         document.getElementById('eanCodeInput').addEventListener('input', renderEanBarcode);
         document.addEventListener('DOMContentLoaded', renderEanBarcode);
+
+        // === Generate random EAN-13 ===
+        document.getElementById('generateEanBtn').addEventListener('click', function () {
+            var digits = '590'; // Poland country code prefix
+            for (var i = 0; i < 9; i++) digits += Math.floor(Math.random() * 10);
+            var sum = 0;
+            for (var j = 0; j < 12; j++) sum += parseInt(digits[j]) * (j % 2 === 0 ? 1 : 3);
+            var check = (10 - (sum % 10)) % 10;
+            var ean = digits + check;
+            document.getElementById('eanCodeInput').value = ean;
+            renderEanBarcode();
+        });
 
         let newImageFileNames = [];
         let imagesToDelete = [];

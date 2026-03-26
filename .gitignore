@@ -476,3 +476,5 @@ wwwroot/img/Blog/Temp/*.*
 wwwroot/img/categories/*.*
 wwwroot/img/Products/*.*/*.*
 wwwroot/img/ProductImage/*.*
+wwwroot/img/ReturnRequests/*.*
+wwwroot/img/ReturnRequests/Temp/*.*

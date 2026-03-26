@@ -111,9 +111,10 @@
                                         <option value="all">All</option>
                                         <option value="name">Name</option>
                                         <option value="sku">SKU</option>
+                                        <option value="ean">EAN</option>
                                         <option value="stripe">Stripe ID</option>
                                     </select>
-                                    <input type="text" class="form-control" id="customSearch" placeholder="Search by name, SKU, or Stripe ID...">
+                                    <input type="text" class="form-control" id="customSearch" placeholder="Search by name, SKU, EAN, or Stripe ID...">
                                     <button class="btn btn-outline-secondary" type="button" id="clearSearch" title="Clear search">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
@@ -195,6 +196,7 @@
                                         <th>Stock</th>
                                         <th>Variants</th>
                                         <th>Reviews</th>
+                                        <th>EAN / GTIN</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -215,7 +217,7 @@
                                                     </div>
                                                 }
                                             </td>
-                                            <td data-search="@product.Name @product.StripeProductId @string.Join(" ", product.SKUs)">
+                                            <td data-search="@product.Name @product.StripeProductId @string.Join(" ", product.SKUs) @(product.EanCode ?? "")">
                                                 <strong>@product.Name</strong>
                                                 <br>
                                                 <small class="text-muted">
@@ -295,6 +297,19 @@
                                                 else
                                                 {
                                                     <small class="text-muted">No reviews</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(product.EanCode))
+                                                {
+                                                    <div class="d-flex flex-column align-items-center" style="min-width: 100px;">
+                                                        <svg class="ean-barcode-mini" data-ean="@product.EanCode"></svg>
+                                                        <small class="text-muted mt-1" style="font-family: 'Roboto Mono', monospace; font-size: 0.7rem;">@product.EanCode</small>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
                                                 }
                                             </td>
                                             <td>
@@ -632,6 +647,7 @@
     <script src="~/lib/datatables/dataTables.bootstrap5.min.js"></script>
     <script src="~/lib/datatables/dataTables.responsive.min.js"></script>
     <script src="~/lib/datatables/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script>
         $(document).ready(function() {
             // Store current filter states
@@ -685,6 +701,10 @@
                         const skuData = $row.find('.sku-list').data('skus') || '';
                         matchesSearch = skuData.toString().toLowerCase().includes(searchLower);
                         break;
+                    case 'ean':
+                        const eanData = $row.find('.ean-barcode-mini').data('ean') || $row.find('td:eq(9)').text().trim();
+                        matchesSearch = eanData.toString().toLowerCase().includes(searchLower);
+                        break;
                     case 'stripe':
                         // Check if stripe ID is in the content (it's in the data-search)
                         // But strictly stripe ID usually starts with prod_
@@ -735,12 +755,27 @@
                     { responsivePriority: 3, targets: -1 },
                     { responsivePriority: 4, targets: 4 },
                     { responsivePriority: 5, targets: 6 },
-                    { responsivePriority: 6, targets: 9 },
+                    { responsivePriority: 6, targets: 10 },
+                    { responsivePriority: 7, targets: 9 },
                     { orderable: false, targets: [0, -1] }
                 ],
                 drawCallback: function() {
                     $('img.img-thumbnail').on('error', function() {
                         $(this).attr('src', '/img/logo_black.png');
+                    });
+                    // Render EAN mini barcodes
+                    document.querySelectorAll('.ean-barcode-mini:not([data-rendered])').forEach(function(svg) {
+                        var ean = svg.getAttribute('data-ean');
+                        if (ean && /^\d{8}$|^\d{12,14}$/.test(ean)) {
+                            try {
+                                var fmt = 'CODE128';
+                                if (ean.length === 13) fmt = 'EAN13';
+                                else if (ean.length === 8) fmt = 'EAN8';
+                                else if (ean.length === 12) fmt = 'UPC';
+                                JsBarcode(svg, ean, { format: fmt, width: 1, height: 30, displayValue: false, margin: 2 });
+                                svg.setAttribute('data-rendered', 'true');
+                            } catch (e) { svg.style.display = 'none'; }
+                        }
                     });
                     // Use this.api() to avoid ReferenceError for 'table' during initialization
                     updateFilteredCount(this.api());

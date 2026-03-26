@@ -145,6 +145,13 @@ namespace Kokomija.Models.ViewModels.Account
         public int ItemCount { get; set; }
         public bool CanCancel { get; set; }
         public bool CanReturn { get; set; }
+        public bool CanRequestReturn { get; set; }
+        public int? ReturnDaysRemaining { get; set; }
+        
+        // Existing return request info
+        public bool HasReturnRequest { get; set; }
+        public int? ReturnRequestId { get; set; }
+        public string? ReturnRequestStatus { get; set; }
         
         // Shipping details
         public string? ShippingMethod { get; set; }

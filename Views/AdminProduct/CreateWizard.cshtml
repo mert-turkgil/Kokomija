@@ -513,12 +513,21 @@
                                         <i class="bi bi-upc-scan me-2"></i>EAN / GTIN Code
                                         <span class="optional-badge">Optional</span>
                                     </h4>
-                                    <div class="form-floating">
-                                        <input type="text" class="form-control" id="eanCode"
-                                               asp-for="EanCode" maxlength="14" placeholder="e.g. 5901234123457">
-                                        <label for="eanCode">EAN / GTIN Barcode</label>
+                                    <div class="input-group">
+                                        <div class="form-floating flex-grow-1">
+                                            <input type="text" class="form-control" id="eanCode"
+                                                   asp-for="EanCode" maxlength="14" placeholder="e.g. 5901234123457">
+                                            <label for="eanCode">EAN / GTIN Barcode</label>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary" id="generateEanBtnWizard" title="Generate random EAN-13 code">
+                                            <i class="bi bi-magic me-1"></i>Generate
+                                        </button>
                                     </div>
                                     <small class="text-muted mt-1 d-block">8, 12, 13, or 14-digit barcode</small>
+                                    <div id="eanBarcodeContainerWizard" class="text-center p-3 mt-2 rounded" style="background: #fff; display: none;">
+                                        <svg id="eanBarcodeWizard"></svg>
+                                        <div class="mt-1"><small class="text-muted">Barcode preview</small></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -2136,6 +2145,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     
     <script>
         $(document).ready(function() {
@@ -2149,6 +2159,38 @@
             let tempImageFileNames = [];
             let primaryImageFileName = null;
             let variantIndex = 0;
+
+            // === EAN Barcode Preview & Generate ===
+            function renderEanBarcodeWizard() {
+                var input = document.getElementById('eanCode');
+                var container = document.getElementById('eanBarcodeContainerWizard');
+                var val = (input.value || '').trim();
+                if (val && /^\d{8}$|^\d{12,14}$/.test(val)) {
+                    try {
+                        var fmt = 'CODE128';
+                        if (val.length === 13) fmt = 'EAN13';
+                        else if (val.length === 8) fmt = 'EAN8';
+                        else if (val.length === 12) fmt = 'UPC';
+                        JsBarcode('#eanBarcodeWizard', val, {
+                            format: fmt, width: 2, height: 60, displayValue: true,
+                            fontSize: 14, margin: 10, background: '#ffffff', lineColor: '#000000'
+                        });
+                        container.style.display = 'block';
+                    } catch (e) { container.style.display = 'none'; }
+                } else {
+                    container.style.display = 'none';
+                }
+            }
+            document.getElementById('eanCode').addEventListener('input', renderEanBarcodeWizard);
+            document.getElementById('generateEanBtnWizard').addEventListener('click', function () {
+                var digits = '590';
+                for (var i = 0; i < 9; i++) digits += Math.floor(Math.random() * 10);
+                var sum = 0;
+                for (var j = 0; j < 12; j++) sum += parseInt(digits[j]) * (j % 2 === 0 ? 1 : 3);
+                var check = (10 - (sum % 10)) % 10;
+                document.getElementById('eanCode').value = digits + check;
+                renderEanBarcodeWizard();
+            });
 
             // === FORM PERSISTENCE (like blog) ===
             function saveFormToStorage() {
