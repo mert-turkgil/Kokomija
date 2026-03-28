@@ -2001,6 +2001,26 @@ public class AdminProductController : Controller
             }
 
             await _unitOfWork.SaveChangesAsync();
+
+            // Sync primary image to Stripe
+            var firstImage = images.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+            if (firstImage != null)
+            {
+                try
+                {
+                    var product = await _unitOfWork.Products.GetByIdAsync(firstImage.ProductId);
+                    if (product != null && !string.IsNullOrEmpty(product.StripeProductId))
+                    {
+                        product.Images = images.OrderBy(i => i.DisplayOrder).ToList();
+                        await _stripeService.UpdateProductAsync(product.StripeProductId, product);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to sync reordered images to Stripe for product image {ImageId}", firstImage.ProductId);
+                }
+            }
+
             return Json(new { success = true });
         }
         catch (Exception ex)

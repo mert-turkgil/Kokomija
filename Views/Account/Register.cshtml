@@ -1,6 +1,7 @@
 @model Kokomija.Models.ViewModels.Account.RegisterViewModel
 @inject Kokomija.Services.ILocalizationService L
 @inject Kokomija.Services.ILocalizedUrlService LocalizedUrl
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Register";
@@ -92,6 +93,11 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="ReturnUrl" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <!-- Honeypot field — hidden from real users, bots fill it -->
+                        <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true">
+                            <input type="text" name="website_url" tabindex="-1" autocomplete="off" />
+                        </div>
 
                         <!-- Name Fields -->
                         <div class="row mb-3">
@@ -208,6 +214,11 @@
                             </small>
                         </div>
 
+                        <!-- Cloudflare Turnstile (Bot Protection) -->
+                        <div class="mb-3">
+                            <div class="cf-turnstile" data-sitekey="@Configuration["Turnstile:SiteKey"]" data-theme="auto"></div>
+                        </div>
+
                         <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary btn-lg w-100">
                             <i class="bi bi-person-plus me-2"></i>@L["Auth_CreateAccount"]
@@ -293,6 +304,7 @@
 </div>
 
 @section Scripts {
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <partial name="_ValidationScriptsPartial" />
     <script>
         function togglePassword(button) {

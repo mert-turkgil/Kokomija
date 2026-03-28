@@ -1322,12 +1322,27 @@
                 selectedVariantId = btn.getAttribute('data-variant-id');
                 selectedColorId = btn.getAttribute('data-color-id');
                 selectedSizeId = btn.getAttribute('data-size-id');
-                var stock = btn.getAttribute('data-stock');
+                var stock = parseInt(btn.getAttribute('data-stock'));
                 
                 document.getElementById('quantity').max = stock;
                 document.getElementById('quantity').readOnly = false;
                 document.getElementById('quantity').value = 1;
                 document.getElementById('addToCartBtn').disabled = false;
+
+                // Update stock info display
+                var stockInfoEl = document.getElementById('stockInfo');
+                if (stock <= 0) {
+                    stockInfoEl.innerHTML = '<i class="fas fa-times-circle text-danger"></i> @L.GetString("OutOfStock", "Product")';
+                    stockInfoEl.className = 'stock-info text-danger';
+                    document.getElementById('addToCartBtn').disabled = true;
+                } else if (stock <= 5) {
+                    var msg = stock === 1 ? '@L.GetString("Stock_LastOne", "Product")' : '@Html.Raw(L.GetString("Stock_OnlyXLeft", "Product"))'.replace('{0}', stock);
+                    stockInfoEl.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i> ' + msg;
+                    stockInfoEl.className = 'stock-info text-warning fw-bold';
+                } else {
+                    stockInfoEl.innerHTML = '<i class="fas fa-box"></i> @L.GetString("InStock", "Product")';
+                    stockInfoEl.className = 'stock-info text-success';
+                }
             }
         });
         

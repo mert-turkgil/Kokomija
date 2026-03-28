@@ -2908,4 +2908,37 @@
   <data name="Status_Completed" xml:space="preserve">
     <value>Zakończony</value>
   </data>
+  <!-- Stock & Availability (bare keys for L.GetString(key, "Product") fallback) -->
+  <data name="OutOfStock" xml:space="preserve">
+    <value>Brak w magazynie</value>
+  </data>
+  <data name="InStock" xml:space="preserve">
+    <value>Dostępny</value>
+  </data>
+  <data name="Stock_LastOne" xml:space="preserve">
+    <value>Ostatnia sztuka!</value>
+  </data>
+  <data name="Stock_OnlyXLeft" xml:space="preserve">
+    <value>Zostało tylko {0} szt.!</value>
+  </data>
+  <!-- Resend Email Confirmation -->
+  <data name="ResendConfirmation_Sent" xml:space="preserve">
+    <value>Email weryfikacyjny został wysłany.</value>
+  </data>
+  <data name="ResendConfirmation_AlreadyConfirmed" xml:space="preserve">
+    <value>Twój email jest już potwierdzony.</value>
+  </data>
+  <data name="ResendConfirmation_Failed" xml:space="preserve">
+    <value>Nie udało się wysłać emaila weryfikacyjnego. Spróbuj ponownie później.</value>
+  </data>
+  <!-- Registration Bot Protection -->
+  <data name="Register_CaptchaRequired" xml:space="preserve">
+    <value>Proszę przejść weryfikację bezpieczeństwa.</value>
+  </data>
+  <data name="Register_CaptchaFailed" xml:space="preserve">
+    <value>Weryfikacja bezpieczeństwa nie powiodła się. Spróbuj ponownie.</value>
+  </data>
+  <data name="Register_DisposableEmailBlocked" xml:space="preserve">
+    <value>Tymczasowe adresy email nie są dozwolone. Użyj stałego adresu email.</value>
+  </data>
 </root>

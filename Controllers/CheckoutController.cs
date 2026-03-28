@@ -164,10 +164,39 @@ namespace Kokomija.Controllers
                     _logger.LogInformation($"Using tax rate: {vat23TaxRate.Id} (23% VAT)");
                 }
 
+                var outOfStockItems = new List<string>();
+
                 foreach (var cartItem in cartItems)
                 {
                     var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
                     if (product == null) continue;
+
+                    // Skip archived/inactive products
+                    if (!product.IsActive)
+                    {
+                        outOfStockItems.Add($"{product.Name} (no longer available)");
+                        continue;
+                    }
+
+                    // Find variant and validate stock
+                    var variants = await _unitOfWork.ProductVariants.FindAsync(v =>
+                        v.ProductId == cartItem.ProductId &&
+                        v.SizeId == cartItem.SizeId &&
+                        v.ColorId == cartItem.ColorId);
+                    var variant = variants.FirstOrDefault();
+                    
+                    if (variant == null) continue;
+
+                    if (variant.StockQuantity <= 0)
+                    {
+                        outOfStockItems.Add($"{product.Name} (out of stock)");
+                        continue;
+                    }
+                    if (variant.StockQuantity < cartItem.Quantity)
+                    {
+                        outOfStockItems.Add($"{product.Name} (only {variant.StockQuantity} left, you requested {cartItem.Quantity})");
+                        continue;
+                    }
 
                     var packSize = product.PackSize;
                     var totalItems = packSize * cartItem.Quantity;
@@ -191,15 +220,6 @@ namespace Kokomija.Controllers
                     {
                         imageUrl = $"{baseUrl}/img/logo_black.png";
                     }
-
-                    // Find variant
-                    var variants = await _unitOfWork.ProductVariants.FindAsync(v =>
-                        v.ProductId == cartItem.ProductId &&
-                        v.SizeId == cartItem.SizeId &&
-                        v.ColorId == cartItem.ColorId);
-                    var variant = variants.FirstOrDefault();
-                    
-                    if (variant == null) continue;
 
                     // Apply business pricing if in business mode and product has business price
                     decimal basePrice = variant.Price;
@@ -257,6 +277,18 @@ namespace Kokomija.Controllers
                     }
 
                     lineItems.Add(lineItem);
+                }
+
+                // Block checkout if any items are out of stock or unavailable
+                if (outOfStockItems.Any())
+                {
+                    var message = "The following items cannot be purchased: " + string.Join("; ", outOfStockItems);
+                    return Json(new { success = false, message });
+                }
+
+                if (!lineItems.Any())
+                {
+                    return Json(new { success = false, message = _localizationService["Cart_Empty"] });
                 }
 
                 // Detect user's country and currency

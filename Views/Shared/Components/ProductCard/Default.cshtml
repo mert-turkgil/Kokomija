@@ -184,6 +184,13 @@
             <div class="card-actions">
                 @if (Model.HasStock)
                 {
+                    @if (Model.StockQuantity.HasValue && Model.StockQuantity.Value > 0 && Model.StockQuantity.Value <= 5)
+                    {
+                        <div class="low-stock-badge mb-1">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>@(Model.StockQuantity.Value == 1 ? L.GetString("Stock_LastOne", "Product") : string.Format(L.GetString("Stock_OnlyXLeft", "Product"), Model.StockQuantity.Value))</span>
+                        </div>
+                    }
                     <button type="button" class="btn btn-primary w-100 add-to-cart-btn" data-product-id="@Model.Id" disabled>
                         <i class="fas fa-shopping-cart me-2"></i>@L.GetString(key: "AddToCart", resourceName: "Common")
                     </button>
@@ -733,6 +740,34 @@
             font-size: 0.8rem;
             padding: 10px;
         }
+    }
+
+    /* Low-stock Badge */
+    .low-stock-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 0.375rem;
+        background: rgba(245, 158, 11, 0.12);
+        color: #b45309;
+        font-size: 0.78rem;
+        font-weight: 600;
+        animation: pulse-stock 2s ease-in-out infinite;
+    }
+
+    .low-stock-badge i {
+        font-size: 0.85rem;
+    }
+
+    [data-bs-theme="dark"] .low-stock-badge {
+        background: rgba(245, 158, 11, 0.18);
+        color: #fbbf24;
+    }
+
+    @@keyframes pulse-stock {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
     }
 </style>
 

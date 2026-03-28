@@ -237,8 +237,7 @@ namespace Kokomija.Controllers
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation($"Order {order.OrderNumber} marked as paid");
                 
-                // Reduce stock quantities for ordered items
-                await ReduceStockForOrderAsync(order.Id);
+                // Stock reduction is handled in CheckoutController.Success to avoid double decrement
             }
             else
             {

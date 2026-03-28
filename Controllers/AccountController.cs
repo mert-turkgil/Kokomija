@@ -29,6 +29,8 @@ namespace Kokomija.Controllers
         private readonly INIPValidationService _nipValidationService;
         private readonly ApplicationDbContext _dbContext;
         private readonly ILocalizationService _localizationService;
+        private readonly ITurnstileService _turnstileService;
+        private readonly IDisposableEmailService _disposableEmailService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -42,7 +44,9 @@ namespace Kokomija.Controllers
             IConfiguration configuration,
             INIPValidationService nipValidationService,
             ApplicationDbContext dbContext,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            ITurnstileService turnstileService,
+            IDisposableEmailService disposableEmailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -56,6 +60,8 @@ namespace Kokomija.Controllers
             _nipValidationService = nipValidationService;
             _dbContext = dbContext;
             _localizationService = localizationService;
+            _turnstileService = turnstileService;
+            _disposableEmailService = disposableEmailService;
         }
 
         #region Login
@@ -283,6 +289,38 @@ namespace Kokomija.Controllers
                 return View(model);
             }
 
+            // Honeypot check — if a hidden field is filled, it's a bot
+            var honeypot = Request.Form["website_url"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(honeypot))
+            {
+                _logger.LogWarning("Bot registration attempt detected (honeypot) from IP {IP}", HttpContext.Connection.RemoteIpAddress);
+                // Return the same view silently — don't reveal detection
+                return View(model);
+            }
+
+            // Verify Cloudflare Turnstile token (bot protection)
+            var turnstileToken = Request.Form["cf-turnstile-response"].FirstOrDefault();
+            if (string.IsNullOrEmpty(turnstileToken))
+            {
+                ModelState.AddModelError(string.Empty, _localizationService["Register_CaptchaRequired"]);
+                return View(model);
+            }
+
+            var turnstileResult = await _turnstileService.VerifyTokenAsync(turnstileToken, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!turnstileResult.Success)
+            {
+                _logger.LogWarning("Turnstile verification failed for registration attempt from IP {IP}", HttpContext.Connection.RemoteIpAddress);
+                ModelState.AddModelError(string.Empty, _localizationService["Register_CaptchaFailed"]);
+                return View(model);
+            }
+
+            // Block disposable/temporary email addresses
+            if (_disposableEmailService.IsDisposable(model.Email))
+            {
+                ModelState.AddModelError("Email", _localizationService["Register_DisposableEmailBlocked"]);
+                return View(model);
+            }
+
             // Check if email already exists
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
@@ -391,8 +429,16 @@ namespace Kokomija.Controllers
                 
                 if (!string.IsNullOrEmpty(verificationUrl))
                 {
-                    await _emailService.SendEmailVerificationAsync(model.Email, verificationUrl, culture);
-                    _logger.LogInformation("Email verification sent to {Email}", model.Email);
+                    try
+                    {
+                        await _emailService.SendEmailVerificationAsync(model.Email, verificationUrl, culture);
+                        _logger.LogInformation("Email verification sent to {Email}", model.Email);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to send email verification to {Email}. User account was created successfully.", model.Email);
+                        // Continue with registration even if email send fails
+                    }
                 }
 
                 // Do NOT auto sign-in - user must confirm email first
@@ -487,8 +533,17 @@ namespace Kokomija.Controllers
             
             if (!string.IsNullOrEmpty(verificationUrl))
             {
-                await _emailService.SendEmailVerificationAsync(email, verificationUrl, culture);
-                _logger.LogInformation("Email verification resent to {Email}", email);
+                try
+                {
+                    await _emailService.SendEmailVerificationAsync(email, verificationUrl, culture);
+                    _logger.LogInformation("Email verification resent to {Email}", email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to resend email verification to {Email}", email);
+                    TempData["ErrorMessage"] = _localizationService["ResendConfirmation_Failed"];
+                    return RedirectToAction("RegisterConfirmation", new { email });
+                }
             }
 
             TempData["SuccessMessage"] = _localizationService["ResendConfirmation_Sent"];
@@ -541,7 +596,16 @@ namespace Kokomija.Controllers
             
             if (!string.IsNullOrEmpty(callbackUrl))
             {
-                await _emailService.SendPasswordResetAsync(user.Email!, callbackUrl);
+                var culture = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName;
+                try
+                {
+                    await _emailService.SendPasswordResetAsync(user.Email!, callbackUrl, culture);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
+                    // Still redirect to confirmation to not reveal user existence
+                }
             }
 
             _logger.LogInformation("Password reset requested for user {Email}", model.Email);

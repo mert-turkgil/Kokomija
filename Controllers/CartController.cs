@@ -95,12 +95,36 @@ namespace Kokomija.Controllers
 
             try
             {
+                // Validate product exists and is active
+                var product = await _unitOfWork.Products.GetByIdAsync(request.ProductId);
+                if (product == null)
+                    return Json(new { success = false, message = "Product not found" });
+                if (!product.IsActive)
+                    return Json(new { success = false, message = "This product is no longer available" });
+
+                // Validate stock availability
+                var variants = await _unitOfWork.ProductVariants.FindAsync(v =>
+                    v.ProductId == request.ProductId &&
+                    v.SizeId == request.SizeId &&
+                    v.ColorId == request.ColorId);
+                var variant = variants.FirstOrDefault();
+
+                if (variant == null)
+                    return Json(new { success = false, message = "Selected variant not found" });
+
                 // Check if item already exists in cart
                 var existingItem = await _unitOfWork.Carts.GetCartItemAsync(
                     userId,
                     request.ProductId,
                     request.ColorId,
                     request.SizeId);
+
+                var requestedTotal = request.Quantity + (existingItem?.Quantity ?? 0);
+
+                if (variant.StockQuantity <= 0)
+                    return Json(new { success = false, message = "This product is out of stock" });
+                if (requestedTotal > variant.StockQuantity)
+                    return Json(new { success = false, message = $"Only {variant.StockQuantity} items available in stock" });
 
                 if (existingItem != null)
                 {

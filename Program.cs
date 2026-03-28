@@ -317,6 +317,9 @@ builder.Services.AddHostedService<SmtpProtectionWorker>();
 builder.Services.AddHttpClient(); // Required for TurnstileService
 builder.Services.AddScoped<ITurnstileService, TurnstileService>();
 
+// Register Disposable Email blocking service
+builder.Services.AddSingleton<IDisposableEmailService, DisposableEmailService>();
+
 // Register Resource Service (Dynamic translations with live reload)
 builder.Services.AddSingleton<IResourceService, ResourceService>();
 

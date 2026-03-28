@@ -290,16 +290,20 @@
                             <div class="language-content active" data-lang="en">
                                 <input type="hidden" name="Translations[0].CultureCode" value="en-US" />
                                 
-                                <div class="form-floating mb-3">
+                                <div class="form-floating mb-3 position-relative">
                                     <input type="text" class="form-control" id="nameEn" name="Translations[0].Name" 
-                                           placeholder="Product name" required>
+                                           placeholder="Product name" required maxlength="120">
                                     <label for="nameEn">Product Name (English) *</label>
+                                    <div class="char-counter" id="nameEnCounter">0 / 120</div>
+                                    <div class="invalid-feedback">Product name is required</div>
                                 </div>
 
-                                <div class="form-floating mb-3">
+                                <div class="form-floating mb-3 position-relative">
                                     <textarea class="form-control" id="descEn" name="Translations[0].Description" 
-                                              style="height: 150px" placeholder="Description" required></textarea>
+                                              style="height: 150px" placeholder="Description" required maxlength="5000"></textarea>
                                     <label for="descEn">Description (English) *</label>
+                                    <div class="char-counter" id="descEnCounter">0 / 5000</div>
+                                    <div class="invalid-feedback">Description is required</div>
                                 </div>
 
                                 <div class="row g-3">
@@ -312,10 +316,11 @@
                                         <small class="text-muted">Leave empty to auto-generate</small>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating">
+                                        <div class="form-floating position-relative">
                                             <input type="text" class="form-control" id="metaDescEn" name="Translations[0].MetaDescription" 
-                                                   placeholder="Meta description">
+                                                   placeholder="Meta description" maxlength="160">
                                             <label for="metaDescEn">Meta Description (SEO)</label>
+                                            <div class="char-counter" id="metaDescEnCounter">0 / 160</div>
                                         </div>
                                     </div>
                                 </div>
@@ -331,16 +336,18 @@
                             <div class="language-content" data-lang="pl">
                                 <input type="hidden" name="Translations[1].CultureCode" value="pl-PL" />
                                 
-                                <div class="form-floating mb-3">
+                                <div class="form-floating mb-3 position-relative">
                                     <input type="text" class="form-control" id="namePl" name="Translations[1].Name" 
-                                           placeholder="Nazwa produktu">
+                                           placeholder="Nazwa produktu" maxlength="120">
                                     <label for="namePl">Nazwa Produktu (Polski) *</label>
+                                    <div class="char-counter" id="namePlCounter">0 / 120</div>
                                 </div>
 
-                                <div class="form-floating mb-3">
+                                <div class="form-floating mb-3 position-relative">
                                     <textarea class="form-control" id="descPl" name="Translations[1].Description" 
-                                              style="height: 150px" placeholder="Opis"></textarea>
+                                              style="height: 150px" placeholder="Opis" maxlength="5000"></textarea>
                                     <label for="descPl">Opis (Polski) *</label>
+                                    <div class="char-counter" id="descPlCounter">0 / 5000</div>
                                 </div>
 
                                 <div class="row g-3">
@@ -353,10 +360,11 @@
                                         <small class="text-muted">Pozostaw puste dla auto-generacji</small>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating">
+                                        <div class="form-floating position-relative">
                                             <input type="text" class="form-control" id="metaDescPl" name="Translations[1].MetaDescription" 
-                                                   placeholder="Meta opis">
+                                                   placeholder="Meta opis" maxlength="160">
                                             <label for="metaDescPl">Meta Opis (SEO)</label>
+                                            <div class="char-counter" id="metaDescPlCounter">0 / 160</div>
                                         </div>
                                     </div>
                                 </div>
@@ -587,6 +595,12 @@
                         </div>
 
                         <div class="image-upload-section">
+                            <!-- Image Count Badge -->
+                            <div class="image-count-badge mb-3" id="imageCountBadge" style="display: none;">
+                                <i class="bi bi-images"></i>
+                                <span id="imageCountText">0 images uploaded</span>
+                            </div>
+
                             <!-- Upload Zone -->
                             <div class="upload-zone" id="dropZone">
                                 <div class="upload-content">
@@ -768,6 +782,7 @@
                                         <div class="review-card-body">
                                             <div class="review-value" id="reviewType">Single Item</div>
                                             <div class="review-value" id="reviewCategory">-</div>
+                                            <div class="review-meta" id="reviewCollection"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -822,6 +837,31 @@
                                         <div class="review-card-body">
                                             <div class="review-value" id="reviewVariants">0 variants</div>
                                             <div class="review-meta" id="reviewStock">Total stock: 0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-6">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-card-text"></i>
+                                            <h5>Description</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-desc-preview" id="reviewDescEn">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="review-card">
+                                        <div class="review-card-header">
+                                            <i class="bi bi-upc-scan"></i>
+                                            <h5>EAN / Barcode</h5>
+                                        </div>
+                                        <div class="review-card-body">
+                                            <div class="review-value" id="reviewEan">-</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2139,6 +2179,65 @@
             .step-icon { width: 36px; height: 36px; font-size: 1rem; }
             .wizard-navigation { padding: 0.75rem 1rem; }
         }
+
+        /* Character Counters */
+        .char-counter {
+            position: absolute;
+            right: 12px;
+            bottom: -20px;
+            font-size: 0.7rem;
+            color: var(--bs-secondary-color, #6c757d);
+            transition: color 0.2s ease;
+            pointer-events: none;
+        }
+        .char-counter.warning { color: #f59e0b; font-weight: 600; }
+        .char-counter.danger { color: #ef4444; font-weight: 600; }
+        .form-floating + .char-counter,
+        .position-relative .char-counter { z-index: 1; }
+
+        /* Inline Validation */
+        .form-control.is-valid-wizard {
+            border-color: var(--wizard-success, #22c55e) !important;
+        }
+        .form-control.is-invalid-wizard {
+            border-color: #ef4444 !important;
+        }
+
+        /* Step Completion Checkmark */
+        .step-indicator.completed .step-icon i { display: none; }
+        .step-indicator.completed .step-icon::after {
+            content: '\F26E';
+            font-family: 'bootstrap-icons';
+            font-size: 1.25rem;
+        }
+
+        /* Image Count Badge */
+        .image-count-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--wizard-primary, #6366f1);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Review Description Preview */
+        .review-desc-preview {
+            font-size: 0.85rem;
+            color: var(--bs-secondary-color, #6c757d);
+            max-height: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        [data-bs-theme="dark"] .char-counter { color: #94a3b8; }
+        [data-bs-theme="dark"] .image-count-badge { background: #4f46e5; }
     </style>
 }
 
@@ -2462,6 +2561,12 @@
                     case 4:
                         if (tempImageFileNames.length === 0) {
                             showToast('No images uploaded — you can still create the product', 'info');
+                        }
+                        return true;
+                    case 5:
+                        if ($('#variantsContainer tr').length === 0) {
+                            showToast('Please add at least one variant with size and stock', 'warning');
+                            return false;
                         }
                         return true;
                     default:
@@ -3167,10 +3272,36 @@
                 
                 // Category
                 $('#reviewCategory').text($('#selectedCategoryDisplay span').text() || '-');
+
+                // Collection
+                var collectionEl = document.getElementById('reviewCollection');
+                if (collectionEl) {
+                    var sel = $('input[name="collectionOption"]:checked').val();
+                    if (sel === 'existing') {
+                        collectionEl.textContent = $('#existingGroupSelect option:selected').text() || '';
+                    } else if (sel === 'new') {
+                        collectionEl.textContent = 'New: ' + ($('#newGroupName').val() || '-');
+                    } else {
+                        collectionEl.textContent = '';
+                    }
+                }
                 
                 // Names
                 $('#reviewNameEn').text($('#nameEn').val() || '-');
                 $('#reviewNamePl').text($('#namePl').val() || '-');
+
+                // Description preview
+                var descPreview = document.getElementById('reviewDescEn');
+                if (descPreview) {
+                    descPreview.textContent = $('#descEn').val() || '-';
+                }
+
+                // EAN
+                var eanEl = document.getElementById('reviewEan');
+                if (eanEl) {
+                    var ean = $('input[name="EanCode"]').val();
+                    eanEl.textContent = ean || 'Not set';
+                }
                 
                 // Price
                 const price = parseFloat($('#retailPrice').val()) || 0;
@@ -3321,6 +3452,83 @@
             updateProgress();
             loadFromStorage();
             setupAutoSave();
+
+            // === CHARACTER COUNTERS ===
+            function setupCharCounter(inputId, counterId, max) {
+                const input = document.getElementById(inputId);
+                const counter = document.getElementById(counterId);
+                if (!input || !counter) return;
+                function update() {
+                    const len = input.value.length;
+                    counter.textContent = len + ' / ' + max;
+                    counter.classList.remove('warning', 'danger');
+                    if (len > max * 0.9) counter.classList.add('danger');
+                    else if (len > max * 0.75) counter.classList.add('warning');
+                }
+                input.addEventListener('input', update);
+                update();
+            }
+            setupCharCounter('nameEn', 'nameEnCounter', 120);
+            setupCharCounter('descEn', 'descEnCounter', 5000);
+            setupCharCounter('metaDescEn', 'metaDescEnCounter', 160);
+            setupCharCounter('namePl', 'namePlCounter', 120);
+            setupCharCounter('descPl', 'descPlCounter', 5000);
+            setupCharCounter('metaDescPl', 'metaDescPlCounter', 160);
+
+            // === INLINE VALIDATION FEEDBACK ===
+            function setupFieldValidation(inputId, validator) {
+                const el = document.getElementById(inputId);
+                if (!el) return;
+                el.addEventListener('blur', function() {
+                    el.classList.remove('is-valid-wizard', 'is-invalid-wizard');
+                    if (el.value.trim()) {
+                        el.classList.add(validator(el.value) ? 'is-valid-wizard' : 'is-invalid-wizard');
+                    }
+                });
+                el.addEventListener('input', function() {
+                    el.classList.remove('is-invalid-wizard');
+                });
+            }
+            setupFieldValidation('nameEn', v => v.trim().length >= 2);
+            setupFieldValidation('descEn', v => v.trim().length >= 10);
+            setupFieldValidation('namePl', v => v.trim().length >= 2);
+            setupFieldValidation('descPl', v => v.trim().length >= 10);
+
+            // === IMAGE COUNT BADGE ===
+            var origAddImagePreview = addImagePreview;
+            var origRemoveImage = removeImage;
+
+            function updateImageCount() {
+                var count = tempImageFileNames.length;
+                var badge = document.getElementById('imageCountBadge');
+                var text = document.getElementById('imageCountText');
+                if (badge && text) {
+                    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+                    text.textContent = count + ' image' + (count !== 1 ? 's' : '') + ' uploaded';
+                }
+            }
+
+            // Observe image changes via MutationObserver on the preview container
+            var imgObserver = new MutationObserver(updateImageCount);
+            var imgPreviewEl = document.getElementById('imagePreview');
+            if (imgPreviewEl) {
+                imgObserver.observe(imgPreviewEl, { childList: true });
+            }
+            updateImageCount();
+
+            // === UNSAVED CHANGES WARNING ===
+            var formDirty = false;
+            $('#productWizardForm').on('change input', 'input, select, textarea', function() {
+                formDirty = true;
+            });
+            $(window).on('beforeunload', function(e) {
+                if (formDirty) {
+                    e.preventDefault();
+                    return '';
+                }
+            });
+            // Clear warning on submit
+            $('#productWizardForm').on('submit', function() { formDirty = false; });
         });
     </script>
     

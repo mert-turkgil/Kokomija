@@ -58,6 +58,10 @@ public class WishlistController : Controller
                 {
                     return Json(new { success = false, message = "Product not found" });
                 }
+                if (!product.IsActive)
+                {
+                    return Json(new { success = false, message = "This product is no longer available" });
+                }
 
                 var wishlistItem = new Wishlist
                 {
@@ -98,6 +102,10 @@ public class WishlistController : Controller
             if (product == null)
             {
                 return NotFound(new { message = "Product not found" });
+            }
+            if (!product.IsActive)
+            {
+                return NotFound(new { message = "This product is no longer available" });
             }
 
             // Check if already in wishlist
