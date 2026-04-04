@@ -377,6 +377,50 @@ public class AutoTranslationService : IAutoTranslationService
     }
 
     #endregion
+
+    public async Task<TranslationTestResult> TestConnectionAsync()
+    {
+        var deepLKey = _configuration["DeepL:ApiKey"];
+        var result = new TranslationTestResult
+        {
+            DeepLConfigured = !string.IsNullOrEmpty(deepLKey)
+        };
+
+        const string testPhrase = "Hello";
+
+        // Try DeepL first
+        if (!string.IsNullOrEmpty(deepLKey))
+        {
+            var deepLResult = await TranslateWithDeepLAsync(testPhrase, "PL", deepLKey);
+            if (deepLResult != null)
+            {
+                result.Success = true;
+                result.Provider = "DeepL";
+                result.TestTranslation = deepLResult.TranslatedText;
+                return result;
+            }
+            result.ErrorMessage = "DeepL API key is configured but the request failed. Check the key validity.";
+        }
+
+        // Try MyMemory
+        var myMemoryResult = await TranslateWithMyMemoryAsync(testPhrase, "en", "pl");
+        if (myMemoryResult != null)
+        {
+            result.Success = true;
+            result.Provider = "MyMemory";
+            result.TestTranslation = myMemoryResult.TranslatedText;
+            if (!result.DeepLConfigured)
+                result.ErrorMessage = "DeepL API key is not configured. Using MyMemory as fallback.";
+            return result;
+        }
+
+        // Dictionary fallback
+        result.Success = true;
+        result.Provider = "Dictionary";
+        result.TestTranslation = "hej";
+        result.ErrorMessage = "Both DeepL and MyMemory are unavailable. Using basic dictionary fallback.";
+        return result;
+    }
 }
 
 // DeepL API Response DTOs

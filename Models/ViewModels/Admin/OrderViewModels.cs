@@ -58,11 +58,18 @@ namespace Kokomija.Models.ViewModels.Admin
         public string OrderNumber { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerEmail { get; set; } = string.Empty;
+        public string? CustomerPhone { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal SubtotalAmount { get; set; }
+        public decimal ShippingCost { get; set; }
+        public decimal TaxAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
         public string Currency { get; set; } = "PLN";
         public string OrderStatus { get; set; } = string.Empty;
         public string PaymentStatus { get; set; } = string.Empty;
+        public string? StripePaymentIntentId { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? PaidAt { get; set; }
         public int ItemCount { get; set; }
         public bool HasShipment { get; set; }
         public ShipmentStatus? ShipmentStatus { get; set; }
@@ -70,6 +77,30 @@ namespace Kokomija.Models.ViewModels.Admin
         public bool HasActiveReturn { get; set; }
         public int ActiveReturnCount { get; set; }
         public bool IsDemoOrder { get; set; }
+        
+        // Shipping address
+        public string? ShippingCity { get; set; }
+        public string? ShippingCountry { get; set; }
+        
+        // Order items for expandable detail
+        public List<OrderListItemProductDto> Items { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Product info for order list item expandable row
+    /// </summary>
+    public class OrderListItemProductDto
+    {
+        public int? ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public string? ProductImageUrl { get; set; }
+        public string? Size { get; set; }
+        public string? Color { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string? EanCode { get; set; }
+        public string? SKU { get; set; }
     }
 
     /// <summary>

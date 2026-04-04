@@ -61,6 +61,30 @@ public class LocalizedUrlMiddleware
                 { "en", "/en/products" }, 
                 { "tr", "/tr/urunler" } 
             } 
+        },
+        { "/home/faq", new Dictionary<string, string> 
+            { 
+                { "pl", "/pl/faq" }, 
+                { "en", "/en/faq" }
+            } 
+        },
+        { "/home/contact", new Dictionary<string, string> 
+            { 
+                { "pl", "/pl/kontakt" }, 
+                { "en", "/en/contact" }
+            } 
+        },
+        { "/blog", new Dictionary<string, string> 
+            { 
+                { "pl", "/pl/blog" }, 
+                { "en", "/en/blog" }
+            } 
+        },
+        { "/blog/index", new Dictionary<string, string> 
+            { 
+                { "pl", "/pl/blog" }, 
+                { "en", "/en/blog" }
+            } 
         }
     };
 
@@ -135,18 +159,25 @@ public class LocalizedUrlMiddleware
         System.Threading.Thread.CurrentThread.CurrentCulture = cultureInfo;
         System.Threading.Thread.CurrentThread.CurrentUICulture = cultureInfo;
         
-        // Update the cookie to remember this choice
-        context.Response.Cookies.Append(
-            CookieRequestCultureProvider.DefaultCookieName,
-            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(fullCulture)),
-            new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddYears(1),
-                IsEssential = true,
-                Path = "/",
-                SameSite = SameSiteMode.Lax
-            }
-        );
+        // Only set the cookie if one doesn't already exist.
+        // This preserves the user's explicit language choice made via SetLanguage.
+        var existingCookie = context.Request.Cookies[CookieRequestCultureProvider.DefaultCookieName];
+        if (string.IsNullOrEmpty(existingCookie))
+        {
+            context.Response.Cookies.Append(
+                CookieRequestCultureProvider.DefaultCookieName,
+                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(fullCulture)),
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddYears(1),
+                    IsEssential = true,
+                    Path = "/",
+                    HttpOnly = false,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax
+                }
+            );
+        }
     }
     
     private void EnsureCultureCookie(HttpContext context, string culture)
@@ -170,6 +201,8 @@ public class LocalizedUrlMiddleware
                     Expires = DateTimeOffset.UtcNow.AddYears(1),
                     IsEssential = true,
                     Path = "/",
+                    HttpOnly = false,
+                    Secure = true,
                     SameSite = SameSiteMode.Lax
                 }
             );
@@ -193,8 +226,9 @@ public class LocalizedUrlMiddleware
             return true;
         }
         
-        // Skip signin callbacks and external login callbacks
-        if (path.StartsWith("/signin-") || path.StartsWith("/account/externallogi"))
+        // Skip signin callbacks, external login callbacks, and email confirmation/reset
+        if (path.StartsWith("/signin-") || path.StartsWith("/account/externallogi") ||
+            path.StartsWith("/account/confirmemail") || path.StartsWith("/account/resetpassword"))
         {
             return true;
         }

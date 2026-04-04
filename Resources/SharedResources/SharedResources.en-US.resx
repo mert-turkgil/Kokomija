@@ -2935,4 +2935,10 @@
   <data name="Register_DisposableEmailBlocked" xml:space="preserve">
     <value>Temporary or disposable email addresses are not allowed. Please use a permanent email.</value>
   </data>
+  <data name="Products_AvailableCoupons" xml:space="preserve">
+    <value>Available Coupons</value>
+  </data>
+  <data name="Provide_Details" xml:space="preserve">
+    <value>Please provide at least 10 characters of detail</value>
+  </data>
 </root>

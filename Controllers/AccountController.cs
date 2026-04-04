@@ -12,6 +12,8 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Kokomija.Controllers
 {
@@ -420,9 +422,10 @@ namespace Kokomija.Controllers
 
                 // Generate email confirmation token and send verification email
                 var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailConfirmationToken));
                 var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://kokomija.pl";
                 var verificationUrl = Url.Action("ConfirmEmail", "Account", 
-                    new { userId = user.Id, code = emailConfirmationToken }, Request.Scheme);
+                    new { userId = user.Id, code = encodedToken }, Request.Scheme);
                 
                 // Detect user's language preference
                 var culture = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName;
@@ -484,7 +487,8 @@ namespace Kokomija.Controllers
                 return NotFound($"Unable to load user with ID '{userId}'.");
             }
 
-            var result = await _userManager.ConfirmEmailAsync(user, code);
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
             if (result.Succeeded)
             {
                 _logger.LogInformation("Email confirmed for user {Email}", user.Email);
@@ -526,8 +530,9 @@ namespace Kokomija.Controllers
 
             // Generate new confirmation token and send email
             var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailConfirmationToken));
             var verificationUrl = Url.Action("ConfirmEmail", "Account", 
-                new { userId = user.Id, code = emailConfirmationToken }, Request.Scheme);
+                new { userId = user.Id, code = encodedToken }, Request.Scheme);
             
             var culture = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName;
             
@@ -1696,6 +1701,9 @@ namespace Kokomija.Controllers
                 return RedirectToAction("Login", new { returnUrl = $"/Account/OrderDetails/{id}" });
             }
 
+            // Load business profile for invoice visibility check
+            var businessProfile = await _nipValidationService.GetBusinessProfileAsync(user.Id);
+
             var order = await _unitOfWork.Orders.GetByIdAsync(id);
             if (order == null || order.UserId != user.Id)
             {
@@ -1763,6 +1771,9 @@ namespace Kokomija.Controllers
                 // Coupon
                 CouponCode = order.Coupon?.Code,
                 
+                // Business order - check if user has a verified business profile
+                IsBusinessOrder = businessProfile != null && businessProfile.IsVerified,
+                
                 Items = order.OrderItems?.Select(oi => new Models.ViewModels.Account.OrderItemViewModel
                 {
                     Id = oi.Id,
@@ -1790,7 +1801,7 @@ namespace Kokomija.Controllers
                 return RedirectToAction("Login", new { returnUrl = $"/Account/ReturnRequest?orderId={orderId}" });
             }
 
-            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
+            var order = await _unitOfWork.Orders.GetOrderWithFullDetailsAsync(orderId);
             if (order == null || order.UserId != user.Id)
             {
                 return NotFound();
@@ -1859,7 +1870,7 @@ namespace Kokomija.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var order = await _unitOfWork.Orders.GetByIdAsync(model.OrderId);
+                var order = await _unitOfWork.Orders.GetOrderWithFullDetailsAsync(model.OrderId);
                 if (order != null)
                 {
                     model.OrderNumber = order.OrderNumber;
@@ -1894,7 +1905,7 @@ namespace Kokomija.Controllers
                 return RedirectToAction("Login");
             }
 
-            var orderToReturn = await _unitOfWork.Orders.GetByIdAsync(model.OrderId);
+            var orderToReturn = await _unitOfWork.Orders.GetOrderWithFullDetailsAsync(model.OrderId);
             if (orderToReturn == null || orderToReturn.UserId != user.Id)
             {
                 TempData["ErrorMessage"] = "Order not found";
@@ -1934,6 +1945,7 @@ namespace Kokomija.Controllers
 
                     var (success, message, requestId) = await _returnRequestService.CreateReturnRequestAsync(createDto, user.Id);
                     if (success) successCount++;
+                    else _logger.LogWarning("Return request failed for order item {OrderItemId}: {Message}", orderItemId, message);
                 }
                 catch (Exception ex)
                 {

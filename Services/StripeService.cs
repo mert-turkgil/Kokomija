@@ -119,7 +119,7 @@ namespace Kokomija.Services
                 // Stripe requires full HTTPS URLs for images
                 // Use a placeholder or your actual domain
                 var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl") ?? "https://kokomija.com";
-                var imageUrl = $"{baseUrl}/img/ProductImage/{primaryImage.ImageUrl}";
+                var imageUrl = $"{baseUrl}{primaryImage.ImageUrl}";
                 imageUrls.Add(imageUrl);
             }
             
@@ -168,7 +168,7 @@ namespace Kokomija.Services
             if (primaryImage != null && !string.IsNullOrEmpty(primaryImage.ImageUrl))
             {
                 var baseUrl = _configuration.GetValue<string>("AppSettings:BaseUrl") ?? "https://kokomija.com";
-                var imageUrl = $"{baseUrl}/img/ProductImage/{primaryImage.ImageUrl}";
+                var imageUrl = $"{baseUrl}{primaryImage.ImageUrl}";
                 imageUrls.Add(imageUrl);
             }
             

@@ -416,6 +416,37 @@
             color: var(--ord-text-primary);
             font-weight: 600;
         }
+
+        /* ===== Expandable Order Rows ===== */
+        .order-row:hover {
+            background: rgba(var(--bs-primary-rgb), 0.04) !important;
+        }
+
+        .order-row.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .order-detail-panel {
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @@keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 600px; }
+        }
+
+        .order-detail-panel .table th {
+            border-bottom: 1px solid var(--ord-card-border);
+            color: var(--ord-text-secondary);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .order-detail-panel .card {
+            border: 1px solid var(--ord-card-border) !important;
+        }
     </style>
 }
 
@@ -670,9 +701,10 @@
             @if (Model.Orders.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
+                                <th style="width: 30px;"></th>
                                 <th>Order #</th>
                                 <th>Customer</th>
                                 <th>Items</th>
@@ -687,7 +719,10 @@
                         <tbody>
                             @foreach (var order in Model.Orders)
                             {
-                                <tr class="@(order.IsDemoOrder ? "table-light" : "")">
+                                <tr class="order-row @(order.IsDemoOrder ? "table-light" : "")" data-order-id="@order.Id" style="cursor: pointer;" onclick="toggleOrderDetail(this)">
+                                    <td class="text-center">
+                                        <i class="bi bi-chevron-right expand-icon" style="transition: transform 0.2s;"></i>
+                                    </td>
                                     <td>
                                         @if (order.IsDemoOrder)
                                         {
@@ -701,7 +736,7 @@
                                         }
                                         else
                                         {
-                                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="fw-bold text-decoration-none">
+                                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="fw-bold text-decoration-none" onclick="event.stopPropagation();">
                                                 @order.OrderNumber
                                             </a>
                                         }
@@ -717,11 +752,21 @@
                                     <td>
                                         <div class="fw-semibold @(order.IsDemoOrder ? "text-muted" : "")">@order.CustomerName</div>
                                         <small class="text-muted">@order.CustomerEmail</small>
+                                        @if (!string.IsNullOrEmpty(order.CustomerPhone))
+                                        {
+                                            <br><small class="text-muted"><i class="bi bi-telephone me-1"></i>@order.CustomerPhone</small>
+                                        }
                                     </td>
                                     <td>
                                         <span class="badge bg-secondary">@order.ItemCount item@(order.ItemCount > 1 ? "s" : "")</span>
                                     </td>
-                                    <td class="fw-bold @(order.IsDemoOrder ? "text-muted" : "")">@order.TotalAmount.ToString("N2") @order.Currency</td>
+                                    <td>
+                                        <div class="fw-bold @(order.IsDemoOrder ? "text-muted" : "")">@order.TotalAmount.ToString("N2") @order.Currency</div>
+                                        @if (order.DiscountAmount > 0)
+                                        {
+                                            <small class="text-success"><i class="bi bi-tag-fill"></i> -@order.DiscountAmount.ToString("N2")</small>
+                                        }
+                                    </td>
                                     <td>
                                         <span class="status-badge status-@order.OrderStatus">
                                             @order.OrderStatus
@@ -731,6 +776,10 @@
                                         <span class="status-badge payment-@order.PaymentStatus">
                                             @order.PaymentStatus
                                         </span>
+                                        @if (order.PaidAt.HasValue)
+                                        {
+                                            <br><small class="text-muted">@order.PaidAt.Value.ToString("MMM dd HH:mm")</small>
+                                        }
                                     </td>
                                     <td>
                                         @if (order.HasShipment)
@@ -748,13 +797,17 @@
                                         {
                                             <span class="text-muted">No shipment</span>
                                         }
+                                        @if (!string.IsNullOrEmpty(order.ShippingCity))
+                                        {
+                                            <br><small class="text-muted"><i class="bi bi-geo-alt"></i> @order.ShippingCity@(order.ShippingCountry != null ? $", {order.ShippingCountry}" : "")</small>
+                                        }
                                     </td>
                                     <td>
                                         <div>@order.CreatedAt.ToString("MMM dd, yyyy")</div>
                                         <small class="text-muted">@order.CreatedAt.ToString("HH:mm")</small>
                                     </td>
                                     <td>
-                                        <div class="quick-actions">
+                                        <div class="quick-actions" onclick="event.stopPropagation();">
                                             @if (order.IsDemoOrder)
                                             {
                                                 <button class="btn btn-sm btn-outline-secondary" disabled title="Demo data - No Stripe details">
@@ -768,6 +821,143 @@
                                                     <i class="bi bi-eye"></i>
                                                 </a>
                                             }
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- Expandable Detail Row -->
+                                <tr class="order-detail-row" data-parent="@order.Id" style="display: none;">
+                                    <td colspan="10" class="p-0 border-0">
+                                        <div class="order-detail-panel" style="background: var(--ord-bg); border-top: 2px solid rgba(var(--bs-primary-rgb), 0.2); padding: 1rem 1.5rem;">
+                                            <div class="row">
+                                                <!-- Order Items -->
+                                                <div class="col-lg-8">
+                                                    <h6 class="mb-2 fw-bold"><i class="bi bi-bag me-1 text-primary"></i> Order Items</h6>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm mb-0" style="font-size: 0.85rem;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="width: 50px;"></th>
+                                                                    <th>Product</th>
+                                                                    <th>SKU / EAN</th>
+                                                                    <th>Variant</th>
+                                                                    <th class="text-center">Qty</th>
+                                                                    <th class="text-end">Price</th>
+                                                                    <th class="text-end">Total</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach (var item in order.Items)
+                                                                {
+                                                                    <tr>
+                                                                        <td>
+                                                                            @if (!string.IsNullOrEmpty(item.ProductImageUrl))
+                                                                            {
+                                                                                <img src="@item.ProductImageUrl" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px;" />
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div style="width: 40px; height: 40px; border-radius: 6px; background: var(--ord-card-border); display: flex; align-items: center; justify-content: center;">
+                                                                                    <i class="bi bi-image text-muted"></i>
+                                                                                </div>
+                                                                            }
+                                                                        </td>
+                                                                        <td>
+                                                                            @if (item.ProductId.HasValue)
+                                                                            {
+                                                                                <a href="@Url.Action("Edit", "AdminProduct", new { id = item.ProductId.Value })" class="text-decoration-none fw-semibold" title="Edit product">
+                                                                                    @item.ProductName
+                                                                                </a>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <span class="fw-semibold">@item.ProductName</span>
+                                                                            }
+                                                                        </td>
+                                                                        <td>
+                                                                            @if (!string.IsNullOrEmpty(item.SKU))
+                                                                            {
+                                                                                <code class="small">@item.SKU</code>
+                                                                            }
+                                                                            @if (!string.IsNullOrEmpty(item.EanCode))
+                                                                            {
+                                                                                @if (item.ProductId.HasValue)
+                                                                                {
+                                                                                    <a href="@Url.Action("Edit", "AdminProduct", new { id = item.ProductId.Value })" class="d-block text-decoration-none" title="Go to product">
+                                                                                        <span class="badge bg-dark bg-opacity-10 text-body-secondary"><i class="bi bi-upc-scan me-1"></i>@item.EanCode</span>
+                                                                                    </a>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <span class="badge bg-dark bg-opacity-10 text-body-secondary d-block"><i class="bi bi-upc-scan me-1"></i>@item.EanCode</span>
+                                                                                }
+                                                                            }
+                                                                        </td>
+                                                                        <td>
+                                                                            @if (!string.IsNullOrEmpty(item.Size))
+                                                                            {
+                                                                                <span class="badge bg-primary bg-opacity-10 text-primary">@item.Size</span>
+                                                                            }
+                                                                            @if (!string.IsNullOrEmpty(item.Color))
+                                                                            {
+                                                                                <span class="badge bg-info bg-opacity-10 text-info">@item.Color</span>
+                                                                            }
+                                                                        </td>
+                                                                        <td class="text-center fw-semibold">×@item.Quantity</td>
+                                                                        <td class="text-end">@item.UnitPrice.ToString("N2") @order.Currency</td>
+                                                                        <td class="text-end fw-bold">@item.TotalPrice.ToString("N2") @order.Currency</td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <!-- Financial Summary -->
+                                                <div class="col-lg-4">
+                                                    <h6 class="mb-2 fw-bold"><i class="bi bi-receipt me-1 text-primary"></i> Summary</h6>
+                                                    <div class="card border-0" style="background: var(--ord-card-bg);">
+                                                        <div class="card-body p-3" style="font-size: 0.85rem;">
+                                                            <div class="d-flex justify-content-between mb-1">
+                                                                <span class="text-muted">Subtotal</span>
+                                                                <span>@order.SubtotalAmount.ToString("N2") @order.Currency</span>
+                                                            </div>
+                                                            @if (order.DiscountAmount > 0)
+                                                            {
+                                                                <div class="d-flex justify-content-between mb-1 text-success">
+                                                                    <span><i class="bi bi-tag-fill"></i> Discount</span>
+                                                                    <span>-@order.DiscountAmount.ToString("N2")</span>
+                                                                </div>
+                                                            }
+                                                            @if (order.ShippingCost > 0)
+                                                            {
+                                                                <div class="d-flex justify-content-between mb-1">
+                                                                    <span class="text-muted"><i class="bi bi-truck"></i> Shipping</span>
+                                                                    <span>@order.ShippingCost.ToString("N2")</span>
+                                                                </div>
+                                                            }
+                                                            @if (order.TaxAmount > 0)
+                                                            {
+                                                                <div class="d-flex justify-content-between mb-1">
+                                                                    <span class="text-muted">Tax</span>
+                                                                    <span>@order.TaxAmount.ToString("N2")</span>
+                                                                </div>
+                                                            }
+                                                            <hr class="my-2" />
+                                                            <div class="d-flex justify-content-between fw-bold">
+                                                                <span>Total</span>
+                                                                <span>@order.TotalAmount.ToString("N2") @order.Currency</span>
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(order.StripePaymentIntentId) && !order.IsDemoOrder)
+                                                            {
+                                                                <hr class="my-2" />
+                                                                <div class="text-muted" style="font-size: 0.75rem;">
+                                                                    <i class="bi bi-stripe me-1"></i>
+                                                                    <span class="user-select-all">@order.StripePaymentIntentId</span>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -1153,6 +1343,22 @@
 
 @section Scripts {
     <script>
+        // Toggle expandable order detail row
+        function toggleOrderDetail(row) {
+            var orderId = row.getAttribute('data-order-id');
+            var detailRow = document.querySelector('tr.order-detail-row[data-parent="' + orderId + '"]');
+            if (!detailRow) return;
+
+            var isExpanded = row.classList.contains('expanded');
+            if (isExpanded) {
+                row.classList.remove('expanded');
+                detailRow.style.display = 'none';
+            } else {
+                row.classList.add('expanded');
+                detailRow.style.display = '';
+            }
+        }
+
         // Modal instances
         let addModal, removeModal, shipmentModal, trackModal, createShipmentModal;
 

@@ -524,14 +524,14 @@
                                     <div class="input-group">
                                         <div class="form-floating flex-grow-1">
                                             <input type="text" class="form-control" id="eanCode"
-                                                   asp-for="EanCode" maxlength="14" placeholder="e.g. 5901234123457">
+                                                   asp-for="EanCode" maxlength="50" placeholder="e.g. 5901234123457 or custom code">
                                             <label for="eanCode">EAN / GTIN Barcode</label>
                                         </div>
                                         <button type="button" class="btn btn-outline-primary" id="generateEanBtnWizard" title="Generate random EAN-13 code">
                                             <i class="bi bi-magic me-1"></i>Generate
                                         </button>
                                     </div>
-                                    <small class="text-muted mt-1 d-block">8, 12, 13, or 14-digit barcode</small>
+                                    <small class="text-muted mt-1 d-block">Standard barcode (EAN-8/13, UPC) or custom code</small>
                                     <div id="eanBarcodeContainerWizard" class="text-center p-3 mt-2 rounded" style="background: #fff; display: none;">
                                         <svg id="eanBarcodeWizard"></svg>
                                         <div class="mt-1"><small class="text-muted">Barcode preview</small></div>
@@ -2264,12 +2264,12 @@
                 var input = document.getElementById('eanCode');
                 var container = document.getElementById('eanBarcodeContainerWizard');
                 var val = (input.value || '').trim();
-                if (val && /^\d{8}$|^\d{12,14}$/.test(val)) {
+                if (val.length > 0) {
                     try {
                         var fmt = 'CODE128';
-                        if (val.length === 13) fmt = 'EAN13';
-                        else if (val.length === 8) fmt = 'EAN8';
-                        else if (val.length === 12) fmt = 'UPC';
+                        if (/^\d{13}$/.test(val)) fmt = 'EAN13';
+                        else if (/^\d{8}$/.test(val)) fmt = 'EAN8';
+                        else if (/^\d{12}$/.test(val)) fmt = 'UPC';
                         JsBarcode('#eanBarcodeWizard', val, {
                             format: fmt, width: 2, height: 60, displayValue: true,
                             fontSize: 14, margin: 10, background: '#ffffff', lineColor: '#000000'

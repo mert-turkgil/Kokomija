@@ -36,6 +36,7 @@ public class AdminController : Controller
     private readonly IStripePayoutService _stripePayoutService;
     private readonly ICarrierApiService _carrierApiService;
     private readonly ISiteControlService _siteControlService;
+    private readonly IAutoTranslationService _autoTranslationService;
 
     // Constants for demo order detection
     private const string DemoPaymentIntentPrefix = "demo_";
@@ -60,7 +61,8 @@ public class AdminController : Controller
         IStripeService stripeService,
         IStripePayoutService stripePayoutService,
         ICarrierApiService carrierApiService,
-        ISiteControlService siteControlService)
+        ISiteControlService siteControlService,
+        IAutoTranslationService autoTranslationService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -81,6 +83,7 @@ public class AdminController : Controller
         _stripePayoutService = stripePayoutService;
         _carrierApiService = carrierApiService;
         _siteControlService = siteControlService;
+        _autoTranslationService = autoTranslationService;
     }
 
     public async Task<IActionResult> Index()
@@ -340,18 +343,40 @@ public class AdminController : Controller
                 OrderNumber = o.OrderNumber,
                 CustomerName = o.CustomerName ?? (o.User != null ? $"{o.User.FirstName} {o.User.LastName}" : null) ?? "Guest",
                 CustomerEmail = o.CustomerEmail,
+                CustomerPhone = o.CustomerPhone,
                 TotalAmount = o.TotalAmount,
+                SubtotalAmount = o.SubtotalAmount,
+                ShippingCost = o.ShippingCost,
+                TaxAmount = o.TaxAmount,
+                DiscountAmount = o.DiscountAmount,
                 Currency = o.Currency.ToUpper(),
                 OrderStatus = o.OrderStatus,
                 PaymentStatus = o.PaymentStatus,
+                StripePaymentIntentId = o.StripePaymentIntentId,
                 CreatedAt = o.CreatedAt,
+                PaidAt = o.PaidAt,
                 ItemCount = o.OrderItems.Count,
                 HasShipment = hasShipment,
                 ShipmentStatus = hasShipment ? shipment!.Status : null,
                 TrackingNumber = hasShipment ? shipment!.TrackingNumber : null,
                 HasActiveReturn = hasReturn,
                 ActiveReturnCount = hasReturn ? returnCount : 0,
-                IsDemoOrder = o.IsDemoOrder || o.OrderNumber.StartsWith("DEMO-")
+                IsDemoOrder = o.IsDemoOrder || o.OrderNumber.StartsWith("DEMO-"),
+                ShippingCity = o.ShippingCity,
+                ShippingCountry = o.ShippingCountry,
+                Items = o.OrderItems.Select(oi => new OrderListItemProductDto
+                {
+                    ProductId = oi.ProductVariant?.ProductId ?? oi.ProductVariant?.Product?.Id,
+                    ProductName = oi.ProductName,
+                    ProductImageUrl = oi.ProductVariant?.Product?.Images?.OrderBy(img => img.DisplayOrder).FirstOrDefault()?.ImageUrl,
+                    Size = oi.Size ?? oi.ProductVariant?.Size?.Name,
+                    Color = oi.Color ?? oi.ProductVariant?.Color?.Name,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    TotalPrice = oi.TotalPrice,
+                    EanCode = oi.ProductVariant?.Product?.EanCode,
+                    SKU = oi.ProductVariant?.SKU
+                }).ToList()
             };
         }).ToList();
         
@@ -2754,6 +2779,31 @@ public class AdminController : Controller
         {
             _logger.LogError(ex, "Error updating translation comment");
             return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// GET: Test DeepL/translation API connectivity
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> TestTranslationConnection()
+    {
+        try
+        {
+            var result = await _autoTranslationService.TestConnectionAsync();
+            return Json(new
+            {
+                success = result.Success,
+                provider = result.Provider,
+                testTranslation = result.TestTranslation,
+                deepLConfigured = result.DeepLConfigured,
+                message = result.ErrorMessage
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error testing translation connection");
+            return Json(new { success = false, message = "Error testing translation connection" });
         }
     }
 

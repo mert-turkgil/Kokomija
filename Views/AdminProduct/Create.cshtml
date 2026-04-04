@@ -241,7 +241,56 @@
                         </div>
                     </div>
 
-                    <!-- 4. Variants -->
+                    <!-- 4. Sizes & Colors (moved before Variants so colors are selected before generating variant combinations) -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-palette me-2"></i>Sizes & Colors</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Available Sizes</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var size in Model.AvailableSizes)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input size-checkbox" type="checkbox" name="SelectedSizeIds" value="@size.Value" id="size_@size.Value" />
+                                            <label class="form-check-label" for="size_@size.Value">@size.Text</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold"><i class="bi bi-palette me-1"></i>Available Colors</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @{
+                                        var colorHexMap = ViewBag.ColorHexMap as Dictionary<string, string> ?? new Dictionary<string, string>();
+                                    }
+                                    @foreach (var color in Model.AvailableColors)
+                                    {
+                                        var hex = colorHexMap.ContainsKey(color.Value) ? colorHexMap[color.Value] : "#ccc";
+                                        <label class="color-chip" style="--chip-color: @hex">
+                                            <input type="checkbox" name="SelectedColorIds" value="@color.Value" class="color-checkbox" data-hex="@hex" />
+                                            <span class="color-swatch" style="background-color: @hex"></span>
+                                            <span class="color-name">@color.Text</span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Custom Colors</label>
+                                <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#customColorModal">
+                                    <i class="bi bi-plus-circle me-1"></i> Add Custom Color
+                                </button>
+                                <input type="hidden" asp-for="CustomColorHex" id="customColorHexInput" />
+                                <input type="hidden" asp-for="CustomColorName" id="customColorNameInput" />
+                                <div id="customColorsList" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Variants -->
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>Product Variants (Stock Management)</h5>
@@ -356,65 +405,16 @@
                                     <span class="badge bg-secondary ms-1">Optional</span>
                                 </label>
                                 <div class="input-group">
-                                    <input asp-for="EanCode" type="text" class="form-control" maxlength="14" placeholder="e.g. 5901234123457" id="eanCodeInput" />
+                                    <input asp-for="EanCode" type="text" class="form-control" maxlength="50" placeholder="e.g. 5901234123457 or custom code" id="eanCodeInput" />
                                     <button type="button" class="btn btn-outline-primary" id="generateEanBtn" title="Generate random EAN-13 code">
                                         <i class="bi bi-magic me-1"></i>Generate
                                     </button>
                                 </div>
-                                <small class="text-muted">8, 12, 13, or 14-digit barcode (admin only, not visible to customers)</small>
+                                <small class="text-muted">Standard barcode (EAN-8/13, UPC) or custom code (admin only, not visible to customers)</small>
                                 <div id="eanBarcodeContainer" class="text-center p-3 mt-2 rounded" style="background: #fff; display: none;">
                                     <svg id="eanBarcode"></svg>
                                     <div class="mt-1"><small class="text-muted">Barcode preview</small></div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sizes & Colors -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="bi bi-palette me-2"></i>Sizes & Colors</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Available Sizes</label>
-                                <div class="d-flex flex-wrap gap-2">
-                                    @foreach (var size in Model.AvailableSizes)
-                                    {
-                                        <div class="form-check">
-                                            <input class="form-check-input size-checkbox" type="checkbox" name="SelectedSizeIds" value="@size.Value" id="size_@size.Value" />
-                                            <label class="form-check-label" for="size_@size.Value">@size.Text</label>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold"><i class="bi bi-palette me-1"></i>Available Colors</label>
-                                <div class="d-flex flex-wrap gap-2">
-                                    @{
-                                        var colorHexMap = ViewBag.ColorHexMap as Dictionary<string, string> ?? new Dictionary<string, string>();
-                                    }
-                                    @foreach (var color in Model.AvailableColors)
-                                    {
-                                        var hex = colorHexMap.ContainsKey(color.Value) ? colorHexMap[color.Value] : "#ccc";
-                                        <label class="color-chip" style="--chip-color: @hex">
-                                            <input type="checkbox" name="SelectedColorIds" value="@color.Value" class="color-checkbox" data-hex="@hex" />
-                                            <span class="color-swatch" style="background-color: @hex"></span>
-                                            <span class="color-name">@color.Text</span>
-                                        </label>
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Custom Colors</label>
-                                <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#customColorModal">
-                                    <i class="bi bi-plus-circle me-1"></i> Add Custom Color
-                                </button>
-                                <input type="hidden" asp-for="CustomColorHex" id="customColorHexInput" />
-                                <input type="hidden" asp-for="CustomColorName" id="customColorNameInput" />
-                                <div id="customColorsList" class="mt-2"></div>
                             </div>
                         </div>
                     </div>
@@ -760,12 +760,12 @@
             const input = document.getElementById('eanCodeInput');
             const container = document.getElementById('eanBarcodeContainer');
             const val = (input.value || '').trim();
-            if (val && /^\d{8}$|^\d{12,14}$/.test(val)) {
+            if (val.length > 0) {
                 try {
                     let format = 'CODE128';
-                    if (val.length === 13) format = 'EAN13';
-                    else if (val.length === 8) format = 'EAN8';
-                    else if (val.length === 12) format = 'UPC';
+                    if (/^\d{13}$/.test(val)) format = 'EAN13';
+                    else if (/^\d{8}$/.test(val)) format = 'EAN8';
+                    else if (/^\d{12}$/.test(val)) format = 'UPC';
                     JsBarcode('#eanBarcode', val, {
                         format: format, width: 2, height: 60, displayValue: true,
                         fontSize: 14, margin: 10, background: '#ffffff', lineColor: '#000000'

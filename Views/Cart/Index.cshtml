@@ -191,7 +191,7 @@
                                         <a asp-controller="Product" asp-action="Details" asp-route-slug="@item.ProductSlug" class="d-block cart-item-image-link">
                                             @if (!string.IsNullOrEmpty(item.ProductImage))
                                             {
-                                                <img src="@Url.Content("~/img/ProductImage/" + item.ProductImage)"
+                                                <img src="@Url.Content("~" + item.ProductImage)"
                                                      alt="@item.ProductName"
                                                      class="img-fluid rounded-2 cart-item-img"
                                                      onerror="this.onerror=null;this.src='@Url.Content("~/img/logo_black.png")';this.classList.add('logo-fallback');">

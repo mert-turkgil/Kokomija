@@ -41,6 +41,11 @@ namespace Kokomija.Models.ViewModels
         public List<ProductTranslationViewModel> Translations { get; set; } = new();
         public bool HasCoupon { get; set; }
         public decimal CouponDiscount { get; set; }
+        
+        // B2B fields
+        public bool IsBusinessMode { get; set; }
+        public decimal? BusinessPrice { get; set; }
+        public bool IsAvailableForBusiness { get; set; }
     }
     
     public class ColorViewModel

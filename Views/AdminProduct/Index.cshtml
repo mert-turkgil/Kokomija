@@ -303,7 +303,9 @@
                                                 @if (!string.IsNullOrEmpty(product.EanCode))
                                                 {
                                                     <div class="d-flex flex-column align-items-center" style="min-width: 100px;">
-                                                        <svg class="ean-barcode-mini" data-ean="@product.EanCode"></svg>
+                                                        <a asp-action="Edit" asp-route-id="@product.Id" title="Edit product">
+                                                            <svg class="ean-barcode-mini" data-ean="@product.EanCode"></svg>
+                                                        </a>
                                                         <small class="text-muted mt-1" style="font-family: 'Roboto Mono', monospace; font-size: 0.7rem;">@product.EanCode</small>
                                                     </div>
                                                 }
@@ -766,12 +768,12 @@
                     // Render EAN mini barcodes
                     document.querySelectorAll('.ean-barcode-mini:not([data-rendered])').forEach(function(svg) {
                         var ean = svg.getAttribute('data-ean');
-                        if (ean && /^\d{8}$|^\d{12,14}$/.test(ean)) {
+                        if (ean && ean.trim().length > 0) {
                             try {
                                 var fmt = 'CODE128';
-                                if (ean.length === 13) fmt = 'EAN13';
-                                else if (ean.length === 8) fmt = 'EAN8';
-                                else if (ean.length === 12) fmt = 'UPC';
+                                if (/^\d{13}$/.test(ean)) fmt = 'EAN13';
+                                else if (/^\d{8}$/.test(ean)) fmt = 'EAN8';
+                                else if (/^\d{12}$/.test(ean)) fmt = 'UPC';
                                 JsBarcode(svg, ean, { format: fmt, width: 1, height: 30, displayValue: false, margin: 2 });
                                 svg.setAttribute('data-rendered', 'true');
                             } catch (e) { svg.style.display = 'none'; }

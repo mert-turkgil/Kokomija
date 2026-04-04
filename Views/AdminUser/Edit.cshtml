@@ -63,10 +63,25 @@
                                 </label>
                             </div>
 
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" asp-for="IsActive" id="isActive" />
+                                <label class="form-check-label" for="isActive">
+                                    Account Active
+                                </label>
+                                <small class="text-muted d-block">Deactivating prevents the user from logging in</small>
+                            </div>
+
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Save Changes
                             </button>
                         </form>
+                        
+                        <hr />
+                        <h6 class="mb-3"><i class="bi bi-key"></i> Password Management</h6>
+                        <button type="button" class="btn btn-warning" id="generatePasswordBtn">
+                            <i class="bi bi-key-fill me-1"></i> Generate New Password
+                        </button>
+                        <small class="text-muted d-block mt-1">Generate a random password for this user</small>
                     </div>
                 </div>
             </div>
@@ -1049,6 +1064,35 @@
     </div>
 </div>
 
+<!-- Generated Password Modal -->
+<div class="modal fade" id="generatedPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="bi bi-key-fill me-2"></i>Generated Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> Copy this password now. It will not be shown again.
+                </div>
+                <div class="bg-light p-3 rounded text-center">
+                    <code id="generatedPasswordText" class="fs-5 user-select-all"></code>
+                </div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-primary" id="copyPasswordBtn" onclick="copyGeneratedPassword()">
+                        <i class="bi bi-clipboard me-1"></i> Copy
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Ban User Modal -->
 <div class="modal fade" id="banUserModal" tabindex="-1">
     <div class="modal-dialog">
@@ -1541,6 +1585,46 @@
                 error: function() {
                     alert('Error creating coupon');
                 }
+            });
+        }
+
+        // === Generate Password ===
+        $('#generatePasswordBtn').on('click', function() {
+            if (!confirm('Generate a new password for this user? The old password will be replaced.')) return;
+            
+            $.ajax({
+                url: '@Url.Action("GeneratePassword", "AdminUser")',
+                type: 'POST',
+                data: {
+                    id: '@Model.Id',
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#generatedPasswordText').text(response.password);
+                        $('#generatedPasswordModal').modal('show');
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Error generating password');
+                }
+            });
+        });
+
+        function copyGeneratedPassword() {
+            const pw = document.getElementById('generatedPasswordText').textContent;
+            navigator.clipboard.writeText(pw).then(function() {
+                const btn = document.getElementById('copyPasswordBtn');
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Copied!';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+                setTimeout(function() {
+                    btn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-primary');
+                }, 2000);
             });
         }
 

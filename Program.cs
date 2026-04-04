@@ -534,6 +534,21 @@ app.MapControllerRoute(
     pattern: "pl/produkty/{id?}",
     defaults: new { controller = "Product", action = "Index", culture = "pl" });
 
+app.MapControllerRoute(
+    name: "pl-faq",
+    pattern: "pl/faq",
+    defaults: new { controller = "Home", action = "FAQ", culture = "pl" });
+
+app.MapControllerRoute(
+    name: "pl-contact",
+    pattern: "pl/kontakt",
+    defaults: new { controller = "Home", action = "Contact", culture = "pl" });
+
+app.MapControllerRoute(
+    name: "pl-blog",
+    pattern: "pl/blog",
+    defaults: new { controller = "Blog", action = "Index", culture = "pl" });
+
 // English routes
 app.MapControllerRoute(
     name: "en-home",
@@ -555,26 +570,21 @@ app.MapControllerRoute(
     pattern: "en/products/{id?}",
     defaults: new { controller = "Product", action = "Index", culture = "en" });
 
-// Turkish routes
 app.MapControllerRoute(
-    name: "tr-home",
-    pattern: "tr/anasayfa",
-    defaults: new { controller = "Home", action = "Index", culture = "tr" });
+    name: "en-faq",
+    pattern: "en/faq",
+    defaults: new { controller = "Home", action = "FAQ", culture = "en" });
 
 app.MapControllerRoute(
-    name: "tr-login",
-    pattern: "tr/giris",
-    defaults: new { controller = "Account", action = "Login", culture = "tr" });
+    name: "en-contact",
+    pattern: "en/contact",
+    defaults: new { controller = "Home", action = "Contact", culture = "en" });
 
 app.MapControllerRoute(
-    name: "tr-register",
-    pattern: "tr/kayit-ol",
-    defaults: new { controller = "Account", action = "Register", culture = "tr" });
+    name: "en-blog",
+    pattern: "en/blog",
+    defaults: new { controller = "Blog", action = "Index", culture = "en" });
 
-app.MapControllerRoute(
-    name: "tr-products",
-    pattern: "tr/urunler/{id?}",
-    defaults: new { controller = "Product", action = "Index", culture = "tr" });
 
 // Default route (fallback)
 app.MapControllerRoute(

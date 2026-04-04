@@ -70,7 +70,7 @@
                                     </div>
                                 </div>
                                 <div class="text-end text-nowrap">
-                                    <div class="text-body-secondary small">x@item.Quantity</div>
+                                    <div class="text-body-secondary small">x @item.Quantity</div>
                                     <strong>@item.TotalPrice.ToString("C")</strong>
                                 </div>
                             </label>
@@ -228,7 +228,7 @@
                     uploadUrl: '@Url.Action("UploadReturnImage", "Account")',
                     withCredentials: true
                 },
-                placeholder: '@(L["ReturnEditor_Placeholder"] ?? "Describe your issue in detail. You can paste or drag images here...")'
+                placeholder: '@Html.Raw(L["ReturnEditor_Placeholder"] ?? "Describe your issue in detail. You can paste or drag images here...")'
             };
 
             try {
@@ -255,7 +255,7 @@
             const checked = document.querySelectorAll('input[name="SelectedItemIds"]:checked');
             if (checked.length === 0) {
                 e.preventDefault();
-                alert('@(L["ReturnRequest_SelectItem"] ?? "Please select at least one item.")');
+                alert('@Html.Raw(L["ReturnRequest_SelectItem"] ?? "Please select at least one item.")');
                 return false;
             }
 
@@ -263,7 +263,7 @@
             const content = returnEditor ? returnEditor.getData().replace(/<[^>]*>/g, '').trim() : '';
             if (content.length < 20) {
                 e.preventDefault();
-                alert('@(L["ReturnRequest_MinDetails"] ?? "Please provide at least 20 characters of detail.")');
+                alert('@Html.Raw(L["ReturnRequest_MinDetails"] ?? "Please provide at least 20 characters of detail.")');
                 return false;
             }
         });

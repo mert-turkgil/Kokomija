@@ -7,7 +7,41 @@
     var alternativeProducts = ViewData["AlternativeProducts"] as List<Kokomija.Entity.Product>;
     var currentCulture = ViewData["CurrentCulture"] as string ?? "en";
 }
-
+@section Styles {
+<style>
+    .product-business-only .business-icon {
+        color: var(--bs-info);
+        opacity: 0.8;
+    }
+    
+    .business-cta .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .business-cta .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .product-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .product-card .card-img-top {
+        background-color: #f8f9fa;
+    }
+    
+    .logo-fallback {
+        padding: 2rem !important;
+        background-color: #f8f9fa;
+    }
+</style>
+}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -80,8 +114,8 @@
                             var slug = translation?.Slug ?? product.Slug ?? product.Id.ToString();
                             var primaryImage = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
                             var imageUrl = primaryImage != null 
-                                ? Url.Content($"~/img/ProductImage/{primaryImage.ImageUrl}") 
-                                : Url.Content("~/img/logo_black.png");
+                                ? primaryImage.ImageUrl 
+                                : "/img/logo_black.png";
                             var productUrl = LocalizedUrl.GetProductUrl(slug);
 
                             <div class="col-md-6 col-lg-3">
@@ -121,36 +155,3 @@
     </div>
 </div>
 
-<style>
-    .product-business-only .business-icon {
-        color: var(--bs-info);
-        opacity: 0.8;
-    }
-    
-    .business-cta .card {
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .business-cta .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-    
-    .product-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-    }
-    
-    .product-card .card-img-top {
-        background-color: #f8f9fa;
-    }
-    
-    .logo-fallback {
-        padding: 2rem !important;
-        background-color: #f8f9fa;
-    }
-</style>

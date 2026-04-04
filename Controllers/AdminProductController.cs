@@ -1296,14 +1296,25 @@ public class AdminProductController : Controller
         {
             if (!ModelState.IsValid)
             {
-                // Reload data
-                var categories = await _unitOfWork.Categories.GetAllAsync();
+                // Reload ALL data that the view needs (must match GET action's ViewBag setup)
+                var categoriesWithTranslations = await _unitOfWork.Repository<Category>().GetAllAsync(c => c.Translations!);
                 var sizes = await _unitOfWork.Sizes.GetAllAsync();
                 var colors = await _unitOfWork.Colors.GetAllAsync();
-                
-                ViewBag.Categories = new SelectList(categories.Where(c => !c.IsDeleted), "Id", "Name", model.CategoryId);
+                var packQuantities = await _unitOfWork.Repository<PackQuantity>().GetAllAsync();
+                var productGroups = await _unitOfWork.Repository<ProductGroup>().GetAllAsync();
+                var activeCoupons = await _unitOfWork.Repository<Coupon>().FindAsync(
+                    c => c.IsActive && (!c.ValidUntil.HasValue || c.ValidUntil >= DateTime.UtcNow)
+                );
+                var productCoupons = await _unitOfWork.Repository<Coupon>().FindAsync(c => c.ProductId == model.Id);
+
+                ViewBag.Categories = categoriesWithTranslations.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder).ToList();
+                ViewBag.ProductGroups = productGroups.ToList();
+                ViewBag.Coupons = activeCoupons.ToList();
                 ViewBag.AvailableSizes = sizes.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
                 ViewBag.AvailableColors = colors.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
+                ViewBag.AvailablePackQuantities = packQuantities.OrderBy(p => p.DisplayOrder).ToList();
+                ViewBag.ColorHexMap = colors.ToDictionary(c => c.Id.ToString(), c => c.HexCode);
+                ViewBag.ProductCoupons = productCoupons.OrderByDescending(c => c.CreatedAt).ToList();
                 
                 return View(model);
             }

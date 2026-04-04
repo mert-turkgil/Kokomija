@@ -131,6 +131,12 @@
                                                                 <i class="bi bi-exclamation-triangle"></i> Unverified
                                                             </span>
                                                         }
+                                                        @if (!user.IsActive)
+                                                        {
+                                                            <span class="badge bg-secondary ms-2">
+                                                                <i class="bi bi-slash-circle"></i> Inactive
+                                                            </span>
+                                                        }
                                                     </div>
                                                 </div>
                                             </td>

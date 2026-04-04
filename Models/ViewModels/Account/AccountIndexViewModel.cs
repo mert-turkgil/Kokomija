@@ -175,6 +175,9 @@ namespace Kokomija.Models.ViewModels.Account
         // Coupon
         public string? CouponCode { get; set; }
         
+        // Business order flag (invoice only available for business orders)
+        public bool IsBusinessOrder { get; set; }
+        
         public IEnumerable<OrderItemViewModel> Items { get; set; } = new List<OrderItemViewModel>();
     }
     

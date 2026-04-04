@@ -19,6 +19,7 @@ namespace Kokomija.Models.ViewModels.Admin
         public string? LastName { get; set; }
         public string? PhoneNumber { get; set; }
         public bool EmailConfirmed { get; set; }
+        public bool IsActive { get; set; } = true;
         public bool IsBanned { get; set; }
         public DateTimeOffset? BannedUntil { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -58,6 +59,9 @@ namespace Kokomija.Models.ViewModels.Admin
         public string? PhoneNumber { get; set; }
         
         public bool EmailConfirmed { get; set; }
+        
+        public bool IsActive { get; set; } = true;
+        
         public bool IsBanned { get; set; }
         public DateTimeOffset? BannedUntil { get; set; }
         public DateTime CreatedAt { get; set; }

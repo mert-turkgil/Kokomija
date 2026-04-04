@@ -18,6 +18,11 @@ public interface IAutoTranslationService
     /// Translate multiple texts at once
     /// </summary>
     Task<List<TranslationResult>> TranslateBatchAsync(List<string> texts, string sourceLanguage, string targetLanguage);
+    
+    /// <summary>
+    /// Test the translation API connection and return which provider is active
+    /// </summary>
+    Task<TranslationTestResult> TestConnectionAsync();
 }
 
 public class TranslationResult
@@ -28,4 +33,13 @@ public class TranslationResult
     public string? ErrorMessage { get; set; }
     public string SourceLanguage { get; set; } = string.Empty;
     public string TargetLanguage { get; set; } = string.Empty;
+}
+
+public class TranslationTestResult
+{
+    public bool Success { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public string? TestTranslation { get; set; }
+    public string? ErrorMessage { get; set; }
+    public bool DeepLConfigured { get; set; }
 }

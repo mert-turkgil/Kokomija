@@ -34,7 +34,7 @@
                             @foreach (var image in Model.Images)
                             {
                                 <div class="swiper-slide">
-                                    <img src="/img/ProductImage/@image.ImageUrl" 
+                                    <img src="@image.ImageUrl" 
                                          alt="@image.AltText" 
                                          class="product-image"
                                          onerror="this.onerror=null; this.src='/img/logo_black.png';">
@@ -73,6 +73,12 @@
                             -@(Math.Round((1 - (Model.DiscountedPrice.Value / Model.BasePrice)) * 100))%
                         </span>
                     }
+                    @if (Model.IsBusinessMode && Model.IsAvailableForBusiness && Model.BusinessPrice.HasValue && Model.BusinessPrice.Value < Model.BasePrice)
+                    {
+                        <span class="badge badge-sale" style="background: linear-gradient(135deg, #0d6efd, #0a58ca);" title="B2B Price">
+                            -@(Math.Round((1 - (Model.BusinessPrice.Value / Model.BasePrice)) * 100))%
+                        </span>
+                    }
                     @if (Model.HasCoupon)
                     {
                         <span class="badge badge-sale" style="background: linear-gradient(135deg, #667eea, #764ba2);" title="Coupon available">
@@ -102,7 +108,23 @@
 
             <!-- Price Display with Discount -->
             <div class="product-price-section">
-                @if (Model.DiscountedPrice.HasValue)
+                @if (Model.IsBusinessMode && Model.IsAvailableForBusiness && Model.BusinessPrice.HasValue)
+                {
+                    <div class="price-with-discount">
+                        <span class="price-current" style="color: #0d6efd;">
+                            @Model.BusinessPrice.Value.ToString("C", new System.Globalization.CultureInfo("pl-PL"))
+                        </span>
+                        <span class="price-original">
+                            @Model.BasePrice.ToString("C", new System.Globalization.CultureInfo("pl-PL"))
+                        </span>
+                    </div>
+                    <div class="mt-1">
+                        <span class="badge" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff; font-size: 0.65rem; padding: 2px 6px;">
+                            <i class="bi bi-building me-1"></i>B2B
+                        </span>
+                    </div>
+                }
+                else if (Model.DiscountedPrice.HasValue)
                 {
                     <div class="price-with-discount">
                         <span class="price-current">

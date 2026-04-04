@@ -141,7 +141,7 @@ class CartManager {
         
         return `
             <div class="cart-preview-item" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
-                <img src="/img/ProductImage/${productImage}" alt="${productName}" onerror="this.src='/img/logo_black.png'">
+                <img src="${productImage}" alt="${productName}" onerror="this.src='/img/logo_black.png'">
                 <div class="cart-item-details">
                     <h6>${productName}</h6>
                     ${meta ? `<div class="cart-item-meta">${meta}</div>` : ''}

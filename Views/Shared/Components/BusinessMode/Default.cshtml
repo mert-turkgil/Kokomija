@@ -1,149 +1,204 @@
 @model Kokomija.ViewComponents.BusinessModeViewModel
 @inject Kokomija.Services.ILocalizationService L
 
-@* B2B/Retail Mode Floating Toggle - Only shown for verified business users *@
-<div id="businessModeFloating" class="business-mode-floating @(Model.IsBusinessModeActive ? "b2b-active" : "retail-active")">
-    <button class="business-mode-toggle-btn" id="businessModeFloatingBtn" 
-            onclick="toggleBusinessModeGlobal()" 
-            title="@(Model.IsBusinessModeActive ? (L["Business_SwitchToRetail"] ?? "Switch to Retail Mode") : (L["Business_SwitchToB2B"] ?? "Switch to B2B Mode"))">
-        <div class="toggle-content">
-            @if (Model.IsBusinessModeActive)
-            {
-                <i class="bi bi-building-fill"></i>
-                <span class="toggle-label">B2B</span>
-            }
-            else
-            {
-                <i class="bi bi-person-fill"></i>
-                <span class="toggle-label">@(L["Retail"] ?? "Retail")</span>
-            }
-        </div>
-        <div class="toggle-company-name" title="@Model.CompanyName">
-            @(Model.CompanyName.Length > 20 ? Model.CompanyName.Substring(0, 17) + "..." : Model.CompanyName)
-        </div>
+@* B2B/Retail Mode Floating Toggle - Scroll-to-top style icon for verified business users *@
+<div id="businessModeFloating" class="business-mode-floating">
+    <button class="business-mode-icon-btn @(Model.IsBusinessModeActive ? "b2b-active" : "retail-active")" 
+            id="businessModeFloatingBtn" 
+            onclick="toggleBusinessModeGlobal()"
+            data-bs-toggle="tooltip"
+            data-bs-placement="left"
+            title="@(Model.IsBusinessModeActive ? (L["Business_SwitchToRetail"] ?? "Switch to Retail Mode") + " — " + Model.CompanyName : (L["Business_SwitchToB2B"] ?? "Switch to B2B Mode") + " — " + Model.CompanyName)">
+        @if (Model.IsBusinessModeActive)
+        {
+            <i class="bi bi-building-fill"></i>
+        }
+        else
+        {
+            <i class="bi bi-person-fill"></i>
+        }
     </button>
+</div>
+
+@* Toast notification container for mode switch feedback *@
+<div id="businessModeToast" class="business-toast" style="display: none;">
+    <div class="business-toast-body">
+        <i id="businessToastIcon" class="bi"></i>
+        <span id="businessToastMessage"></span>
+    </div>
 </div>
 
 <style>
     .business-mode-floating {
         position: fixed;
-        bottom: 80px;
-        right: 20px;
-        z-index: 1050;
-        transition: all 0.3s ease;
+        bottom: calc(2rem + 60px);
+        right: 2rem;
+        z-index: 1000;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
     }
 
-    .business-mode-toggle-btn {
+    .business-mode-icon-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 2px;
-        padding: 10px 16px;
-        border: 2px solid;
-        border-radius: 16px;
+        justify-content: center;
         cursor: pointer;
-        font-weight: 600;
-        font-size: 0.85rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
-        min-width: 70px;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .business-mode-toggle-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+    .business-mode-icon-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
     }
 
-    .toggle-content {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .toggle-content i {
-        font-size: 1.1rem;
-    }
-
-    .toggle-label {
-        font-size: 0.8rem;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-    }
-
-    .toggle-company-name {
-        font-size: 0.6rem;
-        font-weight: 400;
-        opacity: 0.8;
-        max-width: 100px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .business-mode-icon-btn:active {
+        transform: translateY(-1px);
     }
 
     /* B2B Active State */
-    .b2b-active .business-mode-toggle-btn {
-        background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-        color: white;
-        border-color: #0b5ed7;
+    .business-mode-icon-btn.b2b-active {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca);
+        color: #fff;
     }
 
     /* Retail Active State */
-    .retail-active .business-mode-toggle-btn {
-        background: white;
+    .business-mode-icon-btn.retail-active {
+        background: #fff;
         color: #6c757d;
-        border-color: #dee2e6;
+        border: 2px solid #dee2e6;
     }
 
-    [data-bs-theme="dark"] .retail-active .business-mode-toggle-btn {
+    [data-bs-theme="dark"] .business-mode-icon-btn.retail-active {
         background: var(--bs-body-bg);
         color: var(--bs-body-color);
         border-color: var(--bs-border-color);
     }
 
     /* Loading state */
-    .business-mode-toggle-btn.loading {
+    .business-mode-icon-btn.loading {
         pointer-events: none;
-        opacity: 0.7;
+        opacity: 0.6;
     }
 
-    .business-mode-toggle-btn.loading .toggle-content i {
-        animation: spin 1s linear infinite;
+    .business-mode-icon-btn.loading i {
+        animation: bm-spin 0.8s linear infinite;
     }
 
-    @@keyframes spin {
+    @@keyframes bm-spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
+    }
+
+    /* Business Toast */
+    .business-toast {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        min-width: 280px;
+        max-width: 400px;
+        animation: bToastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .business-toast-body {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .business-toast-body i {
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .business-toast.b2b-toast .business-toast-body {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca);
+        color: #fff;
+    }
+
+    .business-toast.retail-toast .business-toast-body {
+        background: #fff;
+        color: #333;
+        border: 1px solid #dee2e6;
+    }
+
+    [data-bs-theme="dark"] .business-toast.retail-toast .business-toast-body {
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        border-color: var(--bs-border-color);
+    }
+
+    @@keyframes bToastIn {
+        from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @@keyframes bToastOut {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(-20px) scale(0.95); }
     }
 
     /* Responsive */
     @@media (max-width: 768px) {
         .business-mode-floating {
-            bottom: 70px;
-            right: 12px;
+            bottom: calc(1.5rem + 55px);
+            right: 1rem;
         }
-        .business-mode-toggle-btn {
-            padding: 8px 12px;
-            min-width: 60px;
+        .business-mode-icon-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 1.1rem;
         }
-        .toggle-company-name {
-            display: none;
+        .business-toast {
+            right: 0.75rem;
+            left: 0.75rem;
+            min-width: auto;
         }
     }
 </style>
 
 <script>
+    // Show pending toast notification on page load (after toggle + reload)
+    document.addEventListener('DOMContentLoaded', function () {
+        var pending = sessionStorage.getItem('businessTogglePending');
+        if (pending) {
+            sessionStorage.removeItem('businessTogglePending');
+            var data = JSON.parse(pending);
+            showBusinessToast(data.isB2B, data.message);
+        }
+
+        // Initialize Bootstrap tooltip
+        var btn = document.getElementById('businessModeFloatingBtn');
+        if (btn && typeof bootstrap !== 'undefined') {
+            new bootstrap.Tooltip(btn);
+        }
+    });
+
     async function toggleBusinessModeGlobal() {
-        const btn = document.getElementById('businessModeFloatingBtn');
-        const container = document.getElementById('businessModeFloating');
+        var btn = document.getElementById('businessModeFloatingBtn');
         if (!btn || btn.classList.contains('loading')) return;
+
+        // Dispose tooltip before toggling
+        var tooltip = bootstrap.Tooltip.getInstance(btn);
+        if (tooltip) tooltip.dispose();
 
         btn.classList.add('loading');
 
         try {
-            const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
-            const token = tokenEl ? tokenEl.value : '';
+            var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+            var token = tokenEl ? tokenEl.value : '';
 
-            const response = await fetch('/Account/ToggleBusinessMode', {
+            var response = await fetch('/Account/ToggleBusinessMode', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -151,9 +206,15 @@
                 }
             });
 
-            const data = await response.json();
+            var data = await response.json();
             if (data.success) {
-                // Reload the page to reflect new pricing everywhere
+                // Store toast data for after reload
+                sessionStorage.setItem('businessTogglePending', JSON.stringify({
+                    isB2B: data.isBusinessModeActive,
+                    message: data.message || (data.isBusinessModeActive 
+                        ? '@(L["Business_ModeActivated"] ?? "Business mode activated — viewing B2B prices")'
+                        : '@(L["Business_RetailActivated"] ?? "Retail mode activated — personal shopping")')
+                }));
                 window.location.reload();
             } else {
                 alert(data.message || 'Failed to change mode');
@@ -164,5 +225,25 @@
         } finally {
             btn.classList.remove('loading');
         }
+    }
+
+    function showBusinessToast(isB2B, message) {
+        var toast = document.getElementById('businessModeToast');
+        var icon = document.getElementById('businessToastIcon');
+        var msg = document.getElementById('businessToastMessage');
+
+        toast.className = 'business-toast ' + (isB2B ? 'b2b-toast' : 'retail-toast');
+        icon.className = 'bi ' + (isB2B ? 'bi-building-fill' : 'bi-person-fill');
+        msg.textContent = message;
+        toast.style.display = 'block';
+
+        // Auto-dismiss after 4 seconds
+        setTimeout(function () {
+            toast.style.animation = 'bToastOut 0.3s ease forwards';
+            setTimeout(function () {
+                toast.style.display = 'none';
+                toast.style.animation = '';
+            }, 300);
+        }, 4000);
     }
 </script>

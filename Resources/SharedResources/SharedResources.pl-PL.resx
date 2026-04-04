@@ -2941,4 +2941,10 @@
   <data name="Register_DisposableEmailBlocked" xml:space="preserve">
     <value>Tymczasowe adresy email nie są dozwolone. Użyj stałego adresu email.</value>
   </data>
+  <data name="Products_AvailableCoupons" xml:space="preserve">
+    <value>Dostępne kupony</value>
+  </data>
+  <data name="Provide_Details" xml:space="preserve">
+    <value>Proszę podać co najmniej 10 znaków szczegółów</value>
+  </data>
 </root>

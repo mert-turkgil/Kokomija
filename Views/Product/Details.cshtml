@@ -30,7 +30,7 @@
     var hasDiscount = Model.Price > 60; // Best value indicator
     var primaryImage = Model.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
     var primaryImageUrl = primaryImage != null 
-        ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/ProductImage/{primaryImage.ImageUrl}"
+        ? $"{Context.Request.Scheme}://{Context.Request.Host}{primaryImage.ImageUrl}"
         : $"{Context.Request.Scheme}://{Context.Request.Host}/img/logo_black.png";
     
     // WELCOME10 discount for non-authenticated users (10% off first order) - only if not in business mode
@@ -444,7 +444,7 @@
         "image": [
             @foreach (var img in Model.Images?.OrderBy(i => i.DisplayOrder) ?? Enumerable.Empty<Kokomija.Entity.ProductImage>())
             {
-                var imgUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/img/ProductImage/{img.ImageUrl}";
+                var imgUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{img.ImageUrl}";
                 @Html.Raw($"\"{imgUrl}\"")
                 if (img != Model.Images?.OrderBy(i => i.DisplayOrder).LastOrDefault())
                 {
@@ -595,7 +595,7 @@
                         {
                             <!-- Single Large Image -->
                             var singleImage = orderedImages.First();
-                            var imgUrl = Url.Content($"~/img/ProductImage/{singleImage.ImageUrl}");
+                            var imgUrl = singleImage.ImageUrl;
                             var seoAltText = !string.IsNullOrEmpty(singleImage.AltText) ? singleImage.AltText : $"{productName} - Kokomija";
                             
                             <div class="single-image-container">
@@ -616,7 +616,7 @@
                         {
                             <!-- Multiple Images with Thumbnails and Navigation -->
                             var mainImage = orderedImages.First();
-                            var mainImageUrl = Url.Content($"~/img/ProductImage/{mainImage.ImageUrl}");
+                            var mainImageUrl = mainImage.ImageUrl;
                             var mainAltText = !string.IsNullOrEmpty(mainImage.AltText) ? mainImage.AltText : $"{productName} - główne zdjęcie - Kokomija";
                             
                             <div class="main-image-container">
@@ -652,7 +652,7 @@
                                 @for (int i = 0; i < orderedImages.Count; i++)
                                 {
                                     var image = orderedImages[i];
-                                    var imgUrl = Url.Content($"~/img/ProductImage/{image.ImageUrl}");
+                                    var imgUrl = image.ImageUrl;
                                     var thumbAltText = !string.IsNullOrEmpty(image.AltText) ? image.AltText : $"{productName} - zdjęcie {i + 1}";
                                     
                                     <div class="thumbnail-item @(i == 0 ? "active" : "")" 
@@ -673,7 +673,7 @@
                         <div id="imageViewer" style="display: none;">
                             @foreach (var image in orderedImages)
                             {
-                                var imgUrl = Url.Content($"~/img/ProductImage/{image.ImageUrl}");
+                                var imgUrl = image.ImageUrl;
                                 <img src="@imgUrl" alt="@productName" />
                             }
                         </div>

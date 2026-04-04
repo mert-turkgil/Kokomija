@@ -225,12 +225,12 @@ namespace Kokomija.ViewComponents
                 ImagePath = desktopImagePath,
                 TabletImagePath = tabletImagePath,
                 MobileImagePath = mobileImagePath,
-                FullImagePath = Url.Content($"~{desktopImagePath}"),
+                FullImagePath = desktopImagePath,
                 FullTabletImagePath = !string.IsNullOrEmpty(tabletImagePath) 
-                    ? Url.Content($"~{tabletImagePath}") 
+                    ? tabletImagePath 
                     : null,
                 FullMobileImagePath = !string.IsNullOrEmpty(mobileImagePath) 
-                    ? Url.Content($"~{mobileImagePath}") 
+                    ? mobileImagePath 
                     : null,
                 ImageAlt = imageAlt,
                 LinkUrl = linkUrl,

@@ -81,6 +81,7 @@ public class AdminUserController : Controller
                 LastName = u.LastName,
                 PhoneNumber = u.PhoneNumber,
                 EmailConfirmed = u.EmailConfirmed,
+                IsActive = u.IsActive,
                 IsBanned = u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow,
                 BannedUntil = u.LockoutEnd,
                 CreatedAt = u.CreatedAt,
@@ -242,6 +243,7 @@ public class AdminUserController : Controller
             LastName = user.LastName,
             PhoneNumber = user.PhoneNumber,
             EmailConfirmed = user.EmailConfirmed,
+            IsActive = user.IsActive,
             IsBanned = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow,
             BannedUntil = user.LockoutEnd,
             CreatedAt = user.CreatedAt,
@@ -431,6 +433,7 @@ public class AdminUserController : Controller
             user.LastName = model.LastName;
             user.PhoneNumber = model.PhoneNumber;
             user.EmailConfirmed = model.EmailConfirmed;
+            user.IsActive = model.IsActive;
 
             var result = await _userManager.UpdateAsync(user);
             
@@ -530,6 +533,88 @@ public class AdminUserController : Controller
             _logger.LogError(ex, "Error unbanning user {UserId}", id);
             return Json(new { success = false, message = "Error unbanning user" });
         }
+    }
+
+    /// <summary>
+    /// POST: Generate a new password for a user
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GeneratePassword(string id)
+    {
+        try
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            // Protect Root users
+            var isRoot = await _userManager.IsInRoleAsync(user, "Root");
+            var currentUser = await _userManager.GetUserAsync(User);
+            var isCurrentUserRoot = currentUser != null && await _userManager.IsInRoleAsync(currentUser, "Root");
+            if (isRoot && !isCurrentUserRoot)
+            {
+                return Json(new { success = false, message = "Cannot generate password for Root users" });
+            }
+
+            // Generate a secure random password
+            var password = GenerateSecurePassword();
+
+            // Remove existing password and set new one
+            var removeResult = await _userManager.RemovePasswordAsync(user);
+            if (!removeResult.Succeeded)
+            {
+                return Json(new { success = false, message = "Failed to reset password: " + string.Join(", ", removeResult.Errors.Select(e => e.Description)) });
+            }
+
+            var addResult = await _userManager.AddPasswordAsync(user, password);
+            if (addResult.Succeeded)
+            {
+                _logger.LogInformation("Password generated for user {UserId} by admin {AdminId}", id, currentUser?.Id);
+                return Json(new { success = true, message = "Password generated successfully", password = password });
+            }
+            else
+            {
+                return Json(new { success = false, message = string.Join(", ", addResult.Errors.Select(e => e.Description)) });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating password for user {UserId}", id);
+            return Json(new { success = false, message = "Error generating password" });
+        }
+    }
+
+    private static string GenerateSecurePassword()
+    {
+        const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string lower = "abcdefghijklmnopqrstuvwxyz";
+        const string digits = "0123456789";
+        const string special = "!@#$%&*";
+        var all = upper + lower + digits + special;
+
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var bytes = new byte[16];
+        rng.GetBytes(bytes);
+
+        var chars = new char[16];
+        // Ensure at least one of each category
+        chars[0] = upper[bytes[0] % upper.Length];
+        chars[1] = lower[bytes[1] % lower.Length];
+        chars[2] = digits[bytes[2] % digits.Length];
+        chars[3] = special[bytes[3] % special.Length];
+
+        for (int i = 4; i < 16; i++)
+        {
+            chars[i] = all[bytes[i] % all.Length];
+        }
+
+        // Shuffle
+        var rngShuffle = new byte[16];
+        rng.GetBytes(rngShuffle);
+        return new string(chars.Select((c, i) => new { c, r = rngShuffle[i] }).OrderBy(x => x.r).Select(x => x.c).ToArray());
     }
 
     /// <summary>

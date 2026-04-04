@@ -1,17 +1,44 @@
 using Kokomija.Data.Abstract;
 using Kokomija.Models.ViewModels;
+using Kokomija.Services;
+using Microsoft.AspNetCore.Identity;
+using Kokomija.Entity;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace Kokomija.ViewComponents
 {
     public class ProductCardViewComponent : ViewComponent
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INIPValidationService _nipValidationService;
 
-        public ProductCardViewComponent(IUnitOfWork unitOfWork)
+        public ProductCardViewComponent(IUnitOfWork unitOfWork, INIPValidationService nipValidationService)
         {
             _unitOfWork = unitOfWork;
+            _nipValidationService = nipValidationService;
+        }
+
+        private async Task<bool> IsBusinessModeActiveAsync()
+        {
+            // Cache per request to avoid N+1 DB calls
+            const string cacheKey = "__BusinessModeActive";
+            if (HttpContext.Items.TryGetValue(cacheKey, out var cached))
+                return (bool)cached!;
+
+            var isActive = false;
+            if (UserClaimsPrincipal?.Identity?.IsAuthenticated == true)
+            {
+                var userId = UserClaimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    var profile = await _nipValidationService.GetBusinessProfileAsync(userId);
+                    isActive = profile is { IsVerified: true, IsBusinessModeActive: true };
+                }
+            }
+            HttpContext.Items[cacheKey] = isActive;
+            return isActive;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(int productId)
@@ -76,12 +103,15 @@ namespace Kokomija.ViewComponents
             var totalStock = variants.Sum(v => v.StockQuantity);
             var hasStock = totalStock > 0;
             
+            // Check business mode
+            var isBusinessMode = await IsBusinessModeActiveAsync();
+            
             // Check if user is authenticated - show WELCOME10 discount for non-authenticated users
             var isAuthenticated = User.Identity?.IsAuthenticated == true;
             decimal? discountedPrice = null;
             var isOnSale = false;
             
-            if (!isAuthenticated)
+            if (!isAuthenticated && !isBusinessMode)
             {
                 // WELCOME10: 10% off for non-authenticated users
                 var welcomeDiscountPercent = 10m;
@@ -119,7 +149,12 @@ namespace Kokomija.ViewComponents
                     Name = t.Name,
                     Description = t.Description,
                     Slug = t.Slug
-                }).ToList() ?? new()
+                }).ToList() ?? new(),
+                
+                // B2B fields
+                IsBusinessMode = isBusinessMode,
+                BusinessPrice = product.BusinessPrice,
+                IsAvailableForBusiness = product.IsAvailableForBusiness
             };
             
             // Check coupon eligibility

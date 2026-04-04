@@ -212,7 +212,7 @@ namespace Kokomija.Controllers
                     {
                         if (baseUrl.StartsWith("https://") && !baseUrl.Contains("localhost") && !baseUrl.Contains("127.0.0.1"))
                         {
-                            imageUrl = $"{baseUrl}/img/ProductImage/{firstImage.ImageUrl}";
+                            imageUrl = $"{baseUrl}{firstImage.ImageUrl}";
                         }
                     }
                     
@@ -877,7 +877,7 @@ namespace Kokomija.Controllers
                 {
                     ProductId = product?.Id ?? 0,
                     ProductName = item.ProductName,
-                    ProductImage = productImage != null ? $"/img/ProductImage/{productImage}" : null,
+                    ProductImage = productImage != null ? productImage : null,
                     Size = item.Size,
                     Color = item.Color,
                     Quantity = item.Quantity,

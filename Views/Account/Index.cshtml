@@ -431,7 +431,7 @@
                                                         <div class="item-thumb" data-bs-toggle="tooltip" title="@item.ProductName">
                                                             @if (!string.IsNullOrEmpty(item.ProductImage))
                                                             {
-                                                                <img src="@Url.Content($"~/img/ProductImage/{item.ProductImage}")" alt="@item.ProductName" onerror="this.src='@Url.Content("~/img/logo_black.png")'">
+                                                                <img src="@item.ProductImage" alt="@item.ProductName" onerror="this.src='/img/logo_black.png'">
                                                             }
                                                             else
                                                             {
@@ -439,7 +439,7 @@
                                                             }
                                                             @if (item.Quantity > 1)
                                                             {
-                                                                <span class="qty-badge">x@item.Quantity</span>
+                                                                <span class="qty-badge">x @item.Quantity</span>
                                                             }
                                                         </div>
                                                     }
@@ -1560,7 +1560,7 @@
                             html += `
                                 <div class="col-md-6 col-lg-4">
                                     <div class="card h-100 shadow-sm">
-                                        <img src="/img/ProductImage/${item.imageUrl}" class="card-img-top" alt="${item.productName}" style="height: 180px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
+                                        <img src="${item.imageUrl}" class="card-img-top" alt="${item.productName}" style="height: 180px; object-fit: cover;" onerror="this.src='/img/logo_black.png'">
                                         <div class="card-body">
                                             <h6 class="card-title text-truncate">${item.productName}</h6>
                                             <p class="card-text fw-bold text-primary">${item.price.toFixed(2)} zł</p>

@@ -91,7 +91,7 @@ namespace Kokomija.Entity
         /// <summary>
         /// EAN/GTIN barcode for product identification
         /// </summary>
-        [MaxLength(14)]
+        [MaxLength(50)]
         public string? EanCode { get; set; }
 
         public bool IsActive { get; set; } = true;

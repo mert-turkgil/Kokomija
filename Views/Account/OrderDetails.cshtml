@@ -350,7 +350,7 @@
                                     </button>
                                 </div>
                             }
-                            @if (Model.PaymentStatus?.ToLower() == "paid")
+                            @if (Model.PaymentStatus?.ToLower() == "paid" && Model.IsBusinessOrder)
                             {
                                 <div class="col-sm-6">
                                     <a asp-action="DownloadInvoice" asp-route-id="@Model.Id" class="od-action-tile od-action-invoice" target="_blank">
@@ -872,15 +872,15 @@
 
         function cancelOrder(orderId) {
             Swal.fire({
-                title: '@(L["Cancel_Order_Request_Title"] ?? "Request Cancellation & Refund")',
-                html: '<p class="text-muted mb-2">@(L["Cancel_Order_Request_Desc"] ?? "Your request will be reviewed by our team.")</p>' +
-                      '<textarea id="cancelReason" class="form-control" rows="3" placeholder="@(L["Cancel_Reason_Placeholder"] ?? "Tell us why you want to cancel (optional)...")"></textarea>',
+                title: '@Html.Raw(L["Cancel_Order_Request_Title"] ?? "Request Cancellation & Refund")',
+                html: '<p class="text-muted mb-2">@Html.Raw(L["Cancel_Order_Request_Desc"] ?? "Your request will be reviewed by our team.")</p>' +
+                      '<textarea id="cancelReason" class="form-control" rows="3" placeholder="@Html.Raw(L["Cancel_Reason_Placeholder"] ?? "Tell us why you want to cancel (optional)...")"></textarea>',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '@(L["Submit_Cancel_Request"] ?? "Submit Request")',
-                cancelButtonText: '@(L["No_Keep"] ?? "No, Keep Order")',
+                confirmButtonText: '@Html.Raw(L["Submit_Cancel_Request"] ?? "Submit Request")',
+                cancelButtonText: '@Html.Raw(L["No_Keep"] ?? "No, Keep Order")',
                 preConfirm: () => {
                     return document.getElementById('cancelReason').value;
                 }
@@ -900,18 +900,18 @@
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
-                                title: '@(L["Cancel_Request_Submitted"] ?? "Request Submitted")',
+                                title: '@Html.Raw(L["Cancel_Request_Submitted"] ?? "Request Submitted")',
                                 text: data.message,
                                 icon: 'success',
                                 timer: 4000,
                                 showConfirmButton: true
                             });
                         } else {
-                            Swal.fire('@(L["Error"] ?? "Error")', data.message || '@(L["Error_Cancelling_Order"] ?? "Failed to submit request")', 'error');
+                            Swal.fire('@Html.Raw(L["Error"] ?? "Error")', data.message || '@Html.Raw(L["Error_Cancelling_Order"] ?? "Failed to submit request")', 'error');
                         }
                     })
                     .catch(() => {
-                        Swal.fire('@(L["Error"] ?? "Error")', '@(L["Error_Cancelling_Order"] ?? "Failed to submit request")', 'error');
+                        Swal.fire('@Html.Raw(L["Error"] ?? "Error")', '@Html.Raw(L["Error_Cancelling_Order"] ?? "Failed to submit request")', 'error');
                     });
                 }
             });
@@ -922,11 +922,11 @@
             const details = document.getElementById('editRequestDetails').value;
             
             if (!type) {
-                Swal.fire('@(L["Error"] ?? "Error")', '@(L["Select_Request_Type"] ?? "Please select a request type")', 'warning');
+                Swal.fire('@Html.Raw(L["Error"] ?? "Error")', '@Html.Raw(L["Select_Request_Type"] ?? "Please select a request type")', 'warning');
                 return;
             }
             if (!details || details.length < 10) {
-                Swal.fire('@(L["Error"] ?? "Error")', '@(L["Provide_Details"] ?? "Please provide at least 10 characters of detail")', 'warning');
+                Swal.fire('@Html.Raw(L["Error"] ?? "Error")', '@Html.Raw(L["Provide_Details"] ?? "Please provide at least 10 characters of detail")', 'warning');
                 return;
             }
 
@@ -947,8 +947,8 @@
                 if (data.success) {
                     bootstrap.Modal.getInstance(document.getElementById('editRequestModal'))?.hide();
                     Swal.fire({
-                        title: '@(L["Request_Submitted"] ?? "Request Submitted")',
-                        text: '@(L["Request_Submitted_Desc"] ?? "We will review your request and contact you via email.")',
+                        title: '@Html.Raw(L["Request_Submitted"] ?? "Request Submitted")',
+                        text: '@Html.Raw(L["Request_Submitted_Desc"] ?? "We will review your request and contact you via email.")',
                         icon: 'success',
                         timer: 3000,
                         showConfirmButton: false
@@ -957,11 +957,11 @@
                     document.getElementById('editRequestDetails').value = '';
                     document.getElementById('editCharCount').textContent = '0';
                 } else {
-                    Swal.fire('@(L["Error"] ?? "Error")', data.message || '@(L["Request_Failed"] ?? "Failed to submit request")', 'error');
+                    Swal.fire('@Html.Raw(L["Error"] ?? "Error")', data.message || '@Html.Raw(L["Request_Failed"] ?? "Failed to submit request")', 'error');
                 }
             })
             .catch(() => {
-                Swal.fire('@(L["Error"] ?? "Error")', '@(L["Request_Failed"] ?? "Failed to submit request")', 'error');
+                Swal.fire('@Html.Raw(L["Error"] ?? "Error")', '@Html.Raw(L["Request_Failed"] ?? "Failed to submit request")', 'error');
             });
         }
     </script>

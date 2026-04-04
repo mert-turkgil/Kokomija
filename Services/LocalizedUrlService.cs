@@ -15,6 +15,8 @@ public interface ILocalizedUrlService
     string GetPrivacyUrl();
     string GetBlogUrl();
     string GetBlogPostUrl(string slug);
+    string GetFaqUrl();
+    string GetContactUrl();
     string GetLocalizedUrl(string controller, string action, string? id = null);
 }
 
@@ -40,9 +42,8 @@ public class LocalizedUrlService : ILocalizedUrlService
     {
         return GetCurrentCulture() switch
         {
-            "pl" => "/pl/strona-glowna",
-            "tr" => "/tr/anasayfa",
-            _ => "/en/home"
+            "pl" => "/pl/strona-glowna",          
+              _ => "/en/home"
         };
     }
     
@@ -51,7 +52,6 @@ public class LocalizedUrlService : ILocalizedUrlService
         return GetCurrentCulture() switch
         {
             "pl" => "/pl/logowanie",
-            "tr" => "/tr/giris",
             _ => "/en/login"
         };
     }
@@ -61,7 +61,6 @@ public class LocalizedUrlService : ILocalizedUrlService
         return GetCurrentCulture() switch
         {
             "pl" => "/pl/rejestracja",
-            "tr" => "/tr/kayit-ol",
             _ => "/en/sign-up"
         };
     }
@@ -71,7 +70,6 @@ public class LocalizedUrlService : ILocalizedUrlService
         return GetCurrentCulture() switch
         {
             "pl" => "/pl/produkty",
-            "tr" => "/tr/urunler",
             _ => "/en/products"
         };
     }
@@ -82,7 +80,6 @@ public class LocalizedUrlService : ILocalizedUrlService
         var productPath = culture switch
         {
             "pl" => "produkt",
-            "tr" => "urun",
             _ => "product"
         };
         return $"/{culture}/{productPath}/{slug}";
@@ -93,7 +90,6 @@ public class LocalizedUrlService : ILocalizedUrlService
         return GetCurrentCulture() switch
         {
             "pl" => "/pl/polityka-prywatnosci",
-            "tr" => "/tr/gizlilik-politikasi",
             _ => "/en/privacy-policy"
         };
     }
@@ -103,7 +99,6 @@ public class LocalizedUrlService : ILocalizedUrlService
         return GetCurrentCulture() switch
         {
             "pl" => "/pl/blog",
-            "tr" => "/tr/blog",
             _ => "/en/blog"
         };
     }
@@ -114,10 +109,27 @@ public class LocalizedUrlService : ILocalizedUrlService
         var blogPath = culture switch
         {
             "pl" => "artykul",
-            "tr" => "makale",
             _ => "blog"
         };
         return $"/{culture}/{blogPath}/{slug}";
+    }
+
+    public string GetFaqUrl()
+    {
+        return GetCurrentCulture() switch
+        {
+            "pl" => "/pl/faq",
+            _ => "/en/faq"
+        };
+    }
+
+    public string GetContactUrl()
+    {
+        return GetCurrentCulture() switch
+        {
+            "pl" => "/pl/kontakt",
+            _ => "/en/contact"
+        };
     }
     
     public string GetLocalizedUrl(string controller, string action, string? id = null)
