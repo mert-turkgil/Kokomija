@@ -79,6 +79,13 @@ namespace Kokomija.Models.ViewModels.Admin
         public List<UserWishlistDto> Wishlist { get; set; } = new();
         public List<UserCouponDto> UsedCoupons { get; set; } = new();
         public List<UserCouponDto> AvailableCoupons { get; set; } = new();
+        
+        // Statistics
+        public string VipTier { get; set; } = "None";
+        public decimal TotalSpent { get; set; }
+        public int TotalOrders { get; set; }
+        public int WishlistCount { get; set; }
+        public decimal? AverageRating { get; set; }
     }
 
     public class UserBusinessProfileDto

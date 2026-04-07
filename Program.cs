@@ -312,6 +312,8 @@ builder.Services.AddScoped<ISmtpProtectionService, SmtpProtectionService>();
 // Email Health Check and SMTP Protection Background Workers
 builder.Services.AddHostedService<Kokomija.BackgroundServices.EmailHealthCheckWorker>();
 builder.Services.AddHostedService<SmtpProtectionWorker>();
+builder.Services.AddHostedService<Kokomija.BackgroundServices.ApiHealthCheckWorker>();
+builder.Services.AddHostedService<Kokomija.BackgroundServices.ReturnRequestCleanupWorker>();
 
 // Register Cloudflare Turnstile Service
 builder.Services.AddHttpClient(); // Required for TurnstileService

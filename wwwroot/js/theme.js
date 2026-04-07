@@ -13,6 +13,7 @@
     class ThemeManager {
         constructor() {
             this.themeToggle = document.getElementById('theme-toggle');
+            this.themeToggleSidebar = document.getElementById('theme-toggle-sidebar');
             this.init();
         }
 
@@ -21,10 +22,18 @@
             const savedTheme = this.getSavedTheme();
             this.setTheme(savedTheme, false);
 
-            // Setup event listeners
+            // Setup event listeners for desktop toggle
             if (this.themeToggle) {
                 this.themeToggle.addEventListener('change', () => {
                     const newTheme = this.themeToggle.checked ? THEME_DARK : THEME_LIGHT;
+                    this.setTheme(newTheme, true);
+                });
+            }
+
+            // Setup event listeners for sidebar toggle
+            if (this.themeToggleSidebar) {
+                this.themeToggleSidebar.addEventListener('change', () => {
+                    const newTheme = this.themeToggleSidebar.checked ? THEME_DARK : THEME_LIGHT;
                     this.setTheme(newTheme, true);
                 });
             }
@@ -63,6 +72,9 @@
             // Update toggle state
             if (this.themeToggle) {
                 this.themeToggle.checked = theme === THEME_DARK;
+            }
+            if (this.themeToggleSidebar) {
+                this.themeToggleSidebar.checked = theme === THEME_DARK;
             }
 
             // Update Bootstrap theme color meta tag

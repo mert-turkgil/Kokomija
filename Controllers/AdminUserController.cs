@@ -306,7 +306,12 @@ public class AdminUserController : Controller
                 AddedAt = w.AddedAt
             }).OrderByDescending(w => w.AddedAt).ToList(),
             UsedCoupons = usedCouponDtos,
-            AvailableCoupons = availableCouponDtos.OrderBy(c => c.ValidUntil).ToList()
+            AvailableCoupons = availableCouponDtos.OrderBy(c => c.ValidUntil).ToList(),
+            VipTier = user.VipTier ?? "None",
+            TotalSpent = user.TotalSpent,
+            TotalOrders = orders.Count(),
+            WishlistCount = wishlist.Count(),
+            AverageRating = reviews.Any() ? Math.Round(reviews.Average(r => r.Rating), 1) : null
         };
 
         // Load products and categories for coupon creation

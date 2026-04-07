@@ -1,3 +1,4 @@
+using Ganss.Xss;
 using Kokomija.Data.Abstract;
 using Kokomija.Entity;
 using Kokomija.Services;
@@ -80,7 +81,7 @@ namespace Kokomija.Controllers
                     ProductId = model.ProductId,
                     UserId = userId,
                     Rating = model.Rating,
-                    Comment = model.Comment.Trim(),
+                    Comment = new HtmlSanitizer().Sanitize(model.Comment.Trim()),
                     IsVerifiedPurchase = true, // Always verified since we check purchase
                     IsVisible = true,
                     CreatedAt = DateTime.UtcNow

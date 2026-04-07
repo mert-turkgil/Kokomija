@@ -513,7 +513,7 @@ namespace Kokomija.Controllers
                 {
                     id = c.Id,
                     name = c.Name,
-                    displayName = c.DisplayName,
+                    displayName = c.DisplayName ?? c.Name,
                     hexCode = c.HexCode
                 });
 
@@ -536,7 +536,7 @@ namespace Kokomija.Controllers
                 if (color == null)
                     return NotFound();
 
-                return Json(new { id = color.Id, name = color.DisplayName, hexCode = color.HexCode });
+                return Json(new { id = color.Id, name = color.DisplayName ?? color.Name, hexCode = color.HexCode });
             }
             catch (Exception ex)
             {
@@ -568,7 +568,7 @@ namespace Kokomija.Controllers
                 {
                     id = s.Id,
                     name = s.Name,
-                    displayName = s.DisplayName
+                    displayName = s.DisplayName ?? s.Name
                 });
 
                 return Json(result);

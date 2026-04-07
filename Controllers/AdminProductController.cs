@@ -974,6 +974,7 @@ public class AdminProductController : Controller
                     var customColor = new Color
                     {
                         Name = names[i].Trim(),
+                        DisplayName = names[i].Trim(),
                         HexCode = hexCodes[i].Trim(),
                         CreatedAt = DateTime.UtcNow
                     };

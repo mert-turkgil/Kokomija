@@ -1226,7 +1226,7 @@
                             }
                         </div>
                         <div class="review-comment">
-                            @review.Comment
+                            @Html.Raw(review.Comment)
                         </div>
                         
                         @if (!string.IsNullOrEmpty(review.AdminReply))
@@ -1621,7 +1621,263 @@
                 })
                 .catch(function() { /* silently ignore */ });
         })();
-    </script>
-}
 
+        // ===== ViewerJS Image Zoom =====
+        (function initImageViewer() {
+            var viewerEl = document.getElementById('imageViewer');
+            var mainImg = document.getElementById('mainImage');
+            var singleImg = document.getElementById('viewerImage');
+            
+            if (viewerEl && viewerEl.querySelectorAll('img').length > 0) {
+                var viewer = new Viewer(viewerEl, {
+                    navbar: true,
+                    title: false,
+                    toolbar: {
+                        zoomIn: 1,
+                        zoomOut: 1,
+                        oneToOne: 1,
+                        reset: 1,
+                        rotateLeft: 1,
+                        rotateRight: 1,
+                        flipHorizontal: 1,
+                        flipVertical: 1
+                    },
+                    transition: true,
+                    zoomRatio: 0.2
+                });
+
+                // Click main image to open viewer at current index
+                if (mainImg) {
+                    mainImg.style.cursor = 'zoom-in';
+                    mainImg.addEventListener('click', function() {
+                        var idx = parseInt(mainImg.getAttribute('data-index')) || 0;
+                        viewer.view(idx);
+                    });
+                }
+
+                // Click single image to open viewer
+                if (singleImg) {
+                    singleImg.style.cursor = 'zoom-in';
+                    singleImg.addEventListener('click', function() {
+                        viewer.show();
+                    });
+                }
+            }
+
+            // Thumbnail navigation
+            var thumbnails = document.querySelectorAll('.thumbnail-item');
+            if (thumbnails.length > 0 && mainImg) {
+                var totalImages = thumbnails.length;
+
+                thumbnails.forEach(function(thumb) {
+                    thumb.addEventListener('click', function() {
+                        var idx = parseInt(this.getAttribute('data-index'));
+                        var imgUrl = this.getAttribute('data-image');
+                        var altText = this.getAttribute('data-alt');
+                        
+                        mainImg.src = imgUrl;
+                        mainImg.alt = altText;
+                        mainImg.setAttribute('data-index', idx);
+                        
+                        thumbnails.forEach(function(t) { t.classList.remove('active'); });
+                        this.classList.add('active');
+                        
+                        var counter = document.getElementById('currentImageIndex');
+                        if (counter) counter.textContent = idx + 1;
+                    });
+                });
+
+                // Previous / Next arrows
+                var prevBtn = document.getElementById('prevImage');
+                var nextBtn = document.getElementById('nextImage');
+
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', function() {
+                        var current = parseInt(mainImg.getAttribute('data-index')) || 0;
+                        var newIdx = (current - 1 + totalImages) % totalImages;
+                        thumbnails[newIdx].click();
+                    });
+                }
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', function() {
+                        var current = parseInt(mainImg.getAttribute('data-index')) || 0;
+                        var newIdx = (current + 1) % totalImages;
+                        thumbnails[newIdx].click();
+                    });
+                }
+
+                // Keyboard navigation
+                document.addEventListener('keydown', function(e) {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+                    if (e.key === 'ArrowLeft' && prevBtn) prevBtn.click();
+                    if (e.key === 'ArrowRight' && nextBtn) nextBtn.click();
+                });
+            }
+        })();
+
+        // ===== Wishlist Initial State =====
+        (function checkWishlistState() {
+            if (!isAuthenticated) return;
+            var btn = document.getElementById('addToWishlistBtn');
+            if (!btn) return;
+            
+            fetch('/api/wishlist/check/@Model.Id')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.inWishlist) {
+                        var icon = btn.querySelector('i');
+                        if (icon) {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                        }
+                    }
+                })
+                .catch(function() { /* ignore */ });
+        })();
+
+        // ===== Review Form Submission =====
+        (function initReviewForm() {
+            var form = document.getElementById('reviewForm');
+            if (!form) return;
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                var ratingInput = form.querySelector('input[name="rating"]:checked');
+                if (!ratingInput) {
+                    alert('@Html.Raw(L.GetString("Review_SelectRating", "Product") ?? "Please select a rating")');
+                    return;
+                }
+
+                var comment = '';
+                if (window.reviewEditorInstance) {
+                    comment = window.reviewEditorInstance.getData();
+                } else {
+                    comment = document.getElementById('reviewComment').value;
+                }
+
+                if (!comment || comment.trim() === '' || comment.trim() === '<p>&nbsp;</p>') {
+                    alert('@Html.Raw(L.GetString("Review_EnterComment", "Product") ?? "Please enter a comment")');
+                    return;
+                }
+
+                var token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+                var submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> @L["Review_Submitting"]...';
+
+                fetch('/Review/Create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify({
+                        productId: @Model.Id,
+                        rating: parseInt(ratingInput.value),
+                        comment: comment
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        submitBtn.innerHTML = '<i class="fas fa-check"></i> ' + data.message;
+                        submitBtn.classList.remove('btn-primary');
+                        submitBtn.classList.add('btn-success');
+                        // Reset form
+                        form.querySelectorAll('input[name="rating"]').forEach(function(r) { r.checked = false; });
+                        if (window.reviewEditorInstance) {
+                            window.reviewEditorInstance.setData('');
+                        } else {
+                            document.getElementById('reviewComment').value = '';
+                        }
+                        // Reload page after brief delay to show new review
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        alert(data.message);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '@L["Review_Submit"]';
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Review submit error:', err);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '@L["Review_Submit"]';
+                });
+            });
+        })();
+    </script>
+
+    <!-- CKEditor 5 for Review Comments -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.css" />
+        <script src="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.umd.js"></script>
+        <style>
+            .ck-editor__editable {
+                min-height: 120px;
+                max-height: 300px;
+            }
+            [data-bs-theme="dark"] .ck.ck-editor__main>.ck-editor__editable,
+            [data-theme="dark"] .ck.ck-editor__main>.ck-editor__editable {
+                background: var(--bs-body-bg, #1a1a2e) !important;
+                color: var(--bs-body-color, #e0e0e0) !important;
+                border-color: var(--bs-border-color, #333) !important;
+            }
+            [data-bs-theme="dark"] .ck.ck-toolbar,
+            [data-theme="dark"] .ck.ck-toolbar {
+                background: var(--bs-tertiary-bg, #16213e) !important;
+                border-color: var(--bs-border-color, #333) !important;
+            }
+            [data-bs-theme="dark"] .ck.ck-toolbar .ck-button,
+            [data-theme="dark"] .ck.ck-toolbar .ck-button {
+                color: var(--bs-body-color, #e0e0e0) !important;
+            }
+            [data-bs-theme="dark"] .ck.ck-toolbar .ck-button:hover,
+            [data-theme="dark"] .ck.ck-toolbar .ck-button:hover {
+                background: var(--bs-secondary-bg, #1a1a2e) !important;
+            }
+            [data-bs-theme="dark"] .ck.ck-dropdown__panel,
+            [data-theme="dark"] .ck.ck-dropdown__panel {
+                background: var(--bs-tertiary-bg, #16213e) !important;
+                border-color: var(--bs-border-color, #333) !important;
+            }
+            [data-bs-theme="dark"] .ck.ck-list__item .ck-button,
+            [data-theme="dark"] .ck.ck-list__item .ck-button {
+                color: var(--bs-body-color, #e0e0e0) !important;
+            }
+            [data-bs-theme="dark"] .ck.ck-list__item .ck-button:hover,
+            [data-theme="dark"] .ck.ck-list__item .ck-button:hover {
+                background: var(--bs-secondary-bg, #1a1a2e) !important;
+            }
+        </style>
+        <script>
+            (function initCKEditor() {
+                var el = document.getElementById('reviewComment');
+                if (!el || typeof CKEDITOR === 'undefined') return;
+
+                var { ClassicEditor, Essentials, Bold, Italic, Underline, Link, Paragraph,
+                      List, BlockQuote, Heading } = CKEDITOR;
+
+                ClassicEditor
+                    .create(el, {
+                        licenseKey: '@(ViewBag.CKEditorLicenseKey ?? "GPL")',
+                        plugins: [Essentials, Bold, Italic, Underline, Link, Paragraph, List, BlockQuote, Heading],
+                        toolbar: {
+                            items: ['heading', '|', 'bold', 'italic', 'underline', '|',
+                                    'link', 'blockQuote', '|', 'bulletedList', 'numberedList', '|',
+                                    'undo', 'redo']
+                        },
+                        placeholder: '@Html.Raw(L.GetString("Review_CommentPlaceholder", "Product") ?? "Write your review...")'
+                    })
+                    .then(function(editor) {
+                        window.reviewEditorInstance = editor;
+                    })
+                    .catch(function(err) {
+                        console.error('CKEditor init error:', err);
+                    });
+            })();
+        </script>
+    }
+}
 
